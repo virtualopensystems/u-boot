@@ -90,6 +90,20 @@ static inline void lcd_putc_xy (ushort x, ushort y, uchar  c);
 static int lcd_init (void *lcdbase);
 
 static void *lcd_logo (void);
+#ifdef CONFIG_LCD_BMP_RLE8
+static int lcd_display_rle8_bitmap(bmp_image_t *bmp, ushort *cmap, uchar *fb,
+				   int x, int y);
+#endif
+
+static int lcd_getbgcolor(void);
+static void lcd_setfgcolor(int color);
+static void lcd_setbgcolor(int color);
+
+#ifdef CONFIG_QSD8X50_LCDC
+void lcdc_drawchar(ushort x, ushort y, uchar c);
+void lcd_disable(void);
+void lcd_enable(void);
+#endif
 
 static int lcd_getbgcolor (void);
 static void lcd_setfgcolor (int color);
@@ -681,6 +695,7 @@ int lcd_display_bitmap(ulong bmp_image, int x, int y)
 	unsigned long width, height, byte_width;
 	unsigned long pwidth = panel_info.vl_col;
 	unsigned colors, bpix, bmp_bpix;
+	unsigned long compression;
 #if defined(CONFIG_CPU_PXA)
 	struct pxafb_info *fbi = &panel_info.pxa;
 #elif defined(CONFIG_MPC823)
@@ -698,6 +713,7 @@ int lcd_display_bitmap(ulong bmp_image, int x, int y)
 	height = le32_to_cpu (bmp->header.height);
 	bmp_bpix = le16_to_cpu(bmp->header.bit_count);
 	colors = 1 << bmp_bpix;
+	compression = le32_to_cpu(bmp->header.compression);
 
 	bpix = NBITS(panel_info.vl_bpix);
 
@@ -803,6 +819,18 @@ int lcd_display_bitmap(ulong bmp_image, int x, int y)
 	switch (bmp_bpix) {
 	case 1: /* pass through */
 	case 8:
+#ifdef CONFIG_LCD_BMP_RLE8
+		if (compression == BMP_BI_RLE8) {
+			if (bpix != 16) {
+				/* TODO implement render code for bpix != 16 */
+				printf("Error: only support 16 bpix");
+				return 1;
+			}
+			return lcd_display_rle8_bitmap(bmp, cmap_base, fb,
+						       x, y);
+		}
+#endif
+
 		if (bpix != 16)
 			byte_width = width;
 		else
@@ -856,6 +884,105 @@ int lcd_display_bitmap(ulong bmp_image, int x, int y)
 	lcd_sync();
 	return (0);
 }
+
+#ifdef CONFIG_LCD_BMP_RLE8
+
+#define BMP_RLE8_ESCAPE		0
+#define BMP_RLE8_EOL		0
+#define BMP_RLE8_EOBMP		1
+#define BMP_RLE8_DELTA		2
+
+/* Do not call this function directly, must be called from
+ * lcd_display_bitmap.
+ */
+static int lcd_display_rle8_bitmap(bmp_image_t *bmp, ushort *cmap, uchar *fb,
+				    int x_off, int y_off)
+{
+	uchar *bmap;
+	ulong width, height;
+	ushort i, cnt, runlen;
+	int x, y;
+	int decode = 1;
+
+	width = le32_to_cpu(bmp->header.width);
+	height = le32_to_cpu(bmp->header.height);
+	bmap = (uchar *)bmp + le32_to_cpu(bmp->header.data_offset);
+
+	x = 0;
+	y = height - 1;
+
+	while (decode) {
+		if (bmap[0] == BMP_RLE8_ESCAPE) {
+			switch (bmap[1]) {
+			case BMP_RLE8_EOL:
+				/* end of line */
+				bmap += 2;
+				x = 0;
+				y--;
+				/* 16bpix, 2-byte per pixel, width should *2 */
+				fb -= (width * 2 + lcd_line_length);
+				break;
+			case BMP_RLE8_EOBMP:
+				/* end of bitmap */
+				decode = 0;
+				break;
+			case BMP_RLE8_DELTA:
+				/* delta run */
+				x += bmap[2];
+				y -= bmap[3];
+				/* 16bpix, 2-byte per pixel, x should *2 */
+				fb = (uchar *) (lcd_base + (y + y_off - 1)
+					* lcd_line_length + (x + x_off) * 2);
+				bmap += 4;
+				break;
+			default:
+				/* unencoded run */
+				runlen = bmap[1];
+				bmap += 2;
+				if (y < height) {
+					if (x < width) {
+						if (x + runlen > width)
+							cnt = width - x;
+						else
+							cnt = runlen;
+						for (i = 0; i < cnt; i++) {
+							*(ushort *)fb =
+								cmap[bmap[i]];
+							/* move 2-byte */
+							fb += 2;
+						}
+					}
+					x += runlen;
+				}
+				bmap += runlen;
+				if (runlen & 1)
+					bmap++;
+			}
+		} else {
+			/* encoded run */
+			if (y < height) {
+				runlen = bmap[0];
+				if (x < width) {
+					if (x + runlen > width)
+						cnt = width - x;
+					else
+						cnt = runlen;
+					for (i = 0; i < cnt; i++) {
+						*(ushort *)fb = cmap[bmap[1]];
+						/* move 2-byte */
+						fb += 2;
+					}
+				}
+				x += runlen;
+			}
+			bmap += 2;
+		}
+	}
+
+	return 0;
+}
+#endif
+
 #endif
 
 static void *lcd_logo (void)
