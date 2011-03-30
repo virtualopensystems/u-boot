@@ -23,9 +23,19 @@ include $(TOPDIR)/config.mk
 
 LIB := $(obj)libtpm.o
 
-COBJS-$(CONFIG_GENERIC_LPC_TPM) = generic_lpc_tpm.o
+IFXDIR = slb9635_i2c
+
+$(shell mkdir -p $(obj)$(IFXDIR))
 
 COBJS-$(CONFIG_DUMMY_TPM) = dummy_tpm.o
+COBJS-$(CONFIG_GENERIC_LPC_TPM) = generic_lpc_tpm.o
+COBJS-$(CONFIG_INFINEON_TPM_I2C) = slb9635_i2c.o \
+	$(IFXDIR)/tpm_proto.o \
+	$(IFXDIR)/tpm.o \
+	$(IFXDIR)/tpm_tis_i2c.o \
+	$(IFXDIR)/tddl.o \
+	$(IFXDIR)/ifx_v05.o \
+	$(IFXDIR)/ifx_v03.o
 
 COBJS	:= $(COBJS-y)
 SRCS	:= $(COBJS:.o=.c)
