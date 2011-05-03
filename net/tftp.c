@@ -38,6 +38,10 @@
 static ulong TftpTimeoutMSecs = TIMEOUT;
 static int TftpTimeoutCountMax = TIMEOUT_COUNT;
 
+#ifdef CONFIG_TFTP_SPEED
+static ulong time_start;   /* Record time we started tftp */
+#endif
+
 /*
  * These globals govern the timeout behavior when attempting a connection to a
  * TFTP server. TftpRRQTimeoutMSecs specifies the number of milliseconds to
@@ -777,6 +781,9 @@ void TftpStart(enum proto_t protocol)
 		TftpState = STATE_SEND_RRQ;
 	}
 
+#ifdef CONFIG_TFTP_SPEED
+	time_start = get_timer(0);
+#endif
 	TftpTimeoutCountMax = TftpRRQTimeoutCountMax;
 
 	NetSetTimeout(TftpTimeoutMSecs, TftpTimeout);
