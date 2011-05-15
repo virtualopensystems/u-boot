@@ -44,6 +44,10 @@ extern struct serial_device eserial4_device;
 
 #endif
 
+#if defined(CONFIG_OF_SERIAL)
+struct serial_device *serial_fdt_get_console_r(void);
+#endif
+
 #if defined(CONFIG_MPC512X)
 extern struct serial_device serial1_device;
 extern struct serial_device serial3_device;

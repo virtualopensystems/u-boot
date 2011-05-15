@@ -49,6 +49,9 @@ void serial_register(struct serial_device *dev)
 
 void serial_initialize(void)
 {
+#ifdef CONFIG_OF_SERIAL
+	serial_register(serial_fdt_get_console_r());
+#endif
 #if defined(CONFIG_8xx_CONS_SMC1) || defined(CONFIG_8xx_CONS_SMC2)
 	serial_register(&serial_smc_device);
 #endif

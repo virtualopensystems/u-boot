@@ -25,13 +25,29 @@
  */
 
 #include <common.h>
-#include <fdt_decode.h>
+#include <fdtdec.h>
 #include <ns16550.h>
 #include <serial.h>
-#include <serial_fdt.h>
+#include <linux/compiler.h>
 
 
 DECLARE_GLOBAL_DATA_PTR;
+
+/* Information obtained about a UART from the FDT */
+struct fdt_uart {
+	fdt_addr_t reg;	/* address of registers in physical memory */
+	int id;		/* id or port number (numbered from 0, default -1) */
+	int reg_shift;	/* each register is (1 << reg_shift) apart */
+	int baudrate;	/* baud rate, will be gd->baudrate if not defined */
+	int clock_freq;	/* clock frequency, -1 if not provided */
+	int multiplier;	/* divisor multiplier, default 16 */
+	int divisor;	/* baud rate divisor, default calculated */
+	int enabled;	/* 1 to enable, 0 to disable */
+	int interrupt;	/* interrupt line */
+	int silent;	/* 1 for silent UART (supresses output by default) */
+	int io_mapped;	/* 1 for IO mapped UART, 0 for memory mapped UART */
+	enum fdt_compat_id compat; /* our selected driver */
+};
 
 /*
  * We need these structures to be outside BSS since they are accessed before
@@ -45,6 +61,42 @@ struct fdt_uart console_uart = {
 	-1U
 };
 
+static void uart_calc_divisor(struct fdt_uart *uart)
+{
+	if (uart->multiplier && uart->baudrate)
+		uart->divisor = (uart->clock_freq +
+				(uart->baudrate * (uart->multiplier / 2))) /
+			(uart->multiplier * uart->baudrate);
+}
+
+static int decode_uart_console(const void *blob, struct fdt_uart *uart,
+		int default_baudrate)
+{
+	int node;
+
+	node = fdtdec_find_alias_node(blob, "console");
+	if (node < 0)
+		return node;
+	uart->reg = fdtdec_get_addr(blob, node, "reg");
+	uart->id = 3;
+	uart->reg_shift = fdtdec_get_int(blob, node, "reg-shift", 2);
+	uart->baudrate = fdtdec_get_int(blob, node, "baudrate",
+					default_baudrate);
+	uart->clock_freq = fdtdec_get_int(blob, node, "clock-frequency", -1);
+	uart->multiplier = fdtdec_get_int(blob, node, "multiplier", 16);
+	uart->divisor = fdtdec_get_int(blob, node, "divisor", -1);
+	uart->enabled = fdtdec_get_is_enabled(blob, node);
+	uart->interrupt = fdtdec_get_int(blob, node, "interrupts", -1);
+	uart->silent = fdtdec_get_config_int(blob, "silent_console", 0);
+	uart->io_mapped = fdtdec_get_int(blob, node, "io-mapped", 0);
+	uart->compat = fdtdec_lookup(blob, node);
+
+	/* Calculate divisor if required */
+	if ((uart->divisor == -1) && (uart->clock_freq != -1))
+		uart_calc_divisor(uart);
+	return 0;
+}
+
 /* Access the console - this may need to be a function */
 #define DECLARE_CONSOLE	struct fdt_uart *uart = &console_uart
 
@@ -55,6 +107,7 @@ static int fserial_init(void)
 
 	switch (uart->compat) {
 #ifdef CONFIG_SYS_NS16550
+	case COMPAT_SERIAL_TEGRA20_UART:
 	case COMPAT_SERIAL_NS16550:
 #ifdef CONFIG_SYS_NS16550_RUNTIME_MAPPED
 		NS16550_is_io_mapped(uart->io_mapped);
@@ -81,7 +134,8 @@ static void fserial_putc(const char c)
 		fserial_putc('\r');
 	switch (uart->compat) {
 #ifdef CONFIG_SYS_NS16550
-	case COMPAT_SERIAL_NS16550 :
+	case COMPAT_SERIAL_TEGRA20_UART:
+	case COMPAT_SERIAL_NS16550:
 #ifdef CONFIG_SYS_NS16550_RUNTIME_MAPPED
 		NS16550_is_io_mapped(uart->io_mapped);
 #endif
@@ -105,17 +159,18 @@ static int fserial_getc(void)
 
 	switch (uart->compat) {
 #ifdef CONFIG_SYS_NS16550
-	case COMPAT_SERIAL_NS16550 :
+	case COMPAT_SERIAL_TEGRA20_UART:
+	case COMPAT_SERIAL_NS16550:
 #ifdef CONFIG_SYS_NS16550_RUNTIME_MAPPED
 		NS16550_is_io_mapped(uart->io_mapped);
 #endif
-		return NS16550_getc((NS16550_t)uart->reg, uart->id);
+		return NS16550_getc((NS16550_t)uart->reg);
 #endif
 	default:
 		break;
 	}
-	/* hang */
-	for (;;) ;
+	hang();
+
 	return 0;
 }
 
@@ -125,11 +180,12 @@ static int fserial_tstc(void)
 
 	switch (uart->compat) {
 #ifdef CONFIG_SYS_NS16550
-	case COMPAT_SERIAL_NS16550 :
+	case COMPAT_SERIAL_TEGRA20_UART:
+	case COMPAT_SERIAL_NS16550:
 #ifdef CONFIG_SYS_NS16550_RUNTIME_MAPPED
 		NS16550_is_io_mapped(uart->io_mapped);
 #endif
-		return NS16550_tstc((NS16550_t)uart->reg, uart->id);
+		return NS16550_tstc((NS16550_t)uart->reg);
 #endif
 	default:
 		break;
@@ -142,10 +198,11 @@ static void fserial_setbrg(void)
 	DECLARE_CONSOLE;
 
 	uart->baudrate = gd->baudrate;
-	fdt_decode_uart_calc_divisor(uart);
+	uart_calc_divisor(uart);
 	switch (uart->compat) {
 #ifdef CONFIG_SYS_NS16550
-	case COMPAT_SERIAL_NS16550 :
+	case COMPAT_SERIAL_TEGRA20_UART:
+	case COMPAT_SERIAL_NS16550:
 #ifdef CONFIG_SYS_NS16550_RUNTIME_MAPPED
 		NS16550_is_io_mapped(uart->io_mapped);
 #endif
@@ -159,11 +216,10 @@ static void fserial_setbrg(void)
 
 static struct serial_device *get_console(void)
 {
-	if (fdt_decode_uart_console(gd->fdt_blob, &console_uart,
+	if (decode_uart_console(gd->fdt_blob, &console_uart,
 			gd->baudrate))
 		return NULL;
 	strcpy(console.name, "serial");
-	strcpy(console.ctlr, "fdt");
 	console.init = fserial_init;
 	console.uninit = NULL;
 	console.setbrg = fserial_setbrg;
@@ -174,7 +230,21 @@ static struct serial_device *get_console(void)
 	return &console;
 }
 
-struct serial_device *serial_fdt_get_console_f(void)
+struct serial_device *serial_fdt_get_console_r(void)
+{
+	/*
+	 * Relocation moves all our function pointers, so we need to set up
+	 * things again. This function will only be called once.
+	 *
+	 * We cannot do the -1 check as in default_serial_console()
+	 * because it will be -1 if that function has been ever been called.
+	 * However, the function pointers set up by serial_fdt_get_console_f
+	 * will be pre-relocation values, so we must re-calculate them.
+	 */
+	return get_console();
+}
+
+__weak struct serial_device *default_serial_console(void)
 {
 	/* if the uart isn't already set up, do it now */
 	if (console_uart.reg == -1U)
@@ -182,19 +252,4 @@ struct serial_device *serial_fdt_get_console_f(void)
 
 	/* otherwise just return the current information */
 	return &console;
-}
-
-
-struct serial_device *serial_fdt_get_console_r(void)
-{
-	/*
-	 * Relocation moves all our function pointers, so we need to set up
-	 * things again. This function will only be called once.
-	 *
-	 * We cannot do the -1 check as in serial_fdt_get_console_f
-	 * because it will be -1 if that function has been ever been called.
-	 * However, the function pointers set up by serial_fdt_get_console_f
-	 * will be pre-relocation values, so we must re-calculate them.
-	 */
-	return get_console();
 }
