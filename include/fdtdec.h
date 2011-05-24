@@ -68,6 +68,8 @@ enum fdt_compat_id {
 	COMPAT_SAMSUNG_EXYNOS5_SROM,	/* Exynos5 Ethernet */
 	COMPAT_SERIAL_TEGRA20_UART,	/* Tegra2 UART */
 	COMPAT_SERIAL_NS16550,		/* NS16550 UART */
+	COMPAT_NVIDIA_TEGRA20_I2C,	/* Tegra2 i2c */
+	COMPAT_NVIDIA_TEGRA20_DVC,	/* Tegra2 dvc (really just i2c) */
 
 	COMPAT_COUNT,
 };
