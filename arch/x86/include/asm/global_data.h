@@ -40,6 +40,8 @@
 
 #ifndef __ASSEMBLY__
 
+#include <asm/u-boot.h>
+
 typedef	struct global_data {
 	bd_t		*bd;
 	unsigned long	flags;

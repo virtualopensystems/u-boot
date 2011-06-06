@@ -41,6 +41,9 @@
 #include <asm-generic/u-boot.h>
 #else
 
+#include <config.h>
+#include <compiler.h>
+
 #ifndef __ASSEMBLY__
 
 typedef struct bd_info {
