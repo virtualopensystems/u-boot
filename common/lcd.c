@@ -35,6 +35,9 @@
 #include <stdarg.h>
 #include <linux/types.h>
 #include <stdio_dev.h>
+#ifdef CONFIG_ARM
+#include <asm/system.h>
+#endif
 #if defined(CONFIG_POST)
 #include <post.h>
 #endif
@@ -70,6 +73,10 @@
 # if (CONSOLE_COLOR_WHITE >= BMP_LOGO_OFFSET) && (LCD_BPP != LCD_COLOR16)
 #  error Default Color Map overlaps with Logo Color Map
 # endif
+#endif
+
+#ifndef CONFIG_LCD_ALIGNMENT
+#define CONFIG_LCD_ALIGNMENT PAGE_SIZE
 #endif
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -330,6 +337,12 @@ static void test_pattern (void)
 /* ** GENERIC Initialization Routines					*/
 /************************************************************************/
 
+int lcd_get_size(int *line_length)
+{
+	*line_length = (panel_info.vl_col * NBITS(panel_info.vl_bpix)) / 8;
+	return *line_length * panel_info.vl_row;
+}
+
 int drv_lcd_init (void)
 {
 	struct stdio_dev lcddev;
@@ -337,7 +350,7 @@ int drv_lcd_init (void)
 
 	lcd_base = (void *)(gd->fb_base);
 
-	lcd_line_length = (panel_info.vl_col * NBITS (panel_info.vl_bpix)) / 8;
+	lcd_get_size(&lcd_line_length);
 
 	lcd_init (lcd_base);		/* LCD initialization */
 
@@ -449,15 +462,16 @@ static int lcd_init (void *lcdbase)
 ulong lcd_setmem (ulong addr)
 {
 	ulong size;
-	int line_length = (panel_info.vl_col * NBITS (panel_info.vl_bpix)) / 8;
+	int line_length;
 
 	debug ("LCD panel info: %d x %d, %d bit/pix\n",
 		panel_info.vl_col, panel_info.vl_row, NBITS (panel_info.vl_bpix) );
 
-	size = line_length * panel_info.vl_row;
+	size = lcd_get_size(&line_length);
 
-	/* Round up to nearest full page */
-	size = (size + (PAGE_SIZE - 1)) & ~(PAGE_SIZE - 1);
+	/* Round up to nearest full page, or MMU section if defined */
+	size = ALIGN(size, CONFIG_LCD_ALIGNMENT);
+	addr = ALIGN(addr - CONFIG_LCD_ALIGNMENT + 1, CONFIG_LCD_ALIGNMENT);
 
 	/* Allocate pages for the frame buffer. */
 	addr -= size;
