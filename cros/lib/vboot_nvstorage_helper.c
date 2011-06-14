@@ -128,3 +128,18 @@ FAIL:
 	printf("Please reset and press recovery button when reboot.\n");
 	while (1);
 }
+
+char *nvcontext_to_str(VbNvContext *nvcxt)
+{
+	static char buf[VBNV_BLOCK_SIZE * 2];
+	int i, j, x;
+
+	for (i = 0; i < VBNV_BLOCK_SIZE; i++) {
+		x = nvcxt->raw[i];
+		j = i << 1;
+		buf[j]   = "0123456789abcdef"[(x >> 4) & 0xf];
+		buf[j+1] = "0123456789abcdef"[x & 0xf];
+	}
+
+	return buf;
+}
