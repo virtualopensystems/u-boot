@@ -32,6 +32,8 @@
 #include <asm/arch/sc520.h>
 #include <generated/asm-offsets.h>
 
+#if !defined CONFIG_NO_RESET_CODE
+
 .text
 .section .start16, "ax"
 .code16
@@ -62,6 +64,8 @@ board_init16:
 	outl	%eax, %dx
 
 	jmp	board_init16_ret
+
+#endif
 
 .section .bios, "ax"
 .code16
