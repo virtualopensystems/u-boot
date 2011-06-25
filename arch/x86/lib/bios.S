@@ -30,7 +30,10 @@
  *----------------------------------------------------------------------
  */
 
+#include <config.h>
 #include "bios.h"
+
+#if !defined CONFIG_NO_REALMODE_CODE
 
 /*
  * During it's initialization phase, before switching to protected
@@ -529,3 +532,5 @@ ram_in_64kb_chunks:
 .type bios_equipment, @function
 bios_equipment:
 	.word	0
+
+#endif

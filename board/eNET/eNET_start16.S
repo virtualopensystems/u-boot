@@ -67,6 +67,8 @@ board_init16:
 
 #endif
 
+#if !defined CONFIG_NO_REALMODE_CODE
+
 .section .bios, "ax"
 .code16
 .globl realmode_reset
@@ -89,3 +91,5 @@ realmode_reset:
 
 1:	hlt
 	jmp	1
+
+#endif
