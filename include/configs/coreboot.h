@@ -175,6 +175,8 @@
 #define CONFIG_SYS_HZ				1000
 #define CONFIG_SYS_X86_ISR_TIMER
 
+#define CONFIG_ZBOOT_32
+
 /*-----------------------------------------------------------------------
  * SDRAM Configuration
  */
