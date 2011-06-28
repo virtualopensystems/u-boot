@@ -44,6 +44,7 @@ int do_echo(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		}
 	}
 
+	/* Use puts() so that the LCD sees it as a new line */
 	if (putnl)
 		puts("\n");
 
