@@ -470,15 +470,15 @@ ehci_submit_async(struct usb_device *dev, unsigned long pipe, void *buffer,
 		WATCHDOG_RESET();
 	} while (get_timer(ts) < timeout);
 
-	/* Check that the TD processing happened */
-	if (token & 0x80) {
-		printf("EHCI timed out on TD - token=%#x\n", token);
-	}
-
 	/* Disable async schedule. */
 	cmd = ehci_readl(&hcor->or_usbcmd);
 	cmd &= ~CMD_ASE;
 	ehci_writel(&hcor->or_usbcmd, cmd);
+
+	/* Check that the TD processing happened */
+	if (token & 0x80) {
+		printf("EHCI timed out on TD - token=%#x\n", token);
+	}
 
 	ret = handshake((uint32_t *)&hcor->or_usbsts, STD_ASS, 0,
 			100 * 1000);
