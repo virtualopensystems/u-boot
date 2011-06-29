@@ -51,7 +51,8 @@ u32 isa_map_rom(u32 bus_addr, int size);
 
 /* arch/x86/lib/... */
 int video_bios_init(void);
+#if defined CONFIG_VGA_CONSOLE
 int video_init(void);
-
+#endif
 
 #endif	/* _U_BOOT_I386_H_ */
