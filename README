@@ -3104,6 +3104,14 @@ use the "saveenv" command to store a valid environment.
 		space for already greatly restricted images, including but not
 		limited to NAND_SPL configurations.
 
+- CONFIG_DISPLAY_BOARDINFO
+		Display information about the board that U-Boot is running on
+		when U-Boot starts up.
+
+- CONFIG_DISPLAY_BOARDINFO_LATE
+		Similar to the previous option, but display this information
+		later, once the LCD is running.
+
 Low Level (hardware related) configuration options:
 ---------------------------------------------------
 
