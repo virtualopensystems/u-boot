@@ -541,8 +541,12 @@ void board_init_r(gd_t *id, ulong dest_addr)
 	dataflash_print_info();
 #endif
 
+#ifdef CONFIG_DELAY_ENVIRONMENT
+	env_set_default();
+#else
 	/* initialize environment */
 	env_relocate();
+#endif
 
 #if defined(CONFIG_CMD_PCI) || defined(CONFIG_PCI)
 	arm_pci_init();
