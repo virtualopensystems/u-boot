@@ -132,5 +132,7 @@ static inline int fdt_status_disabled_by_alias(void *fdt, const char* alias)
 	return fdt_set_status_by_alias(fdt, alias, FDT_STATUS_DISABLED, 0);
 }
 
+int fit_update_fdt_before_boot(char *fdt, ulong *new_size);
+
 #endif /* ifdef CONFIG_OF_LIBFDT */
 #endif /* ifndef __FDT_SUPPORT_H */
