@@ -282,7 +282,9 @@ void main_loop (void)
 	int rc = 1;
 	int flag;
 #endif
-
+#ifdef CONFIG_OF_CONTROL
+	char *env;
+#endif
 #if defined(CONFIG_BOOTDELAY) && (CONFIG_BOOTDELAY >= 0)
 	char *s;
 	int bootdelay;
@@ -381,9 +383,10 @@ void main_loop (void)
 #endif /* CONFIG_BOOTCOUNT_LIMIT */
 		s = getenv ("bootcmd");
 #ifdef CONFIG_OF_CONTROL
-	/* Load bootcmd from fdt if none of above env variables exist. */
-	if (!s)
-		s = fdt_decode_get_config_string(gd->blob, "bootcmd");
+	/* Allow the fdt to override the boot command */
+	env = fdt_decode_get_config_string(gd->blob, "bootcmd");
+	if (env)
+		s = env;
 #endif /* CONFIG_OF_CONTROL */
 
 	debug ("### main_loop: bootcmd=\"%s\"\n", s ? s : "<UNDEFINED>");
