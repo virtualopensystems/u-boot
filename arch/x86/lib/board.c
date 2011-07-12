@@ -164,7 +164,8 @@ gd_t *gd;
 static int calculate_relocation_address(void)
 {
 	ulong text_start = (ulong)&__text_start;
-	ulong bss_end = (ulong)&__bss_end;
+	/* keep .bss variables aligned */
+	ulong bss_end = ALIGN((ulong)&__bss_end, 1<<12);
 	ulong dest_addr;
 	ulong rel_offset;
 
