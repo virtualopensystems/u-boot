@@ -127,6 +127,7 @@
 #define VIDEO_FB_16BPP_WORD_SWAP
 #define CONFIG_I8042_KBD
 #define CONFIG_CFB_CONSOLE
+#define CONFIG_SYS_CONSOLE_INFO_QUIET
 
 /*-----------------------------------------------------------------------
  * VBoot Configuration.
