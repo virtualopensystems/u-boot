@@ -72,27 +72,31 @@ static int parse_coreboot_table_fb(GraphicDevice *gd)
 	gd->vprBase = (unsigned int)fb->physical_address;
 	gd->cprBase = (unsigned int)fb->physical_address;
 
+	sprintf(gd->modeIdent, "%dx%dx%d", gd->winSizeX, gd->winSizeY,
+		 gd->gdfBytesPP * 8);
+
 	return 1;
 }
 
 void *video_hw_init(void)
 {
 	GraphicDevice *gd = &ctfb;
-	int bits_per_pixel;
 
+#ifndef CONFIG_SYS_CONSOLE_INFO_QUIET
 	printf("Video: ");
+#endif
 
 	if(!parse_coreboot_table_fb(gd)) {
+#ifndef CONFIG_SYS_CONSOLE_INFO_QUIET
 		printf("No video mode configured in coreboot!\n");
+#endif
 		return NULL;
 	}
 
-	bits_per_pixel = gd->gdfBytesPP * 8;
 
-	/* fill in Graphic device struct */
-	sprintf(gd->modeIdent, "%dx%dx%d", gd->winSizeX, gd->winSizeY,
-		 bits_per_pixel);
+#ifndef CONFIG_SYS_CONSOLE_INFO_QUIET
 	printf("%s\n", gd->modeIdent);
+#endif
 
 	memset((void *)gd->pciBase, 0,
 		gd->winSizeX * gd->winSizeY * gd->gdfBytesPP);
