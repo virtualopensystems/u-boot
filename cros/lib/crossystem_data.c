@@ -16,8 +16,10 @@
 #include <chromeos/crossystem_data.h>
 #include <linux/string.h>
 
-/* This is used to keep u-boot and kernel in sync */
-#define SHARED_MEM_VERSION 1
+#define CROSSYSTEM_DATA_SIGNATURE "CHROMEOS"
+
+/* This is used to keep bootstub and readwite main firmware in sync */
+#define CROSSYSTEM_DATA_VERSION 1
 
 #define PREFIX "crossystem_data: "
 
@@ -27,7 +29,7 @@ enum {
 	CHSW_WRITE_PROTECT_DISABLED	= 0x200
 };
 
-int crossystem_data_init(crossystem_data_t *cdata, char *frid,
+int crossystem_data_init(crossystem_data_t *cdata, uint8_t *frid,
 		uint32_t fmap_data, void *gbb_data, void *nvcxt_raw,
 		cros_gpio_t *wpsw, cros_gpio_t *recsw, cros_gpio_t *devsw)
 {
@@ -39,8 +41,9 @@ int crossystem_data_init(crossystem_data_t *cdata, char *frid,
 
 	cdata->total_size = sizeof(*cdata);
 
-	strcpy(cdata->signature, "CHROMEOS");
-	cdata->version = SHARED_MEM_VERSION;
+	memcpy(cdata->signature, CROSSYSTEM_DATA_SIGNATURE,
+			sizeof(CROSSYSTEM_DATA_SIGNATURE));
+	cdata->version = CROSSYSTEM_DATA_VERSION;
 
 	if (recsw->value)
 		cdata->chsw |= CHSW_RECOVERY_BUTTON_PRESSED;
@@ -49,8 +52,8 @@ int crossystem_data_init(crossystem_data_t *cdata, char *frid,
 	if (!wpsw->value)
 		cdata->chsw |= CHSW_WRITE_PROTECT_DISABLED;
 
-	strncpy(cdata->frid, frid, ID_LEN);
-	strncpy(cdata->hwid, gbb_data + gbbh->hwid_offset, gbbh->hwid_size);
+	memcpy(cdata->frid, frid, ID_LEN);
+	memcpy(cdata->hwid, gbb_data + gbbh->hwid_offset, gbbh->hwid_size);
 
 	/* boot reason; always 0 */
 	cdata->binf[0] = 0;
@@ -83,9 +86,33 @@ int crossystem_data_init(crossystem_data_t *cdata, char *frid,
 	return 0;
 }
 
-int crossystem_data_set_fwid(crossystem_data_t *cdata, char *fwid)
+int crossystem_data_check_integrity(crossystem_data_t *cdata)
 {
-	strncpy(cdata->fwid, fwid, ID_LEN);
+	if (cdata->total_size != sizeof(*cdata)) {
+		VBDEBUG(PREFIX "blob size mismatch: %08x != %08x\n",
+				cdata->total_size, sizeof(*cdata));
+		return 1;
+	}
+
+	if (memcmp(cdata->signature, CROSSYSTEM_DATA_SIGNATURE,
+				sizeof(CROSSYSTEM_DATA_SIGNATURE))) {
+		VBDEBUG(PREFIX "invalid signature: \"%s\"\n", cdata->signature);
+		return 1;
+	}
+
+	if (cdata->version != CROSSYSTEM_DATA_VERSION) {
+		VBDEBUG(PREFIX "version mismatch: %08x != %08x\n",
+				cdata->version, CROSSYSTEM_DATA_VERSION);
+		return 1;
+	}
+
+	/* Okay, the crossystem data blob passes the sanity check */
+	return 0;
+}
+
+int crossystem_data_set_fwid(crossystem_data_t *cdata, uint8_t *fwid)
+{
+	memcpy(cdata->fwid, fwid, ID_LEN);
 	return 0;
 }
 
@@ -161,8 +188,6 @@ int crossystem_data_embed_into_fdt(crossystem_data_t *cdata, void *fdt,
 	fdt_setprop_cell(fdt, nodeoffset, name, cdata->f)
 #define set_array_prop(name, f) \
 	fdt_setprop(fdt, nodeoffset, name, cdata->f, sizeof(cdata->f))
-#define set_string_prop(name, f) \
-	fdt_setprop_string(fdt, nodeoffset, name, cdata->f)
 #define set_conststring_prop(name, str) \
 	fdt_setprop_string(fdt, nodeoffset, name, str)
 #define set_bool_prop(name, f) \
@@ -170,7 +195,7 @@ int crossystem_data_embed_into_fdt(crossystem_data_t *cdata, void *fdt,
 
 	err = 0;
 	err |= set_scalar_prop("total-size", total_size);
-	err |= set_string_prop("signature", signature);
+	err |= set_array_prop("signature", signature);
 	err |= set_scalar_prop("version", version);
 	err |= set_scalar_prop("nonvolatile-context-lba", nvcxt_lba);
 	err |= set_scalar_prop("nonvolatile-context-offset", vbnv[0]);
@@ -220,15 +245,15 @@ int crossystem_data_embed_into_fdt(crossystem_data_t *cdata, void *fdt,
 	}
 	err |= set_scalar_prop("recovery-reason", binf[4]);
 
-	err |= set_string_prop("hardware-id", hwid);
-	err |= set_string_prop("firmware-version", fwid);
-	err |= set_string_prop("readonly-firmware-version", frid);
+	err |= set_array_prop("hardware-id", hwid);
+	err |= set_array_prop("firmware-version", fwid);
+	err |= set_array_prop("readonly-firmware-version", frid);
 	err |= set_scalar_prop("fmap-offset", fmap_base);
 	err |= set_array_prop("vboot-shared-data", vbshared_data);
 
 #undef set_scalar_prop
 #undef set_array_prop
-#undef set_string_prop
+#undef set_conststring_prop
 #undef set_bool_prop
 
 	if (err)

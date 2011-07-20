@@ -313,7 +313,7 @@ uint32_t twostop_select_and_set_main_firmware(struct fdt_twostop_fmap *fmap,
 	uint32_t selection;
 	uint32_t id_offset = 0, id_length = 0;
 	int w, t;
-	char fwid[ID_LEN];
+	uint8_t fwid[ID_LEN];
 	VbCommonParams cparams;
 
 	if (twostop_init_cparams(fmap, gbb, vb_shared_data, &cparams)) {
@@ -426,7 +426,7 @@ int twostop_init(const void const *fdt,
 		void *vb_shared_data)
 {
 	cros_gpio_t wpsw, recsw, devsw;
-	char frid[ID_LEN];
+	uint8_t frid[ID_LEN];
 	uint8_t nvcxt_raw[VBNV_BLOCK_SIZE];
 	int ret = -1;
 
@@ -609,12 +609,6 @@ uint32_t twostop_boot(const void const *fdt)
 	 */
 
 	return VB_SELECT_COMMAND_LINE;
-}
-
-int crossystem_data_check_integrity(crossystem_data_t *cdata)
-{
-	/* TODO implement crossystem data integrity check */
-	return 0;
 }
 
 int gbb_check_integrity(uint8_t *gbb)

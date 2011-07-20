@@ -28,29 +28,47 @@
 
 /* the data blob format */
 typedef struct {
-	uint32_t	total_size;
-	char		signature[10];
-	uint16_t	version;
-	uint64_t	nvcxt_lba;
-	uint16_t	vbnv[2];
-	uint8_t		nvcxt_cache[VBNV_BLOCK_SIZE];
-	uint8_t		write_protect_sw;
-	uint8_t		recovery_sw;
-	uint8_t		developer_sw;
-	int		gpio_port_write_protect_sw;
-	int		gpio_port_recovery_sw;
-	int		gpio_port_developer_sw;
-	uint8_t		polarity_write_protect_sw;
-	uint8_t		polarity_recovery_sw;
-	uint8_t		polarity_developer_sw;
-	uint8_t		binf[5];
-	uint32_t	chsw;
-	char 		hwid[ID_LEN];
-	char		fwid[ID_LEN];
-	char		frid[ID_LEN];
-	uint32_t	fmap_base;
-	uint8_t		vbshared_data[VB_SHARED_DATA_REC_SIZE];
-} crossystem_data_t;
+	uint32_t	total_size;				/* 0000 */
+	uint8_t		signature[10];				/* 0004 */
+	uint16_t	version;				/* 000c */
+
+	uint64_t	nvcxt_lba;				/* 0010 */
+	uint16_t	vbnv[2];				/* 0018 */
+	uint8_t		nvcxt_cache[VBNV_BLOCK_SIZE];		/* 001c */
+
+	uint8_t		write_protect_sw;			/* 002c */
+	uint8_t		recovery_sw;				/* 002d */
+	uint8_t		developer_sw;				/* 002e */
+	uint8_t		pad1[1];
+
+	uint32_t	gpio_port_write_protect_sw;		/* 0030 */
+	uint32_t	gpio_port_recovery_sw;			/* 0034 */
+	uint32_t	gpio_port_developer_sw;			/* 0038 */
+
+	uint8_t		polarity_write_protect_sw;		/* 003c */
+	uint8_t		polarity_recovery_sw;			/* 003d */
+	uint8_t		polarity_developer_sw;			/* 003e */
+	uint8_t		pad2[1];
+
+	uint8_t		binf[5];				/* 0040 */
+	uint8_t		pad3[1];
+	uint32_t	chsw;					/* 0046 */
+
+	uint8_t 	hwid[ID_LEN];				/* 004a */
+	uint8_t		fwid[ID_LEN];				/* 014a */
+	uint8_t		frid[ID_LEN];				/* 024a */
+
+	uint32_t	fmap_base;				/* 034a */
+	uint8_t		pad4[2];
+
+	/*
+	 * VbSharedData contains fields of long word (64-bit) type, and so it
+	 * should better be aligned on a 8-byte boundary on ARM platforms.
+	 * Although ARM processors can access unaligned addresses, this feature
+	 * is generally not enabled in U-Boot.
+	 */
+	uint8_t		vbshared_data[VB_SHARED_DATA_REC_SIZE];	/* 0350 */
+} __attribute__((packed)) crossystem_data_t;
 
 /**
  * This initializes the data blob that we will pass to kernel, and later be
@@ -69,9 +87,18 @@ typedef struct {
  * @param devsw stores the value of developer mode gpio
  * @return 0 if it succeeds; non-zero if it fails
  */
-int crossystem_data_init(crossystem_data_t *cdata, char *frid,
+int crossystem_data_init(crossystem_data_t *cdata, uint8_t *frid,
 		uint32_t fmap_data, void *gbb_data, void *nvcxt_raw,
 		cros_gpio_t *wpsw, cros_gpio_t *recsw, cros_gpio_t *devsw);
+
+/**
+ * This checks sanity of the crossystem data blob. Readwrite main firmware
+ * should check the sanity of crossystem data that bootstub passes to it.
+ *
+ * @param cdata is the data blob shared with crossystem
+ * @return 0 if it succeeds; non-zero if the sanity check fails
+ */
+int crossystem_data_check_integrity(crossystem_data_t *cdata);
 
 /**
  * This sets rewritable firmware id. It should only be called in non-recovery
@@ -81,7 +108,7 @@ int crossystem_data_init(crossystem_data_t *cdata, char *frid,
  * @param fwid r/w firmware id; a zero-terminated string shorter than ID_LEN
  * @return 0 if it succeeds; non-zero if it fails
  */
-int crossystem_data_set_fwid(crossystem_data_t *cdata, char *fwid);
+int crossystem_data_set_fwid(crossystem_data_t *cdata, uint8_t *fwid);
 
 /**
  * This sets active main firmware and its type.
