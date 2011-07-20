@@ -192,7 +192,7 @@ static int do_vbexport_test_diskinfo_flags(uint32_t flags)
 					info[i].flags,
 					info[i].name);
 
-			if (!(flags & info[i].flags)) {
+			if ((flags & info[i].flags) != flags) {
 				VbExDebug("    INCORRECT: flag mismatched\n");
 				ret = 1;
 			} else

@@ -67,8 +67,6 @@ static void init_usb_storage(void)
 		usb_stor_scan(/*mode=*/1);
 }
 
-typedef block_dev_desc_t *(device_iterator_func)(int *);
-
 block_dev_desc_t *iterate_mmc_device(int *index_ptr)
 {
 	struct mmc *mmc;
@@ -95,54 +93,68 @@ block_dev_desc_t *iterate_usb_device(int *index_ptr)
 	return usb_stor_get_dev((*index_ptr)++);
 }
 
+/*
+ * This appends [dev] to [info] and increments [count_ptr] if [disk_flags] is a
+ * subset of the flags of [dev].
+ */
+void add_device_if_flags_match(block_dev_desc_t *dev, const uint32_t disk_flags,
+		VbDiskInfo *info, uint32_t *count_ptr)
+{
+	uint32_t flags = get_dev_flags(dev);
+
+	/*
+	 * Only add this storage device if the properties of disk_flags is a
+	 * subset of the properties of flags.
+	 */
+	if ((flags & disk_flags) != disk_flags)
+		return;
+
+	info->handle = (VbExDiskHandle_t)dev;
+	info->bytes_per_lba = dev->blksz;
+	info->lba_count = dev->lba;
+	info->flags = flags;
+	info->name = get_dev_name(dev);
+	(*count_ptr)++;
+}
+
 VbError_t VbExDiskGetInfo(VbDiskInfo** infos_ptr, uint32_t* count_ptr,
                           uint32_t disk_flags)
 {
-	device_iterator_func *iterators[] = {
-		iterate_mmc_device, iterate_usb_device, NULL
-	};
-	device_iterator_func *iter;
 	VbDiskInfo *infos;
+	uint32_t count, max_count;
+	int iterator_state;
 	block_dev_desc_t *dev;
-	uint32_t count, max_count, flags;
-	int i, func_index;
 
 	*infos_ptr = NULL;
 	*count_ptr = 0;
 
-	/* We assume there is only one non-removable storage device */
+	/* We return as many disk infos as possible. */
+	/*
+	 * We assume there is only one non-removable storage device. So if the
+	 * caller asks for non-removable devices, we return at most one device.
+	 * Otherwise we return at most MAX_DISK_INFO device.
+	 */
 	max_count = (disk_flags & VB_DISK_FLAG_REMOVABLE) ? MAX_DISK_INFO : 1;
+
+	/* count is the number of device returned */
 	infos = (VbDiskInfo *)VbExMalloc(sizeof(VbDiskInfo) * max_count);
 	count = 0;
 
-	/* To speed up, skip detecting USB if not require removable devices. */
-	if (!(disk_flags & VB_DISK_FLAG_REMOVABLE))
-		iterators[1] = NULL;
+	iterator_state = 0;
+	while (count < max_count && (dev = iterate_mmc_device(&iterator_state)))
+		add_device_if_flags_match(dev, disk_flags,
+				infos + count, &count);
 
-	/*
-	 * If too many storage devices registered, we return as many disk infos
-	 * as possible.
-	 */
-	for (func_index = 0;
-	     count < max_count && (iter = iterators[func_index]);
-	     func_index++) {
-		if (iter == iterate_usb_device)
-			init_usb_storage();
+	/* Skip probing USB device if not require removable devices. */
+        if (count < max_count && (disk_flags & VB_DISK_FLAG_REMOVABLE)) {
+		/* Initialize USB device before probing them. */
+		init_usb_storage();
 
-		i = 0;
-		while (count < max_count && (dev = iter(&i))) {
-			/* Skip this entry if the flags are not matched. */
-			flags = get_dev_flags(dev);
-			if (!(flags & disk_flags))
-				continue;
-
-			infos[count].handle = (VbExDiskHandle_t)dev;
-			infos[count].bytes_per_lba = dev->blksz;
-			infos[count].lba_count = dev->lba;
-			infos[count].flags = flags;
-			infos[count].name = get_dev_name(dev);
-			count++;
-		}
+		iterator_state = 0;
+		while (count < max_count &&
+				(dev = iterate_usb_device(&iterator_state)))
+			add_device_if_flags_match(dev, disk_flags,
+					infos + count, &count);
 	}
 
 	if (count) {
