@@ -22,6 +22,10 @@
 
 #include <vboot_api.h>
 
+#ifndef CACHE_LINE_SIZE
+#define CACHE_LINE_SIZE __BIGGEST_ALIGNMENT__
+#endif
+
 #define TEST_LBA_START	0
 #define TEST_LBA_COUNT	2
 

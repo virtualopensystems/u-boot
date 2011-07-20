@@ -25,6 +25,10 @@
 #define TICKS_PER_MSEC		(CONFIG_SYS_HZ / 1000)
 #define MAX_MSEC_PER_LOOP	((UINT32_MAX / TICKS_PER_MSEC) / 2)
 
+#ifndef CACHE_LINE_SIZE
+#define CACHE_LINE_SIZE __BIGGEST_ALIGNMENT__
+#endif
+
 static void system_abort(void)
 {
 	/* Wait for 3 seconds to let users see error messages and reboot. */
