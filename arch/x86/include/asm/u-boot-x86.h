@@ -29,6 +29,7 @@ int x86_cpu_init_r(void);
 int cpu_init_r(void);
 int x86_cpu_init_f(void);
 int cpu_init_f(void);
+int cleanup_before_linux(void);
 
 /* cpu/.../timer.c */
 void timer_isr(void *);
