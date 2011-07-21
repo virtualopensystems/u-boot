@@ -146,21 +146,21 @@ static VbError_t call_VbInit(VbCommonParams *cparams, VbInitParams *iparams)
 	VbError_t ret;
 
 	VBDEBUG("VbCommonParams:\n");
-	VBDEBUG("    gbb_data         : 0x%lx\n", cparams->gbb_data);
-	VBDEBUG("    gbb_size         : %lu\n", cparams->gbb_size);
-	VBDEBUG("    shared_data_blob : 0x%lx\n", cparams->shared_data_blob);
-	VBDEBUG("    shared_data_size : %lu\n", cparams->shared_data_size);
-	VBDEBUG("    caller_context   : 0x%lx\n", cparams->caller_context);
+	VBDEBUG("    gbb_data         : %p\n", cparams->gbb_data);
+	VBDEBUG("    gbb_size         : %u\n", cparams->gbb_size);
+	VBDEBUG("    shared_data_blob : %p\n", cparams->shared_data_blob);
+	VBDEBUG("    shared_data_size : %u\n", cparams->shared_data_size);
+	VBDEBUG("    caller_context   : %p\n", cparams->caller_context);
 	VBDEBUG("VbInitParams:\n");
-	VBDEBUG("    flags         : 0x%lx\n", iparams->flags);
+	VBDEBUG("    flags         : %#x\n", iparams->flags);
 	VBDEBUG("Calling VbInit()...\n");
 
 	ret = VbInit(cparams, iparams);
-	VBDEBUG("Returned 0x%lu\n", ret);
+	VBDEBUG("Returned %#x\n", ret);
 
 	if (!ret) {
 		VBDEBUG("VbInitParams:\n");
-		VBDEBUG("    out_flags     : 0x%lx\n", iparams->out_flags);
+		VBDEBUG("    out_flags     : %#x\n", iparams->out_flags);
 	}
 
 	return ret;
@@ -172,29 +172,29 @@ static VbError_t call_VbSelectFirmware(VbCommonParams *cparams,
 	VbError_t ret;
 
 	VBDEBUG("VbCommonParams:\n");
-	VBDEBUG("    gbb_data         : 0x%lx\n", cparams->gbb_data);
-	VBDEBUG("    gbb_size         : %lu\n", cparams->gbb_size);
-	VBDEBUG("    shared_data_blob : 0x%lx\n", cparams->shared_data_blob);
-	VBDEBUG("    shared_data_size : %lu\n", cparams->shared_data_size);
-	VBDEBUG("    caller_context   : 0x%lx\n", cparams->caller_context);
+	VBDEBUG("    gbb_data         : %p\n", cparams->gbb_data);
+	VBDEBUG("    gbb_size         : %u\n", cparams->gbb_size);
+	VBDEBUG("    shared_data_blob : %p\n", cparams->shared_data_blob);
+	VBDEBUG("    shared_data_size : %u\n", cparams->shared_data_size);
+	VBDEBUG("    caller_context   : %p\n", cparams->caller_context);
 
 	VBDEBUG("VbSelectFirmwareParams:\n");
-	VBDEBUG("    verification_block_A : 0x%lx\n",
+	VBDEBUG("    verification_block_A : %p\n",
 			fparams->verification_block_A);
-	VBDEBUG("    verification_block_B : 0x%lx\n",
+	VBDEBUG("    verification_block_B : %p\n",
 			fparams->verification_block_B);
-	VBDEBUG("    verification_size_A  : %lu\n",
+	VBDEBUG("    verification_size_A  : %u\n",
 			fparams->verification_size_A);
-	VBDEBUG("    verification_size_B  : %lu\n",
+	VBDEBUG("    verification_size_B  : %u\n",
 			fparams->verification_size_B);
 	VBDEBUG("Calling VbSelectFirmware()...\n");
 
 	ret = VbSelectFirmware(cparams, fparams);
-	VBDEBUG("Returned 0x%lu\n", ret);
+	VBDEBUG("Returned %#x\n", ret);
 
 	if (!ret) {
 		VBDEBUG("VbSelectFirmwareParams:\n");
-		VBDEBUG("    selected_firmware    : %lu\n",
+		VBDEBUG("    selected_firmware    : %u\n",
 				fparams->selected_firmware);
 	}
 
@@ -289,7 +289,7 @@ void bootstub_entry(void)
 	prepare_cparams(global, &cparams);
 	prepare_iparams(global, &iparams);
 	if ((ret = call_VbInit(&cparams, &iparams)))
-		VbExError(PREFIX "VbInit() returns error: 0x%lx!\n", ret);
+		VbExError(PREFIX "VbInit() returns error: %#x!\n", ret);
 
 	/* Handle the VbInit() results */
 	if (iparams.out_flags & VB_INIT_OUT_CLEAR_RAM)
@@ -305,7 +305,7 @@ void bootstub_entry(void)
 	cparams.caller_context = &cache;
 	prepare_fparams(&file, &cache, &fmap, &fparams);
 	if ((ret = call_VbSelectFirmware(&cparams, &fparams)))
-		VbExError(PREFIX "VbSelectFirmare() returned error: 0x%lx!\n",
+		VbExError(PREFIX "VbSelectFirmare() returned error: %#x!\n",
 				ret);
 	release_fparams(&fparams);
 

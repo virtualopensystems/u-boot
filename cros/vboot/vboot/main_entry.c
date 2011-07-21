@@ -37,30 +37,30 @@ static VbError_t call_VbSelectAndLoadKernel(VbCommonParams* cparams,
         VbError_t ret;
 
         VBDEBUG("VbCommonParams:\n");
-        VBDEBUG("    gbb_data         : 0x%lx\n", cparams->gbb_data);
-        VBDEBUG("    gbb_size         : %lu\n", cparams->gbb_size);
-        VBDEBUG("    shared_data_blob : 0x%lx\n", cparams->shared_data_blob);
-        VBDEBUG("    shared_data_size : %lu\n", cparams->shared_data_size);
-        VBDEBUG("    caller_context   : 0x%lx\n", cparams->caller_context);
+        VBDEBUG("    gbb_data         : %p\n", cparams->gbb_data);
+        VBDEBUG("    gbb_size         : %u\n", cparams->gbb_size);
+        VBDEBUG("    shared_data_blob : %p\n", cparams->shared_data_blob);
+        VBDEBUG("    shared_data_size : %u\n", cparams->shared_data_size);
+        VBDEBUG("    caller_context   : %p\n", cparams->caller_context);
         VBDEBUG("VbSelectAndLoadKernelParams:\n");
-        VBDEBUG("    kernel_buffer      : 0x%lx\n", kparams->kernel_buffer);
-        VBDEBUG("    kernel_buffer_size : %lu\n",
+        VBDEBUG("    kernel_buffer      : %p\n", kparams->kernel_buffer);
+        VBDEBUG("    kernel_buffer_size : %u\n",
 						kparams->kernel_buffer_size);
         VBDEBUG("Calling VbSelectAndLoadKernel()...\n");
 
         ret = VbSelectAndLoadKernel(cparams, kparams);
-        VBDEBUG("Returned 0x%lu\n", ret);
+        VBDEBUG("Returned %#x\n", ret);
 
 	if (!ret) {
 		int i;
 	        VBDEBUG("VbSelectAndLoadKernelParams:\n");
-		VBDEBUG("    disk_handle        : 0x%lx\n",
+		VBDEBUG("    disk_handle        : %p\n",
 						kparams->disk_handle);
-		VBDEBUG("    partition_number   : %lu\n",
+		VBDEBUG("    partition_number   : %u\n",
 						kparams->partition_number);
-		VBDEBUG("    bootloader_address : 0x%llx\n",
+		VBDEBUG("    bootloader_address : %#llx\n",
 						kparams->bootloader_address);
-		VBDEBUG("    bootloader_size    : %lu\n",
+		VBDEBUG("    bootloader_size    : %u\n",
 						kparams->bootloader_size);
 		VBDEBUG("    partition_guid     :");
 		for (i = 0; i < 16; i++)
@@ -94,5 +94,5 @@ void main_entry(void)
 	/* Do boot partition substitution in kernel cmdline and boot */
 	ret = boot_kernel(&kparams, &global->cdata_blob);
 
-	VbExError(PREFIX "boot_kernel_helper returned, %lu\n", ret);
+	VbExError(PREFIX "boot_kernel_helper returned, %u\n", ret);
 }
