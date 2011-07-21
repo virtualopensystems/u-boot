@@ -107,6 +107,7 @@ static int fserial_getc(void)
 	}
 	/* hang */
 	for (;;) ;
+	return 0;
 }
 
 static int fserial_tstc(void)
