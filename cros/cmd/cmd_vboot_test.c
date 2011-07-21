@@ -15,6 +15,7 @@
 #include <common.h>
 #include <command.h>
 #include <chromeos/firmware_storage.h>
+#include <chromeos/memory_wipe.h>
 #include <vboot_api.h>
 
 /*
@@ -73,12 +74,49 @@ static int do_vboot_test_fwrw(cmd_tbl_t *cmdtp,
 	return ret;
 }
 
+static int do_vboot_test_memwipe(cmd_tbl_t *cmdtp,
+		int flag, int argc, char * const argv[])
+{
+	memory_wipe_t wipe;
+	char s[] = "ABCDEFGHIJ";
+	const char r[] = "\0BCDEFGH\0J";
+	const size_t size = strlen(s);
+	uintptr_t base = (uintptr_t)s;
+
+	memory_wipe_init(&wipe, base, base + size);
+	/* Result: ---------- */
+	memory_wipe_exclude(&wipe, base + 1, base + 2);
+	/* Result: -B-------- */
+	memory_wipe_exclude(&wipe, base + 5, base + 7);
+	/* Result: -B---FG--- */
+	memory_wipe_exclude(&wipe, base + 2, base + 3);
+	/* Result: -BC--FG--- */
+	memory_wipe_exclude(&wipe, base + 9, base + 10);
+	/* Result: -BC--FG--J */
+	memory_wipe_exclude(&wipe, base + 4, base + 6);
+	/* Result: -BC-EFG--J */
+	memory_wipe_exclude(&wipe, base + 3, base + 5);
+	/* Result: -BCDEFG--J */
+	memory_wipe_exclude(&wipe, base + 2, base + 8);
+	/* Result: -BCDEFGH-J */
+	memory_wipe_execute(&wipe);
+
+	if (memcmp(s, r, size)) {
+		VbExDebug("Failed to wipe the expected regions!\n");
+		return 1;
+	}
+
+	VbExDebug("Memory wipe test SUCCESS!\n");
+	return 0;
+}
+
 static int do_vboot_test_all(cmd_tbl_t *cmdtp,
 		int flag, int argc, char * const argv[])
 {
 	int ret = 0;
 
 	ret |= do_vboot_test_fwrw(cmdtp, flag, argc, argv);
+	ret |= do_vboot_test_memwipe(cmdtp, flag, argc, argv);
 
 	return ret;
 }
@@ -86,6 +124,7 @@ static int do_vboot_test_all(cmd_tbl_t *cmdtp,
 static cmd_tbl_t cmd_vboot_test_sub[] = {
 	U_BOOT_CMD_MKENT(all, 0, 1, do_vboot_test_all, "", ""),
 	U_BOOT_CMD_MKENT(fwrw, 0, 1, do_vboot_test_fwrw, "", ""),
+	U_BOOT_CMD_MKENT(memwipe, 0, 1, do_vboot_test_memwipe, "", ""),
 };
 
 static int do_vboot_test(cmd_tbl_t *cmdtp,
@@ -110,5 +149,6 @@ U_BOOT_CMD(vboot_test, CONFIG_SYS_MAXARGS, 1, do_vboot_test,
 	"Perform tests for basic vboot related utilities",
 	"all - perform all tests\n"
 	"vboot_test fwrw - test the firmware read/write functions\n"
+	"vboot_test memwipe - test the memory wipe functions\n"
 );
 
