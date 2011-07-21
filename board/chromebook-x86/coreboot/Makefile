@@ -34,6 +34,7 @@ LIB	= $(obj)lib$(BOARD).o
 
 COBJS-y	+= coreboot.o
 COBJS-$(CONFIG_PCI) += coreboot_pci.o
+COBJS-y	+= flash.o
 SOBJS-y	+= coreboot_start16.o
 SOBJS-y	+= coreboot_start.o
 
