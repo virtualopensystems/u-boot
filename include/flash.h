@@ -24,6 +24,10 @@
 #ifndef _FLASH_H_
 #define _FLASH_H_
 
+#include <common.h>
+#include <compiler.h>
+#include <config.h>
+
 #ifndef CONFIG_SYS_NO_FLASH
 /*-----------------------------------------------------------------------
  * FLASH Info: contains chip specific data, per FLASH bank
