@@ -10,6 +10,8 @@
 
 #include <common.h>
 #include <fdt_decode.h>
+#include <fdt_support.h>
+#include <gbb_header.h> /* for GoogleBinaryBlockHeader */
 #include <libfdt.h>
 #include <chromeos/common.h>
 #include <chromeos/crossystem_data.h>
