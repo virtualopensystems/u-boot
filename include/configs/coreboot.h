@@ -119,6 +119,13 @@
 #define CONFIG_OF_LIBFDT
 
 /*-----------------------------------------------------------------------
+ * VBoot Configuration.
+ */
+#define CONFIG_CHROMEOS
+/* This value is just to get the chromeos library to compile. */
+#define CHROMEOS_VBNVCONTEXT_LBA	0
+
+/*-----------------------------------------------------------------------
  * Command line configuration.
  */
 #include <config_cmd_default.h>
