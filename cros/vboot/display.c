@@ -54,6 +54,7 @@ VbError_t VbExDisplayBacklight(uint8_t enable)
 	return VBERROR_SUCCESS;
 }
 
+#ifdef CONFIG_LCD
 /* Print the message on the center of LCD. */
 static void print_on_center(const char *message)
 {
@@ -84,9 +85,11 @@ static void print_on_center(const char *message)
 
 	VbExDisplayDebugInfo(result);
 }
+#endif
 
 VbError_t VbExDisplayScreen(uint32_t screen_type)
 {
+#ifdef CONFIG_LCD
 	/*
 	 * Show the debug messages for development. It is a backup method
 	 * when GBB does not contain a full set of bitmaps.
@@ -117,8 +120,13 @@ VbError_t VbExDisplayScreen(uint32_t screen_type)
 			return 1;
 	}
 	return VBERROR_SUCCESS;
+#else
+	printf("VbExDisplayScreen needs lcd support which isn't configured.\n");
+	return 1;
+#endif
 }
 
+#ifdef CONFIG_LCD
 static uint8_t *uncompress_lzma(uint8_t *in_addr, SizeT in_size,
                                 SizeT out_size)
 {
@@ -133,10 +141,12 @@ static uint8_t *uncompress_lzma(uint8_t *in_addr, SizeT in_size,
 	}
 	return out_addr;
 }
+#endif
 
 VbError_t VbExDisplayImage(uint32_t x, uint32_t y, const ImageInfo *info,
                            const void *buffer)
 {
+#ifdef CONFIG_LCD
 	int ret;
 	uint8_t *raw_data;
 
@@ -172,14 +182,24 @@ VbError_t VbExDisplayImage(uint32_t x, uint32_t y, const ImageInfo *info,
 	}
 
 	return VBERROR_SUCCESS;
+#else
+	printf("VbExDisplayImage needs lcd support which isn't configured.\n");
+	return 1;
+#endif
 }
 
 VbError_t VbExDisplayDebugInfo(const char *info_str)
 {
+#ifdef CONFIG_LCD
 	/* Show the debug message on the upper left corner */
 	console_col = 0;
 	console_row = 0;
 	lcd_puts(info_str);
 
 	return VBERROR_SUCCESS;
+#else
+	printf("VbExDisplayDebugInfo needs lcd support which isn't "
+		"configured.\n");
+	return 1;
+#endif
 }
