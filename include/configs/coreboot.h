@@ -311,4 +311,6 @@
 #define CONFIG_LCD_vl_col	1366
 #define CONFIG_LCD_vl_row	768
 
+#define CONFIG_LZMA
+
 #endif	/* __CONFIG_H */
