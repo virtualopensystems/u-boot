@@ -276,8 +276,8 @@
 /*-----------------------------------------------------------------------
  * FLASH configuration
  */
-#define CONFIG_SYS_NO_FLASH
-#undef CONFIG_FLASH_CFI_DRIVER
+#define CONFIG_SPI_FLASH
+#define CONFIG_DUMMY_SPI
 #define CONFIG_SYS_MAX_FLASH_SECT		1
 #define CONFIG_SYS_MAX_FLASH_BANKS		1
 
