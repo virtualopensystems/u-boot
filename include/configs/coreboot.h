@@ -102,6 +102,7 @@
 #define CONFIG_SYS_ATA_REG_OFFSET	0
 #define CONFIG_SYS_ATA_ALT_OFFSET	0x200
 
+#define CONFIG_GENERIC_MMC
 
 #define CONFIG_SUPPORT_VFAT
 /************************************************************
