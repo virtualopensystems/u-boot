@@ -460,6 +460,14 @@ static int do_vbexport_test_display(
 	return ret;
 }
 
+static int do_vbexport_test_isshutdown(
+		cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+{
+	VbExDebug("Shutdown requested? %s\n",
+			VbExIsShutdownRequested() ? "Yes" : "No");
+	return 0;
+}
+
 static int do_vbexport_test_all(
 		cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
@@ -473,6 +481,7 @@ static int do_vbexport_test_all(
 	ret |= do_vbexport_test_nvrw(cmdtp, flag, argc, argv);
 	ret |= do_vbexport_test_key(cmdtp, flag, argc, argv);
 	ret |= do_vbexport_test_display(cmdtp, flag, argc, argv);
+	ret |= do_vbexport_test_isshutdown(cmdtp, flag, argc, argv);
 	if (!ret)
 		VbExDebug("All tests passed!\n");
 	return ret;
@@ -491,6 +500,7 @@ static cmd_tbl_t cmd_vbexport_test_sub[] = {
 	U_BOOT_CMD_MKENT(nvclear, 0, 1, do_vbexport_test_nvclear, "", ""),
 	U_BOOT_CMD_MKENT(key, 0, 1, do_vbexport_test_key, "", ""),
 	U_BOOT_CMD_MKENT(display, 0, 1, do_vbexport_test_display, "", ""),
+	U_BOOT_CMD_MKENT(isshutdown, 0, 1, do_vbexport_test_isshutdown, "", ""),
 };
 
 static int do_vbexport_test(
@@ -525,5 +535,6 @@ U_BOOT_CMD(vbexport_test, CONFIG_SYS_MAXARGS, 1, do_vbexport_test,
 	"vbexport_test nvrw - test the nvstorage read and write functions\n"
 	"vbexport_test key - test the keyboard read function\n"
 	"vbexport_test display - test the display related functions\n"
+	"vbexport_test isshutdown - check if shutdown requested\n"
 );
 
