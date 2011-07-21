@@ -137,6 +137,7 @@
  * VBoot Configuration.
  */
 #define CONFIG_CHROMEOS
+#define CONFIG_CHROMEOS_VBOOT
 #define CONFIG_CHROMEOS_VBEXPORT
 #define CHROMEOS_BOOTARGS ""
 /* This value is just to get the chromeos library to compile. */
