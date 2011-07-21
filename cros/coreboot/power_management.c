@@ -8,13 +8,19 @@
  * Software Foundation.
  */
 
-/* Implementation of per-board TPM driver functions */
+/* Implementation of per-board power management function */
 
-#include <chromeos/hardware_interface.h>
+#include <chromeos/power_management.h>
+#include <common.h>
 
-/* TODO Replace dummy functions below with real implementation. */
+int is_cold_boot(void)
+{
+	printf("is_cold_boot used but not implemented.\n");
+	return 1;
+}
 
-/* Returns 0 if success, nonzero if error. */
-int initialize_tpm(void) { return 0; }
-int lock_tpm(void) { return 0; }
-int lock_tpm_rewritable_firmware_index(void) { return 0; }
+/* This function never returns */
+void cold_reboot(void)
+{
+	printf("cold_reboot used but not implemented.\n");
+}
