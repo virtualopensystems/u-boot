@@ -114,6 +114,11 @@
 #define CONFIG_CFB_CONSOLE
 
 /*-----------------------------------------------------------------------
+ * Device tree configuration.
+ */
+#define CONFIG_OF_LIBFDT
+
+/*-----------------------------------------------------------------------
  * Command line configuration.
  */
 #include <config_cmd_default.h>
