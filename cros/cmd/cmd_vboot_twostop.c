@@ -10,6 +10,7 @@
 
 #include <common.h>
 #include <command.h>
+#include <fdt_decode.h>
 #include <lcd.h>
 #include <malloc.h>
 #include <chromeos/common.h>
@@ -17,6 +18,7 @@
 #include <chromeos/cros_gpio.h>
 #include <chromeos/fdt_decode.h>
 #include <chromeos/firmware_storage.h>
+#include <chromeos/memory_wipe.h>
 #include <chromeos/power_management.h>
 #include <vboot/boot_kernel.h>
 
@@ -73,6 +75,9 @@
 #define GBB_ADDRESS (CROSSYSTEM_DATA_ADDRESS + CROSSYSTEM_DATA_MAXSIZE)
 
 DECLARE_GLOBAL_DATA_PTR;
+
+/* The margin to keep extra stack region that not to be wiped. */
+#define STACK_MARGIN		1024
 
 /*
  * A sentinel value indicates an error occured when selecting main firmware or
@@ -185,8 +190,39 @@ VbError_t VbExHashFirmwareBody(VbCommonParams* cparams, uint32_t firmware_index)
 	return 0;
 }
 
-VbError_t twostop_init_vboot_library(crossystem_data_t *cdata,
-		VbCommonParams *cparams)
+static uintptr_t get_current_sp(void)
+{
+	uintptr_t addr;
+
+	addr = (uintptr_t)&addr;
+	return addr;
+}
+
+static void wipe_unused_memory(const void const *fdt,
+		crossystem_data_t *cdata, VbCommonParams *cparams)
+{
+	memory_wipe_t wipe;
+	struct fdt_memory config;
+
+	if (fdt_decode_memory(fdt, &config))
+		VbExError(PREFIX "FDT decode memory section error\n");
+
+	memory_wipe_init(&wipe, config.start, config.end);
+
+	/* Excludes stack, fdt, gd, bd, heap, u-boot, framebuffer, etc. */
+	memory_wipe_exclude(&wipe, get_current_sp() - STACK_MARGIN, config.end);
+
+	/* Excludes the shared date between bootstub and main firmware. */
+	memory_wipe_exclude(&wipe, (uintptr_t)cdata,
+			(uintptr_t)cdata + sizeof(*cdata));
+	memory_wipe_exclude(&wipe, (uintptr_t)cparams->gbb_data,
+			(uintptr_t)cparams->gbb_data + cparams->gbb_size);
+
+	memory_wipe_execute(&wipe);
+}
+
+VbError_t twostop_init_vboot_library(const void const *fdt,
+		crossystem_data_t *cdata, VbCommonParams *cparams)
 {
 	VbError_t err;
 	VbInitParams iparams;
@@ -205,9 +241,8 @@ VbError_t twostop_init_vboot_library(crossystem_data_t *cdata,
 		return err;
 	}
 
-	/* TODO(waihong) implement clear unused RAM */
-	/* if (iparams.out_flags & VB_INIT_OUT_CLEAR_RAM)
-		; */
+	if (iparams.out_flags & VB_INIT_OUT_CLEAR_RAM)
+		wipe_unused_memory(fdt, cdata, cparams);
 
 	/* No need to check iparams.out_flags & VB_INIT_OUT_ENABLE_RECOVERY */
 
@@ -304,7 +339,8 @@ out:
 	return selection;
 }
 
-uint32_t twostop_select_and_set_main_firmware(struct fdt_twostop_fmap *fmap,
+uint32_t twostop_select_and_set_main_firmware(const void const *fdt,
+		struct fdt_twostop_fmap *fmap,
 		firmware_storage_t *file,
 		void *gbb,
 		crossystem_data_t *cdata,
@@ -322,7 +358,8 @@ uint32_t twostop_select_and_set_main_firmware(struct fdt_twostop_fmap *fmap,
 		return VB_SELECT_ERROR;
 	}
 
-	if (twostop_init_vboot_library(cdata, &cparams) != VBERROR_SUCCESS) {
+	if (twostop_init_vboot_library(fdt, cdata, &cparams)
+			!= VBERROR_SUCCESS) {
 		VBDEBUG(PREFIX "failed to init vboot library\n");
 		return VB_SELECT_ERROR;
 	}
@@ -506,7 +543,7 @@ uint32_t twostop_main_firmware(struct fdt_twostop_fmap *fmap,
 	VBDEBUG(PREFIX "- kernel_buffer_size: : %08x\n",
 			kparams.kernel_buffer_size);
 
-        if ((err = VbSelectAndLoadKernel(&cparams, &kparams))) {
+	if ((err = VbSelectAndLoadKernel(&cparams, &kparams))) {
 		VBDEBUG(PREFIX "VbSelectAndLoadKernel: %d\n", err);
 		return VB_SELECT_ERROR;
 	}
@@ -552,7 +589,7 @@ uint32_t twostop_boot(const void const *fdt)
 		return VB_SELECT_ERROR;
 	}
 
-	selection = twostop_select_and_set_main_firmware(&fmap, &file,
+	selection = twostop_select_and_set_main_firmware(fdt, &fmap, &file,
 			gbb, cdata, vb_shared_data,
 			&fw_blob, &fw_size);
 	VBDEBUG(PREFIX "selection of bootstub: %s\n", str_selection(selection));

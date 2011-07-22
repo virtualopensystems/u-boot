@@ -10,19 +10,24 @@
 
 #include <common.h>
 #include <chromeos/common.h>
+#include <fdt_decode.h>
 #include <chromeos/crossystem_data.h>
 #include <chromeos/fdt_decode.h>
 #include <chromeos/firmware_storage.h>
 #include <chromeos/power_management.h>
+#include <chromeos/memory_wipe.h>
 #include <vboot/entry_points.h>
 #include <vboot/firmware_cache.h>
 #include <vboot/global_data.h>
 
 #include <vboot_api.h>
 
-#define PREFIX		"bootstub: "
+#define PREFIX			"bootstub: "
 
 DECLARE_GLOBAL_DATA_PTR;
+
+/* The margin to keep extra stack region that not to be wiped. */
+#define STACK_MARGIN		1024
 
 static void prepare_cparams(vb_global_t *global, VbCommonParams *cparams)
 {
@@ -119,12 +124,32 @@ static void release_fparams(VbSelectFirmwareParams *fparams)
 	VbExFree(fparams->verification_block_B);
 }
 
-static void clear_ram_not_in_use(void)
+static uintptr_t get_current_sp(void)
 {
-	/*
-	 * TODO(waihong@chromium.org)
-	 * Copy the code from common/cmd_cros_rec.
-	 */
+	uintptr_t addr;
+
+	addr = (uintptr_t)&addr;
+	return addr;
+}
+
+static void wipe_unused_memory(const void const *fdt_ptr, vb_global_t *global)
+{
+	memory_wipe_t wipe;
+	struct fdt_memory config;
+
+	if (fdt_decode_memory(fdt_ptr, &config))
+		VbExError(PREFIX "FDT decode memory section error\n");
+
+	memory_wipe_init(&wipe, config.start, config.end);
+
+	/* Excludes stack, fdt, gd, bd, heap, u-boot, framebuffer, etc. */
+	memory_wipe_exclude(&wipe, get_current_sp() - STACK_MARGIN, config.end);
+
+	/* Excludes the shared date between bootstub and main firmware. */
+	memory_wipe_exclude(&wipe, (uintptr_t)global,
+			(uintptr_t)global + sizeof(*global));
+
+	memory_wipe_execute(&wipe);
 }
 
 typedef void (*firmware_entry_t)(void);
@@ -293,7 +318,7 @@ void bootstub_entry(void)
 
 	/* Handle the VbInit() results */
 	if (iparams.out_flags & VB_INIT_OUT_CLEAR_RAM)
-		clear_ram_not_in_use();
+		wipe_unused_memory(fdt_ptr, global);
 	if (iparams.out_flags & VB_INIT_OUT_ENABLE_DISPLAY)
 		if (load_bmpblk_in_gbb(global, &file))
 			VbExError(PREFIX "Failed to load BMP Block!\n");
