@@ -29,6 +29,7 @@ extern int lcd_display_bitmap (ulong, int, int);
 
 VbError_t VbExDisplayInit(uint32_t *width, uint32_t *height)
 {
+#ifdef CONFIG_OF_CONTROL
 	struct fdt_lcd config;
 
 	/* Get LCD details from FDT */
@@ -39,6 +40,10 @@ VbError_t VbExDisplayInit(uint32_t *width, uint32_t *height)
 
 	*width = config.width;
 	*height = config.height;
+#else
+	*width = CONFIG_LCD_vl_col;
+	*height = CONFIG_LCD_vl_row;
+#endif
 
 	return VBERROR_SUCCESS;
 }
