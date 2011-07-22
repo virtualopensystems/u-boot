@@ -14,6 +14,8 @@
 
 #include <common.h>
 #include <command.h>
+#include <chromeos/cros_gpio.h>
+#include <chromeos/fdt_decode.h>
 #include <chromeos/firmware_storage.h>
 #include <chromeos/memory_wipe.h>
 #include <vboot_api.h>
@@ -24,6 +26,8 @@
  */
 #define TEST_FW_START	0xbfc00
 #define TEST_FW_LENGTH	0x1000
+
+DECLARE_GLOBAL_DATA_PTR;
 
 static int do_vboot_test_fwrw(cmd_tbl_t *cmdtp,
 		int flag, int argc, char * const argv[])
@@ -110,6 +114,26 @@ static int do_vboot_test_memwipe(cmd_tbl_t *cmdtp,
 	return 0;
 }
 
+static int do_vboot_test_gpio(cmd_tbl_t *cmdtp,
+		int flag, int argc, char * const argv[])
+{
+	void *fdt_ptr = (void *)gd->blob;
+	cros_gpio_t gpio;
+	int i;
+
+	for (i = 0; i < CROS_GPIO_MAX_GPIO; i++) {
+		if (cros_gpio_fetch(i, fdt_ptr, &gpio)) {
+			VbExDebug("Failed to fetch GPIO, %d!\n", i);
+			return 1;
+		}
+		if (cros_gpio_dump(&gpio)) {
+			VbExDebug("Failed to dump GPIO, %d!\n", i);
+			return 1;
+		}
+	}
+	return 0;
+}
+
 static int do_vboot_test_all(cmd_tbl_t *cmdtp,
 		int flag, int argc, char * const argv[])
 {
@@ -117,6 +141,7 @@ static int do_vboot_test_all(cmd_tbl_t *cmdtp,
 
 	ret |= do_vboot_test_fwrw(cmdtp, flag, argc, argv);
 	ret |= do_vboot_test_memwipe(cmdtp, flag, argc, argv);
+	ret |= do_vboot_test_gpio(cmdtp, flag, argc, argv);
 
 	return ret;
 }
@@ -125,6 +150,7 @@ static cmd_tbl_t cmd_vboot_test_sub[] = {
 	U_BOOT_CMD_MKENT(all, 0, 1, do_vboot_test_all, "", ""),
 	U_BOOT_CMD_MKENT(fwrw, 0, 1, do_vboot_test_fwrw, "", ""),
 	U_BOOT_CMD_MKENT(memwipe, 0, 1, do_vboot_test_memwipe, "", ""),
+	U_BOOT_CMD_MKENT(gpio, 0, 1, do_vboot_test_gpio, "", ""),
 };
 
 static int do_vboot_test(cmd_tbl_t *cmdtp,
@@ -150,5 +176,6 @@ U_BOOT_CMD(vboot_test, CONFIG_SYS_MAXARGS, 1, do_vboot_test,
 	"all - perform all tests\n"
 	"vboot_test fwrw - test the firmware read/write functions\n"
 	"vboot_test memwipe - test the memory wipe functions\n"
+	"vboot_test gpio - print the status of gpio\n"
 );
 

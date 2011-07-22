@@ -22,20 +22,19 @@
 int cros_gpio_fetch(enum cros_gpio_index index, const void *fdt,
 		cros_gpio_t *gpio)
 {
-	const char const *port[3] = {
+	const char const *port[CROS_GPIO_MAX_GPIO] = {
 		"gpio_port_write_protect_switch",
 		"gpio_port_recovery_switch",
-		"gpio_port_developer_switch"
+		"gpio_port_developer_switch",
+		"gpio_port_lid_switch",
+		"gpio_port_power_switch",
 	};
-	const int const default_port[3] = {
-		GPIO_PH3,
-		GPIO_PH0,
-		GPIO_PV0
-	};
-	const char const *polarity[3] = {
+	const char const *polarity[CROS_GPIO_MAX_GPIO] = {
 		"polarity_write_protect_switch",
 		"polarity_recovery_switch",
 		"polarity_developer_switch",
+		"polarity_lid_switch",
+		"polarity_power_switch",
 	};
 	int p;
 
@@ -46,13 +45,19 @@ int cros_gpio_fetch(enum cros_gpio_index index, const void *fdt,
 
 	gpio->index = index;
 
-	gpio->port = fdt_decode_get_config_int(fdt,
-			port[index], default_port[index]);
+	gpio->port = fdt_decode_get_config_int(fdt, port[index], -1);
+	if (gpio->port == -1) {
+		VBDEBUG(PREFIX "failed to decode gpio port\n");
+		return -1;
+	}
 
 	gpio_direction_input(gpio->port);
 
-	gpio->polarity = fdt_decode_get_config_int(fdt,
-			polarity[index], CROS_GPIO_ACTIVE_HIGH);
+	gpio->polarity = fdt_decode_get_config_int(fdt, polarity[index], -1);
+	if (gpio->polarity == -1) {
+		VBDEBUG(PREFIX "failed to decode gpio polarity\n");
+		return -1;
+	}
 
 	p = (gpio->polarity == CROS_GPIO_ACTIVE_HIGH) ? 0 : 1;
 	gpio->value = p ^ gpio_get_value(gpio->port);
@@ -62,8 +67,8 @@ int cros_gpio_fetch(enum cros_gpio_index index, const void *fdt,
 
 int cros_gpio_dump(cros_gpio_t *gpio)
 {
-	const char const *name[3] = {
-		"wpsw", "recsw", "devsw"
+	const char const *name[CROS_GPIO_MAX_GPIO] = {
+		"wpsw", "recsw", "devsw", "lidsw", "pwrsw"
 	};
 	int index = gpio->index;
 
