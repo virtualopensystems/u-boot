@@ -69,12 +69,12 @@ int boot_kernel(VbSelectAndLoadKernelParams *kparams, crossystem_data_t *cdata)
 	char *cmdline;
 
 	/*
-	 * casting bootloader_address of uint64_t type to uint32_t before
-	 * further casting it to char * to avoid compiler warning
-	 * "cast to pointer from integer of different size"
+	 * casting bootloader_address of uint64_t type to uintptr_t before
+	 * further casting it to char * to avoid compiler warning "cast to
+	 * pointer from integer of different size" on 32-bit address machine.
 	 */
 	cmdline = get_kernel_config((char *)
-			(uint32_t)kparams->bootloader_address);
+			(uintptr_t)kparams->bootloader_address);
 	strncpy(cmdline_buf, cmdline, CROS_CONFIG_SIZE);
 
 	/* if we have init bootargs, append it */

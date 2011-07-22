@@ -146,14 +146,14 @@ typedef struct {
 } hasher_state_t;
 
 /* This can only be called after key block has been verified */
-uint32_t firmware_body_size(const uint32_t vblock_address)
+uintptr_t firmware_body_size(const uintptr_t vblock_address)
 {
 	const VbKeyBlockHeader         const *keyblock;
 	const VbFirmwarePreambleHeader const *preamble;
 
 	keyblock = (VbKeyBlockHeader *)vblock_address;
 	preamble = (VbFirmwarePreambleHeader *)
-		(vblock_address + (uint32_t)keyblock->key_block_size);
+		(vblock_address + (uintptr_t)keyblock->key_block_size);
 
 	return preamble->body_signature.data_size;
 }
@@ -175,11 +175,7 @@ VbError_t VbExHashFirmwareBody(VbCommonParams* cparams, uint32_t firmware_index)
 	 * The key block has been verified. It is safe now to infer the actual
 	 * firmware body size from the key block.
 	 */
-	/*
-	 * TODO: This is not 64-bit safe. On machine that has 64-bit address,
-	 * casting address to 32-bit loses data. But it is okay on ARM.
-	 */
-	s->fw[i].size = firmware_body_size((uint32_t)s->fw[i].vblock);
+	s->fw[i].size = firmware_body_size((uintptr_t)s->fw[i].vblock);
 
 	if (file->read(file, s->fw[i].offset, s->fw[i].size, s->fw[i].cache)) {
 		VBDEBUG(PREFIX "fail to read firmware: %d\n", firmware_index);
