@@ -13,6 +13,7 @@
 #include <fdt_decode.h>
 #include <lcd.h>
 #include <malloc.h>
+#include <chromeos/boot_kernel.h>
 #include <chromeos/common.h>
 #include <chromeos/crossystem_data.h>
 #include <chromeos/cros_gpio.h>
@@ -20,7 +21,6 @@
 #include <chromeos/firmware_storage.h>
 #include <chromeos/memory_wipe.h>
 #include <chromeos/power_management.h>
-#include <vboot/boot_kernel.h>
 
 #include <gbb_header.h> /* for GoogleBinaryBlockHeader */
 #include <vboot_api.h>

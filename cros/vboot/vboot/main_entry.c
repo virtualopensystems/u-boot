@@ -9,8 +9,8 @@
  */
 
 #include <common.h>
+#include <chromeos/boot_kernel.h>
 #include <chromeos/common.h>
-#include <vboot/boot_kernel.h>
 #include <vboot/entry_points.h>
 #include <vboot/global_data.h>
 #include <vboot_api.h>

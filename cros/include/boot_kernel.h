@@ -8,8 +8,8 @@
  * Software Foundation.
  */
 
-#ifndef VBOOT_BOOT_KERNEL_H
-#define VBOOT_BOOT_KERNEL_H
+#ifndef CHROMEOS_BOOT_KERNEL_H
+#define CHROMEOS_BOOT_KERNEL_H
 
 #include <chromeos/crossystem_data.h>
 #include <vboot_api.h>
@@ -24,4 +24,4 @@
  */
 int boot_kernel(VbSelectAndLoadKernelParams *kparams, crossystem_data_t *cdata);
 
-#endif /* VBOOT_BOOT_KERNEL_H */
+#endif /* CHROMEOS_BOOT_KERNEL_H */
