@@ -21,7 +21,7 @@ static void prepare_cparams(vb_global_t *global, VbCommonParams *cparams)
 {
 	cparams->gbb_data = global->gbb_data;
 	cparams->gbb_size = global->gbb_size;
-	cparams->shared_data_blob = global->cdata_blob.vbshared_data;
+	cparams->shared_data_blob = global->cdata_blob.vb_shared_data;
 	cparams->shared_data_size = VB_SHARED_DATA_REC_SIZE;
 }
 

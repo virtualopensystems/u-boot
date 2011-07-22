@@ -110,8 +110,9 @@ int init_vboot_global(vb_global_t *global, firmware_storage_t *file)
 	void *fdt_ptr = (void *)gd->blob;
 	cros_gpio_t wpsw, recsw, devsw;
 	struct fdt_twostop_fmap fmap;
-	char frid[ID_LEN];
-	uint8_t nvraw[VBNV_BLOCK_SIZE];
+	uint8_t frid[ID_LEN];
+	GoogleBinaryBlockHeader *gbb =
+			(GoogleBinaryBlockHeader *)global->gbb_data;
 
 	global->version = VBGLOBAL_VERSION;
 	memcpy(global->signature, VBGLOBAL_SIGNATURE,
@@ -155,14 +156,12 @@ int init_vboot_global(vb_global_t *global, firmware_storage_t *file)
 		return 1;
 	}
 
-	if (VbExNvStorageRead(nvraw)) {
-		VBDEBUG(PREFIX "Failed to read NvStorage!\n");
-		return 1;
-	}
-
-	if (crossystem_data_init(&global->cdata_blob, frid,
-			fmap.readonly.fmap.offset, global->gbb_data, nvraw,
-			&wpsw, &recsw, &devsw)) {
+	if (crossystem_data_init(&global->cdata_blob,
+			&wpsw, &recsw, &devsw,
+			fmap.readonly.fmap.offset,
+			ACTIVE_EC_FIRMWARE_RO,
+			(uint8_t *)global->gbb_data + gbb->hwid_offset,
+			frid)) {
 		VBDEBUG(PREFIX "Failed to init crossystem data!\n");
 		return 1;
 	}

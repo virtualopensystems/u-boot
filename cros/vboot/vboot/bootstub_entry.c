@@ -33,7 +33,7 @@ static void prepare_cparams(vb_global_t *global, VbCommonParams *cparams)
 {
 	cparams->gbb_data = global->gbb_data;
 	cparams->gbb_size = global->gbb_size;
-	cparams->shared_data_blob = global->cdata_blob.vbshared_data;
+	cparams->shared_data_blob = global->cdata_blob.vb_shared_data;
 	cparams->shared_data_size = VB_SHARED_DATA_REC_SIZE;
 }
 
@@ -41,11 +41,11 @@ static void prepare_iparams(vb_global_t *global, VbInitParams *iparams)
 {
 	crossystem_data_t *cdata = &global->cdata_blob;
 	iparams->flags = VB_INIT_FLAG_RO_NORMAL_SUPPORT;
-	if (cdata->developer_sw)
+	if (cdata->boot_developer_switch)
 		iparams->flags |= VB_INIT_FLAG_DEV_SWITCH_ON;
-	if (cdata->recovery_sw)
+	if (cdata->boot_recovery_switch)
 		iparams->flags |= VB_INIT_FLAG_REC_BUTTON_PRESSED;
-	if (cdata->write_protect_sw)
+	if (cdata->boot_write_protect_switch)
 		iparams->flags |= VB_INIT_FLAG_WP_ENABLED;
 }
 
@@ -226,63 +226,52 @@ static VbError_t call_VbSelectFirmware(VbCommonParams *cparams,
 	return ret;
 }
 
-static void fill_boot_status(vb_global_t *global,
-			     uint32_t selected_firmware)
-{
-	crossystem_data_t *cdata = &global->cdata_blob;
-	VbSharedDataHeader *shared = (VbSharedDataHeader *)cdata->vbshared_data;
-	/* mainfw_type of non-recovery boot depends on dev switch */
-	int mainfw_type = cdata->developer_sw ? DEVELOPER_TYPE
-					      : NORMAL_TYPE;
-
-	if (selected_firmware == VB_SELECT_FIRMWARE_RECOVERY) {
-		crossystem_data_set_recovery_reason(cdata,
-				shared->recovery_reason);
-		mainfw_type = RECOVERY_TYPE;
-	}
-
-	crossystem_data_set_active_main_firmware(cdata, selected_firmware,
-						 mainfw_type);
-}
-
 static int fill_crossystem_data(vb_global_t *global,
 				firmware_storage_t *file,
 				struct fdt_twostop_fmap *fmap,
 				uint32_t selected_firmware)
 {
 	crossystem_data_t *cdata = &global->cdata_blob;
-	char fwid[ID_LEN];
+	uint8_t fwid_buf[ID_LEN];
+	uint8_t *fwid = fwid_buf;
 	uint32_t fwid_offset;
-
-	fill_boot_status(global, selected_firmware);
+	/* mainfw_type of non-recovery boot depends on dev switch */
+	int mainfw_type = cdata->boot_developer_switch ?
+			FIRMWARE_TYPE_DEVELOPER : FIRMWARE_TYPE_NORMAL;
 
 	/* Fills FWID */
 	switch (selected_firmware) {
 	case VB_SELECT_FIRMWARE_RECOVERY:
+		mainfw_type = FIRMWARE_TYPE_RECOVERY;
+		/* continue */
+
 	case VB_SELECT_FIRMWARE_READONLY:
-		crossystem_data_set_fwid(cdata, (char *)cdata->frid);
+		fwid = cdata->readonly_firmware_id;
 		goto done;
 
 	case VB_SELECT_FIRMWARE_A:
 		fwid_offset = fmap->readwrite_a.firmware_id.offset;
+		assert(fmap->readwrite_a.firmware_id.length == ID_LEN);
 		break;
 
 	case VB_SELECT_FIRMWARE_B:
 		fwid_offset = fmap->readwrite_b.firmware_id.offset;
+		assert(fmap->readwrite_b.firmware_id.length == ID_LEN);
 		break;
 
 	default:
 		return 1;
 	}
 
-	if (file->read(file, fwid_offset, ID_LEN, fwid)) {
+	if (file->read(file, fwid_offset, ID_LEN, fwid_buf)) {
 		VBDEBUG(PREFIX "Failed to read FWID from firmware!\n");
 		return 1;
 	}
-	crossystem_data_set_fwid(cdata, fwid);
 
 done:
+	crossystem_data_set_main_firmware(cdata, mainfw_type, fwid);
 	crossystem_data_dump(cdata);
+
 	return 0;
 }
 
