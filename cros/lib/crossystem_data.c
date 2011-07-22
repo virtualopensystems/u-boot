@@ -10,7 +10,6 @@
 
 #include <common.h>
 #include <fdt_decode.h>
-#include <gbb_header.h> /* for GoogleBinaryBlockHeader */
 #include <libfdt.h>
 #include <chromeos/common.h>
 #include <chromeos/crossystem_data.h>
@@ -23,65 +22,46 @@
 
 #define PREFIX "crossystem_data: "
 
-enum {
-	CHSW_RECOVERY_BUTTON_PRESSED	= 0x002,
-	CHSW_DEVELOPER_MODE_ENABLED	= 0x020,
-	CHSW_WRITE_PROTECT_DISABLED	= 0x200
-};
-
-int crossystem_data_init(crossystem_data_t *cdata, uint8_t *frid,
-		uint32_t fmap_data, void *gbb_data, void *nvcxt_raw,
-		cros_gpio_t *wpsw, cros_gpio_t *recsw, cros_gpio_t *devsw)
+int crossystem_data_init(crossystem_data_t *cdata,
+		cros_gpio_t *write_protect_switch,
+		cros_gpio_t *recovery_switch,
+		cros_gpio_t *developer_switch,
+		uint32_t fmap_offset,
+		uint8_t active_ec_firmware,
+		uint8_t *hardware_id,
+		uint8_t *readonly_firmware_id)
 {
-	GoogleBinaryBlockHeader *gbbh = (GoogleBinaryBlockHeader *)gbb_data;
-
 	VBDEBUG(PREFIX "crossystem data at %p\n", cdata);
 
 	memset(cdata, '\0', sizeof(*cdata));
 
 	cdata->total_size = sizeof(*cdata);
-
+	cdata->version = CROSSYSTEM_DATA_VERSION;
 	memcpy(cdata->signature, CROSSYSTEM_DATA_SIGNATURE,
 			sizeof(CROSSYSTEM_DATA_SIGNATURE));
-	cdata->version = CROSSYSTEM_DATA_VERSION;
 
-	if (recsw->value)
-		cdata->chsw |= CHSW_RECOVERY_BUTTON_PRESSED;
-	if (devsw->value)
-		cdata->chsw |= CHSW_DEVELOPER_MODE_ENABLED;
-	if (!wpsw->value)
-		cdata->chsw |= CHSW_WRITE_PROTECT_DISABLED;
+	cdata->nonvolatile_context_lba = CHROMEOS_VBNVCONTEXT_LBA;
+	cdata->nonvolatile_context_offset = 0;
+	cdata->nonvolatile_context_size = VBNV_BLOCK_SIZE;
 
-	memcpy(cdata->frid, frid, ID_LEN);
-	memcpy(cdata->hwid, gbb_data + gbbh->hwid_offset, gbbh->hwid_size);
+	cdata->boot_write_protect_switch = write_protect_switch->value;
+	cdata->boot_recovery_switch = recovery_switch->value;
+	cdata->boot_developer_switch = developer_switch->value;
 
-	/* boot reason; always 0 */
-	cdata->binf[0] = 0;
-	/* ec firmware type: 0=read-only, 1=rewritable; default to 0 */
-	cdata->binf[2] = 0;
-	/* recovery reason is default to VBNV_RECOVERY_NOT_REQUESTED */
-	cdata->binf[4] = VBNV_RECOVERY_NOT_REQUESTED;
+	cdata->polarity_write_protect_switch = write_protect_switch->polarity;
+	cdata->polarity_recovery_switch = recovery_switch->polarity;
+	cdata->polarity_developer_switch = developer_switch->polarity;
 
-	cdata->gpio_port_write_protect_sw = wpsw->port;
-	cdata->gpio_port_recovery_sw = recsw->port;
-	cdata->gpio_port_developer_sw = devsw->port;
+	cdata->gpio_port_write_protect_switch = write_protect_switch->port;
+	cdata->gpio_port_recovery_switch = recovery_switch->port;
+	cdata->gpio_port_developer_switch = developer_switch->port;
 
-	cdata->polarity_write_protect_sw = wpsw->polarity;
-	cdata->polarity_recovery_sw = recsw->polarity;
-	cdata->polarity_developer_sw = devsw->polarity;
+	cdata->fmap_offset = fmap_offset;
 
-	cdata->write_protect_sw = wpsw->value;
-	cdata->recovery_sw = recsw->value;
-	cdata->developer_sw = devsw->value;
-
-	cdata->vbnv[0] = 0;
-	cdata->vbnv[1] = VBNV_BLOCK_SIZE;
-
-	cdata->fmap_base = fmap_data;
-
-	cdata->nvcxt_lba = CHROMEOS_VBNVCONTEXT_LBA;
-
-	memcpy(cdata->nvcxt_cache, nvcxt_raw, VBNV_BLOCK_SIZE);
+	cdata->active_ec_firmware = active_ec_firmware;
+	memcpy(cdata->hardware_id, hardware_id, sizeof(cdata->hardware_id));
+	memcpy(cdata->readonly_firmware_id, readonly_firmware_id,
+			sizeof(cdata->readonly_firmware_id));
 
 	return 0;
 }
@@ -110,34 +90,12 @@ int crossystem_data_check_integrity(crossystem_data_t *cdata)
 	return 0;
 }
 
-int crossystem_data_set_fwid(crossystem_data_t *cdata, uint8_t *fwid)
+int crossystem_data_set_main_firmware(crossystem_data_t *cdata,
+		uint8_t firmware_type,
+		uint8_t *firmware_id)
 {
-	memcpy(cdata->fwid, fwid, ID_LEN);
-	return 0;
-}
-
-int crossystem_data_set_active_main_firmware(crossystem_data_t *cdata,
-		int which, int type)
-{
-	cdata->binf[1] = which;
-	cdata->binf[3] = type;
-	return 0;
-}
-
-int crossystem_data_get_active_main_firmware(crossystem_data_t *cdata)
-{
-	return cdata->binf[1];
-}
-
-int crossystem_data_get_active_main_firmware_type(crossystem_data_t *cdata)
-{
-	return cdata->binf[3];
-}
-
-int crossystem_data_set_recovery_reason(crossystem_data_t *cdata,
-		uint32_t reason)
-{
-	cdata->binf[4] = reason;
+	cdata->firmware_type = firmware_type;
+	memcpy(cdata->firmware_id, firmware_id, sizeof(cdata->firmware_id));
 	return 0;
 }
 
@@ -197,59 +155,65 @@ int crossystem_data_embed_into_fdt(crossystem_data_t *cdata, void *fdt,
 	err |= set_scalar_prop("total-size", total_size);
 	err |= set_array_prop("signature", signature);
 	err |= set_scalar_prop("version", version);
-	err |= set_scalar_prop("nonvolatile-context-lba", nvcxt_lba);
-	err |= set_scalar_prop("nonvolatile-context-offset", vbnv[0]);
-	err |= set_scalar_prop("nonvolatile-context-size", vbnv[1]);
-	err |= set_array_prop("boot-nonvolatile-cache", nvcxt_cache);
 
-	err |= set_bool_prop("boot-write-protect-switch", write_protect_sw);
-	err |= set_bool_prop("boot-recovery-switch", recovery_sw);
-	err |= set_bool_prop("boot-developer-switch", developer_sw);
+	err |= set_scalar_prop("nonvolatile-context-lba",
+			nonvolatile_context_lba);
+	err |= set_scalar_prop("nonvolatile-context-offset",
+			nonvolatile_context_offset);
+	err |= set_scalar_prop("nonvolatile-context-size",
+			nonvolatile_context_size);
 
-	gpio_prop[1] = cpu_to_fdt32(cdata->gpio_port_write_protect_sw);
-	gpio_prop[2] = cpu_to_fdt32(cdata->polarity_write_protect_sw);
+	err |= set_bool_prop("boot-write-protect-switch",
+			boot_write_protect_switch);
+	err |= set_bool_prop("boot-recovery-switch",
+			boot_recovery_switch);
+	err |= set_bool_prop("boot-developer-switch",
+			boot_developer_switch);
+
+	gpio_prop[1] = cpu_to_fdt32(cdata->gpio_port_write_protect_switch);
+	gpio_prop[2] = cpu_to_fdt32(cdata->polarity_write_protect_switch);
 	err |= fdt_setprop(fdt, nodeoffset, "write-protect-switch",
 			   gpio_prop, sizeof(gpio_prop));
 
-	gpio_prop[1] = cpu_to_fdt32(cdata->gpio_port_recovery_sw);
-	gpio_prop[2] = cpu_to_fdt32(cdata->polarity_recovery_sw);
+	gpio_prop[1] = cpu_to_fdt32(cdata->gpio_port_recovery_switch);
+	gpio_prop[2] = cpu_to_fdt32(cdata->polarity_recovery_switch);
 	err |= fdt_setprop(fdt, nodeoffset, "recovery-switch",
 			   gpio_prop, sizeof(gpio_prop));
 
-	gpio_prop[1] = cpu_to_fdt32(cdata->gpio_port_developer_sw);
-	gpio_prop[2] = cpu_to_fdt32(cdata->polarity_developer_sw);
+	gpio_prop[1] = cpu_to_fdt32(cdata->gpio_port_developer_switch);
+	gpio_prop[2] = cpu_to_fdt32(cdata->polarity_developer_switch);
 	err |= fdt_setprop(fdt, nodeoffset, "developer-switch",
 			   gpio_prop, sizeof(gpio_prop));
 
-	err |= set_scalar_prop("boot-reason", binf[0]);
+	err |= set_scalar_prop("fmap-offset", fmap_offset);
 
-	switch (cdata->binf[2]) {
-	case 0:
+	switch (cdata->active_ec_firmware) {
+	case ACTIVE_EC_FIRMWARE_RO:
 		err |= set_conststring_prop("active-ec-firmware", "RO");
 		break;
-	case 1:
+	case ACTIVE_EC_FIRMWARE_RW:
 		err |= set_conststring_prop("active-ec-firmware", "RW");
 		break;
 	}
 
-	switch (cdata->binf[3]) {
-	case RECOVERY_TYPE:
+	switch (cdata->firmware_type) {
+	case FIRMWARE_TYPE_RECOVERY:
 		err |= set_conststring_prop("firmware-type", "recovery");
 		break;
-	case NORMAL_TYPE:
+	case FIRMWARE_TYPE_NORMAL:
 		err |= set_conststring_prop("firmware-type", "normal");
 		break;
-	case DEVELOPER_TYPE:
+	case FIRMWARE_TYPE_DEVELOPER:
 		err |= set_conststring_prop("firmware-type", "developer");
 		break;
 	}
-	err |= set_scalar_prop("recovery-reason", binf[4]);
 
-	err |= set_array_prop("hardware-id", hwid);
-	err |= set_array_prop("firmware-version", fwid);
-	err |= set_array_prop("readonly-firmware-version", frid);
-	err |= set_scalar_prop("fmap-offset", fmap_base);
-	err |= set_array_prop("vboot-shared-data", vbshared_data);
+	err |= set_array_prop("hardware-id", hardware_id);
+	err |= set_array_prop("firmware-version", firmware_id);
+	err |= set_array_prop("readonly-firmware-version",
+			readonly_firmware_id);
+
+	err |= set_array_prop("vboot-shared-data", vb_shared_data);
 
 #undef set_scalar_prop
 #undef set_array_prop
@@ -263,40 +227,32 @@ int crossystem_data_embed_into_fdt(crossystem_data_t *cdata, void *fdt,
 
 void crossystem_data_dump(crossystem_data_t *cdata)
 {
-#ifdef VBOOT_DEBUG /* decleare inside ifdef so that compiler doesn't complain */
-	int i;
-
 #define _p(format, field) \
-	VBDEBUG("crossystem_data_dump: %-20s: " format "\n", #field, cdata->field)
+	VBDEBUG("crossystem_data_dump: %-30s: " format "\n", #field, cdata->field)
 	_p("%08x",	total_size);
 	_p("\"%s\"",	signature);
 	_p("%d",	version);
-	_p("%08llx",	nvcxt_lba);
-	_p("%08x",	vbnv[0]);
-	_p("%08x",	vbnv[1]);
-	VBDEBUG("crossystem_data_dump: nvcxt_cache: ");
-	for (i = 0; i < VBNV_BLOCK_SIZE; i++)
-		VBDEBUG("%02x", cdata->nvcxt_cache[i]);
-	VBDEBUG("\n");
-	_p("%d",	write_protect_sw);
-	_p("%d",	recovery_sw);
-	_p("%d",	developer_sw);
-	_p("%d",	gpio_port_write_protect_sw);
-	_p("%d",	gpio_port_recovery_sw);
-	_p("%d",	gpio_port_developer_sw);
-	_p("%d",	polarity_write_protect_sw);
-	_p("%d",	polarity_recovery_sw);
-	_p("%d",	polarity_developer_sw);
-	_p("%08x",	binf[0]);
-	_p("%08x",	binf[1]);
-	_p("%08x",	binf[2]);
-	_p("%08x",	binf[3]);
-	_p("%08x",	binf[4]);
-	_p("%08x",	chsw);
-	_p("\"%s\"",	hwid);
-	_p("\"%s\"",	fwid);
-	_p("\"%s\"",	frid);
-	_p("%08x",	fmap_base);
+
+	_p("%08llx",	nonvolatile_context_lba);
+	_p("%08x",	nonvolatile_context_offset);
+	_p("%08x",	nonvolatile_context_size);
+
+	_p("%d",	boot_write_protect_switch);
+	_p("%d",	boot_recovery_switch);
+	_p("%d",	boot_developer_switch);
+	_p("%d",	polarity_write_protect_switch);
+	_p("%d",	polarity_recovery_switch);
+	_p("%d",	polarity_developer_switch);
+	_p("%d",	gpio_port_write_protect_switch);
+	_p("%d",	gpio_port_recovery_switch);
+	_p("%d",	gpio_port_developer_switch);
+
+	_p("%08x",	fmap_offset);
+
+	_p("%d",	active_ec_firmware);
+	_p("%d",	firmware_type);
+	_p("\"%s\"",	hardware_id);
+	_p("\"%s\"",	readonly_firmware_id);
+	_p("\"%s\"",	firmware_id);
 #undef _p
-#endif
 }

@@ -20,6 +20,7 @@
 #include <chromeos/power_management.h>
 #include <vboot/boot_kernel.h>
 
+#include <gbb_header.h> /* for GoogleBinaryBlockHeader */
 #include <vboot_api.h>
 
 #define PREFIX "vboot_twostop: "
@@ -191,11 +192,11 @@ VbError_t twostop_init_vboot_library(crossystem_data_t *cdata,
 	VbInitParams iparams;
 
 	iparams.flags = VB_INIT_FLAG_RO_NORMAL_SUPPORT;
-	if (cdata->write_protect_sw)
+	if (cdata->boot_write_protect_switch)
 		iparams.flags |= VB_INIT_FLAG_WP_ENABLED;
-	if (cdata->recovery_sw)
+	if (cdata->boot_recovery_switch)
 		iparams.flags |= VB_INIT_FLAG_REC_BUTTON_PRESSED;
-	if (cdata->developer_sw)
+	if (cdata->boot_developer_switch)
 		iparams.flags |= VB_INIT_FLAG_DEV_SWITCH_ON;
 	VBDEBUG(PREFIX "iparams.flags: %08x\n", iparams.flags);
 
@@ -312,8 +313,8 @@ uint32_t twostop_select_and_set_main_firmware(struct fdt_twostop_fmap *fmap,
 {
 	uint32_t selection;
 	uint32_t id_offset = 0, id_length = 0;
-	int w, t;
-	uint8_t fwid[ID_LEN];
+	int firmware_type;
+	uint8_t firmware_id[ID_LEN];
 	VbCommonParams cparams;
 
 	if (twostop_init_cparams(fmap, gbb, vb_shared_data, &cparams)) {
@@ -334,60 +335,45 @@ uint32_t twostop_select_and_set_main_firmware(struct fdt_twostop_fmap *fmap,
 	if (selection == VB_SELECT_ERROR)
 		return VB_SELECT_ERROR;
 
-	w = RECOVERY_FIRMWARE;
-	t = RECOVERY_TYPE;
 	switch(selection) {
 	case VB_SELECT_FIRMWARE_RECOVERY:
-		w = RECOVERY_FIRMWARE;
-		t = RECOVERY_TYPE;
+	case VB_SELECT_FIRMWARE_READONLY:
 		id_offset = fmap->readonly.firmware_id.offset;
 		id_length = fmap->readonly.firmware_id.length;
 		break;
 	case VB_SELECT_FIRMWARE_A:
-		w = REWRITABLE_FIRMWARE_A;
-		t = cdata->developer_sw ? DEVELOPER_TYPE : NORMAL_TYPE;
 		id_offset = fmap->readwrite_a.firmware_id.offset;
 		id_length = fmap->readwrite_a.firmware_id.length;
 		break;
 	case VB_SELECT_FIRMWARE_B:
-		w = REWRITABLE_FIRMWARE_B;
-		t = cdata->developer_sw ? DEVELOPER_TYPE : NORMAL_TYPE;
 		id_offset = fmap->readwrite_b.firmware_id.offset;
 		id_length = fmap->readwrite_b.firmware_id.length;
-		break;
-	case VB_SELECT_FIRMWARE_READONLY:
-		w = READONLY_FIRMWARE;
-		t = cdata->developer_sw ? DEVELOPER_TYPE : NORMAL_TYPE;
-		id_offset = fmap->readonly.firmware_id.offset;
-		id_length = fmap->readonly.firmware_id.length;
 		break;
 	default:
 		VBDEBUG(PREFIX "impossible selection value: %d\n", selection);
 		assert(0);
 	}
 
-	if (id_length > sizeof(fwid)) {
-		VBDEBUG(PREFIX "firmware id is too long: %u > %u\n",
-				id_length, sizeof(fwid));
-		return VB_SELECT_ERROR;
-	}
-
-	if (id_length && file->read(file, id_offset, id_length, fwid)) {
+	if (file->read(file, id_offset,
+				MIN(sizeof(firmware_id), id_length),
+				firmware_id)) {
 		VBDEBUG(PREFIX "failed to read active firmware id\n");
-		fwid[0] = '\0';
+		firmware_id[0] = '\0';
 	}
 
-	VBDEBUG(PREFIX "active main firmware      : %d\n", w);
-	VBDEBUG(PREFIX "active main firmware type : %d\n", t);
-	VBDEBUG(PREFIX "active main firmware id   : \"%s\"\n", fwid);
+	if (selection == VB_SELECT_FIRMWARE_RECOVERY)
+		firmware_type = FIRMWARE_TYPE_RECOVERY;
+	else if (cdata->boot_developer_switch)
+		firmware_type = FIRMWARE_TYPE_DEVELOPER;
+	else
+		firmware_type = FIRMWARE_TYPE_NORMAL;
 
-	if (crossystem_data_set_active_main_firmware(cdata, w, t)) {
+	VBDEBUG(PREFIX "active main firmware type : %d\n", firmware_type);
+	VBDEBUG(PREFIX "active main firmware id   : \"%s\"\n", firmware_id);
+
+	if (crossystem_data_set_main_firmware(cdata,
+				firmware_type, firmware_id)) {
 		VBDEBUG(PREFIX "failed to set active main firmware\n");
-		return VB_SELECT_ERROR;
-	}
-
-	if (crossystem_data_set_fwid(cdata, fwid)) {
-		VBDEBUG(PREFIX "failed to set active main firmware id\n");
 		return VB_SELECT_ERROR;
 	}
 
@@ -426,8 +412,8 @@ int twostop_init(const void const *fdt,
 		void *vb_shared_data)
 {
 	cros_gpio_t wpsw, recsw, devsw;
-	uint8_t frid[ID_LEN];
-	uint8_t nvcxt_raw[VBNV_BLOCK_SIZE];
+	GoogleBinaryBlockHeader *gbbh = (GoogleBinaryBlockHeader *)gbb;
+	uint8_t hardware_id[ID_LEN], readonly_firmware_id[ID_LEN];
 	int ret = -1;
 
 	if (cros_gpio_fetch(CROS_GPIO_WPSW, fdt, &wpsw) ||
@@ -446,19 +432,6 @@ int twostop_init(const void const *fdt,
 	}
 	dump_fmap(fmap);
 
-	/* Read NvStorage */
-	if (VbExNvStorageRead(nvcxt_raw)) {
-		VBDEBUG(PREFIX "failed to read NvStorage\n");
-		return -1;
-	}
-#ifdef VBOOT_DEBUG
-	int i;
-	VBDEBUG(PREFIX "nvcxt_raw: ");
-	for (i = 0; i < VBNV_BLOCK_SIZE; i++)
-		VBDEBUG("%02x", nvcxt_raw[i]);
-	VBDEBUG("\n");
-#endif /* VBOOT_DEBUG */
-
 	/* We revert the decision of using firmware_storage_open_twostop() */
 	if (firmware_storage_open_spi(file)) {
 		VBDEBUG(PREFIX "failed to open firmware storage\n");
@@ -467,11 +440,13 @@ int twostop_init(const void const *fdt,
 
 	/* Read read-only firmware ID */
 	if (file->read(file, fmap->readonly.firmware_id.offset,
-				fmap->readonly.firmware_id.length, frid)) {
+				MIN(sizeof(readonly_firmware_id),
+					fmap->readonly.firmware_id.length),
+				readonly_firmware_id)) {
 		VBDEBUG(PREFIX "failed to read firmware ID\n");
-		goto out;
+		readonly_firmware_id[0] = '\0';
 	}
-	VBDEBUG(PREFIX "read-only firmware id: \"%s\"\n", frid);
+	VBDEBUG(PREFIX "read-only firmware id: \"%s\"\n", readonly_firmware_id);
 
 	/* Load gbb blob */
 	if (file->read(file, fmap->readonly.gbb.offset,
@@ -480,15 +455,22 @@ int twostop_init(const void const *fdt,
 		goto out;
 	}
 
+	memcpy(hardware_id, gbb + gbbh->hwid_offset,
+			MIN(sizeof(hardware_id), gbbh->hwid_size));
+	VBDEBUG(PREFIX "hardware id: \"%s\"\n", hardware_id);
+
 	/* Initialize crossystem data */
+	/*
+	 * TODO There is no readwrite EC firmware on our current ARM boards. But
+	 * we should have a mechanism to probe (or acquire this information from
+	 * the device tree) whether the active EC firmware is R/O or R/W.
+	 */
 	if (crossystem_data_init(cdata,
-				frid,
+				&wpsw, &recsw, &devsw,
 				fmap->readonly.fmap.offset,
-				gbb,
-				nvcxt_raw,
-				&wpsw,
-				&recsw,
-				&devsw)) {
+				ACTIVE_EC_FIRMWARE_RO,
+				hardware_id,
+				readonly_firmware_id)) {
 		VBDEBUG(PREFIX "failed to init crossystem data\n");
 		goto out;
 	}
@@ -560,7 +542,7 @@ uint32_t twostop_boot(const void const *fdt)
 	firmware_storage_t file;
 	crossystem_data_t *cdata = (crossystem_data_t *)CROSSYSTEM_DATA_ADDRESS;
 	void *gbb = (void *)GBB_ADDRESS;
-	void *vb_shared_data = cdata->vbshared_data;
+	void *vb_shared_data = cdata->vb_shared_data;
 	void *fw_blob = NULL;
 	uint32_t fw_size = 0;
 	uint32_t selection;
@@ -624,7 +606,7 @@ uint32_t twostop_readwrite_main_firmware(const void const *fdt)
 	struct fdt_twostop_fmap fmap;
 	crossystem_data_t *cdata = (crossystem_data_t *)CROSSYSTEM_DATA_ADDRESS;
 	void *gbb = (void *)GBB_ADDRESS;
-	void *vb_shared_data = cdata->vbshared_data;
+	void *vb_shared_data = cdata->vb_shared_data;
 
 	/* Newer readwrite firmware should check version of the data blobs */
 
