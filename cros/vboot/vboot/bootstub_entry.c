@@ -125,6 +125,7 @@ static void release_fparams(VbSelectFirmwareParams *fparams)
 	VbExFree(fparams->verification_block_B);
 }
 
+#ifdef CONFIG_OF_CONTROL
 static uintptr_t get_current_sp(void)
 {
 	uintptr_t addr;
@@ -132,9 +133,11 @@ static uintptr_t get_current_sp(void)
 	addr = (uintptr_t)&addr;
 	return addr;
 }
+#endif
 
 static void wipe_unused_memory(const void const *fdt_ptr, vb_global_t *global)
 {
+#ifdef CONFIG_OF_CONTROL
 	memory_wipe_t wipe;
 	struct fdt_memory config;
 
@@ -151,6 +154,10 @@ static void wipe_unused_memory(const void const *fdt_ptr, vb_global_t *global)
 			(uintptr_t)global + sizeof(*global));
 
 	memory_wipe_execute(&wipe);
+#else
+	printf("wipe_unused_memory depends on fdt_decode_memory which"
+		" isn't configured\n");
+#endif
 }
 
 typedef void (*firmware_entry_t)(void);
