@@ -24,8 +24,8 @@
  * TODO: Pick a better region for test instead of GBB.
  * We now test the region of GBB.
  */
-#define TEST_FW_START	0xbfc00
-#define TEST_FW_LENGTH	0x1000
+#define TEST_FW_START		0xc1000
+#define DEFAULT_TEST_FW_LENGTH	0x1000
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -34,14 +34,33 @@ static int do_vboot_test_fwrw(cmd_tbl_t *cmdtp,
 {
 	int ret = 0;
 	firmware_storage_t file;
-	uint8_t original_buf[TEST_FW_LENGTH];
-	uint8_t target_buf[TEST_FW_LENGTH];
-	uint8_t verify_buf[TEST_FW_LENGTH];
-	int i;
+	uint32_t test_length, i;
+	uint8_t *original_buf, *target_buf, *verify_buf;
+	uint64_t t0, t1;
+
+	switch (argc) {
+	case 1:  /* if no argument given, use the default length */
+		test_length = DEFAULT_TEST_FW_LENGTH;
+		break;
+	case 2:  /* use argument */
+		test_length = simple_strtoul(argv[1], NULL, 16);
+		if (!test_length) {
+			VbExDebug("The first argument is not a number!\n");
+			return cmd_usage(cmdtp);
+		}
+		break;
+	default:
+		return cmd_usage(cmdtp);
+	}
+
+	/* Allocate the buffer and fill the target test pattern. */
+	original_buf = VbExMalloc(test_length);
+	target_buf = VbExMalloc(test_length);
+	verify_buf = VbExMalloc(test_length);
 
 	/* Fill the target test pattern. */
-	for (i = 0; i < TEST_FW_LENGTH; i++)
-		target_buf[i] = i & 0xFF;
+	for (i = 0; i < test_length; i++)
+		target_buf[i] = i & 0xff;
 
 	/* Open firmware storage device. */
 	if (firmware_storage_open_spi(&file)) {
@@ -49,28 +68,49 @@ static int do_vboot_test_fwrw(cmd_tbl_t *cmdtp,
 		return 1;
 	}
 
-	if (file.read(&file, TEST_FW_START, TEST_FW_LENGTH, original_buf)) {
+	t0 = VbExGetTimer();
+	if (file.read(&file, TEST_FW_START, test_length, original_buf)) {
 		VbExDebug("Failed to read firmware!\n");
-		return 1;
+		goto out;
 	}
+	t1 = VbExGetTimer();
+	VbExDebug("test_fwrw: fw_read, length: %#x, time: %llu\n",
+			test_length, t1 - t0);
 
-	if (file.write(&file, TEST_FW_START, TEST_FW_LENGTH, target_buf)) {
+	t0 = VbExGetTimer();
+	ret = file.write(&file, TEST_FW_START, test_length, target_buf);
+	VbExDebug("file.write returned\n");
+	if (ret) {
 		VbExDebug("Failed to write firmware!\n");
 		ret = 1;
 	} else {
 		/* Read back and verify the data. */
-		file.read(&file, TEST_FW_START, TEST_FW_LENGTH, verify_buf);
-		if (memcmp(target_buf, verify_buf, TEST_FW_LENGTH) != 0) {
+		VbExDebug("start read again\n");
+		file.read(&file, TEST_FW_START, test_length, verify_buf);
+		VbExDebug("start memcmp\n");
+		if (memcmp(target_buf, verify_buf, test_length) != 0) {
 			VbExDebug("Verify failed. The target data wrote "
 				  "wrong.\n");
 			ret = 1;
 		}
 	}
+	t1 = VbExGetTimer();
+	VbExDebug("test_fwrw: fw_write, length: %#x, time: %llu\n",
+			test_length, t1 - t0);
 
 	 /* Write the original data back. */
-	file.write(&file, TEST_FW_START, TEST_FW_LENGTH, original_buf);
+	if (file.write(&file, TEST_FW_START, test_length, original_buf)) {
+		VbExDebug("Failed to write the original data back. The "
+				"firmware may now be corrupt.\n");
 
+	}
+
+out:
 	file.close(&file);
+
+	VbExFree(original_buf);
+	VbExFree(target_buf);
+	VbExFree(verify_buf);
 
 	if (ret == 0)
 		VbExDebug("Read and write firmware test SUCCESS.\n");
@@ -174,7 +214,7 @@ static int do_vboot_test(cmd_tbl_t *cmdtp,
 U_BOOT_CMD(vboot_test, CONFIG_SYS_MAXARGS, 1, do_vboot_test,
 	"Perform tests for basic vboot related utilities",
 	"all - perform all tests\n"
-	"vboot_test fwrw - test the firmware read/write functions\n"
+	"vboot_test fwrw [length] - test the firmware read/write\n"
 	"vboot_test memwipe - test the memory wipe functions\n"
 	"vboot_test gpio - print the status of gpio\n"
 );

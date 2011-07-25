@@ -26,8 +26,8 @@
 #define CACHE_LINE_SIZE __BIGGEST_ALIGNMENT__
 #endif
 
-#define TEST_LBA_START	0
-#define TEST_LBA_COUNT	2
+#define TEST_LBA_START		0
+#define DEFAULT_TEST_LBA_COUNT	2
 
 #define KEY_CTRL_C	0x03
 
@@ -89,7 +89,7 @@ static int do_vbexport_test_malloc(
 		cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	int ret = 0;
-	VbExDebug("Preforming the malloc/free tests...\n");
+	VbExDebug("Performing the malloc/free tests...\n");
 	ret |= do_vbexport_test_malloc_size(1);
 	ret |= do_vbexport_test_malloc_size(2);
 	ret |= do_vbexport_test_malloc_size(4);
@@ -145,7 +145,7 @@ static int do_vbexport_test_sleep(
 		cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	int ret = 0;
-	VbExDebug("Preforming the sleep tests...\n");
+	VbExDebug("Performing the sleep tests...\n");
 	ret |= do_vbexport_test_sleep_time(&sleep_ms_handler, 10);
 	ret |= do_vbexport_test_sleep_time(&sleep_ms_handler, 50);
 	ret |= do_vbexport_test_sleep_time(&sleep_ms_handler, 100);
@@ -158,7 +158,7 @@ static int do_vbexport_test_longsleep(
 		cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	int ret = 0;
-	VbExDebug("Preforming the long sleep tests...\n");
+	VbExDebug("Performing the long sleep tests...\n");
 	ret |= do_vbexport_test_sleep_time(&sleep_ms_handler, 5000);
 	ret |= do_vbexport_test_sleep_time(&sleep_ms_handler, 10000);
 	ret |= do_vbexport_test_sleep_time(&sleep_ms_handler, 50000);
@@ -169,7 +169,7 @@ static int do_vbexport_test_beep(
 		cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	int ret = 0;
-	VbExDebug("Preforming the beep tests...\n");
+	VbExDebug("Performing the beep tests...\n");
 	ret |= do_vbexport_test_sleep_time(&beep_handler, 500);
 	return ret;
 }
@@ -227,8 +227,24 @@ static int do_vbexport_test_diskrw(
 	int ret = 0;
 	VbDiskInfo *disk_info;
 	VbExDiskHandle_t handle;
-	uint32_t disk_count, buf_byte_count, i;
+	uint32_t disk_count, test_lba_count, buf_byte_count, i;
 	uint8_t *original_buf, *target_buf, *verify_buf;
+	uint64_t t0, t1;
+
+	switch (argc) {
+	case 1:  /* if no argument given, use the default lba count */
+		test_lba_count = DEFAULT_TEST_LBA_COUNT;
+		break;
+	case 2:  /* use argument */
+		test_lba_count = simple_strtoul(argv[1], NULL, 10);
+		if (!test_lba_count) {
+			VbExDebug("The first argument is not a number!\n");
+			return cmd_usage(cmdtp);
+		}
+		break;
+	default:
+		return cmd_usage(cmdtp);
+	}
 
 	/* We perform read/write operations on the first internal disk. */
 	if (VbExDiskGetInfo(&disk_info, &disk_count, VB_DISK_FLAG_FIXED) ||
@@ -237,30 +253,35 @@ static int do_vbexport_test_diskrw(
 		return 1;
 	}
 	handle = disk_info[0].handle;
-	buf_byte_count = disk_info[0].bytes_per_lba * TEST_LBA_COUNT;
+	buf_byte_count = disk_info[0].bytes_per_lba * test_lba_count;
 	VbExDiskFreeInfo(disk_info, handle);
 
 	/* Allocate the buffer and fill the target test pattern. */
 	original_buf = VbExMalloc(buf_byte_count);
 	target_buf = VbExMalloc(buf_byte_count);
 	verify_buf = VbExMalloc(buf_byte_count);
-	for (i = 0; i < buf_byte_count; i++) {
-		target_buf[i] = i % 0x100;
-	}
 
-	if (VbExDiskRead(handle, TEST_LBA_START, TEST_LBA_COUNT,
+	/* Fill the target test pattern. */
+	for (i = 0; i < buf_byte_count; i++)
+		target_buf[i] = i & 0xff;
+
+	t0 = VbExGetTimer();
+	if (VbExDiskRead(handle, TEST_LBA_START, test_lba_count,
 			original_buf)) {
 		VbExDebug("Failed to read disk.\n");
-		return 1;
+		goto out;
 	}
+	t1 = VbExGetTimer();
+	VbExDebug("test_diskrw: disk_read, lba_count: %u, time: %llu\n",
+			test_lba_count, t1 - t0);
 
-	if (VbExDiskWrite(handle, TEST_LBA_START, TEST_LBA_COUNT,
-			target_buf)) {
+	t0 = VbExGetTimer();
+	if (VbExDiskWrite(handle, TEST_LBA_START, test_lba_count, target_buf)) {
 		VbExDebug("Failed to write disk.\n");
 		ret = 1;
 	} else {
 		/* Read back and verify the data. */
-		VbExDiskRead(handle, TEST_LBA_START, TEST_LBA_COUNT,
+		VbExDiskRead(handle, TEST_LBA_START, test_lba_count,
 				verify_buf);
 		if (memcmp(target_buf, verify_buf, buf_byte_count) != 0) {
 			VbExDebug("Verify failed. The target data wrote "
@@ -268,9 +289,19 @@ static int do_vbexport_test_diskrw(
 			ret = 1;
 		}
 	}
+	t1 = VbExGetTimer();
+	VbExDebug("test_diskrw: disk_write, lba_count: %u, time: %llu\n",
+			test_lba_count, t1 - t0);
 
 	/* Write the original data back. */
-	VbExDiskWrite(handle, TEST_LBA_START, TEST_LBA_COUNT, original_buf);
+	if (VbExDiskWrite(handle, TEST_LBA_START, test_lba_count,
+			original_buf)) {
+		VbExDebug("Failed to write the original data back. The disk "
+				"may now be corrupt.\n");
+	}
+
+out:
+	VbExDiskFreeInfo(disk_info, NULL);
 
 	VbExFree(original_buf);
 	VbExFree(target_buf);
@@ -534,7 +565,7 @@ U_BOOT_CMD(vbexport_test, CONFIG_SYS_MAXARGS, 1, do_vbexport_test,
 	"vbexport_test longsleep - test the sleep functions for long delays\n"
 	"vbexport_test beep - test the beep functions\n"
 	"vbexport_test diskinfo - test the diskgetinfo and free functions\n"
-	"vbexport_test diskrw - test the disk read and write functions\n"
+	"vbexport_test diskrw [lba_count] - test the disk read and write\n"
 	"vbexport_test nvclear - clear the nvstorage content\n"
 	"vbexport_test nvrw - test the nvstorage read and write functions\n"
 	"vbexport_test key - test the keyboard read function\n"
