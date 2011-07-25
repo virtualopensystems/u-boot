@@ -167,11 +167,16 @@ static void update_cmdline(char *src, int devnum, int partnum, uint8_t *guid,
 
 int boot_kernel(VbSelectAndLoadKernelParams *kparams, crossystem_data_t *cdata)
 {
-	char cmdline_buf[CROS_CONFIG_SIZE + EXTRA_BUFFER];
-	char cmdline_out[CROS_CONFIG_SIZE + EXTRA_BUFFER];
+	/* sizeof(CHROMEOS_BOOTARGS) reserves extra 1 byte */
+	char cmdline_buf[sizeof(CHROMEOS_BOOTARGS) + CROS_CONFIG_SIZE];
+	/* Reserve EXTRA_BUFFER bytes for update_cmdline's string replacement */
+	char cmdline_out[sizeof(CHROMEOS_BOOTARGS) + CROS_CONFIG_SIZE +
+		EXTRA_BUFFER];
 	char load_address[32];
 	char *argv[2] = {"bootm", load_address};
 	char *cmdline;
+
+	strcpy(cmdline_buf, CHROMEOS_BOOTARGS);
 
 	/*
 	 * casting bootloader_address of uint64_t type to uintptr_t before
@@ -180,16 +185,15 @@ int boot_kernel(VbSelectAndLoadKernelParams *kparams, crossystem_data_t *cdata)
 	 */
 	cmdline = get_kernel_config((char *)
 			(uintptr_t)kparams->bootloader_address);
-	strncpy(cmdline_buf, cmdline, CROS_CONFIG_SIZE);
-
-	/* if we have init bootargs, append it */
-	if ((cmdline = getenv("bootargs"))) {
-		strcat(cmdline_buf, " ");
-		strncat(cmdline_buf, cmdline, EXTRA_BUFFER - 1);
-	}
+	/*
+	 * strncat could write CROS_CONFIG_SIZE + 1 bytes to cmdline_buf. This
+	 * is okay because the extra 1 byte has been reserved in sizeof().
+	 */
+	strncat(cmdline_buf, cmdline, CROS_CONFIG_SIZE);
 
 	VBDEBUG(PREFIX "cmdline before update: %s\n", cmdline_buf);
 
+	/* TODO fix potential buffer overflow */
 	update_cmdline(cmdline_buf,
 			get_dev_num(kparams->disk_handle),
 			kparams->partition_number + 1,
