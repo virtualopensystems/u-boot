@@ -35,12 +35,6 @@ typedef struct {
 	uint8_t		signature[10];
 	uint16_t	version;
 
-	/* Location of non-volatile context */
-	uint64_t	nonvolatile_context_lba;
-	uint16_t	nonvolatile_context_offset;
-	uint16_t	nonvolatile_context_size;
-	uint8_t		pad1[4];
-
 	/*
 	 * Chrome OS-required GPIOs:
 	 * - boot_*      : GPIO truth value at boot time
@@ -50,15 +44,15 @@ typedef struct {
 	uint8_t		boot_write_protect_switch;
 	uint8_t		boot_recovery_switch;
 	uint8_t		boot_developer_switch;
-	uint8_t		pad2[1];
+	uint8_t		pad1[1];
 	uint8_t		polarity_write_protect_switch;
 	uint8_t		polarity_recovery_switch;
 	uint8_t		polarity_developer_switch;
-	uint8_t		pad3[1];
+	uint8_t		pad2[1];
 	uint32_t	gpio_port_write_protect_switch;
 	uint32_t	gpio_port_recovery_switch;
 	uint32_t	gpio_port_developer_switch;
-	uint8_t		pad4[4];
+	uint8_t		pad3[4];
 
 	/* Offset of FMAP on flashrom */
 	uint32_t	fmap_offset;
@@ -73,10 +67,22 @@ typedef struct {
 	 */
 	uint8_t		active_ec_firmware;
 	uint8_t		firmware_type;
-	uint8_t		pad5[2];
+	uint8_t		pad4[2];
 	uint8_t 	hardware_id[ID_LEN];
 	uint8_t		readonly_firmware_id[ID_LEN];
 	uint8_t		firmware_id[ID_LEN];
+
+	union {
+		/* We reserve 208 bytes for board specific data */
+		uint8_t board_reserved_size[0xd0];
+
+		struct {
+			/* Location of non-volatile context */
+			uint64_t	nonvolatile_context_lba;
+			uint16_t	nonvolatile_context_offset;
+			uint16_t	nonvolatile_context_size;
+		} arm;
+	} board;
 
 	/*
 	 * VbSharedData contains fields of long word (64-bit) type, and so it
@@ -95,29 +101,29 @@ assert_offset(total_size,			0x0000);
 assert_offset(signature,			0x0004);
 assert_offset(version,				0x000e);
 
-assert_offset(nonvolatile_context_lba,		0x0010);
-assert_offset(nonvolatile_context_offset,	0x0018);
-assert_offset(nonvolatile_context_size,		0x001a);
+assert_offset(boot_write_protect_switch,	0x0010);
+assert_offset(boot_recovery_switch,		0x0011);
+assert_offset(boot_developer_switch,		0x0012);
+assert_offset(polarity_write_protect_switch,	0x0014);
+assert_offset(polarity_recovery_switch,		0x0015);
+assert_offset(polarity_developer_switch,	0x0016);
+assert_offset(gpio_port_write_protect_switch,	0x0018);
+assert_offset(gpio_port_recovery_switch,	0x001c);
+assert_offset(gpio_port_developer_switch,	0x0020);
 
-assert_offset(boot_write_protect_switch,	0x0020);
-assert_offset(boot_recovery_switch,		0x0021);
-assert_offset(boot_developer_switch,		0x0022);
-assert_offset(polarity_write_protect_switch,	0x0024);
-assert_offset(polarity_recovery_switch,		0x0025);
-assert_offset(polarity_developer_switch,	0x0026);
-assert_offset(gpio_port_write_protect_switch,	0x0028);
-assert_offset(gpio_port_recovery_switch,	0x002c);
-assert_offset(gpio_port_developer_switch,	0x0030);
+assert_offset(fmap_offset,			0x0028);
 
-assert_offset(fmap_offset,			0x0038);
+assert_offset(active_ec_firmware,		0x002c);
+assert_offset(firmware_type,			0x002d);
+assert_offset(hardware_id,			0x0030);
+assert_offset(readonly_firmware_id,		0x0130);
+assert_offset(firmware_id,			0x0230);
 
-assert_offset(active_ec_firmware,		0x003c);
-assert_offset(firmware_type,			0x003d);
-assert_offset(hardware_id,			0x0040);
-assert_offset(readonly_firmware_id,		0x0140);
-assert_offset(firmware_id,			0x0240);
+assert_offset(board.arm.nonvolatile_context_lba,	0x0330);
+assert_offset(board.arm.nonvolatile_context_offset,	0x0338);
+assert_offset(board.arm.nonvolatile_context_size,	0x033a);
 
-assert_offset(vb_shared_data,			0x0340);
+assert_offset(vb_shared_data,			0x0400);
 
 #undef assert_offset
 

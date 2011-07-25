@@ -42,10 +42,6 @@ int crossystem_data_init(crossystem_data_t *cdata,
 	memcpy(cdata->signature, CROSSYSTEM_DATA_SIGNATURE,
 			sizeof(CROSSYSTEM_DATA_SIGNATURE));
 
-	cdata->nonvolatile_context_lba = CHROMEOS_VBNVCONTEXT_LBA;
-	cdata->nonvolatile_context_offset = 0;
-	cdata->nonvolatile_context_size = VBNV_BLOCK_SIZE;
-
 	cdata->boot_write_protect_switch = write_protect_switch->value;
 	cdata->boot_recovery_switch = recovery_switch->value;
 	cdata->boot_developer_switch = developer_switch->value;
@@ -64,6 +60,12 @@ int crossystem_data_init(crossystem_data_t *cdata,
 	memcpy(cdata->hardware_id, hardware_id, sizeof(cdata->hardware_id));
 	memcpy(cdata->readonly_firmware_id, readonly_firmware_id,
 			sizeof(cdata->readonly_firmware_id));
+
+#ifdef CONFIG_TEGRA2
+	cdata->board.arm.nonvolatile_context_lba = CHROMEOS_VBNVCONTEXT_LBA;
+	cdata->board.arm.nonvolatile_context_offset = 0;
+	cdata->board.arm.nonvolatile_context_size = VBNV_BLOCK_SIZE;
+#endif
 
 	return 0;
 }
@@ -158,13 +160,6 @@ int crossystem_data_embed_into_fdt(crossystem_data_t *cdata, void *fdt,
 	err |= set_array_prop("signature", signature);
 	err |= set_scalar_prop("version", version);
 
-	err |= set_scalar_prop("nonvolatile-context-lba",
-			nonvolatile_context_lba);
-	err |= set_scalar_prop("nonvolatile-context-offset",
-			nonvolatile_context_offset);
-	err |= set_scalar_prop("nonvolatile-context-size",
-			nonvolatile_context_size);
-
 	err |= set_bool_prop("boot-write-protect-switch",
 			boot_write_protect_switch);
 	err |= set_bool_prop("boot-recovery-switch",
@@ -215,6 +210,15 @@ int crossystem_data_embed_into_fdt(crossystem_data_t *cdata, void *fdt,
 	err |= set_array_prop("readonly-firmware-version",
 			readonly_firmware_id);
 
+#ifdef CONFIG_TEGRA2
+	err |= set_scalar_prop("nonvolatile-context-lba",
+			board.arm.nonvolatile_context_lba);
+	err |= set_scalar_prop("nonvolatile-context-offset",
+			board.arm.nonvolatile_context_offset);
+	err |= set_scalar_prop("nonvolatile-context-size",
+			board.arm.nonvolatile_context_size);
+#endif
+
 	err |= set_array_prop("vboot-shared-data", vb_shared_data);
 
 #undef set_scalar_prop
@@ -235,10 +239,6 @@ void crossystem_data_dump(crossystem_data_t *cdata)
 	_p("\"%s\"",	signature);
 	_p("%d",	version);
 
-	_p("%08llx",	nonvolatile_context_lba);
-	_p("%08x",	nonvolatile_context_offset);
-	_p("%08x",	nonvolatile_context_size);
-
 	_p("%d",	boot_write_protect_switch);
 	_p("%d",	boot_recovery_switch);
 	_p("%d",	boot_developer_switch);
@@ -256,5 +256,11 @@ void crossystem_data_dump(crossystem_data_t *cdata)
 	_p("\"%s\"",	hardware_id);
 	_p("\"%s\"",	readonly_firmware_id);
 	_p("\"%s\"",	firmware_id);
+
+#ifdef CONFIG_TEGRA2
+	_p("%08llx",	board.arm.nonvolatile_context_lba);
+	_p("%08x",	board.arm.nonvolatile_context_offset);
+	_p("%08x",	board.arm.nonvolatile_context_size);
+#endif
 #undef _p
 }
