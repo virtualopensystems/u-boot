@@ -44,4 +44,13 @@ int fdt_decode_twostop_fmap(const void *fdt, struct fdt_twostop_fmap *config);
 
 void dump_fmap(struct fdt_twostop_fmap *config);
 
+/**
+ * This checks whether a property exists.
+ *
+ * @param fdt	FDT blob to use
+ * @param name	The path and name to the property in question
+ * @return non-zero if the property exists, zero if it does not exist.
+ */
+int fdt_decode_chromeos_config_has_prop(const void *fdt, const char *name);
+
 #endif /* CHROMEOS_FDT_DECODE_H_ */

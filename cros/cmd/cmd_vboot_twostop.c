@@ -223,7 +223,14 @@ VbError_t twostop_init_vboot_library(const void const *fdt,
 	VbError_t err;
 	VbInitParams iparams;
 
-	iparams.flags = VB_INIT_FLAG_RO_NORMAL_SUPPORT;
+	if (fdt_decode_chromeos_config_has_prop(fdt, "twostop-optional")) {
+		VBDEBUG(PREFIX "twostop-optional\n");
+		iparams.flags = VB_INIT_FLAG_RO_NORMAL_SUPPORT;
+	} else {
+		VBDEBUG(PREFIX "not twostop-optional\n");
+		iparams.flags = 0;
+	}
+
 	if (cdata->boot_write_protect_switch)
 		iparams.flags |= VB_INIT_FLAG_WP_ENABLED;
 	if (cdata->boot_recovery_switch)

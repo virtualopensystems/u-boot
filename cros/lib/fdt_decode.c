@@ -153,3 +153,13 @@ void dump_fmap(struct fdt_twostop_fmap *config)
 	dump_firmware_entry("rw-a", &config->readwrite_a);
 	dump_firmware_entry("rw-b", &config->readwrite_b);
 }
+
+int fdt_decode_chromeos_config_has_prop(const void *fdt, const char *name)
+{
+	int nodeoffset = fdt_path_offset(fdt, "/chromeos-config"), len;
+
+	if (nodeoffset < 0)
+		return 0;
+
+	return fdt_get_property(fdt, nodeoffset, name, &len) != NULL;
+}
