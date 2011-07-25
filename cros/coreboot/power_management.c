@@ -13,9 +13,9 @@
 #include <chromeos/power_management.h>
 #include <common.h>
 
-int is_cold_boot(void)
+int is_processor_reset(void)
 {
-	printf("is_cold_boot used but not implemented.\n");
+	printf("is_processor_reset used but not implemented.\n");
 	return 1;
 }
 

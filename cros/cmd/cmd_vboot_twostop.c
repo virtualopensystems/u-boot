@@ -683,8 +683,16 @@ int do_vboot_twostop(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	 */
 	lcd_clear();
 
-	/* If it is a cold boot, we are in read-only firmware */
-	if (is_cold_boot())
+	/*
+	 * A processor reset jumps to the reset entry point (which is the
+	 * read-only firmware), otherwise we have entered U-Boot from a
+	 * software jump.
+	 *
+	 * Note: If a read-only firmware is loaded to memory not because of a
+	 * processor reset, this instance of read-only firmware should go to the
+	 * readwrite firmware code path.
+	 */
+	if (is_processor_reset())
 		selection = twostop_boot(fdt);
 	else
 		selection = twostop_readwrite_main_firmware(fdt);

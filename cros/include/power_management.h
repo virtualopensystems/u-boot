@@ -13,7 +13,7 @@
 #ifndef CHROMEOS_POWER_MANAGEMENT_H_
 #define CHROMEOS_POWER_MANAGEMENT_H_
 
-int is_cold_boot(void);
+int is_processor_reset(void);
 
 /* Tell PMIC to cold reboot the whole system */
 void cold_reboot(void);
