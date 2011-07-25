@@ -267,7 +267,7 @@ uint32_t twostop_make_selection(struct fdt_twostop_fmap *fmap,
 	memset(&fparams, '\0', sizeof(fparams));
 
 	vlength = fmap->readwrite_a.vblock.length;
-	assert(vlength == fmap->readwrite_b.vblock->vblock.length);
+	assert(vlength == fmap->readwrite_b.vblock.length);
 
 	fparams.verification_size_A = fparams.verification_size_B = vlength;
 
