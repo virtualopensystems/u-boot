@@ -19,7 +19,7 @@
  *
  * @param kparams       kparams returned from VbSelectAndLoadKernel()
  * @param cdata         crossystem data pointer
- * @return LOAD_KERNEL_INVALID if it fails to boot; otherwise it never returns
+ * @return non-zero if it fails to boot; otherwise it never returns
  *         to its caller
  */
 int boot_kernel(VbSelectAndLoadKernelParams *kparams, crossystem_data_t *cdata);

@@ -171,7 +171,7 @@ static void update_cmdline(char *src, int devnum, int partnum, uint8_t *guid,
  *
  * @param kparams	kparams returned from VbSelectAndLoadKernel()
  * @param cdata		crossystem data pointer
- * @return LOAD_KERNEL_INVALID if it fails to boot; otherwise it never returns
+ * @return non-zero if it fails to boot; otherwise it never returns
  *         to its caller
  */
 int boot_kernel(VbSelectAndLoadKernelParams *kparams, crossystem_data_t *cdata)
@@ -214,7 +214,7 @@ int boot_kernel(VbSelectAndLoadKernelParams *kparams, crossystem_data_t *cdata)
 	do_bootm(NULL, 0, sizeof(argv)/sizeof(*argv), argv);
 
 	VBDEBUG(PREFIX "failed to boot; is kernel broken?\n");
-	return LOAD_KERNEL_INVALID;
+	return 1;
 }
 
 /*
