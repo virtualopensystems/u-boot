@@ -71,7 +71,7 @@
  * VbSharedData), and finally, the GBB.
  */
 #define CROSSYSTEM_DATA_ADDRESS \
-	(CONFIG_CHROMEOS_KERNEL_LOADADDR + CONFIG_CHROMEOS_KERNEL_BUFSIZE)
+	(CHROMEOS_KERNEL_LOADADDR + CHROMEOS_KERNEL_BUFSIZE)
 #define CROSSYSTEM_DATA_MAXSIZE 0x8000
 #define GBB_ADDRESS (CROSSYSTEM_DATA_ADDRESS + CROSSYSTEM_DATA_MAXSIZE)
 
@@ -539,8 +539,8 @@ uint32_t twostop_main_firmware(struct fdt_twostop_fmap *fmap,
 		return VB_SELECT_ERROR;
 	}
 
-	kparams.kernel_buffer = (void *)CONFIG_CHROMEOS_KERNEL_LOADADDR;
-	kparams.kernel_buffer_size = CONFIG_CHROMEOS_KERNEL_BUFSIZE;
+	kparams.kernel_buffer = (void *)CHROMEOS_KERNEL_LOADADDR;
+	kparams.kernel_buffer_size = CHROMEOS_KERNEL_BUFSIZE;
 
 	VBDEBUG(PREFIX "kparams:\n");
 	VBDEBUG(PREFIX "- kernel_buffer:      : %p\n", kparams.kernel_buffer);
