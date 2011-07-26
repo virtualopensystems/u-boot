@@ -67,6 +67,7 @@ int cros_gpio_fetch(enum cros_gpio_index index, const void *fdt,
 
 int cros_gpio_dump(cros_gpio_t *gpio)
 {
+#ifdef VBOOT_DEBUG
 	const char const *name[CROS_GPIO_MAX_GPIO] = {
 		"wpsw", "recsw", "devsw", "lidsw", "pwrsw"
 	};
@@ -80,5 +81,6 @@ int cros_gpio_dump(cros_gpio_t *gpio)
 	VBDEBUG(PREFIX "%-6s: port=%3d, polarity=%d, value=%d\n",
 			name[gpio->index],
 			gpio->port, gpio->polarity, gpio->value);
+#endif
 	return 0;
 }
