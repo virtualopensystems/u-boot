@@ -70,3 +70,16 @@ int gbb_read_recovery_key(void *gbb,
 
 	return 0;
 }
+
+int gbb_check_integrity(uint8_t *gbb)
+{
+	/*
+	 * Avoid a second "$GBB" signature in the binary. Some utility programs
+	 * that parses the contents of firmware image could fail if there are
+	 * multiple signatures.
+	 */
+	if (gbb[0] == '$' && gbb[1] == 'G' && gbb[2] == 'B' && gbb[3] == 'B')
+		return 0;
+	else
+		return 1;
+}

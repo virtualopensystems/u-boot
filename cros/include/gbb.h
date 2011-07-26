@@ -48,4 +48,12 @@ int gbb_read_bmp_block(void *gbb,
 int gbb_read_recovery_key(void *gbb,
 		firmware_storage_t *file, uint32_t gbb_offset);
 
+/**
+ * This is a sanity check of GBB blob.
+ *
+ * @param gbb		Buffer for holding GBB
+ * @return zero if the check passes, non-zero if the check fails
+ */
+int gbb_check_integrity(uint8_t *gbb);
+
 #endif /* CHROMEOS_GBB_H_ */

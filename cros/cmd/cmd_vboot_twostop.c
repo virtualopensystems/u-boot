@@ -19,6 +19,7 @@
 #include <chromeos/cros_gpio.h>
 #include <chromeos/fdt_decode.h>
 #include <chromeos/firmware_storage.h>
+#include <chromeos/gbb.h>
 #include <chromeos/memory_wipe.h>
 #include <chromeos/power_management.h>
 
@@ -219,7 +220,10 @@ static void wipe_unused_memory(const void const *fdt,
 }
 
 VbError_t twostop_init_vboot_library(const void const *fdt,
-		crossystem_data_t *cdata, VbCommonParams *cparams)
+		firmware_storage_t *file,
+		void *gbb, uint32_t gbb_offset,
+		crossystem_data_t *cdata,
+		VbCommonParams *cparams)
 {
 	VbError_t err;
 	VbInitParams iparams;
@@ -245,10 +249,18 @@ VbError_t twostop_init_vboot_library(const void const *fdt,
 		return err;
 	}
 
+	VBDEBUG(PREFIX "iparams.out_flags: %08x\n", iparams.out_flags);
+
 	if (iparams.out_flags & VB_INIT_OUT_CLEAR_RAM)
 		wipe_unused_memory(fdt, cdata, cparams);
 
-	/* No need to check iparams.out_flags & VB_INIT_OUT_ENABLE_RECOVERY */
+	/* Load required information of GBB */
+	if (iparams.out_flags & VB_INIT_OUT_ENABLE_DISPLAY)
+		if (gbb_read_bmp_block(gbb, file, gbb_offset))
+			return 1;
+	if (iparams.out_flags & VB_INIT_OUT_ENABLE_RECOVERY)
+		if (gbb_read_recovery_key(gbb, file, gbb_offset))
+			return 1;
 
 	return VBERROR_SUCCESS;
 }
@@ -362,7 +374,8 @@ uint32_t twostop_select_and_set_main_firmware(const void const *fdt,
 		return VB_SELECT_ERROR;
 	}
 
-	if (twostop_init_vboot_library(fdt, cdata, &cparams)
+	if (twostop_init_vboot_library(fdt, file,
+				gbb, fmap->readonly.gbb.offset, cdata, &cparams)
 			!= VBERROR_SUCCESS) {
 		VBDEBUG(PREFIX "failed to init vboot library\n");
 		return VB_SELECT_ERROR;
@@ -489,9 +502,8 @@ int twostop_init(const void const *fdt,
 	}
 	VBDEBUG(PREFIX "read-only firmware id: \"%s\"\n", readonly_firmware_id);
 
-	/* Load gbb blob */
-	if (file->read(file, fmap->readonly.gbb.offset,
-				fmap->readonly.gbb.length, gbb)) {
+	/* Load basic parts of gbb blob */
+	if (gbb_init(gbb, file, fmap->readonly.gbb.offset)) {
 		VBDEBUG(PREFIX "failed to read gbb\n");
 		goto out;
 	}
@@ -613,8 +625,6 @@ uint32_t twostop_boot(const void const *fdt)
 
 	/*
 	 * TODO: Now, load drivers for rec/normal/dev main firmware.
-	 * We should be able to use out_flags from VbInit to know which boot
-	 * mode and how many drivers we need.
 	 */
 
 	selection = twostop_main_firmware(&fmap, gbb, cdata, vb_shared_data);
@@ -632,14 +642,6 @@ uint32_t twostop_boot(const void const *fdt)
 	 */
 
 	return VB_SELECT_COMMAND_LINE;
-}
-
-int gbb_check_integrity(uint8_t *gbb)
-{
-	if (gbb[0] == '$' && gbb[1] == 'G' && gbb[2] == 'B' && gbb[3] == 'B')
-		return 0;
-	else
-		return 1;
 }
 
 uint32_t twostop_readwrite_main_firmware(const void const *fdt)
