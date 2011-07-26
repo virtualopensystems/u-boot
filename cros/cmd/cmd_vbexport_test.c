@@ -18,9 +18,12 @@
 #include <command.h>
 #include <gbb_header.h>
 #include <chromeos/firmware_storage.h>
+#include <chromeos/gbb.h>
 #include <vboot/global_data.h>
 
 #include <vboot_api.h>
+
+DECLARE_GLOBAL_DATA_PTR;
 
 #ifndef CACHE_LINE_SIZE
 #define CACHE_LINE_SIZE __BIGGEST_ALIGNMENT__
@@ -395,10 +398,17 @@ static int show_screen_and_delay(uint32_t screen_type)
 
 static uint8_t *read_gbb_from_firmware(void)
 {
+	void *fdt_ptr = (void *)gd->blob;
 	vb_global_t *global;
 	firmware_storage_t file;
+	struct fdt_twostop_fmap fmap;
 
 	global = get_vboot_global();
+
+	if (fdt_decode_twostop_fmap(fdt_ptr, &fmap)) {
+		VbExDebug("Failed to load fmap config from fdt!\n");
+		return NULL;
+	}
 
 	/* Open firmware storage device. */
 	if (firmware_storage_open_spi(&file)) {
@@ -411,7 +421,8 @@ static uint8_t *read_gbb_from_firmware(void)
 		return NULL;
 	}
 
-	if (load_bmpblk_in_gbb(global, &file)) {
+	if (gbb_read_bmp_block(global->gbb_data, &file,
+				fmap.readonly.gbb.offset)) {
 		VbExDebug("Failed to load BMP Block in GBB!\n");
 		return NULL;
 	}

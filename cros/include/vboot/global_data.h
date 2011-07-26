@@ -48,10 +48,4 @@ int init_vboot_global(vb_global_t *global, firmware_storage_t *file);
 /* Checks if vboot global data valid or not. */
 int is_vboot_global_valid(vb_global_t *global);
 
-/* Loads the BMP block in GBB from firmware. */
-int load_bmpblk_in_gbb(vb_global_t *global, firmware_storage_t *file);
-
-/* Loads the recovery key in GBB from firmware. */
-int load_reckey_in_gbb(vb_global_t *global, firmware_storage_t *file);
-
 #endif /* VBOOT_GLOBAL_DATA_H */

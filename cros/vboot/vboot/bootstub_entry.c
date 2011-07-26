@@ -14,6 +14,7 @@
 #include <chromeos/crossystem_data.h>
 #include <chromeos/fdt_decode.h>
 #include <chromeos/firmware_storage.h>
+#include <chromeos/gbb.h>
 #include <chromeos/power_management.h>
 #include <chromeos/memory_wipe.h>
 #include <vboot/entry_points.h>
@@ -309,10 +310,12 @@ void bootstub_entry(void)
 	if (iparams.out_flags & VB_INIT_OUT_CLEAR_RAM)
 		wipe_unused_memory(fdt_ptr, global);
 	if (iparams.out_flags & VB_INIT_OUT_ENABLE_DISPLAY)
-		if (load_bmpblk_in_gbb(global, &file))
+		if (gbb_read_bmp_block(global->gbb_data, &file,
+					fmap.readonly.gbb.offset))
 			VbExError(PREFIX "Failed to load BMP Block!\n");
 	if (iparams.out_flags & VB_INIT_OUT_ENABLE_RECOVERY)
-		if (load_reckey_in_gbb(global, &file))
+		if (gbb_read_recovery_key(global->gbb_data, &file,
+					fmap.readonly.gbb.offset))
 			VbExError(PREFIX "Failed to load recovery key!\n");
 
 	/* Call VbSelectFirmware() */
