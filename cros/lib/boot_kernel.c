@@ -14,7 +14,6 @@
 #include <chromeos/common.h>
 #include <chromeos/crossystem_data.h>
 
-#include <load_kernel_fw.h>
 #include <vboot_api.h>
 
 #define PREFIX "boot_kernel: "
@@ -166,14 +165,6 @@ static void update_cmdline(char *src, int devnum, int partnum, uint8_t *guid,
 	*dst = '\0';
 }
 
-/**
- * This boots kernel specified in [kparmas].
- *
- * @param kparams	kparams returned from VbSelectAndLoadKernel()
- * @param cdata		crossystem data pointer
- * @return non-zero if it fails to boot; otherwise it never returns
- *         to its caller
- */
 int boot_kernel(VbSelectAndLoadKernelParams *kparams, crossystem_data_t *cdata)
 {
 	char cmdline_buf[CROS_CONFIG_SIZE + EXTRA_BUFFER];

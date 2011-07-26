@@ -22,6 +22,7 @@
  * @return non-zero if it fails to boot; otherwise it never returns
  *         to its caller
  */
+/* TODO define error codes on different errors */
 int boot_kernel(VbSelectAndLoadKernelParams *kparams, crossystem_data_t *cdata);
 
 #endif /* CHROMEOS_BOOT_KERNEL_H */
