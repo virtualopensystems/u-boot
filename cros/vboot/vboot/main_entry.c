@@ -86,6 +86,17 @@ void main_entry(void)
 	prepare_cparams(global, &cparams);
 	prepare_kparams(&kparams);
 
+	/*
+	 * VbSelectAndLoadKernel() assumes the TPM interface has already been
+	 * initialized by VbSelectFirmware(). Since we haven't called
+	 * VbSelectFirmware() in the readwrite firmware, we need to explicitly
+	 * initialize the TPM interface. Note that this only re-initializes the
+	 * interface, not the TPM itself.
+	 */
+	if (VbExTpmInit() != TPM_SUCCESS) {
+		VbExError(PREFIX "failed to init tpm interface\n");
+	}
+
 	ret = call_VbSelectAndLoadKernel(&cparams, &kparams);
 
 	if (ret)

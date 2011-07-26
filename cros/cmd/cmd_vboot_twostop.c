@@ -23,6 +23,7 @@
 #include <chromeos/power_management.h>
 
 #include <gbb_header.h> /* for GoogleBinaryBlockHeader */
+#include <tss_constants.h>
 #include <vboot_api.h>
 
 #define PREFIX "vboot_twostop: "
@@ -665,6 +666,18 @@ uint32_t twostop_readwrite_main_firmware(const void const *fdt)
 		return VB_SELECT_ERROR;
 	}
 	dump_fmap(&fmap);
+
+	/*
+	 * VbSelectAndLoadKernel() assumes the TPM interface has already been
+	 * initialized by VbSelectFirmware(). Since we haven't called
+	 * VbSelectFirmware() in the readwrite firmware, we need to explicitly
+	 * initialize the TPM interface. Note that this only re-initializes the
+	 * interface, not the TPM itself.
+	 */
+	if (VbExTpmInit() != TPM_SUCCESS) {
+		VBDEBUG(PREFIX "failed to init tpm interface\n");
+		return VB_SELECT_ERROR;
+	}
 
 	/* TODO Now, initialize device that bootstub did not initialize */
 
