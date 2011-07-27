@@ -79,24 +79,22 @@ static int do_vboot_test_fwrw(cmd_tbl_t *cmdtp,
 
 	t0 = VbExGetTimer();
 	ret = file.write(&file, TEST_FW_START, test_length, target_buf);
-	VbExDebug("file.write returned\n");
+	t1 = VbExGetTimer();
+	VbExDebug("test_fwrw: fw_write, length: %#x, time: %llu\n",
+			test_length, t1 - t0);
+
 	if (ret) {
 		VbExDebug("Failed to write firmware!\n");
 		ret = 1;
 	} else {
 		/* Read back and verify the data. */
-		VbExDebug("start read again\n");
 		file.read(&file, TEST_FW_START, test_length, verify_buf);
-		VbExDebug("start memcmp\n");
 		if (memcmp(target_buf, verify_buf, test_length) != 0) {
 			VbExDebug("Verify failed. The target data wrote "
 				  "wrong.\n");
 			ret = 1;
 		}
 	}
-	t1 = VbExGetTimer();
-	VbExDebug("test_fwrw: fw_write, length: %#x, time: %llu\n",
-			test_length, t1 - t0);
 
 	 /* Write the original data back. */
 	if (file.write(&file, TEST_FW_START, test_length, original_buf)) {

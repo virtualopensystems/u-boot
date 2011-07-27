@@ -279,7 +279,12 @@ static int do_vbexport_test_diskrw(
 			test_lba_count, t1 - t0);
 
 	t0 = VbExGetTimer();
-	if (VbExDiskWrite(handle, TEST_LBA_START, test_lba_count, target_buf)) {
+	ret = VbExDiskWrite(handle, TEST_LBA_START, test_lba_count, target_buf);
+	t1 = VbExGetTimer();
+	VbExDebug("test_diskrw: disk_write, lba_count: %u, time: %llu\n",
+			test_lba_count, t1 - t0);
+
+	if (ret) {
 		VbExDebug("Failed to write disk.\n");
 		ret = 1;
 	} else {
@@ -292,9 +297,6 @@ static int do_vbexport_test_diskrw(
 			ret = 1;
 		}
 	}
-	t1 = VbExGetTimer();
-	VbExDebug("test_diskrw: disk_write, lba_count: %u, time: %llu\n",
-			test_lba_count, t1 - t0);
 
 	/* Write the original data back. */
 	if (VbExDiskWrite(handle, TEST_LBA_START, test_lba_count,
