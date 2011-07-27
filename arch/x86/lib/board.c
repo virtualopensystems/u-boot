@@ -290,6 +290,8 @@ void board_init_r(gd_t *id, ulong dest_addr)
 	/* compiler optimization barrier needed for GCC >= 3.4 */
 	__asm__ __volatile__("" : : : "memory");
 
+	gd->blob = NULL;
+
 	gd->bd = &bd_data;
 	memset(gd->bd, 0, sizeof(bd_t));
 	bootstage_mark(BOOTSTAGE_ID_BOARD_GLOBAL_DATA);
