@@ -213,6 +213,11 @@ void	lcd_puts	(const char *s);
 void	lcd_printf	(const char *fmt, ...);
 void	lcd_clear(void);
 int	lcd_display_bitmap(ulong bmp_image, int x, int y);
+int	lcd_get_pixel_width(void);
+int	lcd_get_pixel_height(void);
+int	lcd_get_screen_rows(void);
+int	lcd_get_screen_columns(void);
+void	lcd_position_cursor(unsigned col, unsigned row);
 
 /* Allow boards to customize the information displayed */
 void lcd_show_board_info(void);
