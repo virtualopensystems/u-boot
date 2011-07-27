@@ -25,6 +25,8 @@ LIB := $(obj)libtpm.o
 
 COBJS-$(CONFIG_GENERIC_LPC_TPM) = generic_lpc_tpm.o
 
+COBJS-$(CONFIG_DUMMY_TPM) = dummy_tpm.o
+
 COBJS	:= $(COBJS-y)
 SRCS	:= $(COBJS:.o=.c)
 OBJS	:= $(addprefix $(obj),$(COBJS))
