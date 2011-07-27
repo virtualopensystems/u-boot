@@ -20,4 +20,7 @@
 #define VBDEBUG(fmt, args...)
 #endif
 
+/* this function is implemented along with vboot_api */
+int display_clear(void);
+
 #endif /* CHROMEOS_COMMON_H_ */

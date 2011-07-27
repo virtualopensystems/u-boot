@@ -9,42 +9,59 @@
  */
 
 #include <common.h>
-#include <fdt_decode.h>
+#ifdef CONFIG_LCD
 #include <lcd.h>
+#endif
+#ifdef CONFIG_CFB_CONSOLE
+#include <video.h>
+#endif
 #include <chromeos/common.h>
 #include <lzma/LzmaTypes.h>
 #include <lzma/LzmaDec.h>
 #include <lzma/LzmaTools.h>
-
-/* Import the header files from vboot_reference */
-#include <vboot_api.h>
 
 #define PRINT_MAX_ROW	20
 #define PRINT_MAX_COL	80
 
 DECLARE_GLOBAL_DATA_PTR;
 
-/* Defined in common/lcd.c */
-extern int lcd_display_bitmap (ulong, int, int);
+struct display_callbacks {
+	int (*dc_get_pixel_width) (void);
+	int (*dc_get_pixel_height) (void);
+	int (*dc_get_screen_columns) (void);
+	int (*dc_get_screen_rows) (void);
+	void (*dc_position_cursor) (unsigned col, unsigned row);
+	void (*dc_puts) (const char *s);
+	int (*dc_display_bitmap) (ulong, int, int);
+	int (*dc_display_clear) (void);
+};
+
+static struct display_callbacks display_callbacks_ = {
+#ifdef CONFIG_LCD
+	.dc_get_pixel_width = lcd_get_pixel_width,
+	.dc_get_pixel_height = lcd_get_pixel_height,
+	.dc_get_screen_columns = lcd_get_screen_columns,
+	.dc_get_screen_rows = lcd_get_screen_rows,
+	.dc_position_cursor = lcd_position_cursor,
+	.dc_puts = lcd_puts,
+	.dc_display_bitmap = lcd_display_bitmap,
+	.dc_display_clear = lcd_clear,
+
+#else
+	.dc_get_pixel_width = video_get_pixel_width,
+	.dc_get_pixel_height = video_get_pixel_height,
+	.dc_get_screen_columns = video_get_screen_columns,
+	.dc_get_screen_rows = video_get_screen_rows,
+	.dc_position_cursor = video_position_cursor,
+	.dc_puts = video_puts,
+	.dc_display_bitmap = video_display_bitmap,
+#endif
+};
 
 VbError_t VbExDisplayInit(uint32_t *width, uint32_t *height)
 {
-#ifdef CONFIG_OF_CONTROL
-	struct fdt_lcd config;
-
-	/* Get LCD details from FDT */
-	if (fdt_decode_lcd(gd->blob, &config)) {
-		VBDEBUG("No LCD information in device tree.\n");
-		return 1;
-	}
-
-	*width = config.width;
-	*height = config.height;
-#else
-	*width = CONFIG_LCD_vl_col;
-	*height = CONFIG_LCD_vl_row;
-#endif
-
+	*width = display_callbacks_.dc_get_pixel_width();
+	*height = display_callbacks_.dc_get_pixel_height();
 	return VBERROR_SUCCESS;
 }
 
@@ -54,50 +71,37 @@ VbError_t VbExDisplayBacklight(uint8_t enable)
 	return VBERROR_SUCCESS;
 }
 
-#ifdef CONFIG_LCD
 /* Print the message on the center of LCD. */
 static void print_on_center(const char *message)
 {
-	char result[PRINT_MAX_ROW * (PRINT_MAX_COL + 1) + 1] = "\0";
-	int i, j, left_space, right_space;
+	int i, room_before_text;
+	int screen_size = display_callbacks_.dc_get_screen_columns() *
+		display_callbacks_.dc_get_screen_rows();
+	int text_length = strlen(message);
 
-	for (i = 0; i < PRINT_MAX_ROW / 2 - 1; i++) {
-		for (j = 0; j < PRINT_MAX_COL; j++)
-			strcat(result, ".");
-		strcat(result, "\n");
-	}
+	room_before_text = (screen_size - text_length) / 2;
 
-	left_space = (PRINT_MAX_COL - strlen(message)) / 2;
-	for (i = 0; i < left_space; i++)
-		strcat(result, ".");
-	strcat(result, message);
+	display_callbacks_.dc_position_cursor(0, 0);
 
-	right_space = PRINT_MAX_COL - strlen(message) - left_space;
-	for (i = 0; i < right_space; i++)
-		strcat(result, ".");
-	strcat(result, "\n");
+	for (i = 0; i < room_before_text; i++)
+		display_callbacks_.dc_puts(".");
 
-	for (i = 0; i < PRINT_MAX_ROW - PRINT_MAX_ROW / 2; i++) {
-		for (j = 0; j < PRINT_MAX_COL; j++)
-			strcat(result, ".");
-		strcat(result, "\n");
-	}
+	display_callbacks_.dc_puts(message);
 
-	VbExDisplayDebugInfo(result);
+	for (i = i + text_length; i < screen_size; i++)
+		display_callbacks_.dc_puts(".");
 }
-#endif
 
 VbError_t VbExDisplayScreen(uint32_t screen_type)
 {
-#ifdef CONFIG_LCD
 	/*
 	 * Show the debug messages for development. It is a backup method
 	 * when GBB does not contain a full set of bitmaps.
 	 */
 	switch (screen_type) {
 		case VB_SCREEN_BLANK:
-			/* clear the lcd screen */
-			lcd_clear();
+			/* clear the screen */
+			display_clear();
 			break;
 		case VB_SCREEN_DEVELOPER_WARNING:
 			print_on_center("developer mode warning");
@@ -120,13 +124,8 @@ VbError_t VbExDisplayScreen(uint32_t screen_type)
 			return 1;
 	}
 	return VBERROR_SUCCESS;
-#else
-	printf("VbExDisplayScreen needs lcd support which isn't configured.\n");
-	return 1;
-#endif
 }
 
-#ifdef CONFIG_LCD
 static uint8_t *uncompress_lzma(uint8_t *in_addr, SizeT in_size,
                                 SizeT out_size)
 {
@@ -141,12 +140,10 @@ static uint8_t *uncompress_lzma(uint8_t *in_addr, SizeT in_size,
 	}
 	return out_addr;
 }
-#endif
 
 VbError_t VbExDisplayImage(uint32_t x, uint32_t y, const ImageInfo *info,
                            const void *buffer)
 {
-#ifdef CONFIG_LCD
 	int ret;
 	uint8_t *raw_data;
 
@@ -171,7 +168,7 @@ VbError_t VbExDisplayImage(uint32_t x, uint32_t y, const ImageInfo *info,
 		return 1;
 	}
 
-	ret = lcd_display_bitmap((ulong)raw_data, x, y);
+	ret = display_callbacks_.dc_display_bitmap((ulong)raw_data, x, y);
 
 	if (info->compression == COMPRESS_LZMA1)
 		VbExFree(raw_data);
@@ -182,24 +179,21 @@ VbError_t VbExDisplayImage(uint32_t x, uint32_t y, const ImageInfo *info,
 	}
 
 	return VBERROR_SUCCESS;
-#else
-	printf("VbExDisplayImage needs lcd support which isn't configured.\n");
-	return 1;
-#endif
 }
 
 VbError_t VbExDisplayDebugInfo(const char *info_str)
 {
-#ifdef CONFIG_LCD
-	/* Show the debug message on the upper left corner */
-	console_col = 0;
-	console_row = 0;
-	lcd_puts(info_str);
-
+	display_callbacks_.dc_position_cursor(0, 0);
+	display_callbacks_.dc_puts(info_str);
 	return VBERROR_SUCCESS;
-#else
-	printf("VbExDisplayDebugInfo needs lcd support which isn't "
-		"configured.\n");
-	return 1;
-#endif
+}
+
+/* this function is not technically part of the vboot interface */
+int display_clear(void)
+{
+	if (display_callbacks_.dc_display_clear)
+		return display_callbacks_.dc_display_clear();
+
+	printf ("%s: not implemented!\n", __FUNCTION__);
+	return -1;
 }
