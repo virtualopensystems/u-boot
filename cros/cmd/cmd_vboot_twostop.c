@@ -375,7 +375,7 @@ uint32_t twostop_select_and_set_main_firmware(const void const *fdt,
 		void *gbb,
 		crossystem_data_t *cdata,
 		void *vb_shared_data,
-		void **fw_blob_ptr, uint32_t *fw_size_ptr)
+		int *boot_mode, void **fw_blob_ptr, uint32_t *fw_size_ptr)
 {
 	uint32_t selection;
 	uint32_t id_offset = 0, id_length = 0;
@@ -435,6 +435,8 @@ uint32_t twostop_select_and_set_main_firmware(const void const *fdt,
 		firmware_type = FIRMWARE_TYPE_DEVELOPER;
 	else
 		firmware_type = FIRMWARE_TYPE_NORMAL;
+
+	*boot_mode = firmware_type;
 
 	VBDEBUG(PREFIX "active main firmware type : %d\n", firmware_type);
 	VBDEBUG(PREFIX "active main firmware id   : \"%s\"\n", firmware_id);
@@ -614,6 +616,7 @@ uint32_t twostop_boot(const void const *fdt)
 	void *fw_blob = NULL;
 	uint32_t fw_size = 0;
 	uint32_t selection;
+	int boot_mode = FIRMWARE_TYPE_NORMAL;
 
 	if (twostop_init(fdt, &fmap, &file, gbb, cdata, vb_shared_data)) {
 		VBDEBUG(PREFIX "failed to init twostop boot\n");
@@ -622,7 +625,7 @@ uint32_t twostop_boot(const void const *fdt)
 
 	selection = twostop_select_and_set_main_firmware(fdt, &fmap, &file,
 			gbb, cdata, vb_shared_data,
-			&fw_blob, &fw_size);
+			&boot_mode, &fw_blob, &fw_size);
 	VBDEBUG(PREFIX "selection of bootstub: %s\n", str_selection(selection));
 
 	file.close(&file); /* We don't care even if it fails */
@@ -641,6 +644,8 @@ uint32_t twostop_boot(const void const *fdt)
 	/*
 	 * TODO: Now, load drivers for rec/normal/dev main firmware.
 	 */
+
+	VBDEBUG(PREFIX "boot_mode: %d\n", boot_mode);
 
 	selection = twostop_main_firmware(&fmap, gbb, cdata, vb_shared_data);
 	VBDEBUG(PREFIX "selection of read-only main firmware: %s\n",
