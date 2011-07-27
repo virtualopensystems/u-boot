@@ -707,7 +707,11 @@ int do_vboot_twostop(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	 * In normal mode, we don't need to load graphics driver and clear
 	 * screen.
 	 */
+#ifdef CONFIG_LCD
 	lcd_clear();
+#else
+	printf("Would call lcd_clear, but the LCD driver isn't being used.\n");
+#endif
 
 	/*
 	 * A processor reset jumps to the reset entry point (which is the
