@@ -192,6 +192,7 @@ VbError_t VbExHashFirmwareBody(VbCommonParams* cparams, uint32_t firmware_index)
 	return 0;
 }
 
+#ifdef CONFIG_OF_CONTROL
 static uintptr_t get_current_sp(void)
 {
 	uintptr_t addr;
@@ -199,10 +200,12 @@ static uintptr_t get_current_sp(void)
 	addr = (uintptr_t)&addr;
 	return addr;
 }
+#endif
 
 static void wipe_unused_memory(const void const *fdt,
 		crossystem_data_t *cdata, VbCommonParams *cparams)
 {
+#ifdef CONFIG_OF_CONTROL
 	memory_wipe_t wipe;
 	struct fdt_memory config;
 
@@ -221,6 +224,10 @@ static void wipe_unused_memory(const void const *fdt,
 			(uintptr_t)cparams->gbb_data + cparams->gbb_size);
 
 	memory_wipe_execute(&wipe);
+#else
+	printf("wipe_unused_memory depends on fdt_decode_memory which"
+		" isn't configured\n");
+#endif
 }
 
 VbError_t twostop_init_vboot_library(const void const *fdt,
