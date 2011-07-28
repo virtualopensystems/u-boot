@@ -41,12 +41,10 @@
 /*-----------------------------------------------------------------------
  * Memory layout
  */
+#define CHROMEOS_KERNEL_LOADADDR	0x00100000
+#define CHROMEOS_KERNEL_BUFSIZE		0x00800000
 #define CONFIG_VBGLOBAL_BASE		0x00FB0000
 #define CONFIG_SYS_TEXT_BASE		0x00FC0000
-#define CONFIG_CHROMEOS_KERNEL_LOADADDR	0x02000000
-#define CONFIG_CHROMEOS_KERNEL_BUFSIZE	0x00800000
-#define CHROMEOS_KERNEL_LOADADDR	CONFIG_CHROMEOS_KERNEL_LOADADDR
-#define CHROMEOS_KERNEL_BUFSIZE		CONFIG_CHROMEOS_KERNEL_BUFSIZE
 
 
 /*-----------------------------------------------------------------------
