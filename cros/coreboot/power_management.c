@@ -24,3 +24,9 @@ void cold_reboot(void)
 {
 	printf("cold_reboot used but not implemented.\n");
 }
+
+/* This function never returns */
+void power_off(void)
+{
+	printf("power_off used but not implemented.\n");
+}

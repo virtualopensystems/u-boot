@@ -89,14 +89,15 @@ DECLARE_GLOBAL_DATA_PTR;
  * A sentinel value indicates an error occured when selecting main firmware or
  * kernel. This value must be unique to enum VbSelectFirmware_t.
  */
-#define VB_SELECT_ERROR        0xff
+#define VB_SELECT_ERROR		0xff
 
 /*
  * A dummy value indicates that VbSelectAndLoadKernel requires U-Boot to show up
  * a command line. This value must be unique to enum VbSelectFirmware_t.
  */
+#define VB_SELECT_POWER_OFF	0xfe
 /* TODO Implement the "returning to command line" in vboot_reference. */
-#define VB_SELECT_COMMAND_LINE 0xfe
+#define VB_SELECT_COMMAND_LINE	0xfd
 
 #ifdef VBOOT_DEBUG
 const char *str_selection(uint32_t selection)
@@ -110,6 +111,8 @@ const char *str_selection(uint32_t selection)
 
 	if (selection == VB_SELECT_ERROR)
 		return "VB_SELECT_ERROR";
+	else if (selection == VB_SELECT_POWER_OFF)
+		return "VB_SELECT_POWER_OFF";
 	else if (selection == VB_SELECT_COMMAND_LINE)
 		return "VB_SELECT_COMMAND_LINE";
 	else
@@ -572,7 +575,8 @@ uint32_t twostop_main_firmware(struct fdt_twostop_fmap *fmap,
 
 	if ((err = VbSelectAndLoadKernel(&cparams, &kparams))) {
 		VBDEBUG(PREFIX "VbSelectAndLoadKernel: %d\n", err);
-		return VB_SELECT_ERROR;
+		return VbExIsShutdownRequested() ?
+			VB_SELECT_POWER_OFF : VB_SELECT_ERROR;
 	}
 
 	/* TODO: Check kparams.out_flags and return VB_SELECT_COMMAND_LINE. */
@@ -642,10 +646,8 @@ uint32_t twostop_boot(const void const *fdt)
 	VBDEBUG(PREFIX "selection of read-only main firmware: %s\n",
 			str_selection(selection));
 
-	if (selection == VB_SELECT_ERROR)
-		return VB_SELECT_ERROR;
-
-	assert(selection == VB_SELECT_COMMAND_LINE);
+	if (selection != VB_SELECT_COMMAND_LINE)
+		return selection;
 
 	/*
 	 * TODO: Now, load all other drivers, such as networking, as we are
@@ -728,6 +730,9 @@ int do_vboot_twostop(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 
 	if (selection == VB_SELECT_COMMAND_LINE)
 		return 0;
+
+	if (selection == VB_SELECT_POWER_OFF)
+		power_off();
 
 	assert(selection == VB_SELECT_ERROR);
 

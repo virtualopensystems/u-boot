@@ -15,8 +15,10 @@
 
 int is_processor_reset(void);
 
-/* Tell PMIC to cold reboot the whole system */
+/* Cold reboot the machine */
 void cold_reboot(void);
 
-#endif /* CHROMEOS_POWER_MANAGEMENT_H_ */
+/* Power off the machine */
+void power_off(void);
 
+#endif /* CHROMEOS_POWER_MANAGEMENT_H_ */
