@@ -108,35 +108,55 @@ static char *emit_guid(char *dst, uint8_t *guid)
  *   ("root=/dev/sd%D%P", 2, 3)      -> "root=/dev/sdc3"
  *   ("root=/dev/mmcblk%Dp%P", 0, 5) -> "root=/dev/mmcblk0p5".
  *
- * @param src - input string
- * @param devnum - device number of the storage device we will mount
- * @param partnum - partition number of the root file system we will mount
- * @param guid - guid of the kernel partition
- * @param dst - output string; a copy of [src] with special characters replaced
+ * @param src		Input string
+ * @param devnum	Device number of the storage device we will mount
+ * @param partnum	Partition number of the root file system we will mount
+ * @param guid		GUID of the kernel partition
+ * @param dst		Output string
+ * @param dst_size	Size of output string
+ * @return zero if it succeeds, non-zero if it fails
  */
-static void update_cmdline(char *src, int devnum, int partnum, uint8_t *guid,
-		char *dst)
+static int update_cmdline(char *src, int devnum, int partnum, uint8_t *guid,
+		char *dst, int dst_size)
 {
+	char *dst_end = dst + dst_size;
 	int c;
 
-	// sanity check on inputs
-	if (devnum < 0 || devnum > 25 || partnum < 1 || partnum > 99) {
-		VBDEBUG(PREFIX "insane input: %d, %d\n", devnum, partnum);
-		devnum = 0;
-		partnum = 3;
+	/* sanity check on inputs */
+	if (devnum < 0 || devnum > 25 || partnum < 1 || partnum > 99 ||
+			dst_size < 0 || dst_size > 10000) {
+		VBDEBUG(PREFIX "insane input: %d, %d, %d\n", devnum, partnum,
+				dst_size);
+		return 1;
+	}
+
+	/*
+	 * Condition "dst + X <= dst_end" checks if there is at least X bytes
+	 * left in dst. We use X > 1 so that there is always 1 byte for '\0'
+	 * after the loop.
+	 *
+	 * We constantly estimate how many bytes we are going to write to dst
+	 * for copying characters from src or for the string replacements, and
+	 * check if there is sufficient space.
+	 */
+
+#define CHECK_SPACE(bytes) \
+	if (!(dst + (bytes) <= dst_end)) { \
+		VBDEBUG(PREFIX "fail: need at least %d bytes\n", (bytes)); \
+		return 1; \
 	}
 
 	while ((c = *src++)) {
 		if (c != '%') {
+			CHECK_SPACE(2);
 			*dst++ = c;
 			continue;
 		}
 
 		switch ((c = *src++)) {
 		case '\0':
-			/* input ends in '%'; is it not well-formed? */
-			src--;
-			break;
+			VBDEBUG(PREFIX "mal-formed input: end in '%%'\n");
+			return 1;
 		case 'D':
 			/*
 			 * TODO: Do we have any better way to know whether %D
@@ -144,25 +164,35 @@ static void update_cmdline(char *src, int devnum, int partnum, uint8_t *guid,
 			 * done by a rule of thumb that if %D is followed by a
 			 * 'p' character, then it is replaced by digits.
 			 */
-			if (*src == 'p')
+			if (*src == 'p') {
+				CHECK_SPACE(3);
 				dst = itoa(dst, devnum);
-			else
+			} else {
+				CHECK_SPACE(2);
 				*dst++ = 'a' + devnum;
+			}
 			break;
 		case 'P':
-			dst = itoa(dst, devnum);
+			CHECK_SPACE(3);
+			dst = itoa(dst, partnum);
 			break;
 		case 'U':
+			/* GUID replacement needs 36 bytes */
+			CHECK_SPACE(36 + 1);
 			dst = emit_guid(dst, guid);
 			break;
 		default:
+			CHECK_SPACE(3);
 			*dst++ = '%';
 			*dst++ = c;
 			break;
 		}
 	}
 
+#undef CHECK_SPACE
+
 	*dst = '\0';
+	return 0;
 }
 
 /* TODO Copy from tegra2-common.h so that coreboot can be built */
@@ -206,12 +236,14 @@ int boot_kernel(VbSelectAndLoadKernelParams *kparams, crossystem_data_t *cdata)
 
 	VBDEBUG(PREFIX "cmdline before update: %s\n", cmdline_buf);
 
-	/* TODO fix potential buffer overflow */
-	update_cmdline(cmdline_buf,
+	if (update_cmdline(cmdline_buf,
 			get_dev_num(kparams->disk_handle),
 			kparams->partition_number + 1,
 			kparams->partition_guid,
-			cmdline_out);
+			cmdline_out, sizeof(cmdline_out))) {
+		VBDEBUG(PREFIX "failed replace %%[DUP] in command line\n");
+		return 1;
+	}
 
 	setenv("bootargs", cmdline_out);
 	VBDEBUG(PREFIX "cmdline after update:  %s\n", getenv("bootargs"));
