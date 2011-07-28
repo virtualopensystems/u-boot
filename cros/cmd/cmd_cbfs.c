@@ -43,7 +43,12 @@ int do_cbfs_init(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 			return 1;
 		}
 	}
-	return file_cbfs_init(end_of_rom);
+	file_cbfs_init(end_of_rom);
+	if (file_cbfs_result != CBFS_SUCCESS) {
+		printf("%s.\n", file_cbfs_error());
+		return 1;
+	}
+	return 0;
 }
 
 U_BOOT_CMD(
@@ -61,6 +66,7 @@ int do_cbfs_fsload (cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 	unsigned long offset;
 	unsigned long count;
 	char buf[12];
+	CbfsFile file;
 
 	if (argc < 3) {
 		printf("usage: cbfsload <addr> <filename> [bytes]\n");
@@ -74,11 +80,18 @@ int do_cbfs_fsload (cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 	else
 		count = 0;
 
-	size = file_cbfs_read(argv[2], (void *)offset, count);
-	if (size < 0) {
-		printf("\n** Unable to read \"%s\" from cbfs **\n", argv[2]);
+	file = file_cbfs_find(argv[2]);
+	if (!file) {
+		if (file_cbfs_result == CBFS_FILE_NOT_FOUND)
+			printf("%s: %s\n", file_cbfs_error(), argv[2]);
+		else
+			printf("%s.\n", file_cbfs_error());
 		return 1;
 	}
+
+	printf("reading %s\n", file_cbfs_name(file));
+
+	size = file_cbfs_read(file, (void *)offset, count);
 
 	printf("\n%ld bytes read\n", size);
 
@@ -97,7 +110,72 @@ U_BOOT_CMD(
 
 int do_cbfs_ls (cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 {
-	return file_cbfs_ls();
+	CbfsFile file = file_cbfs_get_first();
+	int files = 0;
+
+	if (!file) {
+		printf("%s.\n", file_cbfs_error());
+		return 1;
+	}
+
+	printf("     size              type  name\n");
+	printf("------------------------------------------\n");
+	while (file) {
+		u32 type = file_cbfs_type(file);
+		char *typeName = NULL;
+		const char *filename = file_cbfs_name(file);
+		printf(" %8d", file_cbfs_size(file));
+
+		switch (type) {
+		    case CBFS_TYPE_STAGE:
+			typeName = "stage";
+			break;
+		    case CBFS_TYPE_PAYLOAD:
+			typeName = "payload";
+			break;
+		    case CBFS_TYPE_OPTIONROM:
+			typeName = "option rom";
+			break;
+		    case CBFS_TYPE_BOOTSPLASH:
+			typeName = "boot splash";
+			break;
+		    case CBFS_TYPE_RAW:
+			typeName = "raw";
+			break;
+		    case CBFS_TYPE_VSA:
+			typeName = "vsa";
+			break;
+		    case CBFS_TYPE_MBI:
+			typeName = "mbi";
+			break;
+		    case CBFS_TYPE_MICROCODE:
+			typeName = "microcode";
+			break;
+		    case CBFS_COMPONENT_CMOS_DEFAULT:
+			typeName = "cmos default";
+			break;
+		    case CBFS_COMPONENT_CMOS_LAYOUT:
+			typeName = "cmos layout";
+			break;
+		    case -1UL:
+			typeName = "null";
+			break;
+		}
+		if (typeName)
+			printf("  %16s", typeName);
+		else
+			printf("  %16d", type);
+
+		if (filename[0])
+			printf("  %s\n", filename);
+		else
+			printf("  %s\n", "(empty)");
+		file_cbfs_get_next(&file);
+		files++;
+	}
+
+	printf("\n%d file(s)\n\n", files);
+	return 0;
 }
 
 U_BOOT_CMD(
@@ -108,7 +186,23 @@ U_BOOT_CMD(
 
 int do_cbfs_fsinfo (cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 {
-	return file_cbfs_fsinfo();
+	const CbfsHeader *header = file_cbfs_get_header();
+	if (!header) {
+		printf("%s.\n", file_cbfs_error());
+		return 1;
+	}
+
+	printf("\n");
+	printf("CBFS version: %#x\n", header->version);
+	printf("ROM size: %#x\n", header->romSize);
+	printf("Boot block size: %#x\n", header->bootBlockSize);
+	printf("CBFS size: %#x\n",
+		header->romSize - header->bootBlockSize - header->offset);
+	printf("Alignment: %d\n", header->align);
+	printf("Offset: %#x\n", header->offset);
+	printf("\n");
+
+	return 0;
 }
 
 U_BOOT_CMD(

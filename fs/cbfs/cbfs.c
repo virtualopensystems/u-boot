@@ -20,32 +20,30 @@
  * MA 02111-1307 USA
  */
 
-#include <common.h>
-#include <config.h>
 #include <cbfs.h>
 #include <malloc.h>
 #include <asm/byteorder.h>
 
-#define CBFS_TYPE_STAGE      0x10
-#define CBFS_TYPE_PAYLOAD    0x20
-#define CBFS_TYPE_OPTIONROM  0x30
-#define CBFS_TYPE_BOOTSPLASH 0x40
-#define CBFS_TYPE_RAW        0x50
-#define CBFS_TYPE_VSA        0x51
-#define CBFS_TYPE_MBI        0x52
-#define CBFS_TYPE_MICROCODE  0x53
-#define CBFS_COMPONENT_CMOS_DEFAULT 0xaa
-#define CBFS_COMPONENT_CMOS_LAYOUT 0x01aa
+CbfsResult file_cbfs_result;
 
-typedef struct CbfsHeader {
-	u32 magic;
-	u32 version;
-	u32 romSize;
-	u32 bootBlockSize;
-	u32 align;
-	u32 offset;
-	u32 pad[2];
-} __attribute__((packed)) CbfsHeader;
+const char *
+file_cbfs_error(void)
+{
+	switch (file_cbfs_result) {
+	    case CBFS_SUCCESS:
+		return "Success";
+	    case CBFS_NOT_INITIALIZED:
+		return "CBFS not initialized";
+	    case CBFS_BAD_HEADER:
+		return "Bad CBFS header";
+	    case CBFS_BAD_FILE:
+		return "Bad CBFS file";
+	    case CBFS_FILE_NOT_FOUND:
+		return "File not found";
+	    default:
+		return "Unknown";
+	}
+}
 
 typedef struct CbfsFileHeader {
 	u8 magic[8];
@@ -56,10 +54,13 @@ typedef struct CbfsFileHeader {
 } __attribute__((packed)) CbfsFileHeader;
 
 typedef struct CbfsCacheNode {
-	CbfsFileHeader header;
 	struct CbfsCacheNode *next;
+	u32 type;
 	void *data;
+	u32 dataLength;
 	char *name;
+	u32 nameLength;
+	u32 checksum;
 } __attribute__((packed)) CbfsCacheNode;
 
 
@@ -71,7 +72,8 @@ static int initialized;
 static struct CbfsHeader header;
 static CbfsCacheNode *fileCache;
 
-static void swap_header(CbfsHeader *dest, CbfsHeader *src)
+static void
+swap_header(CbfsHeader *dest, CbfsHeader *src)
 {
 	dest->magic = be32_to_cpu(src->magic);
 	dest->version = be32_to_cpu(src->version);
@@ -81,7 +83,8 @@ static void swap_header(CbfsHeader *dest, CbfsHeader *src)
 	dest->offset = be32_to_cpu(src->offset);
 }
 
-static void swap_file_header(CbfsFileHeader *dest, CbfsFileHeader *src)
+static void
+swap_file_header(CbfsFileHeader *dest, CbfsFileHeader *src)
 {
 	memcpy(&dest->magic, &src->magic, sizeof(dest->magic));
 	dest->len = be32_to_cpu(src->len);
@@ -90,19 +93,12 @@ static void swap_file_header(CbfsFileHeader *dest, CbfsFileHeader *src)
 	dest->offset = be32_to_cpu(src->offset);
 }
 
-static int init_check(void)
-{
-	if (!initialized) {
-		printf("CBFS not initialized.\n");
-		return 1;
-	}
-	return 0;
-}
-
-static int file_cbfs_fill_cache(u8 *start, u32 size, u32 align)
+static void
+file_cbfs_fill_cache(u8 *start, u32 size, u32 align)
 {
 	CbfsCacheNode *cacheNode;
 	CbfsCacheNode *newNode;
+	CbfsFileHeader header;
 	CbfsCacheNode **cacheTail = &fileCache;
 
 	/* Clear out old information. */
@@ -129,35 +125,40 @@ static int file_cbfs_fill_cache(u8 *start, u32 size, u32 align)
 		}
 
 		newNode = (CbfsCacheNode *)malloc(sizeof(CbfsCacheNode));
-		swap_file_header(&newNode->header, fileHeader);
-		if (newNode->header.offset < sizeof(CbfsFileHeader) ||
-				newNode->header.offset > newNode->header.len) {
-			printf("Bad file in CBFS.\n");
-			return 1;
+		swap_file_header(&header, fileHeader);
+		if (header.offset < sizeof(CbfsFileHeader) ||
+				header.offset > header.len) {
+			file_cbfs_result = CBFS_BAD_FILE;
+			return;
 		}
 		newNode->next = NULL;
-		newNode->data = start + newNode->header.offset;
-		nameLen = newNode->header.offset - sizeof(CbfsFileHeader);
+		newNode->type = header.type;
+		newNode->data = start + header.offset;
+		newNode->dataLength = header.len;
+		nameLen = header.offset - sizeof(CbfsFileHeader);
 		/* Add a byte for a NULL terminator. */
 		newNode->name = (char *)malloc(nameLen + 1);
 		strncpy(newNode->name,
 			((char *)fileHeader) + sizeof(CbfsFileHeader),
 			nameLen);
 		newNode->name[nameLen] = 0;
+		newNode->nameLength = nameLen;
+		newNode->checksum = header.checksum;
 		*cacheTail = newNode;
 		cacheTail = &newNode->next;
 
-		step = newNode->header.len;
+		step = header.len;
 		if (step % align)
 			step = step + align - step % align;
 
 		size -= step;
 		start += step;
 	}
-	return 0;
+	file_cbfs_result = CBFS_SUCCESS;
 }
 
-int file_cbfs_init(uintptr_t endOfRom)
+void
+file_cbfs_init(uintptr_t endOfRom)
 {
 	CbfsHeader *headerInRom;
 	u8 *startOfRom;
@@ -168,129 +169,131 @@ int file_cbfs_init(uintptr_t endOfRom)
 
 	if (header.magic != goodMagic || header.offset >
 			header.romSize - header.bootBlockSize) {
-		printf("Bad CBFS header.\n");
-		return 1;
+		file_cbfs_result = CBFS_BAD_HEADER;
+		return;
 	}
 
 	startOfRom = (u8 *)(endOfRom + 1 - header.romSize);
 
-	if (file_cbfs_fill_cache(startOfRom + header.offset,
-			header.romSize, header.align)) {
-		return 1;
-	}
-
-	initialized = 1;
-	return 0;
+	file_cbfs_fill_cache(startOfRom + header.offset,
+			     header.romSize, header.align);
+	if (file_cbfs_result == CBFS_SUCCESS)
+		initialized = 1;
 }
 
-long file_cbfs_read(const char *filename, void *buffer, unsigned long maxsize)
+const CbfsHeader *
+file_cbfs_get_header(void)
+{
+	if (initialized) {
+		file_cbfs_result = CBFS_SUCCESS;
+		return &header;
+	} else {
+		file_cbfs_result = CBFS_NOT_INITIALIZED;
+		return NULL;
+	}
+}
+
+CbfsFile
+file_cbfs_get_first(void)
+{
+	if (!initialized) {
+		file_cbfs_result = CBFS_NOT_INITIALIZED;
+		return NULL;
+	} else {
+		file_cbfs_result = CBFS_SUCCESS;
+		return fileCache;
+	}
+}
+
+void
+file_cbfs_get_next(CbfsFile *file)
+{
+	if (!initialized) {
+		file_cbfs_result = CBFS_NOT_INITIALIZED;
+		file = NULL;
+		return;
+	}
+
+	if (*file)
+		*file = (*file)->next;
+	file_cbfs_result = CBFS_SUCCESS;
+}
+
+CbfsFile
+file_cbfs_find(const char *name)
 {
 	struct CbfsCacheNode *cacheNode = fileCache;
-	u32 size;
 
-	if (init_check())
-		return 1;
+	if (!initialized) {
+		file_cbfs_result = CBFS_NOT_INITIALIZED;
+		return NULL;
+	}
 
 	while (cacheNode) {
-		if (!strcmp(filename, cacheNode->name))
+		if (!strcmp(name, cacheNode->name))
 			break;
 		cacheNode = cacheNode->next;
 	}
 	if (!cacheNode) {
-		printf("File %s not found.\n", filename);
-		return -1;
+		file_cbfs_result = CBFS_FILE_NOT_FOUND;
+	} else {
+		file_cbfs_result = CBFS_SUCCESS;
+	}
+	return cacheNode;
+}
+
+const char *
+file_cbfs_name(CbfsFile file)
+{
+	if (!initialized) {
+		file_cbfs_result = CBFS_NOT_INITIALIZED;
+		return NULL;
+	} else {
+		file_cbfs_result = CBFS_SUCCESS;
+		return file->name;
+	}
+}
+
+u32
+file_cbfs_size(CbfsFile file)
+{
+	if (!initialized) {
+		file_cbfs_result = CBFS_NOT_INITIALIZED;
+		return 0;
+	} else {
+		file_cbfs_result = CBFS_SUCCESS;
+		return file->dataLength;
+	}
+}
+
+u32
+file_cbfs_type(CbfsFile file)
+{
+	if (!initialized) {
+		file_cbfs_result = CBFS_NOT_INITIALIZED;
+		return 0;
+	} else {
+		file_cbfs_result = CBFS_SUCCESS;
+		return file->type;
+	}
+}
+
+long
+file_cbfs_read(CbfsFile file, void *buffer, unsigned long maxsize)
+{
+	u32 size;
+
+	if (!initialized) {
+		file_cbfs_result = CBFS_NOT_INITIALIZED;
+		return -CBFS_NOT_INITIALIZED;
 	}
 
-	printf("reading %s\n", filename);
-
-	size = cacheNode->header.len;
+	size = file->dataLength;
 	if (maxsize && size > maxsize)
 		size = maxsize;
 
-	memcpy(buffer, cacheNode->data, size);
+	memcpy(buffer, file->data, size);
 
+	file_cbfs_result = CBFS_SUCCESS;
 	return size;
-}
-
-int file_cbfs_ls(void)
-{
-	struct CbfsCacheNode *cacheNode = fileCache;
-	int files = 0;
-
-	if (init_check())
-		return 1;
-
-	printf("     size              type  name\n");
-	printf("------------------------------------------\n");
-	while (cacheNode) {
-		char *typeName = NULL;
-		printf(" %8d", cacheNode->header.len);
-
-		switch (cacheNode->header.type) {
-		    case CBFS_TYPE_STAGE:
-			typeName = "stage";
-			break;
-		    case CBFS_TYPE_PAYLOAD:
-			typeName = "payload";
-			break;
-		    case CBFS_TYPE_OPTIONROM:
-			typeName = "option rom";
-			break;
-		    case CBFS_TYPE_BOOTSPLASH:
-			typeName = "boot splash";
-			break;
-		    case CBFS_TYPE_RAW:
-			typeName = "raw";
-			break;
-		    case CBFS_TYPE_VSA:
-			typeName = "vsa";
-			break;
-		    case CBFS_TYPE_MBI:
-			typeName = "mbi";
-			break;
-		    case CBFS_TYPE_MICROCODE:
-			typeName = "microcode";
-			break;
-		    case CBFS_COMPONENT_CMOS_DEFAULT:
-			typeName = "cmos default";
-			break;
-		    case CBFS_COMPONENT_CMOS_LAYOUT:
-			typeName = "cmos layout";
-			break;
-		    case -1UL:
-			typeName = "null";
-			break;
-		}
-		if (typeName)
-			printf("  %16s", typeName);
-		else
-			printf("  %16d", cacheNode->header.type);
-
-		if (cacheNode->name[0])
-			printf("  %s\n", cacheNode->name);
-		else
-			printf("  %s\n", "(empty)");
-		cacheNode = cacheNode->next;
-		files++;
-	}
-
-	printf("\n%d file(s)\n\n", files);
-	return 0;
-}
-
-int file_cbfs_fsinfo(void)
-{
-	if (init_check())
-		return 1;
-
-	printf("\n");
-	printf("CBFS version: %#x\n", header.version);
-	printf("ROM size: %#x\n", header.romSize);
-	printf("Boot block size: %#x\n", header.bootBlockSize);
-	printf("CBFS size: %#x\n",
-		header.romSize - header.bootBlockSize - header.offset);
-	printf("Alignment: %d\n", header.align);
-	printf("Offset: %#x\n", header.offset);
-	printf("\n");
-	return 0;
 }
