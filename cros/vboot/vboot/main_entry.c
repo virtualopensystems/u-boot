@@ -28,8 +28,8 @@ static void prepare_cparams(vb_global_t *global, VbCommonParams *cparams)
 
 static void prepare_kparams(VbSelectAndLoadKernelParams *kparams)
 {
-	kparams->kernel_buffer = (void *)CONFIG_CHROMEOS_KERNEL_LOADADDR;
-	kparams->kernel_buffer_size = CONFIG_CHROMEOS_KERNEL_BUFSIZE;
+	kparams->kernel_buffer = (void *)CHROMEOS_KERNEL_LOADADDR;
+	kparams->kernel_buffer_size = CHROMEOS_KERNEL_BUFSIZE;
 }
 
 static VbError_t call_VbSelectAndLoadKernel(VbCommonParams* cparams,
