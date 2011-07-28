@@ -156,7 +156,8 @@ void dump_fmap(struct fdt_twostop_fmap *config)
 
 int fdt_decode_chromeos_config_has_prop(const void *fdt, const char *name)
 {
-	int nodeoffset = fdt_path_offset(fdt, "/chromeos-config"), len;
+	int nodeoffset = fdt_path_offset(fdt, "/chromeos-config");
+	int len;
 
 	if (nodeoffset < 0)
 		return 0;
