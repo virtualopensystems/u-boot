@@ -234,7 +234,9 @@ int boot_kernel(VbSelectAndLoadKernelParams *kparams, crossystem_data_t *cdata)
 	 */
 	strncat(cmdline_buf, cmdline, CROS_CONFIG_SIZE);
 
-	VBDEBUG(PREFIX "cmdline before update: %s\n", cmdline_buf);
+	VBDEBUG(PREFIX "cmdline before update: ");
+	VBDEBUG_PUTS(cmdline_buf);
+	VBDEBUG_PUTS("\n");
 
 	if (update_cmdline(cmdline_buf,
 			get_dev_num(kparams->disk_handle),
@@ -246,7 +248,9 @@ int boot_kernel(VbSelectAndLoadKernelParams *kparams, crossystem_data_t *cdata)
 	}
 
 	setenv("bootargs", cmdline_out);
-	VBDEBUG(PREFIX "cmdline after update:  %s\n", getenv("bootargs"));
+	VBDEBUG(PREFIX "cmdline after update:  ");
+	VBDEBUG_PUTS(getenv("bootargs"));
+	VBDEBUG_PUTS("\n");
 
 	g_crossystem_data = cdata;
 

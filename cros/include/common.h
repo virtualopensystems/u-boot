@@ -20,6 +20,17 @@
 #define VBDEBUG(fmt, args...)
 #endif
 
+/*
+ * VBDEBUG(), which indirectly calls printf(), has an internal buffer on output
+ * string, and so cannot output very long string. Thus, if you want to print a
+ * very long string, please use VBDEBUG_PUTS(), which calls puts().
+ */
+#if defined VBOOT_DEBUG || defined DEBUG
+#define VBDEBUG_PUTS(str) puts(str)
+#else
+#define VBDEBUG_PUTS(str)
+#endif
+
 /* this function is implemented along with vboot_api */
 int display_clear(void);
 
