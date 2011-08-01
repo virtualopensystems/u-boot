@@ -518,6 +518,9 @@ int do_usb(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		printf("(Re)start USB...\n");
 		i = usb_init();
 		if (i >= 0) {
+#ifdef CONFIG_USB_KEYBOARD
+			drv_usb_kbd_init();
+#endif
 #ifdef CONFIG_USB_STORAGE
 			/* try to recognize storage devices immediately */
 			usb_stor_curr_dev = usb_stor_scan(1);

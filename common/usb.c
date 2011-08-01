@@ -983,10 +983,6 @@ void usb_scan_devices(void)
 		printf("No USB Device found\n");
 	else
 		printf("%d USB Device(s) found\n", dev_index);
-	/* insert "driver" if possible */
-#ifdef CONFIG_USB_KEYBOARD
-	drv_usb_kbd_init();
-#endif
 	USB_PRINTF("scan end\n");
 }
 
