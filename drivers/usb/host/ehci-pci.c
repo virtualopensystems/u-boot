@@ -23,7 +23,6 @@
 #include <usb.h>
 
 #include "ehci.h"
-#include "ehci-core.h"
 
 #ifdef CONFIG_PCI_EHCI_DEVICE
 static struct pci_device_id ehci_pci_ids[] = {
@@ -34,7 +33,7 @@ static struct pci_device_id ehci_pci_ids[] = {
 	{0, 0}
 };
 #else
-static pci_dev_t ehci_find_class(void)
+static pci_dev_t ehci_find_class(int index)
 {
 	int bus;
 	int devnum;
@@ -57,7 +56,7 @@ static pci_dev_t ehci_find_class(void)
 			{
 				pci_read_config_dword(bdf, PCI_CLASS_REVISION,
 				                      &class);
-				if (class >> 8 == 0x0c0320)
+				if ((class >> 8 == 0x0c0320) && !index--)
 					return bdf;
 			}
 		}
@@ -70,15 +69,18 @@ static pci_dev_t ehci_find_class(void)
  * Create the appropriate control structures to manage
  * a new EHCI host controller.
  */
-int ehci_hcd_init(void)
+int ehci_hcd_init(int index, struct ehci_hccr **ret_hccr,
+		struct ehci_hcor **ret_hcor)
 {
 	pci_dev_t pdev;
 	uint32_t cmd;
+	struct ehci_hccr *hccr;
+	struct ehci_hcor *hcor;
 
 #ifdef CONFIG_PCI_EHCI_DEVICE
 	pdev = pci_find_devices(ehci_pci_ids, CONFIG_PCI_EHCI_DEVICE);
 #else
-	pdev = ehci_find_class();
+	pdev = ehci_find_class(index);
 #endif
 	if (pdev == -1) {
 		printf("EHCI host controller not found\n");
@@ -98,6 +100,9 @@ int ehci_hcd_init(void)
 	pci_read_config_dword(pdev, PCI_COMMAND, &cmd);
 	cmd |= PCI_COMMAND_MASTER;
 	pci_write_config_dword(pdev, PCI_COMMAND, cmd);
+
+	*ret_hccr = hccr;
+	*ret_hcor = hcor;
 	return 0;
 }
 
@@ -105,7 +110,7 @@ int ehci_hcd_init(void)
  * Destroy the appropriate control structures corresponding
  * the the EHCI host controller.
  */
-int ehci_hcd_stop(void)
+int ehci_hcd_stop(int index)
 {
 	return 0;
 }

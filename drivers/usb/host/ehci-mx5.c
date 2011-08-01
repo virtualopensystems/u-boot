@@ -206,9 +206,12 @@ void __board_ehci_hcd_postinit(struct usb_ehci *ehci, int port)
 void board_ehci_hcd_postinit(struct usb_ehci *ehci, int port)
 	__attribute((weak, alias("__board_ehci_hcd_postinit")));
 
-int ehci_hcd_init(void)
+int ehci_hcd_init(int index, struct ehci_hccr **ret_hccr,
+		struct ehci_hcor **ret_hcor)
 {
 	struct usb_ehci *ehci;
+	struct ehci_hccr *hccr;
+	struct ehci_hcor *hcor;
 #ifdef CONFIG_MX53
 	struct clkctl *sc_regs = (struct clkctl *)CCM_BASE_ADDR;
 	u32 reg;
@@ -244,10 +247,12 @@ int ehci_hcd_init(void)
 	/* Do board specific post-initialization */
 	board_ehci_hcd_postinit(ehci, CONFIG_MXC_USB_PORT);
 
+	*ret_hccr = hccr;
+	*ret_hcor = hcor;
 	return 0;
 }
 
-int ehci_hcd_stop(void)
+int ehci_hcd_stop(int index)
 {
 	return 0;
 }

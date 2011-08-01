@@ -33,7 +33,6 @@
 #include <usb/ehci-fsl.h>
 
 #include "ehci.h"
-#include "ehci-core.h"
 
 static void fsl_setup_phy(volatile struct ehci_hcor *);
 static void fsl_platform_set_host_mode(volatile struct usb_ehci *ehci);
@@ -46,9 +45,12 @@ static void usb_platform_dr_init(volatile struct usb_ehci *ehci);
  * This code is derived from EHCI FSL USB Linux driver for MPC5121
  *
  */
-int ehci_hcd_init(void)
+int ehci_hcd_init(int index, struct ehci_hccr **ret_hccr,
+		struct ehci_hcor **ret_hcor)
 {
 	volatile struct usb_ehci *ehci;
+	struct ehci_hccr *hccr;
+	struct ehci_hcor *hcor;
 
 	/* Hook the memory mapped registers for EHCI-Controller */
 	ehci = (struct usb_ehci *)CONFIG_SYS_FSL_USB_ADDR;
@@ -82,6 +84,8 @@ int ehci_hcd_init(void)
 	out_be32(&ehci->burstsize, FSL_EHCI_TXPBURST(8) |
 				   FSL_EHCI_RXPBURST(8));
 
+	*ret_hccr = hccr;
+	*ret_hcor = hcor;
 	return 0;
 }
 
@@ -89,7 +93,7 @@ int ehci_hcd_init(void)
  * Destroy the appropriate control structures corresponding
  * the the EHCI host controller.
  */
-int ehci_hcd_stop(void)
+int ehci_hcd_stop(int index)
 {
 	volatile struct usb_ehci *ehci;
 	int exit_status = 0;

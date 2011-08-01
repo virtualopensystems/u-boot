@@ -21,38 +21,26 @@
 #include <usb.h>
 
 #include "ehci.h"
-#include "ehci-core.h"
 
-int vct_ehci_hcd_init(u32 *hccr, u32 *hcor);
+int vct_ehci_hcd_init(struct ehci_hccr **hccr, struct ehci_hcor **hcor);
 
 /*
  * Create the appropriate control structures to manage
  * a new EHCI host controller.
  */
-int ehci_hcd_init(void)
+int ehci_hcd_init(int index, struct ehci_hccr **hccr, struct ehci_hcor **hcor)
 {
-	int ret;
-	u32 vct_hccr;
-	u32 vct_hcor;
-
 	/*
 	 * Init VCT specific stuff
 	 */
-	ret = vct_ehci_hcd_init(&vct_hccr, &vct_hcor);
-	if (ret)
-		return ret;
-
-	hccr = (struct ehci_hccr *)vct_hccr;
-	hcor = (struct ehci_hcor *)vct_hcor;
-
-	return 0;
+	return vct_ehci_hcd_init(hccr, hcor);
 }
 
 /*
  * Destroy the appropriate control structures corresponding
  * the the EHCI host controller.
  */
-int ehci_hcd_stop(void)
+int ehci_hcd_stop(int index)
 {
 	return 0;
 }

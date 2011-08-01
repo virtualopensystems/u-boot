@@ -197,7 +197,24 @@ struct QH {
 };
 
 /* Low level init functions */
-int ehci_hcd_init(void);
-int ehci_hcd_stop(void);
+
+/**
+ * Hardware specific part of the EHCI controller initialization
+ *
+ * @param index  controller number to initialize
+ * @param hccr   returns start address of EHCI HCCR registers
+ * @param hcor   returns start address of EHCI HCOR registers
+ * @return 0 if ok, -1 on error (invalid port number or hardware failure)
+ */
+int ehci_hcd_init(int index, struct ehci_hccr **hccr, struct ehci_hcor **hcor);
+
+
+/**
+ * Hardware specific part of the EHCI controller shutdown
+ *
+ * @param index  controller number to stop
+ * @return 0 if ok, -1 on error (invalid port number or hardware failure)
+ */
+int ehci_hcd_stop(int index);
 
 #endif /* USB_EHCI_H */

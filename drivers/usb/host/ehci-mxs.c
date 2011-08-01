@@ -70,7 +70,8 @@ int mxs_ehci_get_port(struct ehci_mxs *mxs_usb, int port)
 #define	HW_DIGCTL_CTRL_USB0_CLKGATE	(1 << 2)
 #define	HW_DIGCTL_CTRL_USB1_CLKGATE	(1 << 16)
 
-int ehci_hcd_init(void)
+int ehci_hcd_init(int index, struct ehci_hccr **ret_hccr,
+		struct ehci_hcor **ret_hcor)
 {
 
 	int ret;
@@ -107,15 +108,15 @@ int ehci_hcd_init(void)
 		&ehci_mxs.phy_regs->hw_usbphy_ctrl_set);
 
 	usb_base = ((uint32_t)ehci_mxs.usb_regs) + 0x100;
-	hccr = (struct ehci_hccr *)usb_base;
+	*ret_hccr = (struct ehci_hccr *)usb_base;
 
 	cap_base = ehci_readl(&hccr->cr_capbase);
-	hcor = (struct ehci_hcor *)(usb_base + HC_LENGTH(cap_base));
+	*ret_hcor = (struct ehci_hcor *)(usb_base + HC_LENGTH(cap_base));
 
 	return 0;
 }
 
-int ehci_hcd_stop(void)
+int ehci_hcd_stop(int index)
 {
 	int ret;
 	uint32_t tmp;

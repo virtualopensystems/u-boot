@@ -33,7 +33,6 @@
 #include <asm/gpio.h>
 #include <asm/arch/ehci.h>
 #include <asm/ehci-omap.h>
-#include "ehci-core.h"
 
 static struct omap_uhh *const uhh = (struct omap_uhh *)OMAP_UHH_BASE;
 static struct omap_usbtll *const usbtll = (struct omap_usbtll *)OMAP_USBTLL_BASE;
@@ -136,7 +135,7 @@ static inline void omap_ehci_phy_reset(int on, int delay)
 #endif
 
 /* Reset is needed otherwise the kernel-driver will throw an error. */
-int omap_ehci_hcd_stop(void)
+int omap_ehci_hcd_stop(int index)
 {
 	debug("Resetting OMAP EHCI\n");
 	omap_ehci_phy_reset(1, 0);
@@ -155,7 +154,8 @@ int omap_ehci_hcd_stop(void)
  * Based on "drivers/usb/host/ehci-omap.c" from Linux 3.1
  * See there for additional Copyrights.
  */
-int omap_ehci_hcd_init(struct omap_usbhs_board_data *usbhs_pdata)
+int omap_ehci_hcd_init(int index, struct omap_usbhs_board_data *usbhs_pdata,
+	struct ehci_hccr **ret_hccr, struct ehci_hcor **ret_hcor)
 {
 	int ret;
 	unsigned int i, reg = 0, rev = 0;
@@ -247,8 +247,8 @@ int omap_ehci_hcd_init(struct omap_usbhs_board_data *usbhs_pdata)
 			omap_ehci_soft_phy_reset(i);
 
 	dcache_disable();
-	hccr = (struct ehci_hccr *)(OMAP_EHCI_BASE);
-	hcor = (struct ehci_hcor *)(OMAP_EHCI_BASE + 0x10);
+	*ret_hccr = (struct ehci_hccr *)(OMAP_EHCI_BASE);
+	*ret_hcor = (struct ehci_hcor *)(OMAP_EHCI_BASE + 0x10);
 
 	debug("OMAP EHCI init done\n");
 	return 0;

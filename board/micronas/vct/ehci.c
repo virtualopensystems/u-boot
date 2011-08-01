@@ -24,7 +24,10 @@
 
 #include "vct.h"
 
-int vct_ehci_hcd_init(u32 *hccr, u32 *hcor)
+struct ehci_hccr;
+struct ehci_hcor;
+
+int vct_ehci_hcd_init(struct ehci_hccr **hccr, struct ehci_hcor **hcor)
 {
 	int retval;
 	u32 val;
