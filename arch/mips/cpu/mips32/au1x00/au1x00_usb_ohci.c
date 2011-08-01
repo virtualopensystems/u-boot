@@ -1565,7 +1565,7 @@ static void hc_release_ohci (ohci_t *ohci)
  */
 static char ohci_inited = 0;
 
-int usb_lowlevel_init(void)
+void *usb_lowlevel_init(int index)
 {
 	u32 pin_func;
 	u32 sys_freqctrl, sys_clksrc;
@@ -1650,19 +1650,19 @@ int usb_lowlevel_init(void)
 	/* align the storage */
 	if ((__u32)&ghcca[0] & 0xff) {
 		err("HCCA not aligned!!");
-		return -1;
+		return NULL;
 	}
 	phcca = &ghcca[0];
 	info("aligned ghcca %p", phcca);
 	memset(&ohci_dev, 0, sizeof(struct ohci_device));
 	if ((__u32)&ohci_dev.ed[0] & 0x7) {
 		err("EDs not aligned!!");
-		return -1;
+		return NULL;
 	}
 	memset(gtd, 0, sizeof(td_t) * (NUM_TD + 1));
 	if ((__u32)gtd & 0x7) {
 		err("TDs not aligned!!");
-		return -1;
+		return NULL;
 	}
 	ptd = gtd;
 	gohci.hcca = phcca;
@@ -1697,29 +1697,28 @@ int usb_lowlevel_init(void)
 	wait_ms(1);
 #endif
 	ohci_inited = 1;
-	return 0;
+	return &gohci;
 
   errout:
 	err("OHCI initialization error\n");
 	hc_release_ohci (&gohci);
 	/* Initialization failed */
 	au_writel(readl(USB_HOST_CONFIG) & ~USBH_ENABLE_CE, USB_HOST_CONFIG);
-	return -1;
+	return NULL;
 }
 
-int usb_lowlevel_stop(void)
+void usb_lowlevel_stop(int index)
 {
 	/* this gets called really early - before the controller has */
 	/* even been initialized! */
 	if (!ohci_inited)
-		return 0;
+		return;
 	/* TODO release any interrupts, etc. */
 	/* call hc_release_ohci() here ? */
 	hc_reset (&gohci);
 	/* may not want to do this */
 	/* Disable clock */
 	au_writel(readl(USB_HOST_CONFIG) & ~USBH_ENABLE_CE, USB_HOST_CONFIG);
-	return 0;
 }
 
 #endif /* CONFIG_USB_OHCI */

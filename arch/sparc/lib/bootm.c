@@ -36,7 +36,7 @@ extern void srmmu_init_cpu(unsigned int entry);
 extern void prepare_bootargs(char *bootargs);
 
 #ifdef CONFIG_USB_UHCI
-extern int usb_lowlevel_stop(void);
+extern void usb_lowlevel_stop(int index);
 #endif
 
 /* sparc kernel argument (the ROM vector) */
@@ -124,7 +124,7 @@ int do_bootm_linux(int flag, int argc, char * const argv[], bootm_headers_t * im
 #endif
 
 #ifdef CONFIG_USB_UHCI
-	usb_lowlevel_stop();
+	usb_lowlevel_stop(0);
 #endif
 
 	/* set basic boot params in kernel header now that it has been

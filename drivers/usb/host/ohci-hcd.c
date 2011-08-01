@@ -1879,7 +1879,7 @@ static void hc_release_ohci(ohci_t *ohci)
  */
 static char ohci_inited = 0;
 
-int usb_lowlevel_init(void)
+void *usb_lowlevel_init(int index)
 {
 #ifdef CONFIG_PCI_OHCI
 	pci_dev_t pdev;
@@ -1888,32 +1888,32 @@ int usb_lowlevel_init(void)
 #ifdef CONFIG_SYS_USB_OHCI_CPU_INIT
 	/* cpu dependant init */
 	if (usb_cpu_init())
-		return -1;
+		return NULL;
 #endif
 
 #ifdef CONFIG_SYS_USB_OHCI_BOARD_INIT
 	/*  board dependant init */
 	if (usb_board_init())
-		return -1;
+		return NULL;
 #endif
 	memset(&gohci, 0, sizeof(ohci_t));
 
 	/* align the storage */
 	if ((__u32)&ghcca[0] & 0xff) {
 		err("HCCA not aligned!!");
-		return -1;
+		return NULL;
 	}
 	phcca = &ghcca[0];
 	info("aligned ghcca %p", phcca);
 	memset(&ohci_dev, 0, sizeof(struct ohci_device));
 	if ((__u32)&ohci_dev.ed[0] & 0x7) {
 		err("EDs not aligned!!");
-		return -1;
+		return NULL;
 	}
 	memset(gtd, 0, sizeof(td_t) * (NUM_TD + 1));
 	if ((__u32)gtd & 0x7) {
 		err("TDs not aligned!!");
-		return -1;
+		return NULL;
 	}
 	ptd = gtd;
 	gohci.hcca = phcca;
@@ -1937,7 +1937,7 @@ int usb_lowlevel_init(void)
 		printf("OHCI regs address 0x%08x\n", base);
 		gohci.regs = (struct ohci_regs *)base;
 	} else
-		return -1;
+		return NULL;
 #else
 	gohci.regs = (struct ohci_regs *)CONFIG_SYS_USB_OHCI_REGS_BASE;
 #endif
@@ -1957,7 +1957,7 @@ int usb_lowlevel_init(void)
 		/* cpu dependant cleanup */
 		usb_cpu_init_fail();
 #endif
-		return -1;
+		return NULL;
 	}
 
 	if (hc_start(&gohci) < 0) {
@@ -1973,7 +1973,7 @@ int usb_lowlevel_init(void)
 		/* cpu dependant cleanup */
 		usb_cpu_stop();
 #endif
-		return -1;
+		return NULL;
 	}
 
 #ifdef	DEBUG
@@ -1982,10 +1982,10 @@ int usb_lowlevel_init(void)
 	wait_ms(1);
 #endif
 	ohci_inited = 1;
-	return 0;
+	return &gohci;
 }
 
-int usb_lowlevel_stop(void)
+int usb_lowlevel_stop(int index)
 {
 	/* this gets called really early - before the controller has */
 	/* even been initialized! */

@@ -706,7 +706,7 @@ void handle_usb_interrupt(void)
 
 /* init uhci
  */
-int usb_lowlevel_init(void)
+void *usb_lowlevel_init(int index)
 {
 	unsigned char temp;
 	ambapp_ahbdev ahbdev;
@@ -714,7 +714,7 @@ int usb_lowlevel_init(void)
 	/* Find GRUSB core using AMBA Plug&Play information */
 	if (ambapp_ahbslv_first(VENDOR_GAISLER, GAISLER_UHCI, &ahbdev) != 1) {
 		printf("USB UHCI: Failed to find GRUSB controller\n");
-		return -1;
+		return NULL;
 	}
 	usb_base_addr = ahbdev.address[0];
 	grusb_irq = ahbdev.irq;
@@ -740,19 +740,18 @@ int usb_lowlevel_init(void)
 	start_hc();
 	irq_install_handler(grusb_irq,
 			    (interrupt_handler_t *) handle_usb_interrupt, NULL);
-	return 0;
+	return &usb_base_addr;
 }
 
 /* stop uhci
  */
-int usb_lowlevel_stop(void)
+void usb_lowlevel_stop(int index)
 {
 	if (grusb_irq == -1)
-		return 1;
+		return;
 	irq_free_handler(grusb_irq);
 	reset_hc();
 	grusb_irq = -1;
-	return 0;
 }
 
 /*******************************************************************************************

@@ -801,26 +801,26 @@ unknown:
 	return -1;
 }
 
-int usb_lowlevel_stop(void)
+void usb_lowlevel_stop(int index)
 {
-	return ehci_hcd_stop();
+	ehci_hcd_stop();
 }
 
-int usb_lowlevel_init(void)
+void *usb_lowlevel_init(int index)
 {
 	uint32_t reg;
 	uint32_t cmd;
 
 	if (ehci_hcd_init() != 0)
-		return -1;
+		return NULL;
 
 	/* EHCI spec section 4.1 */
 	if (ehci_reset() != 0)
-		return -1;
+		return NULL;
 
 #if defined(CONFIG_EHCI_HCD_INIT_AFTER_RESET)
 	if (ehci_hcd_init() != 0)
-		return -1;
+		return NULL;
 #endif
 	/* Set the high address word (aka segment) for 64-bit controller */
 	if (ehci_readl(&hccr->cr_hccparams) & 1) /* 64-bit Addressing */
@@ -870,7 +870,7 @@ int usb_lowlevel_init(void)
 
 	rootdev = 0;
 
-	return 0;
+	return hccr;
 }
 
 int

@@ -1561,7 +1561,7 @@ static void hc_release_ohci (ohci_t *ohci)
  */
 static char ohci_inited = 0;
 
-int usb_lowlevel_init(void)
+void *usb_lowlevel_init(int index)
 {
 
 	/* Set the USB Clock						     */
@@ -1583,19 +1583,19 @@ int usb_lowlevel_init(void)
 	/* align the storage */
 	if ((__u32)&ghcca[0] & 0xff) {
 		err("HCCA not aligned!!");
-		return -1;
+		return NULL;
 	}
 	phcca = &ghcca[0];
 	info("aligned ghcca %p", phcca);
 	memset(&ohci_dev, 0, sizeof(struct ohci_device));
 	if ((__u32)&ohci_dev.ed[0] & 0x7) {
 		err("EDs not aligned!!");
-		return -1;
+		return NULL;
 	}
 	memset(gtd, 0, sizeof(td_t) * (NUM_TD + 1));
 	if ((__u32)gtd & 0x7) {
 		err("TDs not aligned!!");
-		return -1;
+		return NULL;
 	}
 	ptd = gtd;
 	gohci.hcca = phcca;
@@ -1611,13 +1611,13 @@ int usb_lowlevel_init(void)
 
 	if (hc_reset (&gohci) < 0) {
 		hc_release_ohci (&gohci);
-		return -1;
+		return NULL;
 	}
 
 	if (hc_start (&gohci) < 0) {
 		err ("can't start usb-%s", gohci.slot_name);
 		hc_release_ohci (&gohci);
-		return -1;
+		return NULL;
 	}
 
 #ifdef	DEBUG
@@ -1626,19 +1626,18 @@ int usb_lowlevel_init(void)
 	ohci_inited = 1;
 	urb_finished = 1;
 
-	return 0;
+	return &gohci;
 }
 
-int usb_lowlevel_stop(void)
+void usb_lowlevel_stop(int index)
 {
 	/* this gets called really early - before the controller has */
 	/* even been initialized! */
 	if (!ohci_inited)
-		return 0;
+		return;
 	/* TODO release any interrupts, etc. */
 	/* call hc_release_ohci() here ? */
 	hc_reset (&gohci);
-	return 0;
 }
 
 #endif /* CONFIG_USB_OHCI */

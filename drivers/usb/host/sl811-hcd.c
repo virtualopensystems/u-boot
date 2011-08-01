@@ -210,17 +210,16 @@ static int sl811_hc_reset(void)
 	return 1;
 }
 
-int usb_lowlevel_init(void)
+void *usb_lowlevel_init(int index)
 {
 	root_hub_devnum = 0;
 	sl811_hc_reset();
-	return 0;
+	return (void *)SL811_ADR;
 }
 
-int usb_lowlevel_stop(void)
+void usb_lowlevel_stop(int index)
 {
 	sl811_hc_reset();
-	return 0;
 }
 
 static int calc_needed_buswidth(int bytes, int need_preamble)

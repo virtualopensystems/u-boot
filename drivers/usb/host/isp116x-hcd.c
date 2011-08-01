@@ -1391,7 +1391,7 @@ int isp116x_check_id(struct isp116x *isp116x)
 	return 0;
 }
 
-int usb_lowlevel_init(void)
+void *usb_lowlevel_init(int index)
 {
 	struct isp116x *isp116x = &isp116x_dev;
 
@@ -1417,7 +1417,7 @@ int usb_lowlevel_init(void)
 
 	/* Try to get ISP116x silicon chip ID */
 	if (isp116x_check_id(isp116x) < 0)
-		return -1;
+		return NULL;
 
 	isp116x->disabled = 1;
 	isp116x->sleeping = 0;
@@ -1425,10 +1425,10 @@ int usb_lowlevel_init(void)
 	isp116x_reset(isp116x);
 	isp116x_start(isp116x);
 
-	return 0;
+	return isp116x;
 }
 
-int usb_lowlevel_stop(void)
+void usb_lowlevel_stop(int index)
 {
 	struct isp116x *isp116x = &isp116x_dev;
 
@@ -1436,6 +1436,4 @@ int usb_lowlevel_stop(void)
 
 	if (!isp116x->disabled)
 		isp116x_stop(isp116x);
-
-	return 0;
 }

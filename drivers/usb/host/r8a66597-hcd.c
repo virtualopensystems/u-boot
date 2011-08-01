@@ -914,7 +914,7 @@ void usb_event_poll(void)
 	R8A66597_DPRINT("%s\n", __func__);
 }
 
-int usb_lowlevel_init(void)
+void *usb_lowlevel_init(int index)
 {
 	struct r8a66597 *r8a66597 = &gr8a66597;
 
@@ -934,12 +934,10 @@ int usb_lowlevel_init(void)
 
 	wait_ms(50);
 
-	return 0;
+	return r8a66597;
 }
 
-int usb_lowlevel_stop(void)
+void usb_lowlevel_stop(int index)
 {
 	disable_controller(&gr8a66597);
-
-	return 0;
 }

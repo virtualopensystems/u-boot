@@ -128,6 +128,7 @@ struct usb_device {
 	int portnr;
 	struct usb_device *parent;
 	struct usb_device *children[USB_MAXCHILDREN];
+	void *controller;               /* hardware controller private data */
 };
 
 /**********************************************************************
@@ -141,8 +142,20 @@ struct usb_device {
 	defined(CONFIG_USB_OMAP3) || defined(CONFIG_USB_DA8XX) || \
 	defined(CONFIG_USB_BLACKFIN) || defined(CONFIG_USB_AM35X)
 
-int usb_lowlevel_init(void);
-int usb_lowlevel_stop(void);
+/**
+ * Controller specific part of the USB initialization
+ *
+ * @param index  controller number to initialize
+ * @return controller private data if ok, NULL on error
+ */
+void *usb_lowlevel_init(int index);
+
+/**
+ * Controller specific part of the USB shutdown
+ *
+ * @param index  controller number to stop
+ */
+void usb_lowlevel_stop(int index);
 int submit_bulk_msg(struct usb_device *dev, unsigned long pipe,
 			void *buffer, int transfer_len);
 int submit_control_msg(struct usb_device *dev, unsigned long pipe, void *buffer,
@@ -154,6 +167,10 @@ void usb_event_poll(void);
 /* Defines */
 #define USB_UHCI_VEND_ID	0x8086
 #define USB_UHCI_DEV_ID		0x7112
+
+#ifndef CONFIG_USB_MAX_CONTROLLER_COUNT
+#define CONFIG_USB_MAX_CONTROLLER_COUNT 1
+#endif
 
 #else
 #error USB Lowlevel not defined

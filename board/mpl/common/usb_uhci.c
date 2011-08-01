@@ -602,7 +602,7 @@ void handle_usb_interrupt(void)
 
 /* init uhci
  */
-int usb_lowlevel_init(void)
+void *usb_lowlevel_init(int index)
 {
 	unsigned char temp;
 	int	busdevfunc;
@@ -610,7 +610,7 @@ int usb_lowlevel_init(void)
 	busdevfunc=pci_find_device(USB_UHCI_VEND_ID,USB_UHCI_DEV_ID,0); /* get PCI Device ID */
 	if(busdevfunc==-1) {
 		printf("Error USB UHCI (%04X,%04X) not found\n",USB_UHCI_VEND_ID,USB_UHCI_DEV_ID);
-		return -1;
+		return NULL;
 	}
 	pci_read_config_byte(busdevfunc,PCI_INTERRUPT_LINE,&temp);
 	irqvec = temp;
@@ -627,19 +627,18 @@ int usb_lowlevel_init(void)
 	reset_hc();
 	start_hc();
 	irq_install_handler(irqvec, (interrupt_handler_t *)handle_usb_interrupt, NULL);
-	return 0;
+	return &usb_base_addr;
 }
 
 /* stop uhci
  */
-int usb_lowlevel_stop(void)
+void usb_lowlevel_stop(int index)
 {
 	if(irqvec==-1)
-		return 1;
+		return;
 	irq_free_handler(irqvec);
 	reset_hc();
 	irqvec = -1;
-	return 0;
 }
 
 /*******************************************************************************************

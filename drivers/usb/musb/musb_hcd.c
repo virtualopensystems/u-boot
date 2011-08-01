@@ -1092,7 +1092,7 @@ int submit_bulk_msg(struct usb_device *dev, unsigned long pipe,
 /*
  * This function initializes the usb controller module.
  */
-int usb_lowlevel_init(void)
+void *usb_lowlevel_init(int index)
 {
 	u8  power;
 	u32 timeout;
@@ -1100,7 +1100,7 @@ int usb_lowlevel_init(void)
 	musb_rh_init();
 
 	if (musb_platform_init() == -1)
-		return -1;
+		return NULL;
 
 	/* Configure all the endpoint FIFO's and start usb controller */
 	musbr = musb_cfg.regs;
@@ -1119,7 +1119,7 @@ int usb_lowlevel_init(void)
 
 	/* if musb core is not in host mode, then return */
 	if (!timeout)
-		return -1;
+		return NULL;
 
 	/* start usb bus reset */
 	power = readb(&musbr->power);
@@ -1138,18 +1138,17 @@ int usb_lowlevel_init(void)
 			MUSB_TYPE_SPEED_HIGH :
 			((readb(&musbr->devctl) & MUSB_DEVCTL_FSDEV) ?
 			MUSB_TYPE_SPEED_FULL : MUSB_TYPE_SPEED_LOW);
-	return 0;
+	return &musb_cfg;
 }
 
 /*
  * This function stops the operation of the davinci usb module.
  */
-int usb_lowlevel_stop(void)
+void usb_lowlevel_stop(int index)
 {
 	/* Reset the USB module */
 	musb_platform_deinit();
 	writeb(0, &musbr->devctl);
-	return 0;
 }
 
 /*
