@@ -52,6 +52,8 @@ struct sysinfo_t {
 	u32 cmos_range_start;
 	u32 cmos_range_end;
 	u32 cmos_checksum_location;
+	u32 vbnv_start;
+	u32 vbnv_size;
 
 	char *version;
 	char *extra_version;

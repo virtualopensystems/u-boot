@@ -79,7 +79,21 @@ static void cb_parse_serial(unsigned char *ptr, struct sysinfo_t *info)
 
 static void cb_parse_optiontable(unsigned char *ptr, struct sysinfo_t *info)
 {
-	info->option_table = (struct cb_cmos_option_table *)ptr;
+	struct cb_cmos_option_table *otp = (struct cb_cmos_option_table *)ptr;
+	struct cb_cmos_entries* cme;
+
+	info->option_table = otp;
+	cme = (struct cb_cmos_entries*) ((u32) otp + otp->header_length);
+	/* find the offset and size of the vbnv area */
+	while ((((char*) cme - (char*)otp) < otp->size) &&
+	       (cme->tag == CB_TAG_OPTION)) {
+		if (!strncmp("vbnv", (char*) cme->name, sizeof(cme->name))) {
+			info->vbnv_start = cme->bit >> 3;
+			info->vbnv_size = cme->length >> 3;
+			break;
+		}
+		cme = (struct cb_cmos_entries*) ((char*)cme + cme->size);
+	}
 }
 
 static void cb_parse_checksum(unsigned char *ptr, struct sysinfo_t *info)
