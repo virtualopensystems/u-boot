@@ -149,9 +149,14 @@ static void wipe_unused_memory(const void const *fdt_ptr, vb_global_t *global)
 	/* Excludes stack, fdt, gd, bd, heap, u-boot, framebuffer, etc. */
 	memory_wipe_exclude(&wipe, get_current_sp() - STACK_MARGIN, config.end);
 
-	/* Excludes the shared date between bootstub and main firmware. */
+	/* Excludes the shared data between bootstub and main firmware. */
 	memory_wipe_exclude(&wipe, (uintptr_t)global,
 			(uintptr_t)global + sizeof(*global));
+
+	/* Excludes the LP0 vector. */
+	memory_wipe_exclude(&wipe,
+			    (uintptr_t)TEGRA_LP0_ADDR,
+			    (uintptr_t)(TEGRA_LP0_ADDR + TEGRA_LP0_SIZE));
 
 	memory_wipe_execute(&wipe);
 #else
