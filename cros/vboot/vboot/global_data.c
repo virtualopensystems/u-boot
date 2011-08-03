@@ -47,8 +47,8 @@ int init_vboot_global(vb_global_t *global, firmware_storage_t *file)
 		return 1;
         }
 
-	if (fdt_decode_twostop_fmap(gd->blob, &fmap)) {
-		VBDEBUG(PREFIX "Failed to load fmap config from fdt!\n");
+	if (decode_twostop_fmap(&fmap)) {
+		VBDEBUG(PREFIX "Failed to load fmap config!\n");
 		return 1;
 	}
 

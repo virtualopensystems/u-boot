@@ -11,6 +11,8 @@
 #ifndef CHROMEOS_FMAP_H_
 #define CHROMEOS_FMAP_H_
 
+#include <compiler.h>
+
 /* Structures to hold Chrome OS specific configuration from the FMAP. */
 
 struct fmap_entry {
@@ -41,5 +43,7 @@ struct twostop_fmap {
 };
 
 void dump_fmap(struct twostop_fmap *config);
+
+int decode_twostop_fmap(struct twostop_fmap *fmap);
 
 #endif /* CHROMEOS_FMAP_H_ */

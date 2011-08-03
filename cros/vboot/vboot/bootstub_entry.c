@@ -300,8 +300,8 @@ void bootstub_entry(void)
 	VbSelectFirmwareParams fparams;
 	VbError_t ret;
 
-	if (fdt_decode_twostop_fmap(fdt_ptr, &fmap))
-		VbExError(PREFIX "Failed to load fmap config from fdt.\n");
+	if (decode_twostop_fmap(&fmap))
+		VbExError(PREFIX "Failed to load fmap config.\n");
 
 	/* Open firmware storage device */
 	if (firmware_storage_open_spi(&file))

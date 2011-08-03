@@ -447,7 +447,7 @@ twostop_init(struct twostop_fmap *fmap, firmware_storage_t *file,
 	cros_gpio_dump(&recsw);
 	cros_gpio_dump(&devsw);
 
-	if (fdt_decode_twostop_fmap(gd->blob, fmap)) {
+	if (decode_twostop_fmap(fmap)) {
 		VBDEBUG(PREFIX "failed to decode fmap\n");
 		return -1;
 	}
@@ -633,7 +633,7 @@ twostop_readwrite_main_firmware(void)
 		return VB_SELECT_ERROR;
 	}
 
-	if (fdt_decode_twostop_fmap(gd->blob, &fmap)) {
+	if (decode_twostop_fmap(&fmap)) {
 		VBDEBUG(PREFIX "failed to decode fmap\n");
 		return VB_SELECT_ERROR;
 	}
