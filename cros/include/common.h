@@ -11,8 +11,9 @@
 #ifndef CHROMEOS_COMMON_H_
 #define CHROMEOS_COMMON_H_
 
-#if defined VBOOT_DEBUG
 #include <vboot_api.h>
+
+#if defined VBOOT_DEBUG
 #define VBDEBUG(fmt, args...) VbExDebug(fmt ,##args)
 #elif defined DEBUG
 #define VBDEBUG debug
