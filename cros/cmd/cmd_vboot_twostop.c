@@ -121,7 +121,7 @@ const char *str_selection(uint32_t selection)
 }
 #endif /* VBOOT_DEBUG */
 
-int twostop_init_cparams(struct fdt_twostop_fmap *fmap,
+int twostop_init_cparams(struct twostop_fmap *fmap,
 		void *gbb,
 		void *vb_shared_data,
 		VbCommonParams *cparams)
@@ -234,7 +234,7 @@ VbError_t twostop_init_vboot_library(const void const *fdt,
 	return VBERROR_SUCCESS;
 }
 
-uint32_t twostop_make_selection(struct fdt_twostop_fmap *fmap,
+uint32_t twostop_make_selection(struct twostop_fmap *fmap,
 		firmware_storage_t *file,
 		VbCommonParams *cparams,
 		void **fw_blob_ptr,
@@ -325,7 +325,7 @@ out:
 }
 
 uint32_t twostop_select_and_set_main_firmware(const void const *fdt,
-		struct fdt_twostop_fmap *fmap,
+		struct twostop_fmap *fmap,
 		firmware_storage_t *file,
 		void *gbb,
 		crossystem_data_t *cdata,
@@ -430,7 +430,7 @@ uint32_t twostop_jump(crossystem_data_t *cdata, void *fw_blob, uint32_t fw_size)
 }
 
 int twostop_init(const void const *fdt,
-		struct fdt_twostop_fmap *fmap,
+		struct twostop_fmap *fmap,
 		firmware_storage_t *file,
 		void *gbb,
 		crossystem_data_t *cdata,
@@ -508,7 +508,7 @@ out:
 	return ret;
 }
 
-uint32_t twostop_main_firmware(struct fdt_twostop_fmap *fmap,
+uint32_t twostop_main_firmware(struct twostop_fmap *fmap,
 		void *gbb,
 		crossystem_data_t *cdata,
 		void *vb_shared_data)
@@ -563,7 +563,7 @@ uint32_t twostop_main_firmware(struct fdt_twostop_fmap *fmap,
 
 uint32_t twostop_boot(const void const *fdt)
 {
-	struct fdt_twostop_fmap fmap;
+	struct twostop_fmap fmap;
 	firmware_storage_t file;
 	crossystem_data_t *cdata = (crossystem_data_t *)CROSSYSTEM_DATA_ADDRESS;
 	void *gbb = (void *)GBB_ADDRESS;
@@ -619,7 +619,7 @@ uint32_t twostop_boot(const void const *fdt)
 
 uint32_t twostop_readwrite_main_firmware(const void const *fdt)
 {
-	struct fdt_twostop_fmap fmap;
+	struct twostop_fmap fmap;
 	crossystem_data_t *cdata = (crossystem_data_t *)CROSSYSTEM_DATA_ADDRESS;
 	void *gbb = (void *)GBB_ADDRESS;
 	void *vb_shared_data = cdata->vb_shared_data;

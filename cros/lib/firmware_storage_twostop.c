@@ -24,18 +24,18 @@ enum {
 };
 
 struct context {
-	struct fdt_twostop_fmap *fmap;
+	struct twostop_fmap *fmap;
 	int section;
 	firmware_storage_t spi_file;
 	struct mmc *mmc;
 };
 
-static int within_entry(const struct fdt_fmap_entry *e, uint32_t offset)
+static int within_entry(const struct fmap_entry *e, uint32_t offset)
 {
 	return e->offset <= offset && offset < e->offset + e->length;
 }
 
-static int get_section(const struct fdt_twostop_fmap *fmap, off_t offset)
+static int get_section(const struct twostop_fmap *fmap, off_t offset)
 {
 	if (within_entry(&fmap->readonly.readonly, offset))
 		return SECTION_RO;
@@ -47,7 +47,7 @@ static int get_section(const struct fdt_twostop_fmap *fmap, off_t offset)
 		return -1;
 }
 
-static void set_start_block_and_offset(const struct fdt_twostop_fmap *fmap,
+static void set_start_block_and_offset(const struct twostop_fmap *fmap,
 		int section, uint32_t offset,
 		uint32_t *start_block_ptr, uint32_t *offset_in_block_ptr)
 {
@@ -220,7 +220,7 @@ static int close_twostop(firmware_storage_t *file)
 }
 
 int firmware_storage_open_twostop(firmware_storage_t *file,
-		struct fdt_twostop_fmap *fmap)
+		struct twostop_fmap *fmap)
 {
 	struct context *cxt;
 

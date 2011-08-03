@@ -12,6 +12,7 @@
 #include <libfdt.h>
 #include <chromeos/common.h>
 #include <chromeos/fdt_decode.h>
+#include <chromeos/fmap.h>
 #include <linux/string.h>
 
 #define PREFIX "chromeos/fdt_decode: "
@@ -43,7 +44,7 @@ static int relpath_offset(const void *blob, int offset, const char *in_path)
 }
 
 static int decode_fmap_entry(const void *blob, int offset, const char *base,
-		const char *name, struct fdt_fmap_entry *entry)
+		const char *name, struct fmap_entry *entry)
 {
 	char path[50];
 	int length;
@@ -90,7 +91,7 @@ static int decode_block_lba(const void *blob, int offset, const char *path,
 }
 
 int decode_firmware_entry(const char *blob, int fmap_offset, const char *name,
-		struct fdt_firmware_entry *entry)
+		struct fmap_firmware_entry *entry)
 {
 	int err;
 
@@ -103,7 +104,7 @@ int decode_firmware_entry(const char *blob, int fmap_offset, const char *name,
 	return err;
 }
 
-int fdt_decode_twostop_fmap(const void *blob, struct fdt_twostop_fmap *config)
+int fdt_decode_twostop_fmap(const void *blob, struct twostop_fmap *config)
 {
 	int fmap_offset;
 	int err;
@@ -127,31 +128,6 @@ int fdt_decode_twostop_fmap(const void *blob, struct fdt_twostop_fmap *config)
 			&config->readonly.firmware_id);
 
 	return 0;
-}
-
-void dump_entry(const char *path, struct fdt_fmap_entry *entry)
-{
-	VBDEBUG(PREFIX "%-20s %08x:%08x\n", path, entry->offset,
-		entry->length);
-}
-
-void dump_firmware_entry(const char *name, struct fdt_firmware_entry *entry)
-{
-	VBDEBUG(PREFIX "%s\n", name);
-	dump_entry("boot", &entry->boot);
-	dump_entry("vblock", &entry->vblock);
-	dump_entry("firmware_id", &entry->firmware_id);
-	VBDEBUG(PREFIX "%-20s %08llx\n", "LBA", entry->block_lba);
-}
-
-void dump_fmap(struct fdt_twostop_fmap *config)
-{
-	VBDEBUG(PREFIX "rw-a:\n");
-	dump_entry("fmap", &config->readonly.fmap);
-	dump_entry("gbb", &config->readonly.gbb);
-	dump_entry("firmware_id", &config->readonly.firmware_id);
-	dump_firmware_entry("rw-a", &config->readwrite_a);
-	dump_firmware_entry("rw-b", &config->readwrite_b);
 }
 
 int fdt_decode_chromeos_config_has_prop(const void *fdt, const char *name)

@@ -403,7 +403,7 @@ static uint8_t *read_gbb_from_firmware(void)
 	void *fdt_ptr = (void *)gd->blob;
 	vb_global_t *global;
 	firmware_storage_t file;
-	struct fdt_twostop_fmap fmap;
+	struct twostop_fmap fmap;
 
 	global = get_vboot_global();
 

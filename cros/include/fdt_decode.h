@@ -11,38 +11,11 @@
 #ifndef CHROMEOS_FDT_DECODE_H_
 #define CHROMEOS_FDT_DECODE_H_
 
+#include <chromeos/fmap.h>
+
 /* Decode Chrome OS specific configuration from fdt */
 
-struct fdt_fmap_entry {
-	uint32_t offset;
-	uint32_t length;
-};
-
-struct fdt_firmware_entry {
-	struct fdt_fmap_entry boot;	/* U-Boot */
-	struct fdt_fmap_entry vblock;
-	struct fdt_fmap_entry firmware_id;
-	uint64_t block_lba;
-};
-
-/*
- * Only sections that are used during booting are put here. More sections will
- * be added if required.
- */
-struct fdt_twostop_fmap {
-	struct {
-		struct fdt_fmap_entry fmap;
-		struct fdt_fmap_entry gbb;
-		struct fdt_fmap_entry firmware_id;
-	} readonly;
-
-	struct fdt_firmware_entry readwrite_a;
-	struct fdt_firmware_entry readwrite_b;
-};
-
-int fdt_decode_twostop_fmap(const void *fdt, struct fdt_twostop_fmap *config);
-
-void dump_fmap(struct fdt_twostop_fmap *config);
+int fdt_decode_twostop_fmap(const void *fdt, struct twostop_fmap *config);
 
 /**
  * This checks whether a property exists.

@@ -91,7 +91,7 @@ static int read_verification_block(firmware_storage_t *file,
 
 static void prepare_fparams(firmware_storage_t *file,
 			    firmware_cache_t *cache,
-			    struct fdt_twostop_fmap *fmap,
+			    struct twostop_fmap *fmap,
 			    VbSelectFirmwareParams *fparams)
 {
 	uint32_t fw_main_a_size, fw_main_b_size;
@@ -241,7 +241,7 @@ static VbError_t call_VbSelectFirmware(VbCommonParams *cparams,
 
 static int fill_crossystem_data(vb_global_t *global,
 				firmware_storage_t *file,
-				struct fdt_twostop_fmap *fmap,
+				struct twostop_fmap *fmap,
 				uint32_t selected_firmware)
 {
 	crossystem_data_t *cdata = &global->cdata_blob;
@@ -291,7 +291,7 @@ done:
 void bootstub_entry(void)
 {
 	void *fdt_ptr = (void *)gd->blob;
-	struct fdt_twostop_fmap fmap;
+	struct twostop_fmap fmap;
 	vb_global_t *global;
 	firmware_storage_t file;
 	firmware_cache_t cache;

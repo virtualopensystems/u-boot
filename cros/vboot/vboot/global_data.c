@@ -31,7 +31,7 @@ int init_vboot_global(vb_global_t *global, firmware_storage_t *file)
 {
 	void *fdt_ptr = (void *)gd->blob;
 	cros_gpio_t wpsw, recsw, devsw;
-	struct fdt_twostop_fmap fmap;
+	struct twostop_fmap fmap;
 	uint8_t frid[ID_LEN];
 	GoogleBinaryBlockHeader *gbb =
 			(GoogleBinaryBlockHeader *)global->gbb_data;
