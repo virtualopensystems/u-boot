@@ -15,15 +15,12 @@
 
 #define PREFIX			"misc: "
 
-DECLARE_GLOBAL_DATA_PTR;
-
 uint32_t VbExIsShutdownRequested(void)
 {
-	void *fdt_ptr = (void *)gd->blob;
 	cros_gpio_t lidsw, pwrsw;
 
-	if (cros_gpio_fetch(CROS_GPIO_LIDSW, fdt_ptr, &lidsw) ||
-			cros_gpio_fetch(CROS_GPIO_PWRSW, fdt_ptr, &pwrsw)) {
+	if (cros_gpio_fetch(CROS_GPIO_LIDSW, &lidsw) ||
+			cros_gpio_fetch(CROS_GPIO_PWRSW, &pwrsw)) {
 		VBDEBUG(PREFIX "Failed to fetch GPIO!\n");
 		/* still return 0, No-Shutdown-Requested */
 		return 0;

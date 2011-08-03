@@ -27,8 +27,6 @@
 #define TEST_FW_START		0xc1000
 #define DEFAULT_TEST_FW_LENGTH	0x1000
 
-DECLARE_GLOBAL_DATA_PTR;
-
 static int do_vboot_test_fwrw(cmd_tbl_t *cmdtp,
 		int flag, int argc, char * const argv[])
 {
@@ -155,12 +153,11 @@ static int do_vboot_test_memwipe(cmd_tbl_t *cmdtp,
 static int do_vboot_test_gpio(cmd_tbl_t *cmdtp,
 		int flag, int argc, char * const argv[])
 {
-	void *fdt_ptr = (void *)gd->blob;
 	cros_gpio_t gpio;
 	int i;
 
 	for (i = 0; i < CROS_GPIO_MAX_GPIO; i++) {
-		if (cros_gpio_fetch(i, fdt_ptr, &gpio)) {
+		if (cros_gpio_fetch(i, &gpio)) {
 			VbExDebug("Failed to fetch GPIO, %d!\n", i);
 			return 1;
 		}

@@ -29,7 +29,6 @@ vb_global_t *get_vboot_global(void)
 
 int init_vboot_global(vb_global_t *global, firmware_storage_t *file)
 {
-	void *fdt_ptr = (void *)gd->blob;
 	cros_gpio_t wpsw, recsw, devsw;
 	struct twostop_fmap fmap;
 	uint8_t frid[ID_LEN];
@@ -41,14 +40,14 @@ int init_vboot_global(vb_global_t *global, firmware_storage_t *file)
 			VBGLOBAL_SIGNATURE_SIZE);
 
 	/* Gets GPIO status */
-	if (cros_gpio_fetch(CROS_GPIO_WPSW, fdt_ptr, &wpsw) ||
-			cros_gpio_fetch(CROS_GPIO_RECSW, fdt_ptr, &recsw) ||
-			cros_gpio_fetch(CROS_GPIO_DEVSW, fdt_ptr, &devsw)) {
+	if (cros_gpio_fetch(CROS_GPIO_WPSW, &wpsw) ||
+			cros_gpio_fetch(CROS_GPIO_RECSW, &recsw) ||
+			cros_gpio_fetch(CROS_GPIO_DEVSW, &devsw)) {
 		VBDEBUG(PREFIX "Failed to fetch GPIO!\n");
 		return 1;
         }
 
-	if (fdt_decode_twostop_fmap(fdt_ptr, &fmap)) {
+	if (fdt_decode_twostop_fmap(gd->blob, &fmap)) {
 		VBDEBUG(PREFIX "Failed to load fmap config from fdt!\n");
 		return 1;
 	}

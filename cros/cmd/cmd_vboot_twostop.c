@@ -101,7 +101,8 @@ DECLARE_GLOBAL_DATA_PTR;
 #define VB_SELECT_COMMAND_LINE	0xfd
 
 #ifdef VBOOT_DEBUG
-const char *str_selection(uint32_t selection)
+static const char *
+str_selection(uint32_t selection)
 {
 	static const char const *str[] = {
 		"VB_SELECT_FIRMWARE_RECOVERY",
@@ -121,10 +122,9 @@ const char *str_selection(uint32_t selection)
 }
 #endif /* VBOOT_DEBUG */
 
-int twostop_init_cparams(struct twostop_fmap *fmap,
-		void *gbb,
-		void *vb_shared_data,
-		VbCommonParams *cparams)
+static int
+twostop_init_cparams(struct twostop_fmap *fmap, void *gbb,
+		     void *vb_shared_data, VbCommonParams *cparams)
 {
 	cparams->gbb_data = gbb;
 	cparams->gbb_size = fmap->readonly.gbb.length;
@@ -146,7 +146,8 @@ int twostop_init_cparams(struct twostop_fmap *fmap,
 }
 
 #ifdef CONFIG_OF_CONTROL
-static uintptr_t get_current_sp(void)
+static uintptr_t
+get_current_sp(void)
 {
 	uintptr_t addr;
 
@@ -155,14 +156,14 @@ static uintptr_t get_current_sp(void)
 }
 #endif
 
-static void wipe_unused_memory(const void const *fdt,
-		crossystem_data_t *cdata, VbCommonParams *cparams)
+static void
+wipe_unused_memory(crossystem_data_t *cdata, VbCommonParams *cparams)
 {
 #ifdef CONFIG_OF_CONTROL
 	memory_wipe_t wipe;
 	struct fdt_memory config;
 
-	if (fdt_decode_memory(fdt, &config))
+	if (fdt_decode_memory(gd->blob, &config))
 		VbExError(PREFIX "FDT decode memory section error\n");
 
 	memory_wipe_init(&wipe, config.start, config.end);
@@ -188,16 +189,15 @@ static void wipe_unused_memory(const void const *fdt,
 #endif
 }
 
-VbError_t twostop_init_vboot_library(const void const *fdt,
-		firmware_storage_t *file,
-		void *gbb, uint32_t gbb_offset,
-		crossystem_data_t *cdata,
-		VbCommonParams *cparams)
+static VbError_t
+twostop_init_vboot_library(firmware_storage_t *file, void *gbb,
+			   uint32_t gbb_offset, crossystem_data_t *cdata,
+			   VbCommonParams *cparams)
 {
 	VbError_t err;
 	VbInitParams iparams;
 
-	if (fdt_decode_chromeos_config_has_prop(fdt, "twostop-optional")) {
+	if (fdt_decode_chromeos_config_has_prop(gd->blob, "twostop-optional")) {
 		VBDEBUG(PREFIX "twostop-optional\n");
 		iparams.flags = VB_INIT_FLAG_RO_NORMAL_SUPPORT;
 	} else {
@@ -221,7 +221,7 @@ VbError_t twostop_init_vboot_library(const void const *fdt,
 	VBDEBUG(PREFIX "iparams.out_flags: %08x\n", iparams.out_flags);
 
 	if (iparams.out_flags & VB_INIT_OUT_CLEAR_RAM)
-		wipe_unused_memory(fdt, cdata, cparams);
+		wipe_unused_memory(cdata, cparams);
 
 	/* Load required information of GBB */
 	if (iparams.out_flags & VB_INIT_OUT_ENABLE_DISPLAY)
@@ -234,11 +234,10 @@ VbError_t twostop_init_vboot_library(const void const *fdt,
 	return VBERROR_SUCCESS;
 }
 
-uint32_t twostop_make_selection(struct twostop_fmap *fmap,
-		firmware_storage_t *file,
-		VbCommonParams *cparams,
-		void **fw_blob_ptr,
-		uint32_t *fw_size_ptr)
+static uint32_t
+twostop_make_selection(struct twostop_fmap *fmap, firmware_storage_t *file,
+		       VbCommonParams *cparams, void **fw_blob_ptr,
+		       uint32_t *fw_size_ptr)
 {
 	uint32_t selection = VB_SELECT_ERROR;
 	VbError_t err;
@@ -324,13 +323,12 @@ out:
 	return selection;
 }
 
-uint32_t twostop_select_and_set_main_firmware(const void const *fdt,
-		struct twostop_fmap *fmap,
-		firmware_storage_t *file,
-		void *gbb,
-		crossystem_data_t *cdata,
-		void *vb_shared_data,
-		int *boot_mode, void **fw_blob_ptr, uint32_t *fw_size_ptr)
+static uint32_t
+twostop_select_and_set_main_firmware(struct twostop_fmap *fmap,
+				     firmware_storage_t *file,
+				     void *gbb, crossystem_data_t *cdata,
+				     void *vb_shared_data, int *boot_mode,
+				     void **fw_blob_ptr, uint32_t *fw_size_ptr)
 {
 	uint32_t selection;
 	uint32_t id_offset = 0, id_length = 0;
@@ -343,8 +341,8 @@ uint32_t twostop_select_and_set_main_firmware(const void const *fdt,
 		return VB_SELECT_ERROR;
 	}
 
-	if (twostop_init_vboot_library(fdt, file,
-				gbb, fmap->readonly.gbb.offset, cdata, &cparams)
+	if (twostop_init_vboot_library(file, gbb, fmap->readonly.gbb.offset,
+				       cdata, &cparams)
 			!= VBERROR_SUCCESS) {
 		VBDEBUG(PREFIX "failed to init vboot library\n");
 		return VB_SELECT_ERROR;
@@ -405,7 +403,8 @@ uint32_t twostop_select_and_set_main_firmware(const void const *fdt,
 	return selection;
 }
 
-uint32_t twostop_jump(crossystem_data_t *cdata, void *fw_blob, uint32_t fw_size)
+static uint32_t
+twostop_jump(crossystem_data_t *cdata, void *fw_blob, uint32_t fw_size)
 {
 	VBDEBUG(PREFIX "jump to readwrite main firmware at %#x, size %#x\n",
 			CONFIG_SYS_TEXT_BASE, fw_size);
@@ -429,21 +428,18 @@ uint32_t twostop_jump(crossystem_data_t *cdata, void *fw_blob, uint32_t fw_size)
 	return VB_SELECT_ERROR;
 }
 
-int twostop_init(const void const *fdt,
-		struct twostop_fmap *fmap,
-		firmware_storage_t *file,
-		void *gbb,
-		crossystem_data_t *cdata,
-		void *vb_shared_data)
+static int
+twostop_init(struct twostop_fmap *fmap, firmware_storage_t *file,
+	     void *gbb, crossystem_data_t *cdata, void *vb_shared_data)
 {
 	cros_gpio_t wpsw, recsw, devsw;
 	GoogleBinaryBlockHeader *gbbh = (GoogleBinaryBlockHeader *)gbb;
 	uint8_t hardware_id[ID_LEN], readonly_firmware_id[ID_LEN];
 	int ret = -1;
 
-	if (cros_gpio_fetch(CROS_GPIO_WPSW, fdt, &wpsw) ||
-			cros_gpio_fetch(CROS_GPIO_RECSW, fdt, &recsw) ||
-			cros_gpio_fetch(CROS_GPIO_DEVSW, fdt, &devsw)) {
+	if (cros_gpio_fetch(CROS_GPIO_WPSW, &wpsw) ||
+			cros_gpio_fetch(CROS_GPIO_RECSW, &recsw) ||
+			cros_gpio_fetch(CROS_GPIO_DEVSW, &devsw)) {
 		VBDEBUG(PREFIX "failed to fetch gpio\n");
 		return -1;
 	}
@@ -451,7 +447,7 @@ int twostop_init(const void const *fdt,
 	cros_gpio_dump(&recsw);
 	cros_gpio_dump(&devsw);
 
-	if (fdt_decode_twostop_fmap(fdt, fmap)) {
+	if (fdt_decode_twostop_fmap(gd->blob, fmap)) {
 		VBDEBUG(PREFIX "failed to decode fmap\n");
 		return -1;
 	}
@@ -508,10 +504,9 @@ out:
 	return ret;
 }
 
-uint32_t twostop_main_firmware(struct twostop_fmap *fmap,
-		void *gbb,
-		crossystem_data_t *cdata,
-		void *vb_shared_data)
+static uint32_t
+twostop_main_firmware(struct twostop_fmap *fmap, void *gbb,
+		      crossystem_data_t *cdata, void *vb_shared_data)
 {
 	VbError_t err;
 	VbSelectAndLoadKernelParams kparams;
@@ -561,7 +556,8 @@ uint32_t twostop_main_firmware(struct twostop_fmap *fmap,
 	return VB_SELECT_ERROR;
 }
 
-uint32_t twostop_boot(const void const *fdt)
+static uint32_t
+twostop_boot(void)
 {
 	struct twostop_fmap fmap;
 	firmware_storage_t file;
@@ -573,12 +569,12 @@ uint32_t twostop_boot(const void const *fdt)
 	uint32_t selection;
 	int boot_mode = FIRMWARE_TYPE_NORMAL;
 
-	if (twostop_init(fdt, &fmap, &file, gbb, cdata, vb_shared_data)) {
+	if (twostop_init(&fmap, &file, gbb, cdata, vb_shared_data)) {
 		VBDEBUG(PREFIX "failed to init twostop boot\n");
 		return VB_SELECT_ERROR;
 	}
 
-	selection = twostop_select_and_set_main_firmware(fdt, &fmap, &file,
+	selection = twostop_select_and_set_main_firmware(&fmap, &file,
 			gbb, cdata, vb_shared_data,
 			&boot_mode, &fw_blob, &fw_size);
 	VBDEBUG(PREFIX "selection of bootstub: %s\n", str_selection(selection));
@@ -617,7 +613,8 @@ uint32_t twostop_boot(const void const *fdt)
 	return VB_SELECT_COMMAND_LINE;
 }
 
-uint32_t twostop_readwrite_main_firmware(const void const *fdt)
+static uint32_t
+twostop_readwrite_main_firmware(void)
 {
 	struct twostop_fmap fmap;
 	crossystem_data_t *cdata = (crossystem_data_t *)CROSSYSTEM_DATA_ADDRESS;
@@ -636,7 +633,7 @@ uint32_t twostop_readwrite_main_firmware(const void const *fdt)
 		return VB_SELECT_ERROR;
 	}
 
-	if (fdt_decode_twostop_fmap(fdt, &fmap)) {
+	if (fdt_decode_twostop_fmap(gd->blob, &fmap)) {
 		VBDEBUG(PREFIX "failed to decode fmap\n");
 		return VB_SELECT_ERROR;
 	}
@@ -659,9 +656,9 @@ uint32_t twostop_readwrite_main_firmware(const void const *fdt)
 	return twostop_main_firmware(&fmap, gbb, cdata, vb_shared_data);
 }
 
-int do_vboot_twostop(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int
+do_vboot_twostop(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
-	const void const *fdt = gd->blob;
 	uint32_t selection;
 
 	/*
@@ -681,9 +678,9 @@ int do_vboot_twostop(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	 * readwrite firmware code path.
 	 */
 	if (is_processor_reset())
-		selection = twostop_boot(fdt);
+		selection = twostop_boot();
 	else
-		selection = twostop_readwrite_main_firmware(fdt);
+		selection = twostop_readwrite_main_firmware();
 
 	VBDEBUG(PREFIX "selection of main firmware: %s\n",
 			str_selection(selection));

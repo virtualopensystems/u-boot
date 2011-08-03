@@ -13,8 +13,7 @@
 #include <chromeos/cros_gpio.h>
 #include <common.h>
 
-int cros_gpio_fetch(enum cros_gpio_index index, const void *fdt,
-		cros_gpio_t *gpio)
+int cros_gpio_fetch(enum cros_gpio_index index, cros_gpio_t *gpio)
 {
 	printf("cros_gpio_fetch used but not implemented.\n");
 	return 0;

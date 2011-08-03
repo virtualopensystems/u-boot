@@ -14,13 +14,15 @@
 #include <fdt_decode.h>
 #include <asm/arch/gpio.h>
 #include <asm/arch/tegra2.h>
+#include <asm/global_data.h>
 #include <chromeos/common.h>
 #include <chromeos/cros_gpio.h>
 
 #define PREFIX "cros_gpio: "
 
-int cros_gpio_fetch(enum cros_gpio_index index, const void *fdt,
-		cros_gpio_t *gpio)
+DECLARE_GLOBAL_DATA_PTR;
+
+int cros_gpio_fetch(enum cros_gpio_index index, cros_gpio_t *gpio)
 {
 	const char const *port[CROS_GPIO_MAX_GPIO] = {
 		"gpio_port_write_protect_switch",
@@ -45,7 +47,7 @@ int cros_gpio_fetch(enum cros_gpio_index index, const void *fdt,
 
 	gpio->index = index;
 
-	gpio->port = fdt_decode_get_config_int(fdt, port[index], -1);
+	gpio->port = fdt_decode_get_config_int(gd->blob, port[index], -1);
 	if (gpio->port == -1) {
 		VBDEBUG(PREFIX "failed to decode gpio port\n");
 		return -1;
@@ -53,7 +55,8 @@ int cros_gpio_fetch(enum cros_gpio_index index, const void *fdt,
 
 	gpio_direction_input(gpio->port);
 
-	gpio->polarity = fdt_decode_get_config_int(fdt, polarity[index], -1);
+	gpio->polarity =
+		fdt_decode_get_config_int(gd->blob, polarity[index], -1);
 	if (gpio->polarity == -1) {
 		VBDEBUG(PREFIX "failed to decode gpio polarity\n");
 		return -1;
