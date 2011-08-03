@@ -20,6 +20,7 @@
 #include <chromeos/fdt_decode.h>
 #include <chromeos/firmware_storage.h>
 #include <chromeos/gbb.h>
+#include <chromeos/hasher_state.h>
 #include <chromeos/memory_wipe.h>
 #include <chromeos/power_management.h>
 
@@ -141,57 +142,6 @@ int twostop_init_cparams(struct fdt_twostop_fmap *fmap,
 
 #undef P
 
-	return 0;
-}
-
-typedef struct {
-	firmware_storage_t *file;
-	struct {
-		void *vblock;
-		uint32_t offset;
-		uint32_t size;
-		void *cache;
-	} fw[2];
-} hasher_state_t;
-
-/* This can only be called after key block has been verified */
-uintptr_t firmware_body_size(const uintptr_t vblock_address)
-{
-	const VbKeyBlockHeader         const *keyblock;
-	const VbFirmwarePreambleHeader const *preamble;
-
-	keyblock = (VbKeyBlockHeader *)vblock_address;
-	preamble = (VbFirmwarePreambleHeader *)
-		(vblock_address + (uintptr_t)keyblock->key_block_size);
-
-	return preamble->body_signature.data_size;
-}
-
-VbError_t VbExHashFirmwareBody(VbCommonParams* cparams, uint32_t firmware_index)
-{
-	hasher_state_t *s = cparams->caller_context;
-	const int i = (firmware_index == VB_SELECT_FIRMWARE_A ? 0 : 1);
-	firmware_storage_t *file = s->file;
-
-	if (firmware_index != VB_SELECT_FIRMWARE_A &&
-			firmware_index != VB_SELECT_FIRMWARE_B) {
-		VBDEBUG(PREFIX "incorrect firmware index: %d\n",
-				firmware_index);
-		return 1;
-	}
-
-	/*
-	 * The key block has been verified. It is safe now to infer the actual
-	 * firmware body size from the key block.
-	 */
-	s->fw[i].size = firmware_body_size((uintptr_t)s->fw[i].vblock);
-
-	if (file->read(file, s->fw[i].offset, s->fw[i].size, s->fw[i].cache)) {
-		VBDEBUG(PREFIX "fail to read firmware: %d\n", firmware_index);
-		return 1;
-	}
-
-	VbUpdateFirmwareBodyHash(cparams, s->fw[i].cache, s->fw[i].size);
 	return 0;
 }
 

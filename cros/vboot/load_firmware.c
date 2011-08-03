@@ -10,57 +10,50 @@
 
 #include <common.h>
 #include <chromeos/common.h>
-#include <chromeos/firmware_storage.h>
-#include <vboot/firmware_cache.h>
+#include <chromeos/hasher_state.h>
 
-/* Import the header files from vboot_reference. */
 #include <vboot_api.h>
+#include <vboot_struct.h>
 
-#define PREFIX			"load_firmware: "
+#define PREFIX "load_firmware: "
 
-/*
- * Amount of bytes we read each time we call read().
- * See the commit log for more detail about the benchmark results.
- */
-#define BLOCK_SIZE		(8 * 1024)
-
-VbError_t VbExHashFirmwareBody(VbCommonParams* cparams,
-			       uint32_t firmware_index)
+/* This can only be called after key block has been verified */
+static uintptr_t firmware_body_size(const uintptr_t vblock_address)
 {
-	firmware_cache_t *cache = (firmware_cache_t *)cparams->caller_context;
-	firmware_storage_t *file = cache->file;
-	firmware_info_t *info;
-	int index;
-	uint8_t *buffer;
-	size_t offset, leftover, n;
+	const VbKeyBlockHeader         const *keyblock;
+	const VbFirmwarePreambleHeader const *preamble;
+
+	keyblock = (VbKeyBlockHeader *)vblock_address;
+	preamble = (VbFirmwarePreambleHeader *)
+		(vblock_address + (uintptr_t)keyblock->key_block_size);
+
+	return preamble->body_signature.data_size;
+}
+
+VbError_t VbExHashFirmwareBody(VbCommonParams* cparams, uint32_t firmware_index)
+{
+	hasher_state_t *s = cparams->caller_context;
+	const int i = (firmware_index == VB_SELECT_FIRMWARE_A ? 0 : 1);
+	firmware_storage_t *file = s->file;
 
 	if (firmware_index != VB_SELECT_FIRMWARE_A &&
 			firmware_index != VB_SELECT_FIRMWARE_B) {
-		VBDEBUG(PREFIX "Incorrect firmware index: %08x\n",
+		VBDEBUG(PREFIX "incorrect firmware index: %d\n",
 				firmware_index);
 		return 1;
 	}
 
-	index = (firmware_index == VB_SELECT_FIRMWARE_A ? 0 : 1);
-	info = &cache->infos[index];
-	buffer = info->buffer;
-	offset = info->offset;
-
 	/*
-	 * This loop feeds firmware body into VbUpdateFirmwareBodyHash.
+	 * The key block has been verified. It is safe now to infer the actual
+	 * firmware body size from the key block.
 	 */
-	for (leftover = info->size;
-			leftover > 0;
-			leftover -= n, offset += n, buffer += n) {
-		n = min(BLOCK_SIZE, leftover);
-		if (file->read(file, offset, n, buffer)) {
-			VBDEBUG(PREFIX "an error has occured "
-					"while reading firmware");
-			return 1;
-		}
+	s->fw[i].size = firmware_body_size((uintptr_t)s->fw[i].vblock);
 
-		VbUpdateFirmwareBodyHash(cparams, buffer, n);
+	if (file->read(file, s->fw[i].offset, s->fw[i].size, s->fw[i].cache)) {
+		VBDEBUG(PREFIX "fail to read firmware: %d\n", firmware_index);
+		return 1;
 	}
 
+	VbUpdateFirmwareBodyHash(cparams, s->fw[i].cache, s->fw[i].size);
 	return 0;
 }
