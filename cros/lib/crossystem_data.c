@@ -9,13 +9,16 @@
  */
 
 #include <common.h>
-#include <fdt_decode.h>
-#include <fdt_support.h>
 #include <gbb_header.h> /* for GoogleBinaryBlockHeader */
-#include <libfdt.h>
 #include <chromeos/common.h>
 #include <chromeos/crossystem_data.h>
 #include <linux/string.h>
+
+#ifdef CONFIG_OF_LIBFDT
+#include <fdt_decode.h>
+#include <fdt_support.h>
+#include <libfdt.h>
+#endif
 
 #define CROSSYSTEM_DATA_SIGNATURE "CHROMEOS"
 
@@ -103,6 +106,7 @@ int crossystem_data_set_main_firmware(crossystem_data_t *cdata,
 	return 0;
 }
 
+#ifdef CONFIG_OF_LIBFDT
 int crossystem_data_embed_into_fdt(crossystem_data_t *cdata, void *fdt,
 		uint32_t *size_ptr)
 {
@@ -230,6 +234,7 @@ int crossystem_data_embed_into_fdt(crossystem_data_t *cdata, void *fdt,
 		VBDEBUG(PREFIX "fail to store all properties into fdt\n");
 	return err;
 }
+#endif /* ^^^^ CONFIG_OF_LIBFDT  NOT defined ^^^^ */
 
 void crossystem_data_dump(crossystem_data_t *cdata)
 {

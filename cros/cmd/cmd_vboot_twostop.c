@@ -122,6 +122,25 @@ str_selection(uint32_t selection)
 }
 #endif /* VBOOT_DEBUG */
 
+/*
+ * Check if two stop boot secuence can be interrupted. If configured - use the
+ * device tree contents to determine it. Some other means (like checking the
+ * environment) could be added later.
+ *
+ * Returns VB_INIT_FLAG_RO_NORMAL_SUPPORT if interruption is allowed or 0
+ * otherwise.
+ */
+static int check_ro_normal_support(void)
+{
+	int rc = 0;
+#ifdef CONFIG_OF_CONTROL
+	if (fdt_decode_chromeos_config_has_prop(gd->blob, "twostop-optional"))
+		rc = VB_INIT_FLAG_RO_NORMAL_SUPPORT;
+#endif
+	VBDEBUG(PREFIX "%stwostop-optional\n", rc ? "" : "not ");
+	return rc;
+}
+
 static int
 twostop_init_cparams(struct twostop_fmap *fmap, void *gbb,
 		     void *vb_shared_data, VbCommonParams *cparams)
@@ -197,13 +216,8 @@ twostop_init_vboot_library(firmware_storage_t *file, void *gbb,
 	VbError_t err;
 	VbInitParams iparams;
 
-	if (fdt_decode_chromeos_config_has_prop(gd->blob, "twostop-optional")) {
-		VBDEBUG(PREFIX "twostop-optional\n");
-		iparams.flags = VB_INIT_FLAG_RO_NORMAL_SUPPORT;
-	} else {
-		VBDEBUG(PREFIX "not twostop-optional\n");
-		iparams.flags = 0;
-	}
+	memset(&iparams, 0, sizeof(iparams));
+	iparams.flags = check_ro_normal_support();
 
 	if (cdata->boot_write_protect_switch)
 		iparams.flags |= VB_INIT_FLAG_WP_ENABLED;
