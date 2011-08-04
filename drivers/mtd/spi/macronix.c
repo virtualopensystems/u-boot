@@ -49,6 +49,8 @@
 #define CMD_MX25XX_DP		0xb9	/* Deep Power-down */
 #define CMD_MX25XX_RES		0xab	/* Release from DP, and Read Signature */
 
+#define MACRONIX_SR_WIP		(1 << 0)	/* Write-in-Progress */
+
 struct macronix_spi_flash_params {
 	u16 idcode;
 	u16 page_size;
@@ -191,6 +193,11 @@ struct spi_flash *spi_flash_probe_macronix(struct spi_slave *spi, u8 *idcode)
 	flash->write = spi_flash_cmd_write_multi;
 	flash->erase = macronix_erase;
 	flash->read = spi_flash_cmd_read_fast;
+#ifdef CONFIG_SPI_FLASH_MACRONIX_NO_FAST_READ
+	flash->read = spi_flash_cmd_read_slow;
+#else
+	flash->read = spi_flash_cmd_read_fast;
+#endif
 	flash->page_size = params->page_size;
 	flash->sector_size = params->page_size * params->pages_per_sector
 		* params->sectors_per_block;
