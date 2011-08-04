@@ -43,6 +43,7 @@
 #include <serial.h>
 #include <asm/u-boot-x86.h>
 #include <asm-generic/sections.h>
+#include <spi.h>
 #include <elf.h>
 
 #ifdef CONFIG_BITBANGMII
@@ -347,6 +348,10 @@ void board_init_r(gd_t *id, ulong dest_addr)
 
 	/* Initialize the console (after the relocation and devices init) */
 	console_init_r();
+
+#ifdef CONFIG_CMD_SPI
+	spi_init();
+#endif
 
 #ifdef CONFIG_MISC_INIT_R
 	show_boot_progress(0x27);
