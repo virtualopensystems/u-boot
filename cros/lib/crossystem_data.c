@@ -24,6 +24,12 @@
 #include <asm/ic/coreboot/sysinfo.h>
 #endif
 
+#ifdef CONFIG_OF_LIBFDT
+#include <fdt_decode.h>
+#include <fdt_support.h>
+#include <libfdt.h>
+#endif
+
 #define CROSSYSTEM_DATA_SIGNATURE "CHROMEOS"
 
 /* This is used to keep bootstub and readwite main firmware in sync */

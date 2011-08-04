@@ -144,7 +144,7 @@ int board_use_usb_keyboard(int boot_mode)
 	__attribute__((weak, alias("__board_use_usb_keyboard")));
 
 /*
- * Check if two stop boot secuence can be interrupted. If configured - use the
+ * Check if two stop boot sequence can be interrupted. If configured - use the
  * device tree contents to determine it. Some other means (like checking the
  * environment) could be added later.
  *
