@@ -31,9 +31,12 @@
 #define _COREBOOT_SYSINFO_H
 
 #include <compiler.h>
+#include <asm/ic/coreboot/tables.h>
 
 /* Allow a maximum of 16 memory range definitions. */
 #define SYSINFO_MAX_MEM_RANGES 16
+/* Allow a maximum of 8 GPIOs */
+#define SYSINFO_MAX_GPIOS 8
 
 struct sysinfo_t {
 	unsigned int cpu_khz;
@@ -78,6 +81,9 @@ struct sysinfo_t {
 	char *assembler;
 
 	struct cb_framebuffer *framebuffer;
+
+	int num_gpios;
+	struct cb_gpio gpios[SYSINFO_MAX_GPIOS];
 
 	unsigned long *mbtable; /** Pointer to the multiboot table */
 };

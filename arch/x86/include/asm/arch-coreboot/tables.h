@@ -164,6 +164,23 @@ struct cb_framebuffer {
 	u8 reserved_mask_size;
 };
 
+#define CB_TAG_GPIO 0x0013
+#define GPIO_MAX_NAME_LENGTH 16
+struct cb_gpio {
+	u32 port;
+	u32 polarity;
+	u32 value;
+	u8 name[GPIO_MAX_NAME_LENGTH];
+};
+
+struct cb_gpios {
+	u32 tag;
+	u32 size;
+
+	u32 count;
+	struct cb_gpio gpios[0];
+};
+
 #define CB_TAG_CMOS_OPTION_TABLE 0x00c8
 struct cb_cmos_option_table {
 	u32 tag;
