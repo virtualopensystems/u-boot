@@ -104,6 +104,18 @@ static void cb_parse_checksum(unsigned char *ptr, struct sysinfo_t *info)
 	info->cmos_checksum_location = cmos_cksum->location;
 }
 
+static void cb_parse_gpios(unsigned char *ptr, struct sysinfo_t *info)
+{
+	int i;
+	struct cb_gpios *gpios = (struct cb_gpios *)ptr;
+
+	info->num_gpios = (gpios->count < SYSINFO_MAX_GPIOS) ?
+				(gpios->count) : SYSINFO_MAX_GPIOS;
+
+	for (i = 0; i < info->num_gpios; i++)
+		info->gpios[i] = gpios->gpios[i];
+}
+
 static void cb_parse_framebuffer(unsigned char *ptr, struct sysinfo_t *info)
 {
 	info->framebuffer = (struct cb_framebuffer *)ptr;
@@ -207,6 +219,8 @@ static int cb_parse_header(void *addr, int len, struct sysinfo_t *info)
 		case CB_TAG_FRAMEBUFFER:
 			cb_parse_framebuffer(ptr, info);
 			break;
+		case CB_TAG_GPIO:
+			cb_parse_gpios(ptr, info);
 		}
 
 		ptr += rec->size;
