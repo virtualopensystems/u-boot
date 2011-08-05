@@ -55,6 +55,7 @@ static struct display_callbacks display_callbacks_ = {
 	.dc_position_cursor = video_position_cursor,
 	.dc_puts = video_puts,
 	.dc_display_bitmap = video_display_bitmap,
+	.dc_display_clear = video_clear
 #endif
 };
 
@@ -191,9 +192,5 @@ VbError_t VbExDisplayDebugInfo(const char *info_str)
 /* this function is not technically part of the vboot interface */
 int display_clear(void)
 {
-	if (display_callbacks_.dc_display_clear)
-		return display_callbacks_.dc_display_clear();
-
-	printf ("%s: not implemented!\n", __FUNCTION__);
-	return -1;
+	return display_callbacks_.dc_display_clear();
 }

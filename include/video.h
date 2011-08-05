@@ -21,5 +21,6 @@ int	video_get_screen_rows (void);
 int	video_get_screen_columns (void);
 int	video_get_pixel_width (void);
 int	video_get_pixel_height(void);
+int	video_clear(void);
 
 #endif
