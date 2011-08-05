@@ -36,6 +36,11 @@
 #include <asm/arch-coreboot/sysinfo.h>
 #include <cros/fdt_decode.h>
 #include <cros/firmware_storage.h>
+#include <cros/power_management.h>
+
+#ifdef CONFIG_HW_WATCHDOG
+#include <watchdog.h>
+#endif
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -223,3 +228,19 @@ int board_final_cleanup(void)
 
 	return 0;
 }
+
+int do_coldboot(cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
+{
+	cold_reboot();
+	return (0);
+}
+
+U_BOOT_CMD(coldboot, 1, 1, do_coldboot, "Initiate a cold reboot.", "");
+
+int do_poweroff(cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
+{
+	power_off();
+	return (0);
+}
+
+U_BOOT_CMD(poweroff, 1, 1, do_poweroff, "Switch off power", "");
