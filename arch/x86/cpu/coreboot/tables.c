@@ -144,6 +144,9 @@ static int cb_parse_header(void *addr, int len, struct sysinfo_t *info)
 	/* Now, walk the tables. */
 	ptr += header->header_bytes;
 
+	/* Inintialize some fields to sentinel values. */
+	info->vbnv_start = info->vbnv_size = (uint32_t)(-1);
+
 	for (i = 0; i < header->table_entries; i++) {
 		struct cb_record *rec = (struct cb_record *)ptr;
 

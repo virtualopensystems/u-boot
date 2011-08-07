@@ -54,7 +54,7 @@ VbError_t VbExNvStorageRead(uint8_t* buf)
 {
 	int i;
 
-	if (lib_sysinfo.vbnv_start) {
+	if (lib_sysinfo.vbnv_start == (uint32_t)(-1)) {
 		printf("%s:%d - vbnv address undefined\n",
 		       __FUNCTION__, __LINE__);
 		return VBERROR_INVALID_SCREEN_INDEX;
@@ -70,7 +70,7 @@ VbError_t VbExNvStorageWrite(const uint8_t* buf)
 {
 	int i;
 
-	if (lib_sysinfo.vbnv_start) {
+	if (lib_sysinfo.vbnv_start == (uint32_t)(-1)) {
 		printf("%s:%d - vbnv address undefined\n",
 		       __FUNCTION__, __LINE__);
 		return VBERROR_INVALID_SCREEN_INDEX;
