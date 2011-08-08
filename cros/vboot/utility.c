@@ -67,11 +67,6 @@ void VbExFree(void *ptr)
 	free(ptr);
 }
 
-uint64_t VbExGetTimer(void)
-{
-	return timer_get_us();
-}
-
 void VbExSleepMs(uint32_t msec)
 {
 	uint32_t delay, start;
