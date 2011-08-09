@@ -149,7 +149,7 @@ twostop_init_cparams(struct twostop_fmap *fmap, void *gbb,
 	return 0;
 }
 
-#ifdef CONFIG_OF_CONTROL
+#if defined(CONFIG_OF_CONTROL) && defined(CONFIG_TEGRA2)
 static uintptr_t
 get_current_sp(void)
 {
@@ -163,7 +163,7 @@ get_current_sp(void)
 static void
 wipe_unused_memory(crossystem_data_t *cdata, VbCommonParams *cparams)
 {
-#ifdef CONFIG_OF_CONTROL
+#if defined(CONFIG_OF_CONTROL) && defined(CONFIG_TEGRA2)
 	int fb_size, lcd_line_length;
 	memory_wipe_t wipe;
 	struct fdt_memory config;
@@ -194,9 +194,6 @@ wipe_unused_memory(crossystem_data_t *cdata, VbCommonParams *cparams)
 			    (uintptr_t)gd->fb_base + fb_size);
 
 	memory_wipe_execute(&wipe);
-#else
-	printf("wipe_unused_memory depends on fdt_decode_memory which"
-		" isn't configured\n");
 #endif
 }
 

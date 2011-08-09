@@ -181,6 +181,13 @@ struct cb_gpios {
 	struct cb_gpio gpios[0];
 };
 
+#define CB_TAG_FDT	0x0014
+struct cb_fdt {
+	uint32_t tag;
+	uint32_t size;	/* size of the entire entry */
+	/* the actual FDT gets placed here */
+};
+
 #define CB_TAG_CMOS_OPTION_TABLE 0x00c8
 struct cb_cmos_option_table {
 	u32 tag;
