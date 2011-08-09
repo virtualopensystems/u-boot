@@ -46,6 +46,8 @@ int cpu_init_f(void)
 	int ret = get_coreboot_info(&lib_sysinfo);
 	if (ret != 0)
 		printf("Failed to parse coreboot tables.\n");
+	gd->fdt_blob = lib_sysinfo.sys_fdt;
+
 	return ret;
 }
 
