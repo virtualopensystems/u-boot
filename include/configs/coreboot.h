@@ -276,6 +276,7 @@
  * FLASH configuration
  */
 #define CONFIG_SPI_FLASH
+#define CONFIG_NEW_SPI_XFER
 #define CONFIG_DUMMY_SPI
 #define CONFIG_SYS_MAX_FLASH_SECT		1
 #define CONFIG_SYS_MAX_FLASH_BANKS		1
