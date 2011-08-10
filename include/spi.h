@@ -24,6 +24,8 @@
 #ifndef _SPI_H_
 #define _SPI_H_
 
+#include <config.h>
+
 /* Controller-specific definitions: */
 
 /* SPI mode flags */
@@ -115,6 +117,34 @@ int spi_claim_bus(struct spi_slave *slave);
  */
 void spi_release_bus(struct spi_slave *slave);
 
+#ifdef CONFIG_NEW_SPI_XFER
+/*-----------------------------------------------------------------------
+ * SPI transfer
+ *
+ * This writes "bitlen" bits out the SPI MOSI port and simultaneously clocks
+ * "bitlen" bits in the SPI MISO port.  That's just the way SPI works.
+ *
+ * The source of the outgoing bits is the "dout" parameter and the
+ * destination of the input bits is the "din" parameter.  Note that "dout"
+ * and "din" can point to the same memory location, in which case the
+ * input data overwrites the output data (since both are buffered by
+ * temporary variables, this is OK).
+ *
+ * spi_xfer() interface:
+ *   slave:	The SPI slave which will be sending/receiving the data.
+ *   dout:	Pointer to a string of bits to send out.  The bits are
+ *		held in a byte array and are sent MSB first.
+ *   bitsout:	How many bits to write.
+ *   din:	Pointer to a string of bits that will be filled in.
+ *   bitsin:	How many bits to read.
+ *
+ *   Returns: 0 on success, not 0 on failure
+ */
+int  spi_xfer(struct spi_slave *slave, const void *dout, unsigned int bitsout,
+		void *din, unsigned int bitsin);
+
+#else
+
 /*-----------------------------------------------------------------------
  * SPI transfer
  *
@@ -139,6 +169,7 @@ void spi_release_bus(struct spi_slave *slave);
  */
 int  spi_xfer(struct spi_slave *slave, unsigned int bitlen, const void *dout,
 		void *din, unsigned long flags);
+#endif
 
 /*-----------------------------------------------------------------------
  * Determine if a SPI chipselect is valid.
@@ -194,7 +225,11 @@ static inline int spi_w8r8(struct spi_slave *slave, unsigned char byte)
 	dout[0] = byte;
 	dout[1] = 0;
 
+#ifdef CONFIG_NEW_SPI_XFER
+	ret = spi_xfer(slave, dout, 16, din, 16);
+#else
 	ret = spi_xfer(slave, 16, dout, din, SPI_XFER_BEGIN | SPI_XFER_END);
+#endif
 	return ret < 0 ? ret : din[1];
 }
 

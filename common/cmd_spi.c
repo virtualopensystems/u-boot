@@ -126,8 +126,12 @@ int do_spi (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	}
 
 	spi_claim_bus(slave);
+#ifdef CONFIG_NEW_SPI_XFER
+	if(spi_xfer(slave, dout, bitlen, din, bitlen) != 0) {
+#else
 	if(spi_xfer(slave, bitlen, dout, din,
 				SPI_XFER_BEGIN | SPI_XFER_END) != 0) {
+#endif
 		printf("Error during SPI transaction\n");
 		rcode = 1;
 	} else {

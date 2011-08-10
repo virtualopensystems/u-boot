@@ -8,6 +8,7 @@
  */
 
 #include <common.h>
+#include <config.h>
 #include <malloc.h>
 #include <spi.h>
 #include <spi_flash.h>
@@ -22,6 +23,115 @@ static void spi_flash_addr(u32 addr, u8 *cmd)
 	cmd[2] = addr >> 8;
 	cmd[3] = addr >> 0;
 }
+
+#ifdef CONFIG_NEW_SPI_XFER
+
+int spi_flash_cmd(struct spi_slave *spi, u8 cmd, void *response, size_t len)
+{
+	int ret = spi_xfer(spi, &cmd, 8, response, len * 8);
+	if (ret)
+		debug("SF: Failed to send command %02x: %d\n", cmd, ret);
+
+	return ret;
+}
+
+int spi_flash_cmd_read(struct spi_slave *spi, const u8 *cmd,
+		size_t cmd_len, void *data, size_t data_len)
+{
+	int ret = spi_xfer(spi, cmd, cmd_len * 8, data, data_len * 8);
+	if (ret) {
+		debug("SF: Failed to send read command (%zu bytes): %d\n",
+				data_len, ret);
+	}
+
+	return ret;
+}
+
+int spi_flash_cmd_write(struct spi_slave *spi, const u8 *cmd, size_t cmd_len,
+		const void *data, size_t data_len)
+{
+	int ret;
+	u8 buff[cmd_len + data_len];
+	memcpy(buff, cmd, cmd_len);
+	memcpy(buff + cmd_len, data, data_len);
+
+	ret = spi_xfer(spi, buff, (cmd_len + data_len) * 8, NULL, 0);
+	if (ret) {
+		debug("SF: Failed to send write command (%zu bytes): %d\n",
+				data_len, ret);
+	}
+
+	return ret;
+}
+
+int spi_flash_read_common(struct spi_flash *flash, const u8 *cmd,
+		size_t cmd_len, void *data, size_t data_len)
+{
+	struct spi_slave *spi = flash->spi;
+	int ret;
+
+	spi_claim_bus(spi);
+	ret = spi_flash_cmd_read(spi, cmd, cmd_len, data, data_len);
+	spi_release_bus(spi);
+
+	return ret;
+}
+
+int spi_flash_cmd_read_fast(struct spi_flash *flash, u32 offset,
+		size_t len, void *data)
+{
+	struct spi_slave *spi = flash->spi;
+	u8 cmd[5];
+
+	cmd[0] = CMD_READ_ARRAY_FAST;
+	spi_flash_addr(offset, cmd);
+	cmd[4] = 0x00;
+
+	return spi_flash_cmd_read(spi, cmd, sizeof(cmd), data, len);
+}
+
+int spi_flash_cmd_read_slow(struct spi_flash *flash, u32 offset,
+		size_t len, void *data)
+{
+	struct spi_slave *spi = flash->spi;
+	u8 cmd[4];
+
+	cmd[0] = CMD_READ_ARRAY_SLOW;
+	spi_flash_addr(offset, cmd);
+
+	return spi_flash_cmd_read(spi, cmd, sizeof(cmd), data, len);
+}
+
+int spi_flash_cmd_poll_bit(struct spi_flash *flash, unsigned long timeout,
+			   u8 cmd, u8 poll_bit)
+{
+	struct spi_slave *spi = flash->spi;
+	unsigned long timebase;
+	int ret;
+	u8 status;
+
+	timebase = get_timer(0);
+	do {
+		WATCHDOG_RESET();
+
+		ret = spi_flash_cmd_read(spi, &cmd, 1, &status, 1);
+		if (ret)
+			return -1;
+
+		if ((status & poll_bit) == 0)
+			break;
+
+	} while (get_timer(timebase) < timeout);
+
+	if ((status & poll_bit) == 0)
+		return 0;
+
+	/* Timed out */
+	debug("SF: time out!\n");
+	return -1;
+}
+
+#else
 
 static int spi_flash_read_write(struct spi_slave *spi,
 				const u8 *cmd, size_t cmd_len,
@@ -183,6 +293,8 @@ int spi_flash_cmd_poll_bit(struct spi_flash *flash, unsigned long timeout,
 	debug("SF: time out!\n");
 	return -1;
 }
+
+#endif /* CONFIG_NEW_SPI_XFER */
 
 int spi_flash_cmd_wait_ready(struct spi_flash *flash, unsigned long timeout)
 {
