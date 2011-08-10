@@ -56,8 +56,13 @@ void spi_cs_deactivate(struct spi_slave *slave)
 	printf("spi_cs_deactivate used but not implemented.\n");
 }
 
+#ifdef CONFIG_NEW_SPI_XFER
+int spi_xfer(struct spi_slave *slave, const void *dout, unsigned int bitsout,
+		void *din, unsigned int bitsin)
+#else
 int spi_xfer(struct spi_slave *slave, unsigned int bitlen, const void *dout,
 		void *din, unsigned long flags)
+#endif
 {
 	printf("spi_xfer used but not implemented.\n");
 	return 0;
