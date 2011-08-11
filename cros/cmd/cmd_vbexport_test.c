@@ -19,7 +19,6 @@
 #include <gbb_header.h>
 #include <chromeos/firmware_storage.h>
 #include <chromeos/gbb.h>
-#include <vboot/global_data.h>
 
 #include <vboot_api.h>
 
@@ -400,11 +399,9 @@ static int show_screen_and_delay(uint32_t screen_type)
 
 static uint8_t *read_gbb_from_firmware(void)
 {
-	vb_global_t *global;
 	firmware_storage_t file;
 	struct twostop_fmap fmap;
-
-	global = get_vboot_global();
+	void *gbb = (void *)GBB_ADDRESS;
 
 	if (decode_twostop_fmap(&fmap)) {
 		VbExDebug("Failed to load fmap config!\n");
@@ -417,13 +414,12 @@ static uint8_t *read_gbb_from_firmware(void)
 		return NULL;
 	}
 
-	if (init_vboot_global(global, &file)) {
-		VbExDebug("Failed to init vboot global data!\n");
+	if (gbb_init(gbb, &file, fmap.readonly.gbb.offset)) {
+		VbExDebug("Failed to read GBB!\n");
 		return NULL;
 	}
 
-	if (gbb_read_bmp_block(global->gbb_data, &file,
-				fmap.readonly.gbb.offset)) {
+	if (gbb_read_bmp_block(gbb, &file, fmap.readonly.gbb.offset)) {
 		VbExDebug("Failed to load BMP Block in GBB!\n");
 		return NULL;
 	}
@@ -432,7 +428,7 @@ static uint8_t *read_gbb_from_firmware(void)
 		VbExDebug("Failed to close firmware device!\n");
 	}
 
-	return global->gbb_data;
+	return gbb;
 }
 
 static int show_images_and_delay(BmpBlockHeader *bmph, int index)

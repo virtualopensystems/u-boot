@@ -66,21 +66,6 @@
  * initialized by the bootstub, and which are by the readwrite firmware.
  */
 
-/*
- * We use fixed memory address for the parameters --- this should be simpler
- * than atags or a register holding the address of the parameters. Besides,
- * Chrome OS kernel is loaded to a fixed location, we could simply use this
- * location as our anchor for the location of the parameters.
- */
-/*
- * Layout: first, the kernel buffer, then the crossystem data (and the
- * VbSharedData), and finally, the GBB.
- */
-#define CROSSYSTEM_DATA_ADDRESS \
-	(CHROMEOS_KERNEL_LOADADDR + CHROMEOS_KERNEL_BUFSIZE)
-#define CROSSYSTEM_DATA_MAXSIZE 0x8000
-#define GBB_ADDRESS (CROSSYSTEM_DATA_ADDRESS + CROSSYSTEM_DATA_MAXSIZE)
-
 DECLARE_GLOBAL_DATA_PTR;
 
 /* The margin to keep extra stack region that not to be wiped. */
