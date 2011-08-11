@@ -399,12 +399,13 @@ static int show_screen_and_delay(uint32_t screen_type)
 
 static uint8_t *read_gbb_from_firmware(void)
 {
+	void *fdt_ptr = (void *)gd->blob;
 	firmware_storage_t file;
 	struct twostop_fmap fmap;
 	void *gbb = (void *)GBB_ADDRESS;
 
-	if (decode_twostop_fmap(&fmap)) {
-		VbExDebug("Failed to load fmap config!\n");
+	if (fdt_decode_twostop_fmap(fdt_ptr, &fmap)) {
+		VbExDebug("Failed to load fmap config from fdt!\n");
 		return NULL;
 	}
 
