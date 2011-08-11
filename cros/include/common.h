@@ -32,6 +32,16 @@
 #define VBDEBUG_PUTS(str)
 #endif
 
+
+enum {
+	BOOTSTAGE_VBOOT_TWOSTOP = BOOTSTAGE_USER,
+	BOOTSTAGE_VBOOT_TWOSTOP_INIT,
+	BOOTSTAGE_VBOOT_SELECT_AND_SET,
+	BOOTSTAGE_VBOOT_TWOSTOP_MAIN_FIRMWARE,
+
+	BOOTSTAGE_VBOOT_LAST
+};
+
 /* this function is implemented along with vboot_api */
 int display_clear(void);
 

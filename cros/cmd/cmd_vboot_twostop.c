@@ -335,6 +335,8 @@ twostop_select_and_set_main_firmware(struct twostop_fmap *fmap,
 	uint8_t firmware_id[ID_LEN];
 	VbCommonParams cparams;
 
+	bootstage_mark(BOOTSTAGE_VBOOT_SELECT_AND_SET,
+		       "twostop_select_and_set_main_firmware");
 	if (twostop_init_cparams(fmap, gbb, vb_shared_data, &cparams)) {
 		VBDEBUG(PREFIX "failed to init cparams\n");
 		return VB_SELECT_ERROR;
@@ -436,6 +438,7 @@ twostop_init(struct twostop_fmap *fmap, firmware_storage_t *file,
 	uint8_t hardware_id[ID_LEN], readonly_firmware_id[ID_LEN];
 	int ret = -1;
 
+	bootstage_mark(BOOTSTAGE_VBOOT_TWOSTOP_INIT, "twostop_init");
 	if (cros_gpio_fetch(CROS_GPIO_WPSW, &wpsw) ||
 			cros_gpio_fetch(CROS_GPIO_RECSW, &recsw) ||
 			cros_gpio_fetch(CROS_GPIO_DEVSW, &devsw)) {
@@ -511,6 +514,8 @@ twostop_main_firmware(struct twostop_fmap *fmap, void *gbb,
 	VbSelectAndLoadKernelParams kparams;
 	VbCommonParams cparams;
 
+	bootstage_mark(BOOTSTAGE_VBOOT_TWOSTOP_MAIN_FIRMWARE,
+		       "twostop_main_firmware");
 	if (twostop_init_cparams(fmap, gbb, vb_shared_data, &cparams)) {
 		VBDEBUG(PREFIX "failed to init cparams\n");
 		return VB_SELECT_ERROR;
@@ -660,6 +665,7 @@ do_vboot_twostop(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	uint32_t selection;
 
+	bootstage_mark(BOOTSTAGE_VBOOT_TWOSTOP, "do_vboot_twostop");
 	/*
 	 * TODO: We should clear screen later if we load graphics optionally.
 	 * In normal mode, we don't need to load graphics driver and clear
