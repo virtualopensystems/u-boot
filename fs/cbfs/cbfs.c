@@ -69,7 +69,7 @@ static const u8 goodFileMagic[] = "LARCHIVE";
 
 
 static int initialized;
-static struct CbfsHeader header;
+static struct CbfsHeader cbfsHeader;
 static CbfsCacheNode *fileCache;
 
 static void
@@ -93,23 +93,13 @@ swap_file_header(CbfsFileHeader *dest, CbfsFileHeader *src)
 	dest->offset = be32_to_cpu(src->offset);
 }
 
-static void
-file_cbfs_fill_cache(u8 *start, u32 size, u32 align)
+static int
+file_cbfs_next_file(u8 *start, u32 size, u32 align, CbfsCacheNode *newNode,
+		u32 *used)
 {
-	CbfsCacheNode *cacheNode;
-	CbfsCacheNode *newNode;
 	CbfsFileHeader header;
-	CbfsCacheNode **cacheTail = &fileCache;
 
-	/* Clear out old information. */
-	cacheNode = fileCache;
-	while (cacheNode) {
-		CbfsCacheNode *oldNode = cacheNode;
-		cacheNode = cacheNode->next;
-		free(oldNode->name);
-		free(oldNode);
-	}
-	fileCache = NULL;
+	*used = 0;
 
 	while (size >= align) {
 		CbfsFileHeader *fileHeader = (CbfsFileHeader *)start;
@@ -119,64 +109,106 @@ file_cbfs_fill_cache(u8 *start, u32 size, u32 align)
 		/* Check if there's a file here. */
 		if (memcmp(goodFileMagic, &(fileHeader->magic),
 				sizeof(fileHeader->magic))) {
+			*used += align;
 			size -= align;
 			start += align;
 			continue;
 		}
 
-		newNode = (CbfsCacheNode *)malloc(sizeof(CbfsCacheNode));
 		swap_file_header(&header, fileHeader);
 		if (header.offset < sizeof(CbfsFileHeader) ||
 				header.offset > header.len) {
 			file_cbfs_result = CBFS_BAD_FILE;
-			return;
+			return -1;
 		}
 		newNode->next = NULL;
 		newNode->type = header.type;
 		newNode->data = start + header.offset;
 		newNode->dataLength = header.len;
 		nameLen = header.offset - sizeof(CbfsFileHeader);
-		/* Add a byte for a NULL terminator. */
-		newNode->name = (char *)malloc(nameLen + 1);
-		strncpy(newNode->name,
-			((char *)fileHeader) + sizeof(CbfsFileHeader),
-			nameLen);
-		newNode->name[nameLen] = 0;
+		newNode->name = (char *)fileHeader + sizeof(CbfsFileHeader);
 		newNode->nameLength = nameLen;
 		newNode->checksum = header.checksum;
-		*cacheTail = newNode;
-		cacheTail = &newNode->next;
 
 		step = header.len;
 		if (step % align)
 			step = step + align - step % align;
 
-		size -= step;
-		start += step;
+		*used += step;
+		return 1;
+	}
+	return 0;
+}
+
+static void
+file_cbfs_fill_cache(u8 *start, u32 size, u32 align)
+{
+	CbfsCacheNode *cacheNode;
+	CbfsCacheNode *newNode;
+	CbfsCacheNode **cacheTail = &fileCache;
+
+	/* Clear out old information. */
+	cacheNode = fileCache;
+	while (cacheNode) {
+		CbfsCacheNode *oldNode = cacheNode;
+		cacheNode = cacheNode->next;
+		free(oldNode);
+	}
+	fileCache = NULL;
+
+	while (size >= align) {
+		int result;
+		u32 used;
+
+		newNode = (CbfsCacheNode *)malloc(sizeof(CbfsCacheNode));
+		result = file_cbfs_next_file(start, size, align,
+			newNode, &used);
+
+		if (result < 0) {
+			free(newNode);
+			return;
+		} else if (result == 0) {
+			free(newNode);
+			break;
+		}
+		*cacheTail = newNode;
+		cacheTail = &newNode->next;
+
+		size -= used;
+		start += used;
 	}
 	file_cbfs_result = CBFS_SUCCESS;
+}
+
+static int
+file_cbfs_load_header(uintptr_t endOfRom, CbfsHeader *header)
+{
+	CbfsHeader *headerInRom;
+
+	headerInRom = (CbfsHeader *)(uintptr_t)*(u32 *)(endOfRom - 3);
+	swap_header(header, headerInRom);
+
+	if (header->magic != goodMagic || header->offset >
+			header->romSize - header->bootBlockSize) {
+		file_cbfs_result = CBFS_BAD_HEADER;
+		return 1;
+	}
+	return 0;
 }
 
 void
 file_cbfs_init(uintptr_t endOfRom)
 {
-	CbfsHeader *headerInRom;
 	u8 *startOfRom;
 	initialized = 0;
 
-	headerInRom = (CbfsHeader *)(uintptr_t)*(u32 *)(endOfRom - 3);
-	swap_header(&header, headerInRom);
-
-	if (header.magic != goodMagic || header.offset >
-			header.romSize - header.bootBlockSize) {
-		file_cbfs_result = CBFS_BAD_HEADER;
+	if (file_cbfs_load_header(endOfRom, &cbfsHeader))
 		return;
-	}
 
-	startOfRom = (u8 *)(endOfRom + 1 - header.romSize);
+	startOfRom = (u8 *)(endOfRom + 1 - cbfsHeader.romSize);
 
-	file_cbfs_fill_cache(startOfRom + header.offset,
-			     header.romSize, header.align);
+	file_cbfs_fill_cache(startOfRom + cbfsHeader.offset,
+			     cbfsHeader.romSize, cbfsHeader.align);
 	if (file_cbfs_result == CBFS_SUCCESS)
 		initialized = 1;
 }
@@ -186,7 +218,7 @@ file_cbfs_get_header(void)
 {
 	if (initialized) {
 		file_cbfs_result = CBFS_SUCCESS;
-		return &header;
+		return &cbfsHeader;
 	} else {
 		file_cbfs_result = CBFS_NOT_INITIALIZED;
 		return NULL;
@@ -242,51 +274,69 @@ file_cbfs_find(const char *name)
 	return cacheNode;
 }
 
+CbfsFile
+file_cbfs_find_uncached(uintptr_t endOfRom, const char *name)
+{
+	u8 *start;
+	u32 size;
+	u32 align;
+	static CbfsCacheNode node;
+
+	if (file_cbfs_load_header(endOfRom, &cbfsHeader))
+		return NULL;
+
+	start = (u8 *)(endOfRom + 1 - cbfsHeader.romSize);
+	size = cbfsHeader.romSize;
+	align = cbfsHeader.align;
+
+	while (size >= align) {
+		int result;
+		u32 used;
+
+		result = file_cbfs_next_file(start, size, align, &node, &used);
+
+		if (result < 0) {
+			return NULL;
+		} else if (result == 0) {
+			break;
+		}
+
+		if (!strcmp(name, node.name)) {
+			return &node;
+		}
+
+		size -= used;
+		start += used;
+	}
+	file_cbfs_result = CBFS_FILE_NOT_FOUND;
+	return NULL;
+}
+
 const char *
 file_cbfs_name(CbfsFile file)
 {
-	if (!initialized) {
-		file_cbfs_result = CBFS_NOT_INITIALIZED;
-		return NULL;
-	} else {
-		file_cbfs_result = CBFS_SUCCESS;
-		return file->name;
-	}
+	file_cbfs_result = CBFS_SUCCESS;
+	return file->name;
 }
 
 u32
 file_cbfs_size(CbfsFile file)
 {
-	if (!initialized) {
-		file_cbfs_result = CBFS_NOT_INITIALIZED;
-		return 0;
-	} else {
-		file_cbfs_result = CBFS_SUCCESS;
-		return file->dataLength;
-	}
+	file_cbfs_result = CBFS_SUCCESS;
+	return file->dataLength;
 }
 
 u32
 file_cbfs_type(CbfsFile file)
 {
-	if (!initialized) {
-		file_cbfs_result = CBFS_NOT_INITIALIZED;
-		return 0;
-	} else {
-		file_cbfs_result = CBFS_SUCCESS;
-		return file->type;
-	}
+	file_cbfs_result = CBFS_SUCCESS;
+	return file->type;
 }
 
 long
 file_cbfs_read(CbfsFile file, void *buffer, unsigned long maxsize)
 {
 	u32 size;
-
-	if (!initialized) {
-		file_cbfs_result = CBFS_NOT_INITIALIZED;
-		return -CBFS_NOT_INITIALIZED;
-	}
 
 	size = file->dataLength;
 	if (maxsize && size > maxsize)

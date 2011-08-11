@@ -106,6 +106,22 @@ void file_cbfs_get_next(CbfsFile *file);
  */
 CbfsFile file_cbfs_find(const char *name);
 
+
+/***************************************************************************/
+/* All of the functions below can be used without first initializing CBFS. */
+/***************************************************************************/
+
+/*
+ * Find a file with a particular name in CBFS without using the heap.
+ *
+ * @param end_of_rom	Points to the end of the ROM the CBFS should be read
+ *                      from.
+ * @param name		The name to search for.
+ *
+ * @return A handle to the file, or NULL on error.
+ */
+CbfsFile file_cbfs_find_uncached(uintptr_t end_of_rom, const char *name);
+
 /*
  * Get the name of a file in CBFS.
  *
