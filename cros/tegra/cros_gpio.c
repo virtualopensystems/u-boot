@@ -22,47 +22,74 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+static char *gpio_name[CROS_GPIO_MAX_GPIO] = {
+	"write-protect-switch",
+	"recovery-switch",
+	"developer-switch",
+	"lid-switch",
+	"power-switch",
+};
+
+static int g_config_node = -1;
+static unsigned long g_valid_time;
+
+int misc_init_r(void)
+{
+	struct fdt_gpio_state gs;
+	int i, config_node;
+
+	config_node = fdt_path_offset(gd->blob, "/config");
+	if (config_node < 0)
+		return -1;
+
+	for (i = 0; i < CROS_GPIO_MAX_GPIO; i++) {
+		if (fdt_decode_gpio(gd->blob, config_node, gpio_name[i], &gs))
+			return -1;
+		fdt_setup_gpio(&gs);
+	}
+
+	/*
+	 * In theory we have to insert a delay here for charging the input
+	 * gate capacitance. Consider a 200K ohms series resister and 10
+	 * picofarads gate capacitance.
+	 *
+	 * RC time constant is
+	 *     200 K ohms * 10 picofarads = 2 microseconds
+	 *
+	 * Then 10-90% rise time is
+	 *     2 microseconds * 2.2 = 4.4 microseconds
+	 *
+	 * Thus, 10 microseconds gives us a 50% margin.
+	 */
+	g_valid_time = timer_get_us() + 10;
+	g_config_node = config_node;
+
+	return 0;
+}
+
 int cros_gpio_fetch(enum cros_gpio_index index, cros_gpio_t *gpio)
 {
-	const char const *port[CROS_GPIO_MAX_GPIO] = {
-		"gpio_port_write_protect_switch",
-		"gpio_port_recovery_switch",
-		"gpio_port_developer_switch",
-		"gpio_port_lid_switch",
-		"gpio_port_power_switch",
-	};
-	const char const *polarity[CROS_GPIO_MAX_GPIO] = {
-		"polarity_write_protect_switch",
-		"polarity_recovery_switch",
-		"polarity_developer_switch",
-		"polarity_lid_switch",
-		"polarity_power_switch",
-	};
+	struct fdt_gpio_state gs;
 	int p;
 
-	if (index < 0 || index >= CROS_GPIO_MAX_GPIO) {
-		VBDEBUG(PREFIX "index out of range: %d\n", index);
+	assert(g_config_node >= 0);
+	assert(index >= 0 && index < CROS_GPIO_MAX_GPIO);
+
+	if (fdt_decode_gpio(gd->blob, g_config_node, gpio_name[index], &gs)) {
+		VBDEBUG(PREFIX "fail to decode gpio: %d\n", index);
 		return -1;
 	}
 
 	gpio->index = index;
-
-	gpio->port = fdt_decode_get_config_int(gd->blob, port[index], -1);
-	if (gpio->port == -1) {
-		VBDEBUG(PREFIX "failed to decode gpio port\n");
-		return -1;
-	}
-
-	gpio_direction_input(gpio->port);
-
-	gpio->polarity =
-		fdt_decode_get_config_int(gd->blob, polarity[index], -1);
-	if (gpio->polarity == -1) {
-		VBDEBUG(PREFIX "failed to decode gpio polarity\n");
-		return -1;
-	}
-
+	gpio->port = gs.gpio;
+	gpio->polarity = (gs.flags & FDT_GPIO_ACTIVE_LOW) ?
+		CROS_GPIO_ACTIVE_LOW : CROS_GPIO_ACTIVE_HIGH;
 	p = (gpio->polarity == CROS_GPIO_ACTIVE_HIGH) ? 0 : 1;
+
+	/* We can only read GPIO after g_valid_time */
+	while (timer_get_us() < g_valid_time)
+		udelay(10);
+
 	gpio->value = p ^ gpio_get_value(gpio->port);
 
 	return 0;
