@@ -12,8 +12,8 @@ include $(TOPDIR)/config.mk
 
 LIB	= $(obj)libvbexport_board.a
 
-COBJS-$(CONFIG_CHROMEOS_VBEXPORT) += nvstorage.o
-COBJS-$(CONFIG_CHROMEOS_VBEXPORT) += utility.o
+COBJS-$(CONFIG_CHROMEOS) += nvstorage.o
+COBJS-$(CONFIG_CHROMEOS) += utility.o
 
 COBJS	:= $(COBJS-y)
 OBJS	:= $(addprefix $(obj),$(COBJS))
