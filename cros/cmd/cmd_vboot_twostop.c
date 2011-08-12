@@ -164,6 +164,7 @@ static void
 wipe_unused_memory(crossystem_data_t *cdata, VbCommonParams *cparams)
 {
 #ifdef CONFIG_OF_CONTROL
+	int fb_size, lcd_line_length;
 	memory_wipe_t wipe;
 	struct fdt_memory config;
 
@@ -185,6 +186,12 @@ wipe_unused_memory(crossystem_data_t *cdata, VbCommonParams *cparams)
 	memory_wipe_exclude(&wipe,
 			    (uintptr_t)TEGRA_LP0_ADDR,
 			    (uintptr_t)(TEGRA_LP0_ADDR + TEGRA_LP0_SIZE));
+
+	/* Excludes the frame buffer. */
+	fb_size = lcd_get_size(&lcd_line_length);
+	memory_wipe_exclude(&wipe,
+			    (uintptr_t)gd->fb_base,
+			    (uintptr_t)gd->fb_base + fb_size);
 
 	memory_wipe_execute(&wipe);
 #else
