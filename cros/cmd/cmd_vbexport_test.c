@@ -436,6 +436,8 @@ static int show_images_and_delay(BmpBlockHeader *bmph, int index)
 	int i;
 	ScreenLayout *screen;
 	ImageInfo *info;
+	void *rawimg;
+        uint32_t inoutsize;
 
 	screen = (ScreenLayout *)(bmph + 1);
 	screen += index;
@@ -445,18 +447,37 @@ static int show_images_and_delay(BmpBlockHeader *bmph, int index)
 	     i++) {
 		info = (ImageInfo *)((uint8_t *)bmph +
 				screen->images[i].image_info_offset);
+		inoutsize = info->original_size;
+
+                if (COMPRESS_NONE == info->compression) {
+			rawimg = NULL;
+		} else {
+			rawimg = VbExMalloc(inoutsize);
+			if (VbExDecompress(info + 1, info->compressed_size,
+					   info->compression,
+					   rawimg, &inoutsize)) {
+				goto bad;
+			}
+		}
+
 		if (VbExDisplayImage(screen->images[i].x,
 				     screen->images[i].y,
-				     info,
-				     info + 1)) {
-			VbExDebug("Failed to display image, screen=%lu, "
-				  "image=%d!\n", index, i);
-			return 1;
+				     rawimg ? rawimg : info + 1,
+				     inoutsize)) {
+			goto bad;
 		}
+		if (rawimg)
+			VbExFree(rawimg);
 	}
 
 	VbExSleepMs(1000);
 	return 0;
+
+bad:
+	if (rawimg)
+		VbExFree(rawimg);
+	VbExDebug("Failed to display image, screen=%lu, image=%d!\n", index, i);
+	return 1;
 }
 
 static int do_vbexport_test_display(

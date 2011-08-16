@@ -127,56 +127,43 @@ VbError_t VbExDisplayScreen(uint32_t screen_type)
 	return VBERROR_SUCCESS;
 }
 
-static uint8_t *uncompress_lzma(uint8_t *in_addr, SizeT in_size,
-                                SizeT out_size)
+VbError_t VbExDecompress(void *inbuf, uint32_t in_size,
+                         uint32_t compression_type,
+                         void *outbuf, uint32_t *out_size)
 {
-	uint8_t *out_addr = VbExMalloc(out_size);
-	SizeT lzma_len = out_size;
+	SizeT input_size = in_size;
+	SizeT output_size = *out_size;
 	int ret;
 
-	ret = lzmaBuffToBuffDecompress(out_addr, &lzma_len, in_addr, in_size);
-	if (ret != SZ_OK) {
-		VbExFree(out_addr);
-		out_addr = NULL;
-	}
-	return out_addr;
-}
-
-VbError_t VbExDisplayImage(uint32_t x, uint32_t y, const ImageInfo *info,
-                           const void *buffer)
-{
-	int ret;
-	uint8_t *raw_data;
-
-	switch (info->compression) {
+	switch (compression_type) {
 	case COMPRESS_NONE:
-		raw_data = (uint8_t *)buffer;
-		break;
+		memcpy(outbuf, inbuf, in_size);
+                *out_size = in_size;
+		return VBERROR_SUCCESS;
 
 	case COMPRESS_LZMA1:
-		raw_data = uncompress_lzma((uint8_t *)buffer,
-				(SizeT)info->compressed_size,
-				(SizeT)info->original_size);
-		if (!raw_data) {
-			VBDEBUG("LZMA decompress failed.\n");
-			return 1;
+		ret = lzmaBuffToBuffDecompress(outbuf, &output_size,
+					       inbuf, input_size);
+		if (ret != SZ_OK) {
+			return ret;
 		}
-		break;
-
-	default:
-		VBDEBUG("Unsupported compression format: %08x\n",
-				info->compression);
-		return 1;
+                *out_size = output_size;
+		return VBERROR_SUCCESS;
 	}
 
-	ret = display_callbacks_.dc_display_bitmap((ulong)raw_data, x, y);
+	VBDEBUG("Unsupported compression format: %08x\n", compression_type);
+	return VBERROR_INVALID_PARAMETER;
+}
 
-	if (info->compression == COMPRESS_LZMA1)
-		VbExFree(raw_data);
 
+VbError_t VbExDisplayImage(uint32_t x, uint32_t y,
+                           void *buffer, uint32_t buffersize)
+{
+	int ret;
+	ret = display_callbacks_.dc_display_bitmap((ulong)buffer, x, y);
 	if (ret) {
 		VBDEBUG("LCD display error.\n");
-		return 1;
+		return VBERROR_UNKNOWN;
 	}
 
 	return VBERROR_SUCCESS;
