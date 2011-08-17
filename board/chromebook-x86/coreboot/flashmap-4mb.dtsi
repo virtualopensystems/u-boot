@@ -1,0 +1,187 @@
+/*
+ * Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	/*
+	 * Names will be capitalized and hyphen converted to underscore by
+	 * cros_bundle_firmware.
+	 */
+	flash@ffc00000 {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		compatible = "chromeos,flashmap";
+		reg = <0x00000000 0x00400000>;
+
+                /* ---- Section: Read-only ---- */
+		ro-section@0 {
+                        label = "ro-section";
+			reg = <0x00220000 0x001e0000>;
+			read-only;
+		};
+
+		ro-boot@0 {
+			label = "boot-stub";
+			reg = <0x00380000 0x00080000>; /* 512 KB */
+			read-only;
+			type = "blob signed";
+		};
+		ro-recovery@0 {
+			/* Deprecated section */
+			label = "recovery";
+			reg = <0x00280000 0x00080000>;
+			read-only;
+		};
+		ro-firmware-id@0 {
+			label = "ro-frid";
+			reg = <0x00270400 0x00000040>;
+			read-only;
+			type = "blobstring fwid";
+		};
+		ro-fmap@0 {
+			label = "fmap";
+
+			/* We encourage to align FMAP partition in as large
+			 * block as possible so that flashrom can find it soon.
+			 * For example, aligning to 512KB is better than to
+			 * 256KB. */
+
+			reg = <0x00270000 0x00000400>;
+			read-only;
+			type = "fmap";
+			ver-major = <1>;
+			ver-minor = <0>;
+		};
+		ro-gbb@0 {
+			label = "gbb";
+
+			/* GBB offset must be aligned to 4K bytes */
+			reg = <0x00340000 0x00040000>;
+			read-only;
+			type = "blob gbb";
+		};
+		ro-data@0 {
+		        /* Currently unused, simply for padding */
+			label = "ro-data";
+			reg = <0x00300000 0x00040000>;
+			read-only;
+		};
+
+                /* ---- Section: Vital-product data (VPD) ---- */
+		ro-vpd@0 {
+			label = "ro-vpd";
+
+			/* VPD offset must be aligned to 4K bytes */
+			reg = <0x00200000 0x00020000>;
+			read-only;
+			type = "wiped";
+			wipe-value = [ff];
+		};
+
+		/* ---- Section: Rewritable slot A ---- */
+		rw-a@0 {
+			label = "rw-section-a";
+			/* Alignment: 4k (for updating) */
+			reg = <0x00020000 0x000f0000>;
+		};
+		rw-a-vblock@0 {
+			label = "vblock-a";
+			/* Alignment: 4k (for updating) and must be in start of
+			 * each RW_SECTION. */
+			reg = <0x00020000 0x00010000>;
+			type = "keyblock boot";
+			keyblock = "firmware.keyblock";
+			signprivate = "firmware_data_key.vbprivk";
+			version = <1>;
+			kernelkey = "kernel_subkey.vbpubk";
+			preamble-flags = <1>;
+		};
+		rw-a-boot@0 {
+			/* Alignment: no requirement (yet). */
+			label = "fw-main-a";
+			reg = <0x00030000 0x000dffc0>;
+			type = "blob boot";
+		};
+		rw-a-firmware-id@0 {
+			/* Alignment: no requirement. */
+			label = "rw-fwid-a";
+			reg = <0x0010ffc0 0x00000040>;
+			read-only;
+			type = "blobstring fwid";
+		};
+
+		/* ---- Section: Rewritable slot B ---- */
+		rw-b@0 {
+			label = "rw-section-b";
+			/* Alignment: 4k (for updating) */
+			reg = <0x00110000 0x000f0000>;
+		};
+		rw-b-vblock@0 {
+			label = "vblock-b";
+			/* Alignment: 4k (for updating) and must be in start of
+			 * each RW_SECTION. */
+			reg = <0x00110000 0x00010000>;
+			type = "keyblock boot";
+			keyblock = "firmware.keyblock";
+			signprivate = "firmware_data_key.vbprivk";
+			version = <1>;
+			kernelkey = "kernel_subkey.vbpubk";
+			preamble-flags = <1>;
+		};
+		rw-b-boot@0 {
+			label = "fw-main-b";
+			/* Alignment: no requirement (yet). */
+			reg = <0x00120000 0x000dffc0>;
+			type = "blob boot";
+		};
+		rw-b-firmware-id@0 {
+			label = "rw-fwid-b";
+			/* Alignment: no requirement. */
+			reg = <0x001fffc0 0x00000040>;
+			read-only;
+			type = "blobstring fwid";
+		};
+
+		/* ---- Section: Rewritable VPD 32 KB ---- */
+		rw-vpd@0 {
+			label = "rw-vpd";
+			/* Alignment: 4k (for updating) */
+			reg = <0x00000000 0x00001000>;
+			type = "wiped";
+			wipe-value = [ff];
+		};
+
+		/* ---- Section: Rewritable shared 16 KB---- */
+		shared-section@0 {
+			/* Alignment: 4k (for updating).
+			 * Anything in this range may be updated in recovery. */
+			label = "rw-shared";
+			reg = <0x00001000 0x0001f000>;
+		};
+		shared-data@0 {
+			label = "shared-data";
+			/* Alignment: 4k (for random read/write).
+			 * RW firmware can put calibration data here. */
+			reg = <0x00001000 0x0001f000>;
+			type = "wiped";
+			wipe-value = [00];
+		};
+		/* ---- Section: Rewritable private 16 KB---- */
+		dev-cfg@0 {
+			label = "dev-cfg";
+			/* Alignment: 4k, and must occupy bottom of U-Boot
+			 * firmware -- check CONFIG_ENV_OFFSET */
+			reg = <0x00000000 0x00000000>;
+
+			/*
+			 * We could put the dev environment here, but U-Boot has
+			 * a default built in. Devs can 'saveenv' to set this
+			 * up.
+			 */
+			type = "wiped";
+			wipe-value = [00];
+		};
+	};
+};

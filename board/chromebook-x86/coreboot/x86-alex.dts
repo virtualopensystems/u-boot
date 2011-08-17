@@ -1,13 +1,21 @@
 /dts-v1/;
 
+/include/ "flashmap-4mb.dtsi"
+
 / {
         #address-cells = <1>;
         #size-cells = <1>;
 	model = "Google Alex";
 	compatible = "google,alex", "intel,atom-pineview";
 
+	chromeos-config {
+		twostop;                /* Two-stop boot */
+		twostop-optional;       /* One-stop optimization enabled */
+	};
+
 	config {
 	       silent_console = <0>;
+	       hwid = "X86 ALEX TEST 9769";
 	};
 
 	aliases {
