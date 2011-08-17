@@ -5,11 +5,11 @@
 /include/ "oxpcie.dtsi"
 
 / {
-	model = "Google Alex";
-	compatible = "google,alex", "intel,atom-pineview";
+	model = "Google Mario";
+	compatible = "google,mario", "intel,atom-pineview";
 
 	config {
 	       silent_console = <0>;
-	       hwid = "X86 ALEX TEST 9769";
+	       hwid = "X86 MARIO TEST 1089";
 	};
 };

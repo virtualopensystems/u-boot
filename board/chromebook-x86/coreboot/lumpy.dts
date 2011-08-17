@@ -5,11 +5,11 @@
 /include/ "oxpcie.dtsi"
 
 / {
-	model = "Google Alex";
-	compatible = "google,alex", "intel,atom-pineview";
+	model = "Google Lumpy";
+	compatible = "google,lumpy", "intel,celeron-sandybridge";
 
 	config {
 	       silent_console = <0>;
-	       hwid = "X86 ALEX TEST 9769";
+	       hwid = "X86 LUMPY TEST 6638";
 	};
 };

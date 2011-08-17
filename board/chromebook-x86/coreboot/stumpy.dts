@@ -1,0 +1,15 @@
+/dts-v1/;
+
+/include/ "skeleton.dtsi"
+/include/ "flashmap-4mb.dtsi"
+/include/ "iouart.dtsi"
+
+/ {
+	model = "Google Stumpy";
+	compatible = "google,stumpy", "intel,celeron-sandybridge";
+
+	config {
+	       silent_console = <0>;
+	       hwid = "X86 STUMPY TEST 0128";
+	};
+};
