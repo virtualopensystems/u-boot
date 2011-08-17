@@ -9,24 +9,21 @@
  */
 
 #include <common.h>
-#ifdef CONFIG_MMC
-#include <mmc.h>
-#endif
 #include <part.h>
-#include <usb.h>
 #include <chromeos/common.h>
 #include <linux/list.h>
 
 /* Import the header files from vboot_reference. */
 #include <vboot_api.h>
 
+#include "boot_device.h"
+
 #define PREFIX			"boot_device: "
 
-/*
- * Total number of storage devices, USB + MMC + reserved.
- * MMC is 2 now. Reserve extra 3 for margin of safety.
- */
-#define MAX_DISK_INFO		(USB_MAX_STOR_DEV + 2 + 3)
+/* Maximum number of devices we can support */
+enum {
+	MAX_DISK_INFO	= 10,
+};
 
 /* TODO Move these definitions to vboot_wrapper.h or somewhere like that. */
 enum {
@@ -36,151 +33,115 @@ enum {
 	VBERROR_DISK_WRITE_ERROR,
 };
 
-static uint32_t get_dev_flags(const block_dev_desc_t *dev)
+/* Boot interfaces that we know about */
+struct boot_interface *interface[IF_TYPE_MAX];
+int interface_count;
+
+int boot_device_register_interface(struct boot_interface *iface)
 {
-	return dev->removable ? VB_DISK_FLAG_REMOVABLE : VB_DISK_FLAG_FIXED;
+	if (interface_count >= ARRAY_SIZE(interface))
+		return -1;
+	interface[interface_count++] = iface;
+	return 0;
 }
 
-static const char *get_dev_name(const block_dev_desc_t *dev)
+int boot_device_matches(const block_dev_desc_t *dev,
+				    uint32_t disk_flags, uint32_t *flags)
 {
-	/*
-	 * See the definitions of IF_TYPE_* in /include/part.h.
-	 * 8 is max size of strings, the "UNKNOWN".
-	 */
-	static const char all_disk_types[IF_TYPE_MAX][8] = {
-		"UNKNOWN", "IDE", "SCSI", "ATAPI", "USB",
-		"DOC", "MMC", "SD", "SATA"};
-
-	if (dev->if_type >= IF_TYPE_MAX) {
-		return all_disk_types[0];
-	}
-	return all_disk_types[dev->if_type];
+	*flags = dev->removable ? VB_DISK_FLAG_REMOVABLE :
+			VB_DISK_FLAG_FIXED;
+	return (*flags & disk_flags) == disk_flags;
 }
 
-static void init_usb_storage(void)
-{
-	/*
-	 * We should stop all USB devices first. Otherwise we can't detect any
-	 * new devices.
-	 */
-	usb_stop();
-
-	if (usb_init() >= 0)
-		usb_stor_scan(/*mode=*/1);
-}
-
-block_dev_desc_t *iterate_internal_devices(int *index_ptr)
-{
-#ifdef CONFIG_MMC
-	struct mmc *mmc;
-	int index;
-
-	for (index = *index_ptr; (mmc = find_mmc_device(index)); index++) {
-		/* Skip device that cannot be initialized */
-		if (!mmc_init(mmc))
-			break;
-	}
-
-	/*
-	 * find_mmc_device() returns a pointer from a global linked list. So
-	 * &mmc->block_dev is not a dangling pointer after this function
-	 * is returned.
-	 */
-
-	*index_ptr = index + 1;
-	if (mmc)
-		return &mmc->block_dev;
-#endif
-#ifdef CONFIG_CMD_IDE
-#ifdef CONFIG_MMC
-	/* TODO(reinauer) Fix index handling first */
-#error "MMC and IDE can not be enabled at the same time right now."
-#endif
-	block_dev_desc_t *ide;
-	ide = ide_get_dev(*index_ptr);
-	*index_ptr = *index_ptr + 1;
-
-	if (ide)
-		return ide;
-#endif
-	return NULL;
-}
-
-block_dev_desc_t *iterate_usb_device(int *index_ptr)
-{
-	return usb_stor_get_dev((*index_ptr)++);
-}
-
-/*
- * This appends [dev] to [info] and increments [count_ptr] if [disk_flags] is a
- * subset of the flags of [dev].
+/**
+ * Scan a list of devices and add those which match the supplied disk_flags
+ * to the info array.
+ *
+ * @param name		Peripheral name
+ * @param devs		List of devices to check
+ * @param count		Number of devices
+ * @param disk_flags	Disk flags which must be present for each device added
+ * @param info		Output array of matching devices
+ * @return number of devices added (0 if none)
  */
-void add_device_if_flags_match(block_dev_desc_t *dev, const uint32_t disk_flags,
-		VbDiskInfo *info, uint32_t *count_ptr)
+static int add_matching_devices(const char *name, block_dev_desc_t **devs,
+		int count, uint32_t disk_flags, VbDiskInfo *info)
 {
-	uint32_t flags = get_dev_flags(dev);
+	int added = 0;
+	int i;
 
-	/*
-	 * Only add this storage device if the properties of disk_flags is a
-	 * subset of the properties of flags.
-	 */
-	if ((flags & disk_flags) != disk_flags)
-		return;
+	for (i = 0; i < count; i++) {
+		block_dev_desc_t *dev = devs[i];
+		uint32_t flags;
 
-	info->handle = (VbExDiskHandle_t)dev;
-	info->bytes_per_lba = dev->blksz;
-	info->lba_count = dev->lba;
-	info->flags = flags;
-	info->name = get_dev_name(dev);
-	(*count_ptr)++;
+		/*
+		* Only add this storage device if the properties of
+		* disk_flags is a subset of the properties of flags.
+		*/
+		if (boot_device_matches(dev, disk_flags, &flags)) {
+			info->handle = (VbExDiskHandle_t)dev;
+			info->bytes_per_lba = dev->blksz;
+			info->lba_count = dev->lba;
+			info->flags = flags;
+			info->name = name;
+			info++, added++;
+		}
+	}
+	return added;
 }
 
-VbError_t VbExDiskGetInfo(VbDiskInfo** infos_ptr, uint32_t* count_ptr,
-                          uint32_t disk_flags)
+VbError_t VbExDiskGetInfo(VbDiskInfo **infos_ptr, uint32_t *count_ptr,
+			  uint32_t disk_flags)
 {
 	VbDiskInfo *infos;
-	uint32_t count, max_count;
-	int iterator_state;
-	block_dev_desc_t *dev;
-
-	*infos_ptr = NULL;
-	*count_ptr = 0;
+	uint32_t max_count;	/* maximum devices to scan for */
+	uint32_t count = 0;	/* number of matching devices found */
+	block_dev_desc_t *dev[MAX_DISK_INFO];
+	int upto;
 
 	/* We return as many disk infos as possible. */
-	/*
-	 * We assume there is only one non-removable storage device. So if the
-	 * caller asks for non-removable devices, we return at most one device.
-	 * Otherwise we return at most MAX_DISK_INFO device.
-	 */
-	max_count = (disk_flags & VB_DISK_FLAG_REMOVABLE) ? MAX_DISK_INFO : 1;
+	max_count = MAX_DISK_INFO;
 
-	/* count is the number of device returned */
 	infos = (VbDiskInfo *)VbExMalloc(sizeof(VbDiskInfo) * max_count);
-	count = 0;
 
-	iterator_state = 0;
-	while (count < max_count && (dev = iterate_internal_devices(&iterator_state)))
-		add_device_if_flags_match(dev, disk_flags,
-				infos + count, &count);
+	/* Scan through all the interfaces looking for devices */
+	for (upto = 0; upto < interface_count && count < max_count; upto++) {
+		struct boot_interface *iface = interface[upto];
+		int found;
 
-	/* Skip probing USB device if not require removable devices. */
-        if (count < max_count && (disk_flags & VB_DISK_FLAG_REMOVABLE)) {
-		/* Initialize USB device before probing them. */
-		init_usb_storage();
+		found = iface->start(disk_flags);
+		if (found < 0) {
+			VBDEBUG(PREFIX "%s: start() failed\n", iface->name);
+			continue;
+		}
+		if (!found) {
+			VBDEBUG(PREFIX "%s - start() returned 0\n",
+				iface->name);
+			continue;
+		}
 
-		iterator_state = 0;
-		while (count < max_count &&
-				(dev = iterate_usb_device(&iterator_state)))
-			add_device_if_flags_match(dev, disk_flags,
-					infos + count, &count);
+		found = iface->scan(dev, max_count - count, disk_flags);
+		if (found < 0) {
+			VBDEBUG(PREFIX "%s: scan() failed\n", iface->name);
+			continue;
+		}
+		assert(found <= max_count - count);
+
+		/* Now record the devices that have the required flags */
+		count += add_matching_devices(iface->name, dev, found,
+					      disk_flags, infos);
 	}
 
 	if (count) {
 		*infos_ptr = infos;
 		*count_ptr = count;
-	} else
+	} else {
+		*infos_ptr = NULL;
+		*count_ptr = 0;
 		VbExFree(infos);
+	}
 
+	/* The operation itself succeeds, despite scan failure all about */
 	return VBERROR_SUCCESS;
 }
 
@@ -226,4 +187,20 @@ VbError_t VbExDiskWrite(VbExDiskHandle_t handle, uint64_t lba_start,
 		return VBERROR_DISK_WRITE_ERROR;
 
 	return VBERROR_SUCCESS;
+}
+
+int boot_device_init(void)
+{
+	int err = 0;
+
+#ifdef CONFIG_CHROMEOS_USB
+	err |= boot_device_usb_probe();
+#endif
+#ifdef CONFIG_MMC
+	err |= boot_device_mmc_probe();
+#endif
+#ifdef CONFIG_CHROMEOS_IDE
+	err |= boot_device_ide_probe();
+#endif
+	return err;
 }

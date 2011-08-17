@@ -13,6 +13,8 @@
 #include <chromeos/cros_gpio.h>
 #include <vboot_api.h>
 
+#include "boot_device.h"
+
 #define PREFIX			"misc: "
 
 uint32_t VbExIsShutdownRequested(void)
@@ -42,5 +44,11 @@ uint32_t VbExIsShutdownRequested(void)
 
 int vbexport_init(void)
 {
+	int err = boot_device_init();
+
+	if (err) {
+		printf("vbexport_init: boot devices probe failed\n");
+		return -1;
+	}
 	return 0;
 }
