@@ -67,8 +67,9 @@ static void init_usb_storage(void)
 		usb_stor_scan(/*mode=*/1);
 }
 
-block_dev_desc_t *iterate_mmc_device(int *index_ptr)
+block_dev_desc_t *iterate_internal_devices(int *index_ptr)
 {
+#ifdef CONFIG_MMC
 	struct mmc *mmc;
 	int index;
 
@@ -85,7 +86,22 @@ block_dev_desc_t *iterate_mmc_device(int *index_ptr)
 	 */
 
 	*index_ptr = index + 1;
-	return mmc ? &mmc->block_dev : NULL;
+	if (mmc)
+		return &mmc->block_dev;
+#endif
+#ifdef CONFIG_CMD_IDE
+#ifdef CONFIG_MMC
+	/* TODO(reinauer) Fix index handling first */
+#error "MMC and IDE can not be enabled at the same time right now."
+#endif
+	block_dev_desc_t *ide;
+	ide = ide_get_dev(*index_ptr);
+	*index_ptr = *index_ptr + 1;
+
+	if (ide)
+		return ide;
+#endif
+	return NULL;
 }
 
 block_dev_desc_t *iterate_usb_device(int *index_ptr)
@@ -141,7 +157,7 @@ VbError_t VbExDiskGetInfo(VbDiskInfo** infos_ptr, uint32_t* count_ptr,
 	count = 0;
 
 	iterator_state = 0;
-	while (count < max_count && (dev = iterate_mmc_device(&iterator_state)))
+	while (count < max_count && (dev = iterate_internal_devices(&iterator_state)))
 		add_device_if_flags_match(dev, disk_flags,
 				infos + count, &count);
 
