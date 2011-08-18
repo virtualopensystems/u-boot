@@ -30,6 +30,7 @@
 #ifndef _COREBOOT_SYSINFO_H
 #define _COREBOOT_SYSINFO_H
 
+#include <common.h>
 #include <compiler.h>
 #include <asm/ic/coreboot/tables.h>
 #ifdef CONFIG_OF_CONTROL
