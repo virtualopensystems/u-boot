@@ -56,6 +56,9 @@ static int fserial_init(void)
 	switch (uart->compat) {
 #ifdef CONFIG_SYS_NS16550
 	case COMPAT_SERIAL_NS16550:
+#ifdef CONFIG_SYS_NS16550_RUNTIME_MAPPED
+		NS16550_is_io_mapped(uart->io_mapped);
+#endif
 		NS16550_init((NS16550_t)uart->reg, uart->divisor);
 		break;
 #endif
@@ -79,6 +82,9 @@ static void fserial_putc(const char c)
 	switch (uart->compat) {
 #ifdef CONFIG_SYS_NS16550
 	case COMPAT_SERIAL_NS16550 :
+#ifdef CONFIG_SYS_NS16550_RUNTIME_MAPPED
+		NS16550_is_io_mapped(uart->io_mapped);
+#endif
 		NS16550_putc((NS16550_t)uart->reg, c);
 		break;
 #endif
@@ -100,6 +106,9 @@ static int fserial_getc(void)
 	switch (uart->compat) {
 #ifdef CONFIG_SYS_NS16550
 	case COMPAT_SERIAL_NS16550 :
+#ifdef CONFIG_SYS_NS16550_RUNTIME_MAPPED
+		NS16550_is_io_mapped(uart->io_mapped);
+#endif
 		return NS16550_getc((NS16550_t)uart->reg, uart->id);
 #endif
 	default:
@@ -117,6 +126,9 @@ static int fserial_tstc(void)
 	switch (uart->compat) {
 #ifdef CONFIG_SYS_NS16550
 	case COMPAT_SERIAL_NS16550 :
+#ifdef CONFIG_SYS_NS16550_RUNTIME_MAPPED
+		NS16550_is_io_mapped(uart->io_mapped);
+#endif
 		return NS16550_tstc((NS16550_t)uart->reg, uart->id);
 #endif
 	default:
@@ -134,6 +146,9 @@ static void fserial_setbrg(void)
 	switch (uart->compat) {
 #ifdef CONFIG_SYS_NS16550
 	case COMPAT_SERIAL_NS16550 :
+#ifdef CONFIG_SYS_NS16550_RUNTIME_MAPPED
+		NS16550_is_io_mapped(uart->io_mapped);
+#endif
 		NS16550_reinit((NS16550_t)uart->reg, uart->divisor);
 		break;
 #endif
