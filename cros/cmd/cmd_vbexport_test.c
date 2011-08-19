@@ -67,7 +67,7 @@ static int do_vbexport_test_malloc_size(uint32_t size)
 	char *mem = VbExMalloc(size);
 	int i;
 	VbExDebug("Trying to malloc a memory block for %lu bytes...", size);
-	if ((uint32_t)mem % CACHE_LINE_SIZE != 0) {
+	if ((uintptr_t)mem % CACHE_LINE_SIZE != 0) {
 		VbExDebug("\nMemory not algined with a cache line!\n");
 		VbExFree(mem);
 		return 1;
