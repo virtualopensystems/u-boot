@@ -9,7 +9,9 @@
  */
 
 #include <common.h>
+#ifdef CONFIG_MMC
 #include <mmc.h>
+#endif
 #include <part.h>
 #include <usb.h>
 #include <chromeos/common.h>
