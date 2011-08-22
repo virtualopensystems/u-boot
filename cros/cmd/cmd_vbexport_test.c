@@ -402,7 +402,15 @@ static uint8_t *read_gbb_from_firmware(void)
 	void *fdt_ptr = (void *)gd->blob;
 	firmware_storage_t file;
 	struct twostop_fmap fmap;
-	void *gbb = (void *)GBB_ADDRESS;
+	void *gbb;
+	size_t size;
+
+	gbb = fdt_decode_chromeos_alloc_region(gd->blob,
+			"google-binary-block", &size);
+	if (!gbb) {
+		VbExDebug("Failed to find gbb region!\n");
+		return NULL;
+	}
 
 	if (fdt_decode_twostop_fmap(fdt_ptr, &fmap)) {
 		VbExDebug("Failed to load fmap config from fdt!\n");

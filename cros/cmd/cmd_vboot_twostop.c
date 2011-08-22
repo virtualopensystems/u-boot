@@ -524,6 +524,7 @@ twostop_main_firmware(struct twostop_fmap *fmap, void *gbb,
 	VbError_t err;
 	VbSelectAndLoadKernelParams kparams;
 	VbCommonParams cparams;
+	size_t size;
 
 	bootstage_mark(BOOTSTAGE_VBOOT_TWOSTOP_MAIN_FIRMWARE,
 		       "twostop_main_firmware");
@@ -532,8 +533,9 @@ twostop_main_firmware(struct twostop_fmap *fmap, void *gbb,
 		return VB_SELECT_ERROR;
 	}
 
-	kparams.kernel_buffer = (void *)CHROMEOS_KERNEL_LOADADDR;
-	kparams.kernel_buffer_size = CHROMEOS_KERNEL_BUFSIZE;
+	kparams.kernel_buffer = fdt_decode_chromeos_alloc_region(gd->blob,
+		"kernel", &size);
+	kparams.kernel_buffer_size = size;
 
 	VBDEBUG(PREFIX "kparams:\n");
 	VBDEBUG(PREFIX "- kernel_buffer:      : %p\n", kparams.kernel_buffer);
@@ -571,19 +573,62 @@ twostop_main_firmware(struct twostop_fmap *fmap, void *gbb,
 	return VB_SELECT_ERROR;
 }
 
+/**
+ * Get address of the gbb and cdata, and optionally verify them.
+ *
+ * @param gbb		returns pointer to GBB
+ * @param cdata		returns pointer to crossystem data
+ * @param verify	1 to verify data, 0 to skip this step
+ * @return 0 if ok, -1 on error
+ */
+static int setup_gbb_and_cdata(void **gbb, crossystem_data_t **cdata,
+			       int verify)
+{
+	size_t size;
+
+	*gbb = fdt_decode_chromeos_alloc_region(gd->blob,
+			"google-binary-block", &size);
+	*cdata = fdt_decode_chromeos_alloc_region(gd->blob, "cros-system-data",
+						 &size);
+	if (!*gbb || !*cdata) {
+		VBDEBUG(PREFIX "google-binary-block/cros-system-data missing "
+				"from fdt, or malloc failed\n");
+		return -1;
+	}
+
+	/*
+	 * TODO(clchiou): readwrite firmware should check version of the data
+	 * blobs
+	 */
+	if (verify && crossystem_data_check_integrity(*cdata)) {
+		VBDEBUG(PREFIX "invalid crossystem data\n");
+		return -1;
+	}
+
+	if (verify && gbb_check_integrity(*gbb)) {
+		VBDEBUG(PREFIX "invalid gbb\n");
+		return -1;
+	}
+	return 0;
+}
+
 static uint32_t
 twostop_boot(void)
 {
 	struct twostop_fmap fmap;
 	firmware_storage_t file;
-	crossystem_data_t *cdata = (crossystem_data_t *)CROSSYSTEM_DATA_ADDRESS;
-	void *gbb = (void *)GBB_ADDRESS;
-	void *vb_shared_data = cdata->vb_shared_data;
+	crossystem_data_t *cdata;
+	void *gbb;
+	void *vb_shared_data;
 	void *fw_blob = NULL;
 	uint32_t fw_size = 0;
 	uint32_t selection;
 	int boot_mode = FIRMWARE_TYPE_NORMAL;
 
+	if (setup_gbb_and_cdata(&gbb, &cdata, 0))
+		return VB_SELECT_ERROR;
+
+	vb_shared_data = cdata->vb_shared_data;
 	if (twostop_init(&fmap, &file, gbb, cdata, vb_shared_data)) {
 		VBDEBUG(PREFIX "failed to init twostop boot\n");
 		return VB_SELECT_ERROR;
@@ -632,21 +677,11 @@ static uint32_t
 twostop_readwrite_main_firmware(void)
 {
 	struct twostop_fmap fmap;
-	crossystem_data_t *cdata = (crossystem_data_t *)CROSSYSTEM_DATA_ADDRESS;
-	void *gbb = (void *)GBB_ADDRESS;
-	void *vb_shared_data = cdata->vb_shared_data;
+	crossystem_data_t *cdata;
+	void *gbb;
 
-	/* Newer readwrite firmware should check version of the data blobs */
-
-	if (crossystem_data_check_integrity(cdata)) {
-		VBDEBUG(PREFIX "invalid crossystem data\n");
+	if (setup_gbb_and_cdata(&gbb, &cdata, 1))
 		return VB_SELECT_ERROR;
-	}
-
-	if (gbb_check_integrity(gbb)) {
-		VBDEBUG(PREFIX "invalid gbb\n");
-		return VB_SELECT_ERROR;
-	}
 
 	if (fdt_decode_twostop_fmap(gd->blob, &fmap)) {
 		VBDEBUG(PREFIX "failed to decode fmap\n");
@@ -668,7 +703,7 @@ twostop_readwrite_main_firmware(void)
 
 	/* TODO Now, initialize device that bootstub did not initialize */
 
-	return twostop_main_firmware(&fmap, gbb, cdata, vb_shared_data);
+	return twostop_main_firmware(&fmap, gbb, cdata, cdata->vb_shared_data);
 }
 
 static int

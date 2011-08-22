@@ -26,4 +26,21 @@ int fdt_decode_twostop_fmap(const void *fdt, struct twostop_fmap *config);
  */
 int fdt_decode_chromeos_config_has_prop(const void *fdt, const char *name);
 
+/**
+ * Look up a property in chromeos-config which contains a memory region
+ * address and size. Then return a pointer to this address. if the address
+ * is zero, it is allocated with malloc() instead.
+ *
+ * The property must hold one address with a length. This is only tested on
+ * 32-bit machines.
+ *
+ * @param blob		FDT blob
+ * @param node		node to examine
+ * @param prop_name	name of property to find
+ * @param size		returns size of region
+ * @return pointer to region, or NULL if property not found/malloc failed
+ */
+void *fdt_decode_chromeos_alloc_region(const void *blob,
+		const char *prop_name, size_t *size);
+
 #endif /* CHROMEOS_FDT_DECODE_H_ */

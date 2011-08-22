@@ -13,6 +13,7 @@
 #include <chromeos/common.h>
 #include <chromeos/fdt_decode.h>
 #include <chromeos/fmap.h>
+#include <fdt_decode.h>
 #include <linux/string.h>
 
 #define PREFIX "chromeos/fdt_decode: "
@@ -149,4 +150,15 @@ int fdt_decode_chromeos_config_has_prop(const void *blob, const char *name)
 		return 0;
 
 	return fdt_get_property(blob, nodeoffset, name, &len) != NULL;
+}
+
+void *fdt_decode_chromeos_alloc_region(const void *blob,
+		const char *prop_name, size_t *size)
+{
+	int node = fdt_path_offset(blob, "/chromeos-config");
+
+	if (node < 0)
+		return NULL;
+
+	return fdt_decode_alloc_region(blob, node, prop_name, size);
 }

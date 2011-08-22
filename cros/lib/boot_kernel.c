@@ -200,17 +200,6 @@ static int update_cmdline(char *src, int devnum, int partnum, uint8_t *guid,
 	return 0;
 }
 
-/* TODO Copy from tegra2-common.h so that coreboot can be built */
-#ifndef QUOTE
-/*
- * QUOTE(m) will evaluate to a string version of the value of the macro m
- * passed in.  The extra level of indirection here is to first evaluate the
- * macro m before applying the quoting operator.
- */
-#define QUOTE_(m)	#m
-#define QUOTE(m)	QUOTE_(m)
-#endif
-
 int boot_kernel(VbSelectAndLoadKernelParams *kparams, crossystem_data_t *cdata)
 {
 	/* sizeof(CHROMEOS_BOOTARGS) reserves extra 1 byte */
@@ -223,9 +212,11 @@ int boot_kernel(VbSelectAndLoadKernelParams *kparams, crossystem_data_t *cdata)
 	struct boot_params *params;
 #else
 	/* Chrome OS kernel has to be loaded at fixed location */
-	char *argv[] = { "bootm", QUOTE(CHROMEOS_KERNEL_LOADADDR) };
+	char address[20];
+	char *argv[] = { "bootm", address };
+
+	sprintf(address, "%p", kparams->kernel_buffer);
 #endif
-	assert(kparams->kernel_buffer == (void *)CHROMEOS_KERNEL_LOADADDR);
 
 	strcpy(cmdline_buf, CHROMEOS_BOOTARGS);
 
