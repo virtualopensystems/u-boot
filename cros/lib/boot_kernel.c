@@ -13,6 +13,9 @@
 #include <chromeos/boot_kernel.h>
 #include <chromeos/common.h>
 #include <chromeos/crossystem_data.h>
+#ifdef CONFIG_X86
+#include <asm/zimage.h>
+#endif
 
 #include <vboot_api.h>
 
@@ -214,9 +217,12 @@ int boot_kernel(VbSelectAndLoadKernelParams *kparams, crossystem_data_t *cdata)
 	char cmdline_out[sizeof(CHROMEOS_BOOTARGS) + CROS_CONFIG_SIZE +
 		EXTRA_BUFFER];
 	char *cmdline;
-
+#ifdef CONFIG_X86
+	struct boot_params *params;
+#else
 	/* Chrome OS kernel has to be loaded at fixed location */
 	char *argv[] = { "bootm", QUOTE(CHROMEOS_KERNEL_LOADADDR) };
+#endif
 	assert(kparams->kernel_buffer == (void *)CHROMEOS_KERNEL_LOADADDR);
 
 	strcpy(cmdline_buf, CHROMEOS_BOOTARGS);
@@ -253,8 +259,14 @@ int boot_kernel(VbSelectAndLoadKernelParams *kparams, crossystem_data_t *cdata)
 	VBDEBUG_PUTS("\n");
 
 	g_crossystem_data = cdata;
-
+#ifdef CONFIG_X86
+	params = (struct boot_params *)(uintptr_t)
+		(kparams->bootloader_address - CROS_PARAMS_SIZE);
+	if (!setup_zimage(params, cmdline, 0, 0, 0))
+		boot_zimage(params, kparams->kernel_buffer);
+#else
 	do_bootm(NULL, 0, sizeof(argv)/sizeof(*argv), argv);
+#endif
 
 	VBDEBUG(PREFIX "failed to boot; is kernel broken?\n");
 	return 1;
