@@ -12,6 +12,11 @@
 	chromeos-config {
 		twostop;                /* Two-stop boot */
 		twostop-optional;       /* One-stop optimization enabled */
+
+		/* Memory addresses for kernel, cros-system and gbb */
+		kernel = <0x00100000 0x00800000>;
+		cros-system-data = <0x00900000 0x8000>;
+		google-binary-block = <0x00908000 0x80000>;
 	};
 
 	config {
