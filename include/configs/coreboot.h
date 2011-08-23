@@ -143,6 +143,10 @@
 /* This value is just to get the chromeos library to compile. */
 #define CHROMEOS_VBNVCONTEXT_LBA	0
 
+/* Support USB and IDE booting */
+#define CONFIG_CHROMEOS_USB
+#define CONFIG_CHROMEOS_IDE
+
 /*-----------------------------------------------------------------------
  * Command line configuration.
  */
