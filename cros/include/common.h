@@ -45,4 +45,7 @@ enum {
 /* this function is implemented along with vboot_api */
 int display_clear(void);
 
+/* set up the vbexport library */
+int vbexport_init(void);
+
 #endif /* CHROMEOS_COMMON_H_ */
