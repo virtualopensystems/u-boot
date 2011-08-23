@@ -399,6 +399,10 @@ $(obj)u-boot.dtb:	$(obj)u-boot
 $(obj)u-boot-dtb.bin:	$(obj)u-boot.bin $(obj)u-boot.dtb
 		cat $^ >$@
 
+ifdef DEV_TREE_SEPARATE
+all:		$(obj)u-boot.dtb
+endif
+
 $(obj)u-boot.hex:	$(obj)u-boot
 		$(OBJCOPY) ${OBJCFLAGS} -O ihex $< $@
 
