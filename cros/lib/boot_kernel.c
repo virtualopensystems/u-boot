@@ -21,11 +21,13 @@
 
 #define PREFIX "boot_kernel: "
 
+#ifdef CONFIG_OF_UPDATE_FDT_BEFORE_BOOT
 /*
  * We uses a static variable to communicate with fit_update_fdt_before_boot().
  * For more information, please see commit log.
  */
 static crossystem_data_t *g_crossystem_data = NULL;
+#endif /* CONFIG_OF_UPDATE_FDT_BEFORE_BOOT */
 
 /* defined in common/cmd_bootm.c */
 int do_bootm(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);
@@ -258,7 +260,10 @@ int boot_kernel(VbSelectAndLoadKernelParams *kparams, crossystem_data_t *cdata)
 	VBDEBUG_PUTS(getenv("bootargs"));
 	VBDEBUG_PUTS("\n");
 
+#ifdef CONFIG_OF_UPDATE_FDT_BEFORE_BOOT
 	g_crossystem_data = cdata;
+#endif /* CONFIG_OF_UPDATE_FDT_BEFORE_BOOT */
+
 #ifdef CONFIG_X86
 	params = (struct boot_params *)(uintptr_t)
 		(kparams->bootloader_address - CROS_PARAMS_SIZE);
@@ -272,6 +277,7 @@ int boot_kernel(VbSelectAndLoadKernelParams *kparams, crossystem_data_t *cdata)
 	return 1;
 }
 
+#ifdef CONFIG_OF_UPDATE_FDT_BEFORE_BOOT
 /*
  * This function does the last chance FDT update before booting to kernel.
  * Currently we modify the FDT by embedding crossystem data. So before
@@ -294,3 +300,4 @@ int fit_update_fdt_before_boot(char *fdt, ulong *new_size)
 	*new_size = ns;
 	return 0;
 }
+#endif /* CONFIG_OF_UPDATE_FDT_BEFORE_BOOT */
