@@ -26,8 +26,7 @@
 
 CbfsResult file_cbfs_result;
 
-const char *
-file_cbfs_error(void)
+const char *file_cbfs_error(void)
 {
 	switch (file_cbfs_result) {
 	    case CBFS_SUCCESS:
@@ -72,8 +71,8 @@ static int initialized;
 static struct CbfsHeader cbfsHeader;
 static CbfsCacheNode *fileCache;
 
-static void
-swap_header(CbfsHeader *dest, CbfsHeader *src)
+/* Do endian conversion on the CBFS header structure. */
+static void swap_header(CbfsHeader *dest, CbfsHeader *src)
 {
 	dest->magic = be32_to_cpu(src->magic);
 	dest->version = be32_to_cpu(src->version);
@@ -83,8 +82,8 @@ swap_header(CbfsHeader *dest, CbfsHeader *src)
 	dest->offset = be32_to_cpu(src->offset);
 }
 
-static void
-swap_file_header(CbfsFileHeader *dest, CbfsFileHeader *src)
+/* Do endian conversion on a CBFS file header. */
+static void swap_file_header(CbfsFileHeader *dest, CbfsFileHeader *src)
 {
 	memcpy(&dest->magic, &src->magic, sizeof(dest->magic));
 	dest->len = be32_to_cpu(src->len);
@@ -93,9 +92,22 @@ swap_file_header(CbfsFileHeader *dest, CbfsFileHeader *src)
 	dest->offset = be32_to_cpu(src->offset);
 }
 
-static int
-file_cbfs_next_file(u8 *start, u32 size, u32 align, CbfsCacheNode *newNode,
-		u32 *used)
+/*
+ * Given a starting position in memory, scan forward, bounded by a size, and
+ * find the next valid CBFS file. No memory is allocated by this function. The
+ * caller is responsible for allocating space for the new file structure.
+ *
+ * @param start		The location in memory to start from.
+ * @param size		The size of the memory region to search.
+ * @param align		The alignment boundaries to check on.
+ * @param newNode	A pointer to the file structure to load.
+ * @param used		A pointer to the count of of bytes scanned through,
+ *			including the file if one is found.
+ *
+ * @return 1 if a file is found, 0 if one isn't.
+ */
+static int file_cbfs_next_file(u8 *start, u32 size, u32 align,
+	CbfsCacheNode *newNode, u32 *used)
 {
 	CbfsFileHeader header;
 
@@ -140,8 +152,8 @@ file_cbfs_next_file(u8 *start, u32 size, u32 align, CbfsCacheNode *newNode,
 	return 0;
 }
 
-static void
-file_cbfs_fill_cache(u8 *start, u32 size, u32 align)
+/* Look through a CBFS instance and copy file metadata into regular memory. */
+static void file_cbfs_fill_cache(u8 *start, u32 size, u32 align)
 {
 	CbfsCacheNode *cacheNode;
 	CbfsCacheNode *newNode;
@@ -180,8 +192,8 @@ file_cbfs_fill_cache(u8 *start, u32 size, u32 align)
 	file_cbfs_result = CBFS_SUCCESS;
 }
 
-static int
-file_cbfs_load_header(uintptr_t endOfRom, CbfsHeader *header)
+/* Get the CBFS header out of the ROM and do endian conversion. */
+static int file_cbfs_load_header(uintptr_t endOfRom, CbfsHeader *header)
 {
 	CbfsHeader *headerInRom;
 
@@ -196,8 +208,7 @@ file_cbfs_load_header(uintptr_t endOfRom, CbfsHeader *header)
 	return 0;
 }
 
-void
-file_cbfs_init(uintptr_t endOfRom)
+void file_cbfs_init(uintptr_t endOfRom)
 {
 	u8 *startOfRom;
 	initialized = 0;
@@ -213,8 +224,7 @@ file_cbfs_init(uintptr_t endOfRom)
 		initialized = 1;
 }
 
-const CbfsHeader *
-file_cbfs_get_header(void)
+const CbfsHeader *file_cbfs_get_header(void)
 {
 	if (initialized) {
 		file_cbfs_result = CBFS_SUCCESS;
@@ -225,8 +235,7 @@ file_cbfs_get_header(void)
 	}
 }
 
-CbfsFile
-file_cbfs_get_first(void)
+CbfsFile file_cbfs_get_first(void)
 {
 	if (!initialized) {
 		file_cbfs_result = CBFS_NOT_INITIALIZED;
@@ -237,8 +246,7 @@ file_cbfs_get_first(void)
 	}
 }
 
-void
-file_cbfs_get_next(CbfsFile *file)
+void file_cbfs_get_next(CbfsFile *file)
 {
 	if (!initialized) {
 		file_cbfs_result = CBFS_NOT_INITIALIZED;
@@ -251,8 +259,7 @@ file_cbfs_get_next(CbfsFile *file)
 	file_cbfs_result = CBFS_SUCCESS;
 }
 
-CbfsFile
-file_cbfs_find(const char *name)
+CbfsFile file_cbfs_find(const char *name)
 {
 	struct CbfsCacheNode *cacheNode = fileCache;
 
@@ -274,8 +281,7 @@ file_cbfs_find(const char *name)
 	return cacheNode;
 }
 
-CbfsFile
-file_cbfs_find_uncached(uintptr_t endOfRom, const char *name)
+CbfsFile file_cbfs_find_uncached(uintptr_t endOfRom, const char *name)
 {
 	u8 *start;
 	u32 size;
@@ -312,29 +318,25 @@ file_cbfs_find_uncached(uintptr_t endOfRom, const char *name)
 	return NULL;
 }
 
-const char *
-file_cbfs_name(CbfsFile file)
+const char *file_cbfs_name(CbfsFile file)
 {
 	file_cbfs_result = CBFS_SUCCESS;
 	return file->name;
 }
 
-u32
-file_cbfs_size(CbfsFile file)
+u32 file_cbfs_size(CbfsFile file)
 {
 	file_cbfs_result = CBFS_SUCCESS;
 	return file->dataLength;
 }
 
-u32
-file_cbfs_type(CbfsFile file)
+u32 file_cbfs_type(CbfsFile file)
 {
 	file_cbfs_result = CBFS_SUCCESS;
 	return file->type;
 }
 
-long
-file_cbfs_read(CbfsFile file, void *buffer, unsigned long maxsize)
+long file_cbfs_read(CbfsFile file, void *buffer, unsigned long maxsize)
 {
 	u32 size;
 
