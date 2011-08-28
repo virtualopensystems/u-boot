@@ -122,6 +122,14 @@ static void cb_parse_fdt(unsigned char *ptr, struct sysinfo_t *info)
 	info->sys_fdt = (struct fdt_header *)(((struct cb_fdt *)ptr) + 1);
 }
 
+static void cb_parse_vdat(unsigned char *ptr, struct sysinfo_t *info)
+{
+	struct cb_vdat *vdat = (struct cb_vdat *) ptr;
+
+	info->vdat_addr = vdat->vdat_addr;
+	info->vdat_size = vdat->vdat_size;
+}
+
 static void cb_parse_framebuffer(unsigned char *ptr, struct sysinfo_t *info)
 {
 	info->framebuffer = (struct cb_framebuffer *)ptr;
@@ -230,6 +238,9 @@ static int cb_parse_header(void *addr, int len, struct sysinfo_t *info)
 			break;
 		case CB_TAG_FDT:
 			cb_parse_fdt(ptr, info);
+			break;
+		case CB_TAG_VDAT:
+			cb_parse_vdat(ptr, info);
 			break;
 		}
 
