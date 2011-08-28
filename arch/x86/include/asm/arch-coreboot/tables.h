@@ -188,6 +188,14 @@ struct cb_fdt {
 	/* the actual FDT gets placed here */
 };
 
+#define CB_TAG_VDAT	0x0015
+struct cb_vdat {
+	uint32_t tag;
+	uint32_t size;	/* size of the entire entry */
+	void	 *vdat_addr;
+	uint32_t vdat_size;
+};
+
 #define CB_TAG_CMOS_OPTION_TABLE 0x00c8
 struct cb_cmos_option_table {
 	u32 tag;

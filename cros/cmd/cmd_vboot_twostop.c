@@ -28,6 +28,9 @@
 #include <tss_constants.h>
 #include <vboot_api.h>
 
+#ifdef CONFIG_SYS_COREBOOT
+#include <asm/ic/coreboot/sysinfo.h>
+#endif
 #ifndef CACHE_LINE_SIZE
 #define CACHE_LINE_SIZE __BIGGEST_ALIGNMENT__
 #endif
@@ -132,9 +135,13 @@ twostop_init_cparams(struct twostop_fmap *fmap, void *gbb,
 {
 	cparams->gbb_data = gbb;
 	cparams->gbb_size = fmap->readonly.gbb.length;
+#ifdef CONFIG_SYS_COREBOOT
+	cparams->shared_data_blob = lib_sysinfo.vdat_addr;
+	cparams->shared_data_size = lib_sysinfo.vdat_size;
+#else
 	cparams->shared_data_blob = vb_shared_data;
 	cparams->shared_data_size = VB_SHARED_DATA_REC_SIZE;
-
+#endif
 #define P(format, field) \
 	VBDEBUG(PREFIX "- %-20s: " format "\n", #field, cparams->field)
 
