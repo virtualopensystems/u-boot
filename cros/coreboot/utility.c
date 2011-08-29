@@ -13,10 +13,18 @@
 /* Import the definition of vboot_wrapper interfaces. */
 #include <vboot_api.h>
 
+static uint64_t base_value;
+
 uint64_t VbExGetTimer(void)
 {
 	uint32_t high, low;
+	uint64_t time_now;
 
 	__asm__ __volatile__("rdtsc" : "=a" (low), "=d" (high));
-	return ((uint64_t)high << 32) | (uint64_t)low;
+
+	time_now = ((uint64_t)high << 32) | (uint64_t)low;
+	if (!base_value)
+		base_value = time_now;
+
+	return time_now - base_value;
 }
