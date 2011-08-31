@@ -31,9 +31,9 @@ static int boot_device_ide_scan(block_dev_desc_t **desc, int max_devs,
 
 		ide = ide_get_dev(index);
 		if (!ide)
-			break;
+			continue;
 
-		desc[index++] = ide;
+		desc[found++] = ide;
 	}
 	return found;
 }
