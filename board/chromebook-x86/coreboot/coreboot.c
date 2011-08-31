@@ -34,6 +34,7 @@
 #include <asm/io.h>
 #include <asm/arch-coreboot/tables.h>
 #include <asm/arch-coreboot/sysinfo.h>
+#include <cros/common.h>
 #include <cros/fdt_decode.h>
 #include <cros/firmware_storage.h>
 #include <cros/power_management.h>
@@ -100,7 +101,7 @@ int board_early_init_r(void)
 	gd->fdt_blob = dtb;
 cbfs_failed:
 #endif /* CONFIG_CMD_CBFS && CONFIG_OF_CONTROL */
-	return 0;
+	return vbexport_init();
 }
 
 void show_boot_progress(int val)
