@@ -44,25 +44,99 @@ typedef struct ich7_spi_regs {
 	uint32_t bbar;
 	uint16_t preop;
 	uint16_t optype;
-	uint64_t opmenu;
+	uint8_t opmenu[8];
 } __attribute__((packed)) ich7_spi_regs;
 
-static ich7_spi_regs *ich7_spi = NULL;
+typedef struct ich9_spi_regs {
+	uint32_t bfpr;
+	uint16_t hsfs;
+	uint16_t hsfc;
+	uint32_t faddr;
+	uint32_t _reserved0;
+	uint32_t fdata[16];
+	uint32_t frap;
+	uint32_t freg[5];
+	uint32_t _reserved1[3];
+	uint32_t pr[5];
+	uint32_t _reserved2[2];
+	uint8_t ssfs;
+	uint8_t ssfc[3];
+	uint16_t preop;
+	uint16_t optype;
+	uint8_t opmenu[8];
+	uint32_t bbar;
+	uint8_t _reserved3[12];
+	uint32_t fdoc;
+	uint32_t fdod;
+	uint8_t _reserved4[8];
+	uint32_t afc;
+	uint32_t lvscc;
+	uint32_t uvscc;
+	uint8_t _reserved5[4];
+	uint32_t fpb;
+	uint8_t _reserved6[28];
+	uint32_t srdl;
+	uint32_t srdc;
+	uint32_t srd;
+} __attribute__((packed)) ich9_spi_regs;
+
+typedef struct ich_spi_controller {
+	int locked;
+
+	uint8_t *opmenu;
+	int menubytes;
+	uint16_t *optype;
+	uint32_t *addr;
+	uint8_t *data;
+	unsigned databytes;
+	uint8_t *status;
+	uint16_t *control;
+	uint32_t *bbar;
+} ich_spi_controller;
+
+static ich_spi_controller cntlr;
 
 enum {
 	SPIS_SCIP =		0x0001,
 	SPIS_GRANT =		0x0002,
 	SPIS_CDS =		0x0004,
 	SPIS_FCERR =		0x0008,
+	SSFS_AEL =		0x0010,
 	SPIS_LOCK =		0x8000,
-	SPIS_RESERVED_MASK =	0x7ff0
+	SPIS_RESERVED_MASK =	0x7ff0,
+	SSFS_RESERVED_MASK =	0x7fe2
 };
 
 enum {
-	SPIC_SCGO =		0x0002,
-	SPIC_ACS =		0x0004,
-	SPIC_SPOP =		0x0008,
-	SPIC_DS =		0x4000
+	SPIC_SCGO =		0x000002,
+	SPIC_ACS =		0x000004,
+	SPIC_SPOP =		0x000008,
+	SPIC_DBC =		0x003f00,
+	SPIC_DS =		0x004000,
+	SPIC_SME =		0x008000,
+	SSFC_SCF_MASK =		0x070000,
+	SSFC_RESERVED =		0xf80000
+};
+
+enum {
+	HSFS_FDONE =		0x0001,
+	HSFS_FCERR =		0x0002,
+	HSFS_AEL =		0x0004,
+	HSFS_BERASE_MASK =	0x0018,
+	HSFS_BERASE_SHIFT =	3,
+	HSFS_SCIP =		0x0020,
+	HSFS_FDOPSS =		0x2000,
+	HSFS_FDV =		0x4000,
+	HSFS_FLOCKDN =		0x8000
+};
+
+enum {
+	HSFC_FGO =		0x0001,
+	HSFC_FCYCLE_MASK =	0x0006,
+	HSFC_FCYCLE_SHIFT =	1,
+	HSFC_FDBC_MASK =	0x3f00,
+	HSFC_FDBC_SHIFT =	8,
+	HSFC_FSMIE =		0x8000
 };
 
 enum {
@@ -108,9 +182,9 @@ static void ich_set_bbar(uint32_t minaddr)
 	uint32_t ichspi_bbar;
 
 	minaddr &= bbar_mask;
-	ichspi_bbar = readl(&ich7_spi->bbar) & ~bbar_mask;
+	ichspi_bbar = readl(cntlr.bbar) & ~bbar_mask;
 	ichspi_bbar |= minaddr;
-	writel(ichspi_bbar, &ich7_spi->bbar);
+	writel(ichspi_bbar, cntlr.bbar);
 }
 
 int spi_cs_is_valid(unsigned int bus, unsigned int cs)
@@ -130,9 +204,10 @@ struct spi_slave *spi_setup_slave(unsigned int bus, unsigned int cs,
 	}
 
 	memset(slave, 0, sizeof(*slave));
+
 	slave->bus = bus;
 	slave->cs = cs;
-	return (struct spi_slave *)slave;
+	return slave;
 }
 
 void spi_free_slave(struct spi_slave *_slave)
@@ -141,26 +216,98 @@ void spi_free_slave(struct spi_slave *_slave)
 	free(slave);
 }
 
+static inline int spi_is_cougarpoint_lpc(uint16_t device_id)
+{
+	return device_id >= PCI_DEVICE_ID_INTEL_COUGARPOINT_LPC_MIN &&
+		device_id <= PCI_DEVICE_ID_INTEL_COUGARPOINT_LPC_MAX;
+};
+
 void spi_init(void)
 {
-	const uint16_t spibar_offset = 0x3020;
+	int ich_version = 0;
+
 	uint8_t *rcrb; /* Root Complex Register Block */
 	uint32_t rcba; /* Root Complex Base Address */
 	uint8_t bios_cntl;
+	pci_dev_t dev;
 
-	pci_dev_t dev = pci_find_device(PCI_VENDOR_ID_INTEL,
-					PCI_DEVICE_ID_INTEL_TGP_LPC, 0);
-	/* The docs say it should be at device 31, function 0. */
-	if (PCI_DEV(dev) != 31 || PCI_FUNC(dev) != 0) {
-		puts("ICH SPI: LPC bridge not where it's supposed to be\n");
+	int bus;
+	int last_bus = pci_last_busno();
+
+	if (last_bus == -1) {
+		puts("No PCI busses?\n");
 		return;
 	}
+
+	for (bus = 0; bus <= last_bus; bus++) {
+		uint32_t ids;
+		uint16_t vendor_id, device_id;
+
+		dev = PCI_BDF(bus, 31, 0);
+		pci_read_config_dword(dev, 0, &ids);
+		vendor_id = ids;
+		device_id = (ids >> 16);
+
+		if (vendor_id != PCI_VENDOR_ID_INTEL)
+			continue;
+
+		if (device_id == PCI_DEVICE_ID_INTEL_TGP_LPC) {
+			ich_version = 7;
+			break;
+		} else if (spi_is_cougarpoint_lpc(device_id)) {
+			ich_version = 9;
+			break;
+		}
+	}
+
+	if (!ich_version) {
+		puts("ICH SPI: No ICH found.\n");
+		return;
+	}
+
 	pci_read_config_dword(dev, 0xf0, &rcba);
 	/* Bits 31-14 are the base address, 13-1 are reserved, 0 is enable. */
 	rcrb = (uint8_t *)(rcba & 0xffffc000);
-	ich7_spi = (ich7_spi_regs *)(rcrb + spibar_offset);
+	switch (ich_version) {
+	case 7:
+		{
+			const uint16_t ich7_spibar_offset = 0x3020;
+			ich7_spi_regs *ich7_spi =
+				(ich7_spi_regs *)(rcrb + ich7_spibar_offset);
 
-	ichspi_lock = readw(&ich7_spi->spis) & SPIS_LOCK;
+			ichspi_lock = readw(&ich7_spi->spis) & SPIS_LOCK;
+			cntlr.opmenu = ich7_spi->opmenu;
+			cntlr.menubytes = sizeof(ich7_spi->opmenu);
+			cntlr.optype = &ich7_spi->optype;
+			cntlr.addr = &ich7_spi->spia;
+			cntlr.data = (uint8_t *)ich7_spi->spid;
+			cntlr.databytes = sizeof(ich7_spi->spid);
+			cntlr.status = (uint8_t *)&ich7_spi->spis;
+			cntlr.control = &ich7_spi->spic;
+			cntlr.bbar = &ich7_spi->bbar;
+			break;
+		}
+	case 9:
+		{
+			const uint16_t ich9_spibar_offset = 0x3800;
+			ich9_spi_regs *ich9_spi =
+				(ich9_spi_regs *)(rcrb + ich9_spibar_offset);
+			ichspi_lock = readw(&ich9_spi->hsfs) & HSFS_FLOCKDN;
+			cntlr.opmenu = ich9_spi->opmenu;
+			cntlr.menubytes = sizeof(ich9_spi->opmenu);
+			cntlr.optype = &ich9_spi->optype;
+			cntlr.addr = &ich9_spi->faddr;
+			cntlr.data = (uint8_t *)ich9_spi->fdata;
+			cntlr.databytes = sizeof(ich9_spi->fdata);
+			cntlr.status = &ich9_spi->ssfs;
+			cntlr.control = (uint16_t *)ich9_spi->ssfc;
+			cntlr.bbar = &ich9_spi->bbar;
+			break;
+		}
+	default:
+		printf("ICH SPI: Unrecognized ICH version %d.\n", ich_version);
+	}
+
 	ich_set_bbar(0);
 
 	/* Disable the BIOS write protect so write commands are allowed. */
@@ -232,36 +379,36 @@ static void spi_setup_type(spi_transaction *trans)
 static int spi_setup_opcode(spi_transaction *trans)
 {
 	uint16_t optypes;
-	uint8_t opmenu[8];
+	uint8_t opmenu[cntlr.menubytes];
 
 	trans->opcode = trans->out[0];
 	spi_use_out(trans, 1);
 	if (!ichspi_lock) {
 		/* The lock is off, so just use index 0. */
-		writeb(trans->opcode, &ich7_spi->opmenu);
-		optypes = readw(&ich7_spi->optype);
+		writeb(trans->opcode, cntlr.opmenu);
+		optypes = readw(cntlr.optype);
 		optypes = (optypes & 0xfffc) | (trans->type & 0x3);
-		writew(optypes, &ich7_spi->optype);
+		writew(optypes, cntlr.optype);
 		return 0;
 	} else {
 		/* The lock is on. See if what we need is on the menu. */
 		uint8_t optype;
 		uint16_t opcode_index;
 
-		read_reg(&ich7_spi->opmenu, &opmenu, sizeof(opmenu));
-		for (opcode_index = 0; opcode_index < ARRAY_SIZE(opmenu);
+		read_reg(cntlr.opmenu, opmenu, sizeof(opmenu));
+		for (opcode_index = 0; opcode_index < cntlr.menubytes;
 				opcode_index++) {
 			if (opmenu[opcode_index] == trans->opcode)
 				break;
 		}
 
-		if (opcode_index == ARRAY_SIZE(opmenu)) {
+		if (opcode_index == cntlr.menubytes) {
 			printf("ICH SPI: Opcode %x not found\n",
 				trans->opcode);
 			return -1;
 		}
 
-		optypes = readw(&ich7_spi->optype);
+		optypes = readw(cntlr.optype);
 		optype = (optypes >> (opcode_index * 2)) & 0x3;
 		if (trans->type == SPI_OPCODE_TYPE_WRITE_NO_ADDRESS &&
 			optype == SPI_OPCODE_TYPE_WRITE_WITH_ADDRESS &&
@@ -298,12 +445,12 @@ static int spi_setup_offset(spi_transaction *trans)
 	}
 }
 
-int spi_xfer(struct spi_slave *slave, const void *dout, unsigned int bitsout,
-		void *din, unsigned int bitsin)
+int spi_xfer(struct spi_slave *slave, const void *dout,
+		unsigned int bitsout, void *din, unsigned int bitsin)
 {
 	int timeout;
 
-	uint16_t spis, spic;
+	uint16_t status, control;
 	int16_t opcode_index;
 	int with_address;
 
@@ -331,7 +478,7 @@ int spi_xfer(struct spi_slave *slave, const void *dout, unsigned int bitsout,
 
 	/* 60 ms are 9.6 million cycles at 16 MHz. */
 	timeout = 100 * 60;
-	while ((readw(&ich7_spi->spis) & SPIS_SCIP) && --timeout)
+	while ((readb(cntlr.status) & SPIS_SCIP) && --timeout)
 		udelay(10);
 	if (!timeout) {
 		puts("ICH SPI: SCIP never cleared\n");
@@ -345,75 +492,74 @@ int spi_xfer(struct spi_slave *slave, const void *dout, unsigned int bitsout,
 		return 1;
 
 	/*
-	 * Read or write up to 64 bytes at a time until everything has been
-	 * sent.
+	 * Read or write up to databytes bytes at a time until everything has
+	 * been sent.
 	 */
 	while (trans.bytesout || trans.bytesin) {
-		const unsigned maxdata = 64;
 		uint32_t data_length;
 
 		/* SPI addresses are 24 bit only */
-		writel(trans.offset & 0x00FFFFFF, &ich7_spi->spia);
+		writel(trans.offset & 0x00FFFFFF, cntlr.addr);
 
 		if (trans.bytesout)
-			data_length = min(trans.bytesout, maxdata);
+			data_length = min(trans.bytesout, cntlr.databytes);
 		else
-			data_length = min(trans.bytesin, maxdata);
+			data_length = min(trans.bytesin, cntlr.databytes);
 
 		/* Program data into FDATA0 to N */
 		if (trans.bytesout) {
-			write_reg(trans.out, ich7_spi->spid, data_length);
+			write_reg(trans.out, cntlr.data, data_length);
 			spi_use_out(&trans, data_length);
 			if (with_address)
 				trans.offset += data_length;
 		}
 
-		/* Assemble SPIS */
-		spis = readw(&ich7_spi->spis);
+		/* Assemble the status register */
+		status = readb(cntlr.status);
 		/* keep reserved bits */
-		spis &= SPIS_RESERVED_MASK;
+		status &= SPIS_RESERVED_MASK;
 		/* clear error status registers */
-		spis |= (SPIS_CDS | SPIS_FCERR);
-		writew(spis, &ich7_spi->spis);
+		status |= (SPIS_CDS | SPIS_FCERR);
+		writeb(status, cntlr.status);
 
-		/* Assemble SPIC */
-		spic = (opcode_index & 0x07) << 4;
+		/* Assemble the control register */
+		control = (opcode_index & 0x07) << 4;
 
 		if (data_length != 0) {
-			spic |= SPIC_DS;
-			spic |= (data_length - 1) << 8;
+			control |= SPIC_DS;
+			control |= (data_length - 1) << 8;
 		}
 
 		timeout = 100 * 60;
 
 		/* Start */
-		spic |= SPIC_SCGO;
+		control |= SPIC_SCGO;
 
 		/* write it */
-		writew(spic, &ich7_spi->spic);
+		writew(control, cntlr.control);
 
 		/* Wait for Cycle Done Status or Flash Cycle Error. */
-		spis = readw(&ich7_spi->spis);
-		while (((spis & (SPIS_CDS | SPIS_FCERR)) == 0) && --timeout) {
+		status = readb(cntlr.status);
+		while (((status & (SPIS_CDS | SPIS_FCERR)) == 0) && --timeout) {
 			udelay(10);
-			spis = readw(&ich7_spi->spis);
+			status = readb(cntlr.status);
 		}
 		if (!timeout) {
-			printf("timeout, ICH7_REG_SPIS=0x%04x\n",
-				readw(&ich7_spi->spis));
+			printf("timeout, status = 0x%04x\n",
+				readb(cntlr.status));
 			return 1;
 		}
 
-		if (spis & SPIS_FCERR) {
+		if (status & SPIS_FCERR) {
 			puts("ICH SPI: Transaction error\n");
 			/* keep reserved bits */
-			spis &= SPIS_RESERVED_MASK;
-			writew(spis | SPIS_FCERR, &ich7_spi->spis);
+			status &= SPIS_RESERVED_MASK;
+			writeb(status | SPIS_FCERR, cntlr.status);
 			return 1;
 		}
 
 		if (trans.bytesin) {
-			read_reg(ich7_spi->spid, trans.in, data_length);
+			read_reg(cntlr.data, trans.in, data_length);
 			spi_use_in(&trans, data_length);
 			if (with_address)
 				trans.offset += data_length;
