@@ -139,7 +139,11 @@ struct spi_flash *spi_flash_probe_winbond(struct spi_slave *spi, u8 *idcode)
 
 	flash->write = spi_flash_cmd_write_multi;
 	flash->erase = winbond_erase;
+#ifdef CONFIG_SPI_FLASH_NO_FAST_READ
+	flash->read = spi_flash_cmd_read_slow;
+#else
 	flash->read = spi_flash_cmd_read_fast;
+#endif
 	flash->page_size = page_size;
 	flash->sector_size = page_size * params->pages_per_sector;
 	flash->size = page_size * params->pages_per_sector
