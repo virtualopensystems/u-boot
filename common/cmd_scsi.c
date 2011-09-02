@@ -34,6 +34,10 @@
 #include <image.h>
 #include <pci.h>
 
+#ifdef CONFIG_SCSI_VEND_ID
+#define SCSI_VEND_ID CONFIG_SCSI_VEND_ID
+#define SCSI_DEV_ID CONFIG_SCSI_DEV_ID
+#else
 #ifdef CONFIG_SCSI_SYM53C8XX
 #define SCSI_VEND_ID	0x1000
 #ifndef CONFIG_SCSI_DEV_ID
@@ -48,6 +52,7 @@
 
 #elif !defined(CONFIG_SCSI_AHCI_PLAT)
 #error no scsi device defined
+#endif
 #endif
 
 

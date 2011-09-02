@@ -315,6 +315,13 @@ static __inline__ int find_next_zero_bit (void * addr, int size, int offset)
 	return (offset + set + res);
 }
 
+extern __inline__ int __ilog2(unsigned int x)
+{
+	int lz;
+	__asm__("bsr %1, %0" : "=r" (lz) : "r" (x) : "cc");
+	return lz;
+}
+
 /**
  * ffz - find first zero in word.
  * @word: The word to search

@@ -39,6 +39,7 @@
 #include <malloc.h>
 #include <net.h>
 #include <ide.h>
+#include <scsi.h>
 #include <serial.h>
 #include <asm/u-boot-x86.h>
 #include <asm-generic/sections.h>
