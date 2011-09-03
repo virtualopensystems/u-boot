@@ -12,4 +12,8 @@
 	       silent_console = <0>;
 	       hwid = "X86 STUMPY TEST 0128";
 	};
+
+	flash@ffc00000 {
+		bios-base = <0x400000>;
+	};
 };
