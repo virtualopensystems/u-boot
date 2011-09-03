@@ -71,23 +71,29 @@ static int decode_fmap_entry(const void *blob, int offset, const char *base,
 	return 0;
 }
 
-static int decode_block_lba(const void *blob, int offset, const char *path,
+static int decode_int_property(const void *blob, int offset, const char *name,
 		uint64_t *out)
 {
 	int length;
 	uint32_t *property;
 
-	offset = relpath_offset(blob, offset, path);
-	if (offset < 0)
-		return offset;
-
-	property = (uint32_t *)fdt_getprop(blob, offset, "block-lba", &length);
-	if (!property) {
-		VBDEBUG(PREFIX "failed to load LBA '%s/block-lba'\n", path);
+	property = (uint32_t *)fdt_getprop(blob, offset, name, &length);
+	if (!property || length < 1) {
+		VBDEBUG(PREFIX "failed to load int %s\n", name);
 		return -FDT_ERR_MISSING;
 	}
 	*out = fdt32_to_cpu(*property);
 	return 0;
+}
+
+static int decode_block_lba(const void *blob, int offset, const char *path,
+		uint64_t *out)
+{
+	offset = relpath_offset(blob, offset, path);
+	if (offset < 0)
+		return offset;
+
+	return decode_int_property(blob, offset, "block-lba", out);
 }
 
 int decode_firmware_entry(const char *blob, int fmap_offset, const char *name,
@@ -114,6 +120,10 @@ int fdt_decode_twostop_fmap(const void *blob, struct twostop_fmap *config)
 	if (fmap_offset < 0) {
 		VBDEBUG(PREFIX "chromeos,flashmap node is missing\n");
 		return fmap_offset;
+	}
+	if (decode_int_property(blob, fmap_offset, "bios-base",
+			&config->firmware_base)) {
+		config->firmware_base = 0;
 	}
 	err = decode_firmware_entry(blob, fmap_offset, "rw-a",
 			&config->readwrite_a);

@@ -467,7 +467,7 @@ twostop_init(struct twostop_fmap *fmap, firmware_storage_t *file,
 	dump_fmap(fmap);
 
 	/* We revert the decision of using firmware_storage_open_twostop() */
-	if (firmware_storage_open_spi(file)) {
+	if (firmware_storage_open_spi(file, fmap->firmware_base)) {
 		VBDEBUG(PREFIX "failed to open firmware storage\n");
 		return -1;
 	}
