@@ -9,41 +9,41 @@
  */
 
 #include <common.h>
-#include <ide.h>
+#include <scsi.h>
 
 #include "boot_device.h"
 
-static int boot_device_ide_start(uint32_t disk_flags)
+static int boot_device_scsi_start(uint32_t disk_flags)
 {
-	/* We expect to have at least one IDE device */
+	/* We expect to have at least one SCSI device */
 	return 1;
 }
 
-static int boot_device_ide_scan(block_dev_desc_t **desc, int max_devs,
+static int boot_device_scsi_scan(block_dev_desc_t **desc, int max_devs,
 			 uint32_t disk_flags)
 {
 	int index, found;
 
 	for (index = found = 0; index < max_devs; index++) {
-		block_dev_desc_t *ide;
+		block_dev_desc_t *scsi;
 
-		ide = ide_get_dev(index);
-		if (!ide)
+		scsi = scsi_get_dev(index);
+		if (!scsi)
 			continue;
 
-		desc[found++] = ide;
+		desc[found++] = scsi;
 	}
 	return found;
 }
 
-static struct boot_interface ide_interface = {
-	.name = "ide",
-	.type = IF_TYPE_IDE,
-	.start = boot_device_ide_start,
-	.scan = boot_device_ide_scan,
+static struct boot_interface scsi_interface = {
+	.name = "scsi",
+	.type = IF_TYPE_SCSI,
+	.start = boot_device_scsi_start,
+	.scan = boot_device_scsi_scan,
 };
 
-int boot_device_ide_probe(void)
+int boot_device_scsi_probe(void)
 {
-	return boot_device_register_interface(&ide_interface);
+	return boot_device_register_interface(&scsi_interface);
 }

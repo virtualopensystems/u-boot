@@ -202,5 +202,8 @@ int boot_device_init(void)
 #ifdef CONFIG_CHROMEOS_IDE
 	err |= boot_device_ide_probe();
 #endif
+#ifdef CONFIG_SCSI_AHCI
+	err |= boot_device_scsi_probe();
+#endif
 	return err;
 }

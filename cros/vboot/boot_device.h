@@ -66,6 +66,7 @@ int boot_device_matches(const block_dev_desc_t *dev, uint32_t disk_flags,
 int boot_device_usb_probe(void);
 int boot_device_mmc_probe(void);
 int boot_device_ide_probe(void);
+int boot_device_scsi_probe(void);
 
 /**
  * Register all the available boot devices.
