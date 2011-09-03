@@ -51,6 +51,18 @@
 #define CONFIG_VBGLOBAL_BASE		0x00FB0000
 #define CONFIG_SYS_TEXT_BASE		0x00FC0000
 
+#define CONFIG_SCSI_AHCI
+
+#ifdef CONFIG_SCSI_AHCI
+#define CONFIG_SATA_INTEL		1
+#define CONFIG_SCSI_VEND_ID		PCI_VENDOR_ID_INTEL
+#define CONFIG_SCSI_DEV_ID		PCI_DEVICE_ID_INTEL_NM10_AHCI
+
+#define CONFIG_SYS_SCSI_MAX_SCSI_ID	1
+#define CONFIG_SYS_SCSI_MAX_LUN		1
+#define CONFIG_SYS_SCSI_MAX_DEVICE	(CONFIG_SYS_SCSI_MAX_SCSI_ID * \
+					 CONFIG_SYS_SCSI_MAX_LUN)
+#endif
 
 /*-----------------------------------------------------------------------
  * Watchdog Configuration
@@ -143,9 +155,8 @@
 /* This value is just to get the chromeos library to compile. */
 #define CHROMEOS_VBNVCONTEXT_LBA	0
 
-/* Support USB and IDE booting */
+/* Support USB booting */
 #define CONFIG_CHROMEOS_USB
-#define CONFIG_CHROMEOS_IDE
 
 /*-----------------------------------------------------------------------
  * Command line configuration.
@@ -177,7 +188,7 @@
 #define CONFIG_CMD_SOURCE
 #define CONFIG_CMD_SPI
 #define CONFIG_CMD_XIMG
-#define CONFIG_CMD_IDE
+#define CONFIG_CMD_SCSI
 #define CONFIG_CMD_CBFS
 #define CONFIG_CMD_FAT
 #define CONFIG_CMD_EXT2
@@ -191,7 +202,7 @@
 				"fatload ${devtype} ${devnum}:c 3000000 syslinux/vmlinuz.a; "\
 				"zboot 3000000; "
 
-#define CONFIG_EXTRA_ENV_SETTINGS       	"devtype=ide\0"\
+#define CONFIG_EXTRA_ENV_SETTINGS		"devtype=scsi\0"\
 						"devnum=0\0"\
 						"devname=sda\0"\
 						CONFIG_STD_DEVICES_SETTINGS \
