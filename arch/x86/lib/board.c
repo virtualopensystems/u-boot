@@ -57,7 +57,7 @@
  */
 #undef	XTRN_DECLARE_GLOBAL_DATA_PTR
 #define XTRN_DECLARE_GLOBAL_DATA_PTR	/* empty = allocate here */
-DECLARE_GLOBAL_DATA_PTR = (gd_t *) (CONFIG_SYS_INIT_GD_ADDR);
+DECLARE_GLOBAL_DATA_PTR;
 
 /************************************************************************
  * Init Utilities							*
@@ -257,12 +257,24 @@ void board_init_f(ulong boot_flags)
 {
 	init_fnc_t **init_fnc_ptr;
 
+/*
+ * It's ok to have it on the stack as the stack is not going to be changed
+ * until board_init_r() is invoked, and the first thing it does - is copying
+ * *gd to the new location.
+ */
+
+	gd_t gd_data_f;
+	gd = &gd_data_f;
+	memset(gd, 0, sizeof(*gd));
+
 	gd->flags = boot_flags;
 
 	for (init_fnc_ptr = init_sequence_f; *init_fnc_ptr; ++init_fnc_ptr) {
 		if ((*init_fnc_ptr)() != 0)
 			hang();
 	}
+
+	printf("Relocating to %p\n", (void *)gd->relocaddr);
 
 	gd->flags |= GD_FLG_RELOC;
 
