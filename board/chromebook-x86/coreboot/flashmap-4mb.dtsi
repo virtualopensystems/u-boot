@@ -164,13 +164,13 @@
 			/* Alignment: 4k (for updating).
 			 * Anything in this range may be updated in recovery. */
 			label = "rw-shared";
-			reg = <0x00001000 0x0001f000>;
+			reg = <0x00001000 0x0001b000>;
 		};
 		shared-data@0 {
 			label = "shared-data";
 			/* Alignment: 4k (for random read/write).
 			 * RW firmware can put calibration data here. */
-			reg = <0x00001000 0x0001f000>;
+			reg = <0x00001000 0x0001b000>;
 			type = "wiped";
 			wipe-value = [00];
 		};
@@ -179,7 +179,7 @@
 			label = "dev-cfg";
 			/* Alignment: 4k, and must occupy bottom of U-Boot
 			 * firmware -- check CONFIG_ENV_OFFSET */
-			reg = <0x00000000 0x00000000>;
+			reg = <0x0001c000 0x00004000>;
 
 			/*
 			 * We could put the dev environment here, but U-Boot has
