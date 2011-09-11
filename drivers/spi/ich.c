@@ -146,17 +146,75 @@ enum {
 	SPI_OPCODE_TYPE_WRITE_WITH_ADDRESS =	3
 };
 
+#ifdef DEBUG
+
+static u8 readb_(const void *addr)
+{
+	u8 v = readb(addr);
+	printf("read %2.2x from %4.4x\n",
+	       v, ((unsigned) addr & 0xffff) - 0xf020);
+	return v;
+}
+
+static u16 readw_(const void *addr)
+{
+	u16 v = readw(addr);
+	printf("read %4.4x from %4.4x\n",
+	       v, ((unsigned) addr & 0xffff) - 0xf020);
+	return v;
+}
+
+static u32 readl_(const void *addr)
+{
+	u32 v = readl(addr);
+	printf("read %8.8x from %4.4x\n",
+	       v, ((unsigned) addr & 0xffff) - 0xf020);
+	return v;
+}
+
+static void writeb_(u8 b, const void *addr)
+{
+	writeb(b, addr);
+	printf("wrote %2.2x to %4.4x\n",
+	       b, ((unsigned) addr & 0xffff) - 0xf020);
+}
+
+static void writew_(u16 b, const void *addr)
+{
+	writew(b, addr);
+	printf("wrote %4.4x to %4.4x\n",
+	       b, ((unsigned) addr & 0xffff) - 0xf020);
+}
+
+static void writel_(u32 b, const void *addr)
+{
+	writel(b, addr);
+	printf("wrote %8.8x to %4.4x\n",
+	       b, ((unsigned) addr & 0xffff) - 0xf020);
+}
+
+#else /* DEBUG ^^^ defined  vvv NOT defined */
+
+#define readb_(a) readb(a)
+#define readw_(a) readw(a)
+#define readl_(a) readl(a)
+#define writeb_(a, b) writeb(a, b)
+#define writew_(a, b) writew(a, b)
+#define writel_(a, b) writel(a, b)
+
+#endif  /* DEBUG ^^^ NOT defined */
+
 static void write_reg(const void *value, void *dest, uint32_t size)
 {
 	const uint8_t *bvalue = value;
 	uint8_t *bdest = dest;
 
 	while (size >= 4) {
-		writel(*(const uint32_t *)bvalue, bdest);
+		writel_(*(const uint32_t *)bvalue, bdest);
 		bdest += 4; bvalue += 4; size -= 4;
 	}
 	while (size) {
-		writeb(*bvalue, bdest);
+		writeb_(*bvalue, bdest);
 		bdest++; bvalue++; size--;
 	}
 }
@@ -167,11 +225,11 @@ static void read_reg(const void *src, void *value, uint32_t size)
 	uint8_t *bvalue = value;
 
 	while (size >= 4) {
-		*(uint32_t *)bvalue = readl(bsrc);
+		*(uint32_t *)bvalue = readl_(bsrc);
 		bsrc += 4; bvalue += 4; size -= 4;
 	}
 	while (size) {
-		*bvalue = readb(bsrc);
+		*bvalue = readb_(bsrc);
 		bsrc++; bvalue++; size--;
 	}
 }
@@ -182,9 +240,9 @@ static void ich_set_bbar(uint32_t minaddr)
 	uint32_t ichspi_bbar;
 
 	minaddr &= bbar_mask;
-	ichspi_bbar = readl(cntlr.bbar) & ~bbar_mask;
+	ichspi_bbar = readl_(cntlr.bbar) & ~bbar_mask;
 	ichspi_bbar |= minaddr;
-	writel(ichspi_bbar, cntlr.bbar);
+	writel_(ichspi_bbar, cntlr.bbar);
 }
 
 int spi_cs_is_valid(unsigned int bus, unsigned int cs)
@@ -275,7 +333,7 @@ void spi_init(void)
 			ich7_spi_regs *ich7_spi =
 				(ich7_spi_regs *)(rcrb + ich7_spibar_offset);
 
-			ichspi_lock = readw(&ich7_spi->spis) & SPIS_LOCK;
+			ichspi_lock = readw_(&ich7_spi->spis) & SPIS_LOCK;
 			cntlr.opmenu = ich7_spi->opmenu;
 			cntlr.menubytes = sizeof(ich7_spi->opmenu);
 			cntlr.optype = &ich7_spi->optype;
@@ -292,7 +350,7 @@ void spi_init(void)
 			const uint16_t ich9_spibar_offset = 0x3800;
 			ich9_spi_regs *ich9_spi =
 				(ich9_spi_regs *)(rcrb + ich9_spibar_offset);
-			ichspi_lock = readw(&ich9_spi->hsfs) & HSFS_FLOCKDN;
+			ichspi_lock = readw_(&ich9_spi->hsfs) & HSFS_FLOCKDN;
 			cntlr.opmenu = ich9_spi->opmenu;
 			cntlr.menubytes = sizeof(ich9_spi->opmenu);
 			cntlr.optype = &ich9_spi->optype;
@@ -385,10 +443,10 @@ static int spi_setup_opcode(spi_transaction *trans)
 	spi_use_out(trans, 1);
 	if (!ichspi_lock) {
 		/* The lock is off, so just use index 0. */
-		writeb(trans->opcode, cntlr.opmenu);
-		optypes = readw(cntlr.optype);
+		writeb_(trans->opcode, cntlr.opmenu);
+		optypes = readw_(cntlr.optype);
 		optypes = (optypes & 0xfffc) | (trans->type & 0x3);
-		writew(optypes, cntlr.optype);
+		writew_(optypes, cntlr.optype);
 		return 0;
 	} else {
 		/* The lock is on. See if what we need is on the menu. */
@@ -408,7 +466,7 @@ static int spi_setup_opcode(spi_transaction *trans)
 			return -1;
 		}
 
-		optypes = readw(cntlr.optype);
+		optypes = readw_(cntlr.optype);
 		optype = (optypes >> (opcode_index * 2)) & 0x3;
 		if (trans->type == SPI_OPCODE_TYPE_WRITE_NO_ADDRESS &&
 			optype == SPI_OPCODE_TYPE_WRITE_WITH_ADDRESS &&
@@ -478,7 +536,7 @@ int spi_xfer(struct spi_slave *slave, const void *dout,
 
 	/* 60 ms are 9.6 million cycles at 16 MHz. */
 	timeout = 100 * 60;
-	while ((readb(cntlr.status) & SPIS_SCIP) && --timeout)
+	while ((readb_(cntlr.status) & SPIS_SCIP) && --timeout)
 		udelay(10);
 	if (!timeout) {
 		puts("ICH SPI: SCIP never cleared\n");
@@ -499,7 +557,7 @@ int spi_xfer(struct spi_slave *slave, const void *dout,
 		uint32_t data_length;
 
 		/* SPI addresses are 24 bit only */
-		writel(trans.offset & 0x00FFFFFF, cntlr.addr);
+		writel_(trans.offset & 0x00FFFFFF, cntlr.addr);
 
 		if (trans.bytesout)
 			data_length = min(trans.bytesout, cntlr.databytes);
@@ -515,12 +573,12 @@ int spi_xfer(struct spi_slave *slave, const void *dout,
 		}
 
 		/* Assemble the status register */
-		status = readb(cntlr.status);
+		status = readb_(cntlr.status);
 		/* keep reserved bits */
 		status &= SPIS_RESERVED_MASK;
 		/* clear error status registers */
 		status |= (SPIS_CDS | SPIS_FCERR);
-		writeb(status, cntlr.status);
+		writeb_(status, cntlr.status);
 
 		/* Assemble the control register */
 		control = (opcode_index & 0x07) << 4;
@@ -536,17 +594,17 @@ int spi_xfer(struct spi_slave *slave, const void *dout,
 		control |= SPIC_SCGO;
 
 		/* write it */
-		writew(control, cntlr.control);
+		writew_(control, cntlr.control);
 
 		/* Wait for Cycle Done Status or Flash Cycle Error. */
-		status = readb(cntlr.status);
+		status = readb_(cntlr.status);
 		while (((status & (SPIS_CDS | SPIS_FCERR)) == 0) && --timeout) {
 			udelay(10);
-			status = readb(cntlr.status);
+			status = readb_(cntlr.status);
 		}
 		if (!timeout) {
 			printf("timeout, status = 0x%04x\n",
-				readb(cntlr.status));
+				readb_(cntlr.status));
 			return 1;
 		}
 
@@ -554,7 +612,7 @@ int spi_xfer(struct spi_slave *slave, const void *dout,
 			puts("ICH SPI: Transaction error\n");
 			/* keep reserved bits */
 			status &= SPIS_RESERVED_MASK;
-			writeb(status | SPIS_FCERR, cntlr.status);
+			writeb_(status | SPIS_FCERR, cntlr.status);
 			return 1;
 		}
 
