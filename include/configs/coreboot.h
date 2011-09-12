@@ -302,13 +302,19 @@
 #define CONFIG_SYS_MAX_FLASH_SECT		1
 #define CONFIG_SYS_MAX_FLASH_BANKS		1
 
-#define CONFIG_SYS_NO_FLASH    /* means no NOR flash */
+#define CONFIG_SYS_NO_FLASH	/* means no NOR flash */
 
 /*-----------------------------------------------------------------------
  * Environment configuration
  */
-#define CONFIG_ENV_IS_NOWHERE
-#define CONFIG_ENV_SIZE			0x01000
+#define CONFIG_ENV_IS_IN_SPI_FLASH
+
+ /* Must match the flash map definition! */
+#define CONFIG_ENV_SIZE	  0x4000
+#define CONFIG_ENV_OFFSET 0x1c000
+
+/* Might want to keep two copies in the 16K space */
+#define CONFIG_ENV_SECT_SIZE 0x1000
 
 /*-----------------------------------------------------------------------
  * PCI configuration
