@@ -27,6 +27,16 @@
 #include <linux/types.h>
 #include <linux/compiler.h>
 
+#ifndef CONFIG_BOARDDIR
+#error Make sure config.h is included before this file
+#endif
+
+#ifdef CONFIG_ICH_SPI
+#define CONTROLLER_PAGE_LIMIT	64
+#else
+#define CONTROLLER_PAGE_LIMIT	MAX_INT
+#endif
+
 struct spi_flash {
 	struct spi_slave *spi;
 
