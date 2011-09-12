@@ -55,7 +55,10 @@ void pci_init_board(void)
 	coreboot_hose.config_table = pci_coreboot_config_table;
 	coreboot_hose.first_busno = 0;
 	coreboot_hose.last_busno = 0;
-	coreboot_hose.region_count = 0;
+
+	pci_set_region(coreboot_hose.regions + 0, 0x0, 0x0, 0xffffffff,
+		PCI_REGION_MEM);
+	coreboot_hose.region_count = 1;
 
 	pci_setup_type1(&coreboot_hose, X86_PCI_CONFIG_ADDR,
 		X86_PCI_CONFIG_DATA);
