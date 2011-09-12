@@ -421,17 +421,27 @@ static void spi_setup_type(spi_transaction *trans)
 	trans->type = 0xFF;
 
 	/* Try to guess spi type from read/write sizes. */
-	if (trans->bytesin == 0)
-		/* If bytesin = 0 and bytesout >= 4, we don't know if
-		 * it's WRITE_NO_ADDRESS or WRITE_WITH_ADDRESS. If we
-		 * use WRITE_NO_ADDRESS and the first 3 data bytes are
-		 * actual the address, they go to the bus anyhow.
-		 */
-		trans->type = SPI_OPCODE_TYPE_WRITE_NO_ADDRESS;
-	else if (trans->bytesout == 1) /* and bytesin is > 0 */
+	if (trans->bytesin == 0) {
+		if (trans->bytesout > 4)
+			/*
+			 * If bytesin = 0 and bytesout > 4, we presume this is
+			 * a write data operation, which is accompanied by an
+			 * address.
+			 */
+			trans->type = SPI_OPCODE_TYPE_WRITE_WITH_ADDRESS;
+		else
+			trans->type = SPI_OPCODE_TYPE_WRITE_NO_ADDRESS;
+		return;
+	}
+
+	if (trans->bytesout == 1) { /* and bytesin is > 0 */
 		trans->type = SPI_OPCODE_TYPE_READ_NO_ADDRESS;
-	else if (trans->bytesout == 4) /* and bytesin is > 0 */
+		return;
+	}
+
+	if (trans->bytesout == 4) { /* and bytesin is > 0 */
 		trans->type = SPI_OPCODE_TYPE_READ_WITH_ADDRESS;
+	}
 }
 
 static int spi_setup_opcode(spi_transaction *trans)
@@ -503,14 +513,40 @@ static int spi_setup_offset(spi_transaction *trans)
 	}
 }
 
+/*
+ * Wait for up to 60ms til status register bit(s) turn 1 (in case wait_til_set
+ * below is True) or 0. In case the wait was for the bit(s) to set - write
+ * those bits back, which would cause resetting them.
+ *
+ * Return the last read status value on success or -1 on failure.
+ */
+static int ich_status_poll(u16 bitmask, int wait_til_set)
+{
+	int timeout = 6000; /* This will result in 60 ms */
+	u16 status = 0;
+
+	while (timeout--) {
+		status = readw_(cntlr.status);
+		if (wait_til_set ^ ((status & bitmask) == 0)) {
+			if (wait_til_set)
+				writew_((status & bitmask), cntlr.status);
+			return status;
+		}
+		udelay(10);
+	}
+
+	printf("ICH SPI: SCIP timeout, read %x, expected %x\n",
+		status, bitmask);
+	return -1;
+}
+
 int spi_xfer(struct spi_slave *slave, const void *dout,
 		unsigned int bitsout, void *din, unsigned int bitsin)
 {
-	int timeout;
-
-	uint16_t status, control;
+	uint16_t control;
 	int16_t opcode_index;
 	int with_address;
+	int status;
 
 	spi_transaction trans = {
 		dout, bitsout / 8,
@@ -535,19 +571,41 @@ int spi_xfer(struct spi_slave *slave, const void *dout,
 	}
 
 	/* 60 ms are 9.6 million cycles at 16 MHz. */
-	timeout = 100 * 60;
-	while ((readb_(cntlr.status) & SPIS_SCIP) && --timeout)
-		udelay(10);
-	if (!timeout) {
-		puts("ICH SPI: SCIP never cleared\n");
+	if (ich_status_poll(SPIS_SCIP, 0) == -1)
 		return 1;
-	}
+
+	writew_(SPIS_CDS | SPIS_FCERR, cntlr.status);
 
 	spi_setup_type(&trans);
 	if ((opcode_index = spi_setup_opcode(&trans)) < 0)
 		return 1;
 	if ((with_address = spi_setup_offset(&trans)) < 0)
 		return 1;
+
+	/* Preset control fields */
+	control = SPIC_SCGO | ((opcode_index & 0x07) << 4);
+
+	if (!trans.bytesout && !trans.bytesin) {
+		/*
+		 * This is a 'no data' command (like Write Enable), its
+		 * bitesout size was 1, decremented to zero while executing
+		 * spi_setup_opcode() above. Tell the chip to send the
+		 * command.
+		 */
+		writew_(control, cntlr.control);
+
+		/* wait for the result */
+		status = ich_status_poll(SPIS_CDS | SPIS_FCERR, 1);
+		if (status == -1)
+			return 1;
+
+		if (status & SPIS_FCERR) {
+			puts("ICH SPI: Transaction error\n");
+			return 1;
+		}
+
+		return 0;
+	}
 
 	/*
 	 * Read or write up to databytes bytes at a time until everything has
@@ -572,47 +630,21 @@ int spi_xfer(struct spi_slave *slave, const void *dout,
 				trans.offset += data_length;
 		}
 
-		/* Assemble the status register */
-		status = readb_(cntlr.status);
-		/* keep reserved bits */
-		status &= SPIS_RESERVED_MASK;
-		/* clear error status registers */
-		status |= (SPIS_CDS | SPIS_FCERR);
-		writeb_(status, cntlr.status);
-
-		/* Assemble the control register */
-		control = (opcode_index & 0x07) << 4;
-
-		if (data_length != 0) {
-			control |= SPIC_DS;
-			control |= (data_length - 1) << 8;
-		}
-
-		timeout = 100 * 60;
-
-		/* Start */
-		control |= SPIC_SCGO;
+		/* Add proper control fields' values */
+		control &= ~((cntlr.databytes - 1) << 8);
+		control |= SPIC_DS;
+		control |= (data_length - 1) << 8;
 
 		/* write it */
 		writew_(control, cntlr.control);
 
 		/* Wait for Cycle Done Status or Flash Cycle Error. */
-		status = readb_(cntlr.status);
-		while (((status & (SPIS_CDS | SPIS_FCERR)) == 0) && --timeout) {
-			udelay(10);
-			status = readb_(cntlr.status);
-		}
-		if (!timeout) {
-			printf("timeout, status = 0x%04x\n",
-				readb_(cntlr.status));
+		status = ich_status_poll(SPIS_CDS | SPIS_FCERR, 1);
+		if (status == -1)
 			return 1;
-		}
 
 		if (status & SPIS_FCERR) {
 			puts("ICH SPI: Transaction error\n");
-			/* keep reserved bits */
-			status &= SPIS_RESERVED_MASK;
-			writeb_(status | SPIS_FCERR, cntlr.status);
 			return 1;
 		}
 
