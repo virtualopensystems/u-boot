@@ -1,0 +1,25 @@
+/*
+ * Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/*
+ * This file holds Chrome OS-specific options, kept within a chromeos-config
+ */
+
+/ {
+	chromeos-config {
+		twostop;                /* Two-stop boot */
+		twostop-optional;       /* One-stop optimization enabled */
+	};
+
+	config {
+		silent_console = <0>;
+	};
+
+	chosen {
+		bootargs = "";
+	};
+
+};

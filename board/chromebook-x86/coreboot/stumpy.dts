@@ -1,6 +1,7 @@
 /dts-v1/;
 
 /include/ "skeleton.dtsi"
+/include/ "chromeos.dtsi"
 /include/ "flashmap-4mb.dtsi"
 /include/ "iouart.dtsi"
 
@@ -9,7 +10,6 @@
 	compatible = "google,stumpy", "intel,celeron-sandybridge";
 
 	config {
-	       silent_console = <0>;
 	       hwid = "X86 STUMPY TEST 0128";
 	};
 

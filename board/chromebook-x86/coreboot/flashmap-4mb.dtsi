@@ -5,12 +5,6 @@
  */
 
 / {
-	/* ChromeOS specific configuration for this flashmap */
-	chromeos-config {
-		twostop;                /* Two-stop boot */
-		twostop-optional;       /* One-stop optimization enabled */
-	};
-
 	/*
 	 * Names will be capitalized and hyphen converted to underscore by
 	 * cros_bundle_firmware.
