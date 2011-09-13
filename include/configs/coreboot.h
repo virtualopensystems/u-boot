@@ -40,13 +40,8 @@
 /*-----------------------------------------------------------------------
  * Memory layout
  */
-#define CHROMEOS_KERNEL_LOADADDR	0x00100000
-#define CHROMEOS_KERNEL_BUFSIZE		0x00800000
-#define CROSSYSTEM_DATA_ADDRESS \
-	(CHROMEOS_KERNEL_LOADADDR + CHROMEOS_KERNEL_BUFSIZE)
-#define CROSSYSTEM_DATA_MAXSIZE		0x8000
-#define GBB_ADDRESS \
-	(CROSSYSTEM_DATA_ADDRESS + CROSSYSTEM_DATA_MAXSIZE)
+/* TODO(sjg): Move these two to the fdt */
+#define CONFIG_VBGLOBAL_BASE		0x00FB0000
 #define CONFIG_SYS_TEXT_BASE		0x00FC0000
 
 #define CONFIG_SCSI_AHCI
