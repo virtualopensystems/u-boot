@@ -140,13 +140,13 @@ int fdt_decode_twostop_fmap(const void *blob, struct twostop_fmap *config)
 	return 0;
 }
 
-int fdt_decode_chromeos_config_has_prop(const void *fdt, const char *name)
+int fdt_decode_chromeos_config_has_prop(const void *blob, const char *name)
 {
-	int nodeoffset = fdt_path_offset(fdt, "/chromeos-config");
+	int nodeoffset = fdt_path_offset(blob, "/chromeos-config");
 	int len;
 
 	if (nodeoffset < 0)
 		return 0;
 
-	return fdt_get_property(fdt, nodeoffset, name, &len) != NULL;
+	return fdt_get_property(blob, nodeoffset, name, &len) != NULL;
 }

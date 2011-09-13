@@ -270,7 +270,7 @@ int boot_kernel(VbSelectAndLoadKernelParams *kparams, crossystem_data_t *cdata)
 	if (!setup_zimage(params, cmdline, 0, 0, 0))
 		boot_zimage(params, kparams->kernel_buffer);
 #else
-	do_bootm(NULL, 0, sizeof(argv)/sizeof(*argv), argv);
+	do_bootm(NULL, 0, ARRAY_SIZE(argv), argv);
 #endif
 
 	VBDEBUG(PREFIX "failed to boot; is kernel broken?\n");
