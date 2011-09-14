@@ -147,75 +147,6 @@
 /* Support USB booting */
 #define CONFIG_CHROMEOS_USB
 
-/*-----------------------------------------------------------------------
- * Command line configuration.
- */
-#include <config_cmd_default.h>
-
-#undef CONFIG_CMD_BDI
-#define CONFIG_CMD_BOOTD
-#define CONFIG_CMD_CONSOLE
-#define CONFIG_CMD_DATE
-#define CONFIG_CMD_ECHO
-#define CONFIG_CMD_EDITENV
-#undef CONFIG_CMD_FPGA
-#define CONFIG_CMD_IMI
-#undef CONFIG_CMD_FLASH
-#undef CONFIG_CMD_IMLS
-#define CONFIG_CMD_IRQ
-#define CONFIG_CMD_ITEST
-#undef CONFIG_CMD_LOADB
-#undef CONFIG_CMD_LOADS
-#define CONFIG_CMD_MEMORY
-#define CONFIG_CMD_MISC
-#define CONFIG_CMD_NET
-#undef CONFIG_CMD_NFS
-#define CONFIG_CMD_PCI
-#define CONFIG_CMD_PING
-#define CONFIG_CMD_RUN
-#define CONFIG_CMD_SAVEENV
-#undef CONFIG_CMD_SETGETDCR
-#define CONFIG_CMD_SOURCE
-#define CONFIG_CMD_SPI
-#undef CONFIG_CMD_XIMG
-#define CONFIG_CMD_SCSI
-#define CONFIG_CMD_CBFS
-#define CONFIG_CMD_FAT
-#define CONFIG_CMD_EXT2
-#define CONFIG_CMD_USB
-#define CONFIG_CMD_TPM
-
-#define CONFIG_BOOTDELAY	-1
-#undef  CONFIG_BOOTARGS
-
-#define CONFIG_BOOTCOMMAND	"run set_bootargs; "\
-				"fatload ${devtype} ${devnum}:c 3000000 syslinux/vmlinuz.a; "\
-				"zboot 3000000; "
-
-#define CONFIG_EXTRA_ENV_SETTINGS		"devtype=scsi\0"\
-						"devnum=0\0"\
-						"devname=sda\0"\
-						CONFIG_STD_DEVICES_SETTINGS \
-						"set_bootargs=setenv bootargs "\
-							"console=uart8250,mmio,0xe0401000,115200n8 "\
-							"root=/dev/${devname}3 "\
-							"init=/sbin/init "\
-							"i915.modeset=1 "\
-							"rootwait "\
-							"ro "\
-							"cros_legacy\0"\
-						"usb_boot=usb start;"\
-							"setenv devtype usb;"\
-							"setenv devnum 1;"\
-							"setenv devname sdb;"\
-							"run bootcmd\0" \
-						"mmc_boot=usb start;"\
-							"setenv devtype usb;"\
-							"setenv devnum 0;"\
-							"setenv devname sdb;"\
-							"run bootcmd\0" \
-						""
-
 #if defined(CONFIG_CMD_KGDB)
 #define CONFIG_KGDB_BAUDRATE			115200
 #define CONFIG_KGDB_SER_INDEX			2
@@ -319,5 +250,74 @@
 	/* FDT stuff */
 #define CONFIG_OF_LIBFDT
 #define CONFIG_OF_CONTROL
+
+/*-----------------------------------------------------------------------
+ * Command line configuration.
+ */
+#include <config_cmd_default.h>
+
+#undef CONFIG_CMD_BDI
+#define CONFIG_CMD_BOOTD
+#define CONFIG_CMD_CONSOLE
+#define CONFIG_CMD_DATE
+#define CONFIG_CMD_ECHO
+#define CONFIG_CMD_EDITENV
+#undef CONFIG_CMD_FPGA
+#define CONFIG_CMD_IMI
+#undef CONFIG_CMD_FLASH
+#undef CONFIG_CMD_IMLS
+#define CONFIG_CMD_IRQ
+#define CONFIG_CMD_ITEST
+#undef CONFIG_CMD_LOADB
+#undef CONFIG_CMD_LOADS
+#define CONFIG_CMD_MEMORY
+#define CONFIG_CMD_MISC
+#define CONFIG_CMD_NET
+#undef CONFIG_CMD_NFS
+#define CONFIG_CMD_PCI
+#define CONFIG_CMD_PING
+#define CONFIG_CMD_RUN
+#define CONFIG_CMD_SAVEENV
+#undef CONFIG_CMD_SETGETDCR
+#define CONFIG_CMD_SOURCE
+#define CONFIG_CMD_SPI
+#undef CONFIG_CMD_XIMG
+#define CONFIG_CMD_SCSI
+#define CONFIG_CMD_CBFS
+#define CONFIG_CMD_FAT
+#define CONFIG_CMD_EXT2
+#define CONFIG_CMD_USB
+#define CONFIG_CMD_TPM
+
+#define CONFIG_BOOTDELAY	-1
+#undef  CONFIG_BOOTARGS
+
+#define CONFIG_BOOTCOMMAND	"run set_bootargs; "\
+				"fatload ${devtype} ${devnum}:c 3000000 syslinux/vmlinuz.a; "\
+				"zboot 3000000; "
+
+#define CONFIG_EXTRA_ENV_SETTINGS		"devtype=scsi\0"\
+						"devnum=0\0"\
+						"devname=sda\0"\
+						CONFIG_STD_DEVICES_SETTINGS \
+						"set_bootargs=setenv bootargs "\
+							"console=uart8250,mmio,0xe0401000,115200n8 "\
+							"root=/dev/${devname}3 "\
+							"init=/sbin/init "\
+							"i915.modeset=1 "\
+							"rootwait "\
+							"ro "\
+							"cros_legacy\0"\
+						"usb_boot=usb start;"\
+							"setenv devtype usb;"\
+							"setenv devnum 1;"\
+							"setenv devname sdb;"\
+							"run bootcmd\0" \
+						"mmc_boot=usb start;"\
+							"setenv devtype usb;"\
+							"setenv devnum 0;"\
+							"setenv devname sdb;"\
+							"run bootcmd\0" \
+						""
 
 #endif	/* __CONFIG_H */
