@@ -557,30 +557,29 @@ int spi_xfer(struct spi_slave *slave, const void *dout,
 	/* There has to always at least be an opcode. */
 	if (!bitsout || !dout) {
 		puts("ICH SPI: No opcode for transfer\n");
-		return 1;
+		return -1;
 	}
 	/* Make sure if we read something we have a place to put it. */
 	if (bitsin != 0 && !din) {
 		puts("ICH SPI: Read but no target buffer\n");
-		return 1;
+		return -1;
 	}
 	/* Right now we don't support writing partial bytes. */
 	if (bitsout % 8 || bitsin % 8) {
 		puts("ICH SPI: Accessing partial bytes not supported\n");
-		return 1;
+		return -1;
 	}
 
-	/* 60 ms are 9.6 million cycles at 16 MHz. */
 	if (ich_status_poll(SPIS_SCIP, 0) == -1)
-		return 1;
+		return -1;
 
 	writew_(SPIS_CDS | SPIS_FCERR, cntlr.status);
 
 	spi_setup_type(&trans);
 	if ((opcode_index = spi_setup_opcode(&trans)) < 0)
-		return 1;
+		return -1;
 	if ((with_address = spi_setup_offset(&trans)) < 0)
-		return 1;
+		return -1;
 
 	/* Preset control fields */
 	control = SPIC_SCGO | ((opcode_index & 0x07) << 4);
@@ -597,14 +596,27 @@ int spi_xfer(struct spi_slave *slave, const void *dout,
 		/* wait for the result */
 		status = ich_status_poll(SPIS_CDS | SPIS_FCERR, 1);
 		if (status == -1)
-			return 1;
+			return -1;
 
 		if (status & SPIS_FCERR) {
 			puts("ICH SPI: Transaction error\n");
-			return 1;
+			return -1;
 		}
 
 		return 0;
+	}
+
+	/*
+	 * Check if this is a write command atempting to transfer more bytes
+	 * than the controller can handle. Iterations for writes are not
+	 * supported here because each SPI write command needs to be preceded
+	 * and followed by other SPI commands, and this sequence is controlled
+	 * by the SPI chip driver.
+	 */
+	if (trans.bytesout > cntlr.databytes) {
+		puts("ICH SPI: Too much to write. Does your SPI chip driver use"
+		     " CONTROLLER_PAGE_LIMIT?\n");
+		return -1;
 	}
 
 	/*
@@ -641,11 +653,11 @@ int spi_xfer(struct spi_slave *slave, const void *dout,
 		/* Wait for Cycle Done Status or Flash Cycle Error. */
 		status = ich_status_poll(SPIS_CDS | SPIS_FCERR, 1);
 		if (status == -1)
-			return 1;
+			return -1;
 
 		if (status & SPIS_FCERR) {
 			puts("ICH SPI: Transaction error\n");
-			return 1;
+			return -1;
 		}
 
 		if (trans.bytesin) {
