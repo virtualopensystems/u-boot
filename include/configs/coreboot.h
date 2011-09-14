@@ -36,7 +36,6 @@
  */
 #define CONFIG_SYS_COREBOOT
 #undef CONFIG_SHOW_BOOT_PROGRESS
-#define CONFIG_LAST_STAGE_INIT
 
 /*-----------------------------------------------------------------------
  * Memory layout
@@ -48,7 +47,6 @@
 #define CROSSYSTEM_DATA_MAXSIZE		0x8000
 #define GBB_ADDRESS \
 	(CROSSYSTEM_DATA_ADDRESS + CROSSYSTEM_DATA_MAXSIZE)
-#define CONFIG_VBGLOBAL_BASE		0x00FB0000
 #define CONFIG_SYS_TEXT_BASE		0x00FC0000
 
 #define CONFIG_SCSI_AHCI
@@ -66,12 +64,6 @@
 #define CONFIG_SYS_SCSI_MAX_DEVICE	(CONFIG_SYS_SCSI_MAX_SCSI_ID * \
 					 CONFIG_SYS_SCSI_MAX_LUN)
 #endif
-
-/*-----------------------------------------------------------------------
- * Watchdog Configuration
- */
-#undef CONFIG_WATCHDOG
-#undef CONFIG_HW_WATCHDOG
 
 /* Generic TPM interfaced through LPC bus */
 #define CONFIG_GENERIC_LPC_TPM
@@ -125,18 +117,12 @@
 #define CONFIG_GENERIC_MMC
 
 #define CONFIG_SUPPORT_VFAT
-/************************************************************
- * ATAPI support (experimental)
- ************************************************************/
-#define CONFIG_ATAPI
 
 /************************************************************
  * DISK Partition support
  ************************************************************/
 #define CONFIG_EFI_PARTITION
 #define CONFIG_DOS_PARTITION
-#define CONFIG_MAC_PARTITION
-#define CONFIG_ISO_PARTITION		/* Experimental */
 
 
 /*-----------------------------------------------------------------------
@@ -166,19 +152,20 @@
  */
 #include <config_cmd_default.h>
 
-#define CONFIG_CMD_BDI
+#undef CONFIG_CMD_BDI
 #define CONFIG_CMD_BOOTD
 #define CONFIG_CMD_CONSOLE
 #define CONFIG_CMD_DATE
 #define CONFIG_CMD_ECHO
-#undef CONFIG_CMD_FLASH
-#define CONFIG_CMD_FPGA
+#define CONFIG_CMD_EDITENV
+#undef CONFIG_CMD_FPGA
 #define CONFIG_CMD_IMI
+#undef CONFIG_CMD_FLASH
 #undef CONFIG_CMD_IMLS
 #define CONFIG_CMD_IRQ
 #define CONFIG_CMD_ITEST
-#define CONFIG_CMD_LOADB
-#define CONFIG_CMD_LOADS
+#undef CONFIG_CMD_LOADB
+#undef CONFIG_CMD_LOADS
 #define CONFIG_CMD_MEMORY
 #define CONFIG_CMD_MISC
 #define CONFIG_CMD_NET
@@ -187,10 +174,10 @@
 #define CONFIG_CMD_PING
 #define CONFIG_CMD_RUN
 #define CONFIG_CMD_SAVEENV
-#define CONFIG_CMD_SETGETDCR
+#undef CONFIG_CMD_SETGETDCR
 #define CONFIG_CMD_SOURCE
 #define CONFIG_CMD_SPI
-#define CONFIG_CMD_XIMG
+#undef CONFIG_CMD_XIMG
 #define CONFIG_CMD_SCSI
 #define CONFIG_CMD_CBFS
 #define CONFIG_CMD_FAT
@@ -229,7 +216,6 @@
 							"run bootcmd\0" \
 						""
 
-
 #if defined(CONFIG_CMD_KGDB)
 #define CONFIG_KGDB_BAUDRATE			115200
 #define CONFIG_KGDB_SER_INDEX			2
@@ -259,12 +245,6 @@
  * SDRAM Configuration
  */
 #define CONFIG_NR_DRAM_BANKS			4
-
-/* CONFIG_SYS_SDRAM_DRCTMCTL Overrides the following*/
-#undef CONFIG_SYS_SDRAM_PRECHARGE_DELAY
-#undef CONFIG_SYS_SDRAM_RAS_CAS_DELAY
-#undef CONFIG_SYS_SDRAM_CAS_LATENCY_2T
-#undef CONFIG_SYS_SDRAM_CAS_LATENCY_3T
 
 /*-----------------------------------------------------------------------
  * CPU Features
