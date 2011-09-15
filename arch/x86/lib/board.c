@@ -348,6 +348,7 @@ void board_init_r(gd_t *id, ulong dest_addr)
 	console_init_r();
 
 #ifdef CONFIG_MISC_INIT_R
+	show_boot_progress(0x27);
 	/* miscellaneous platform dependent initialisations */
 	misc_init_r();
 #endif
