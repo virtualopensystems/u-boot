@@ -17,6 +17,9 @@
 		kernel = <0x00100000 0x00800000>;
 		cros-system-data = <0x00900000 0x8000>;
 		google-binary-block = <0x00908000 0x80000>;
+
+		/* This value will be filled in by coreboot at runtime */
+		gnvs-vboot-table = <0>;
 	};
 
 	config {
