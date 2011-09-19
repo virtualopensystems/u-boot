@@ -222,16 +222,10 @@ int video_init(void)
 
 int drv_video_init(void)
 {
-<<<<<<< HEAD
+#if !defined CONFIG_NO_REALMODE_CODE
 	if (video_bios_init())
 		return 1;
-=======
-#if !defined CONFIG_NO_REALMODE_CODE
-	if (video_bios_init()) {
-		return 1;
-	}
 #endif
->>>>>>> Allow compiling out realmode/bios code.
 
 	return video_init();
 }
