@@ -256,6 +256,8 @@ int boot_kernel(VbSelectAndLoadKernelParams *kparams, crossystem_data_t *cdata)
 #endif /* CONFIG_OF_UPDATE_FDT_BEFORE_BOOT */
 
 #ifdef CONFIG_X86
+	crossystem_data_update_acpi(cdata);
+
 	params = (struct boot_params *)(uintptr_t)
 		(kparams->bootloader_address - CROS_PARAMS_SIZE);
 	if (!setup_zimage(params, cmdline, 0, 0, 0))

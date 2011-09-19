@@ -28,6 +28,30 @@ enum {
 	FIRMWARE_TYPE_DEVELOPER	= 2
 };
 
+enum {
+	BOOT_REASON_OTHER  = 0,
+	BOOT_REASON_S3DIAG = 9
+};
+
+enum {
+	CHSW_RECOVERY_X86     = (1 << 1),
+	CHSW_RECOVERY_EC      = (1 << 2),
+	CHSW_DEVELOPER_SWITCH = (1 << 5),
+	CHSW_FIRMWARE_WP_DIS  = (1 << 9)
+};
+
+enum {
+	ACTIVE_MAINFW_RECOVERY = 0,
+	ACTIVE_MAINFW_RW_A     = 1,
+	ACTIVE_MAINFW_RW_B     = 2
+};
+
+enum {
+	RECOVERY_REASON_NONE = 0,
+	RECOVERY_REASON_ME   = 1
+};
+/* TODO(reinauer) other recovery reasons? */
+
 /* the data blob format */
 typedef struct {
 	/* Header of crossystem data blob */
@@ -92,6 +116,26 @@ typedef struct {
 	 */
 	uint8_t		vb_shared_data[VB_SHARED_DATA_REC_SIZE];
 } __attribute__((packed)) crossystem_data_t;
+
+/*
+ * This structure is also used in coreboot. Any changes to this version have
+ * to be made to that version as well
+ */
+typedef struct {
+	/* ChromeOS specific */
+	uint32_t	vbt0;		/* 00 boot reason */
+	uint32_t	vbt1;		/* 04 active main firmware */
+	uint32_t	vbt2;		/* 08 active ec firmware */
+	uint16_t	vbt3;		/* 0c CHSW */
+	uint8_t		vbt4[256];	/* 0e HWID */
+	uint8_t		vbt5[64];	/* 10e FWID */
+	uint8_t		vbt6[64];	/* 14e FRID - 275 */
+	uint32_t	vbt7;		/* 18e active main firmware type */
+	uint32_t	vbt8;		/* 192 recovery reason */
+	uint32_t	vbt9;		/* 196 fmap base address */
+	uint8_t		vdat[3072];	/* 19a */
+					/* d9a */
+} __attribute__((packed)) chromeos_acpi_t;
 
 #define assert_offset(MEMBER, OFFSET) \
 	typedef char static_assertion_##MEMBER_is_at_offset_##OFFSET[ \
@@ -183,6 +227,15 @@ int crossystem_data_set_main_firmware(crossystem_data_t *cdata,
  */
 int crossystem_data_embed_into_fdt(crossystem_data_t *cdata, void *fdt,
 		uint32_t *size_ptr);
+
+#ifdef CONFIG_X86
+/**
+ * This embeds kernel shared data into the ACPI tables.
+ *
+ * @return 0 if it succeeds, non-zero if it fails
+ */
+int crossystem_data_update_acpi(crossystem_data_t *cdata);
+#endif
 
 /**
  * This prints out the data blob content to debug output.

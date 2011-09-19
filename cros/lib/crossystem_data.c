@@ -27,6 +27,8 @@
 
 #define PREFIX "crossystem_data: "
 
+DECLARE_GLOBAL_DATA_PTR;
+
 int crossystem_data_init(crossystem_data_t *cdata,
 		cros_gpio_t *write_protect_switch,
 		cros_gpio_t *recovery_switch,
@@ -235,6 +237,50 @@ int crossystem_data_embed_into_fdt(crossystem_data_t *cdata, void *fdt,
 	return err;
 }
 #endif /* ^^^^ CONFIG_OF_LIBFDT  NOT defined ^^^^ */
+
+#ifdef CONFIG_X86
+int crossystem_data_update_acpi(crossystem_data_t *cdata)
+{
+	const void *fdt = gd->blob;
+	int node_offset, len;
+	const uint32_t *cell;
+	chromeos_acpi_t *acpi_table;
+
+	node_offset = fdt_path_offset(fdt, "/chromeos-config");
+	if (node_offset < 0) {
+		VBDEBUG("crossystem_data_update_acpi: Couldn't access "
+			"chromeos-config.\n");
+		return 1;
+	}
+	cell = fdt_getprop(fdt, node_offset, "gnvs-vboot-table", NULL);
+	if (!cell) {
+		VBDEBUG("crossystem_data_update_acpi: Couldn't access "
+			"gnvs-vboot-table.\n");
+		return 1;
+	}
+	acpi_table = (chromeos_acpi_t *)(uintptr_t)ntohl(*cell);
+
+	acpi_table->vbt0 = BOOT_REASON_OTHER;
+	acpi_table->vbt1 = ACTIVE_MAINFW_RW_A;
+	acpi_table->vbt2 = cdata->active_ec_firmware;
+	acpi_table->vbt3 =
+		(cdata->boot_write_protect_switch ? CHSW_FIRMWARE_WP_DIS : 0) |
+		(cdata->boot_recovery_switch ? CHSW_RECOVERY_X86 : 0) |
+		(cdata->boot_developer_switch ? CHSW_DEVELOPER_SWITCH : 0);
+
+	len = min(ID_LEN, sizeof(acpi_table->vbt4));
+	memcpy(acpi_table->vbt4, cdata->hardware_id, len);
+	len = min(ID_LEN, sizeof(acpi_table->vbt5));
+	memcpy(acpi_table->vbt5, cdata->firmware_id, len);
+	len = min(ID_LEN, sizeof(acpi_table->vbt6));
+	memcpy(acpi_table->vbt6, cdata->readonly_firmware_id, len);
+
+	acpi_table->vbt7 = cdata->firmware_type;
+	acpi_table->vbt8 = RECOVERY_REASON_NONE;
+	acpi_table->vbt9 = cdata->fmap_offset;
+	return 0;
+}
+#endif
 
 void crossystem_data_dump(crossystem_data_t *cdata)
 {
