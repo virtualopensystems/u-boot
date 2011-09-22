@@ -38,6 +38,7 @@ int register_timer_isr (timer_fnc_t *isr_func);
 
 /* Architecture specific - can be in arch/x86/cpu/, arch/x86/lib/, or $(BOARD)/ */
 int dram_init_f(void);
+ulong get_timer_masked(void);
 
 /* cpu/.../interrupts.c */
 int cpu_init_interrupts(void);

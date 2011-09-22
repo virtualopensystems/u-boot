@@ -12,6 +12,12 @@
 
 unsigned long timer_get_us(void)
 {
-	printf("timer_get_us used but not implemented.\n");
+	printf("%s() used but not implemented.\n", __func__);
+	return 0;
+}
+
+ulong get_timer_masked(void)
+{
+	printf("%s() used but not implemented.\n", __func__);
 	return 0;
 }
