@@ -20,12 +20,28 @@
 #include <libfdt.h>
 #endif
 
+#ifdef CONFIG_X86
+#include <asm/ic/coreboot/sysinfo.h>
+#endif
+
 #define CROSSYSTEM_DATA_SIGNATURE "CHROMEOS"
 
 /* This is used to keep bootstub and readwite main firmware in sync */
 #define CROSSYSTEM_DATA_VERSION 1
 
 #define PREFIX "crossystem_data: "
+
+enum VdatFwIndex {
+	VDAT_RW_A = 0,
+	VDAT_RW_B = 1,
+	VDAT_RECOVERY = 0xFF
+};
+
+enum BinfFwIndex {
+	BINF_RECOVERY = 0,
+	BINF_RW_A = 1,
+	BINF_RW_B = 2
+};
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -239,12 +255,24 @@ int crossystem_data_embed_into_fdt(crossystem_data_t *cdata, void *fdt,
 #endif /* ^^^^ CONFIG_OF_LIBFDT  NOT defined ^^^^ */
 
 #ifdef CONFIG_X86
+
+static int crossystem_fw_index_vdat_to_binf(int index)
+{
+	switch (index) {
+	case VDAT_RW_A:     return BINF_RW_A;
+	case VDAT_RW_B:     return BINF_RW_B;
+	case VDAT_RECOVERY: return BINF_RECOVERY;
+	default:            return BINF_RECOVERY;
+	}
+};
+
 int crossystem_data_update_acpi(crossystem_data_t *cdata)
 {
 	const void *fdt = gd->blob;
 	int node_offset, len;
 	const uint32_t *cell;
 	chromeos_acpi_t *acpi_table;
+	VbSharedDataHeader *vdat = (VbSharedDataHeader *)lib_sysinfo.vdat_addr;
 
 	node_offset = fdt_path_offset(fdt, "/chromeos-config");
 	if (node_offset < 0) {
@@ -261,7 +289,8 @@ int crossystem_data_update_acpi(crossystem_data_t *cdata)
 	acpi_table = (chromeos_acpi_t *)(uintptr_t)ntohl(*cell);
 
 	acpi_table->vbt0 = BOOT_REASON_OTHER;
-	acpi_table->vbt1 = ACTIVE_MAINFW_RW_A;
+	acpi_table->vbt1 =
+		crossystem_fw_index_vdat_to_binf(vdat->firmware_index);
 	acpi_table->vbt2 = cdata->active_ec_firmware;
 	acpi_table->vbt3 =
 		(cdata->boot_write_protect_switch ? CHSW_FIRMWARE_WP_DIS : 0) |
