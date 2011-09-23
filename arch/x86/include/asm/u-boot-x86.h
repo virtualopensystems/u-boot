@@ -57,4 +57,13 @@ int video_bios_init(void);
 int video_init(void);
 #endif
 
+/* board/... */
+void set_base_timer_value(uint64_t new_base);
+
+static inline uint64_t rdtsc(void)
+{
+	uint32_t high, low;
+	__asm__ __volatile__("rdtsc" : "=a" (low), "=d" (high));
+	return (((uint64_t)high) << 32) | low;
+}
 #endif	/* _U_BOOT_I386_H_ */

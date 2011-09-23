@@ -17,14 +17,16 @@ static uint64_t base_value;
 
 uint64_t VbExGetTimer(void)
 {
-	uint32_t high, low;
 	uint64_t time_now;
 
-	__asm__ __volatile__("rdtsc" : "=a" (low), "=d" (high));
-
-	time_now = ((uint64_t)high << 32) | (uint64_t)low;
+	time_now = rdtsc();
 	if (!base_value)
 		base_value = time_now;
 
 	return time_now - base_value;
+}
+
+void set_base_timer_value(uint64_t new_base)
+{
+	base_value = new_base;
 }
