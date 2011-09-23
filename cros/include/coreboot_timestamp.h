@@ -36,7 +36,8 @@ enum timestamp_id {
 	TS_BEFORE_INITRAM = 1,
 	TS_AFTER_INITRAM = 2,
 
-	/* u-boot entry IDs start at 0x1000 */
+	/* u-boot entry IDs start at 1000 */
+	TS_U_BOOT_INITTED = 1000
 };
 
 void timestamp_init(void);

@@ -37,6 +37,7 @@ COBJS-$(CONFIG_SYS_COREBOOT) += tables.o
 COBJS-$(CONFIG_SYS_COREBOOT) += ipchecksum.o
 COBJS-$(CONFIG_SYS_COREBOOT) += sdram.o
 COBJS-$(CONFIG_SYS_COREBOOT) += sysinfo.o
+COBJS-$(CONFIG_SYS_COREBOOT) += timestamp.o
 
 SOBJS-$(CONFIG_SYS_COREBOOT) += coreboot_car.o
 

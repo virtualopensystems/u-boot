@@ -17,55 +17,29 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA, 02110-1301 USA
  */
 
-#include <stdint.h>
-#include <console/console.h>
-#include <cbmem.h>
-#include <timestamp.h>
+#include <common.h>
+#include <coreboot/timestamp.h>
+#include <asm/ic/coreboot/sysinfo.h>
 
-#define MAX_TIMESTAMPS 30
+static struct timestamp_table *ts_table;
 
-#ifndef __PRE_RAM__
-static struct timestamp_table* ts_table;
-#endif
-
-static uint64_t tsc_to_uint64(tsc_t tstamp)
+void timestamp_init(void)
 {
-	return (((uint64_t)tstamp.hi) << 32) + tstamp.lo;
+	ts_table = lib_sysinfo.tstamp_table;
+	set_base_timer_value(ts_table->base_time);
+	timestamp_add_now(TS_U_BOOT_INITTED);
 }
 
-void timestamp_init(tsc_t base)
-{
-	struct timestamp_table* tst;
-
-	tst = cbmem_add(CBMEM_ID_TIMESTAMP,
-			sizeof(struct timestamp_table) +
-			MAX_TIMESTAMPS * sizeof(struct timestamp_entry));
-
-	if (!tst) {
-		printk(BIOS_ERR, "ERROR: failed to allocate timstamp table\n");
-		return;
-	}
-
-	tst->base_time = tsc_to_uint64(base);
-	tst->max_entries = MAX_TIMESTAMPS;
-	tst->num_entries = 0;
-}
-
-void timestamp_add(enum timestamp_id id, tsc_t ts_time)
+void timestamp_add(enum timestamp_id id, uint64_t ts_time)
 {
 	struct timestamp_entry *tse;
-#ifdef __PRE_RAM__
-	struct timestamp_table *ts_table = cbmem_find(CBMEM_ID_TIMESTAMP);
-#else
-	if (!ts_table)
-		ts_table = cbmem_find(CBMEM_ID_TIMESTAMP);
-#endif
+
 	if (!ts_table || (ts_table->num_entries == ts_table->max_entries))
 		return;
 
 	tse = &ts_table->entries[ts_table->num_entries++];
 	tse->entry_id = id;
-	tse->entry_stamp = tsc_to_uint64(ts_time) - ts_table->base_time;
+	tse->entry_stamp = ts_time - ts_table->base_time;
 }
 
 void timestamp_add_now(enum timestamp_id id)
