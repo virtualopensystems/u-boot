@@ -130,6 +130,11 @@ static void cb_parse_vdat(unsigned char *ptr, struct sysinfo_t *info)
 	info->vdat_size = vdat->vdat_size;
 }
 
+static void cb_parse_tstamp(unsigned char *ptr, struct sysinfo_t *info)
+{
+	info->tstamp_table = ((struct cb_tstamp *)ptr)->tstamp_tab;
+}
+
 static void cb_parse_framebuffer(unsigned char *ptr, struct sysinfo_t *info)
 {
 	info->framebuffer = (struct cb_framebuffer *)ptr;
@@ -241,6 +246,9 @@ static int cb_parse_header(void *addr, int len, struct sysinfo_t *info)
 			break;
 		case CB_TAG_VDAT:
 			cb_parse_vdat(ptr, info);
+			break;
+		case CB_TAG_TIMESTAMPS:
+			cb_parse_tstamp(ptr, info);
 			break;
 		}
 
