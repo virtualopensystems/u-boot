@@ -20,8 +20,6 @@
 #ifndef __TIMESTAMP_H__
 #define __TIMESTAMP_H__
 
-#include <cpu/x86/tsc.h>
-
 struct timestamp_entry {
 	uint32_t	entry_id;
 	uint64_t	entry_stamp;
@@ -37,10 +35,12 @@ struct timestamp_table {
 enum timestamp_id {
 	TS_BEFORE_INITRAM = 1,
 	TS_AFTER_INITRAM = 2,
+
+	/* u-boot entry IDs start at 0x1000 */
 };
 
-void timestamp_init(tsc_t base);
-void timestamp_add(enum timestamp_id id, tsc_t ts_time);
+void timestamp_init(void);
+void timestamp_add(enum timestamp_id id, uint64_t ts_time);
 void timestamp_add_now(enum timestamp_id id);
 
 #endif

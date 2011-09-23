@@ -196,6 +196,13 @@ struct cb_vdat {
 	uint32_t vdat_size;
 };
 
+#define CB_TAG_TIMESTAMPS	0x0016
+struct cb_tstamp {
+	uint32_t tag;
+	uint32_t size;
+	void   *tstamp_tab;
+};
+
 #define CB_TAG_CMOS_OPTION_TABLE 0x00c8
 struct cb_cmos_option_table {
 	u32 tag;
