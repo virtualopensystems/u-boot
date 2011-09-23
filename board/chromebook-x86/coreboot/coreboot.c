@@ -34,11 +34,11 @@
 #include <asm/io.h>
 #include <asm/arch-coreboot/tables.h>
 #include <asm/arch-coreboot/sysinfo.h>
+#include <coreboot_timestamp.h>
 #include <cros/common.h>
 #include <cros/fdt_decode.h>
 #include <cros/firmware_storage.h>
 #include <cros/power_management.h>
-
 #ifdef CONFIG_HW_WATCHDOG
 #include <watchdog.h>
 #endif
@@ -56,7 +56,7 @@ int cpu_init_f(void)
 	if (ret != 0)
 		printf("Failed to parse coreboot tables.\n");
 	gd->fdt_blob = lib_sysinfo.sys_fdt;
-
+	timestamp_init();
 	return ret;
 }
 
