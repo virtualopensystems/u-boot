@@ -162,12 +162,18 @@ static void setup_arch_unused_memory(memory_wipe_t *wipe,
 	crossystem_data_t *cdata, VbCommonParams *cparams)
 {
 	int fb_size, lcd_line_length;
-	struct fdt_memory config;
+	struct fdt_memory config, ramoops;
 
-	if (fdt_decode_memory(gd->blob, &config))
+	if (fdt_decode_memory(gd->blob, "/memory", &config))
 		VbExError(PREFIX "FDT decode memory section error\n");
 
 	memory_wipe_add(wipe, config.start, config.end);
+
+	/* Excludes kcrashmem if in FDT */
+	if (fdt_decode_memory(gd->blob, "/ramoops", &ramoops))
+		VBDEBUG(PREFIX "RAMOOPS not contained within FDT\n");
+	else
+		memory_wipe_sub(wipe, ramoops.start, ramoops.end);
 
 	/* Excludes the LP0 vector. */
 	memory_wipe_sub(wipe,
