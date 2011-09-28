@@ -12,6 +12,7 @@
 
 #include <chromeos/power_management.h>
 #include <common.h>
+#include <asm/global_data.h>
 #include <asm/io.h>
 #include <pci.h>
 
@@ -32,10 +33,19 @@
 #define   SYS_RST       (1 << 1)
 #define   RST_CPU       (1 << 2)
 
+DECLARE_GLOBAL_DATA_PTR;
+
 int is_processor_reset(void)
 {
-	printf("is_processor_reset used but not implemented.\n");
-	return 1;
+	/*
+	 * This isn't actually whether or not this boot is the result of a
+	 * cold boot, it's really whether u-boot was started from the ELF
+	 * entry point or from the start of the image. It also isn't really
+	 * being used to check if the processor was reset either, it's
+	 * checking if this copy of u-boot is the RW or RO firmware. This is a
+	 * good enough approximation, though, and causes the right behavior.
+	 */
+	return gd->flags & GD_FLG_COLD_BOOT;
 }
 
 /* Do a hard reset through the chipset's reset control register. This
