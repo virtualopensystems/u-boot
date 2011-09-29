@@ -3,7 +3,6 @@
 /include/ "skeleton.dtsi"
 /include/ "chromeos.dtsi"
 /include/ "flashmap-4mb.dtsi"
-/include/ "oxpcie.dtsi"
 
 / {
 	model = "Google Mario";
