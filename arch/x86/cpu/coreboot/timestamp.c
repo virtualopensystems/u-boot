@@ -21,6 +21,18 @@
 #include <coreboot/timestamp.h>
 #include <asm/ic/coreboot/sysinfo.h>
 
+struct timestamp_entry {
+	uint32_t	entry_id;
+	uint64_t	entry_stamp;
+} __attribute__((packed));
+
+struct timestamp_table {
+	uint64_t	base_time;
+	uint32_t	max_entries;
+	uint32_t	num_entries;
+	struct timestamp_entry entries[0]; /* Variable number of entries */
+} __attribute__((packed));
+
 static struct timestamp_table *ts_table;
 
 void timestamp_init(void)

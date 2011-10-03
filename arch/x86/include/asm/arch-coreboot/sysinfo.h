@@ -33,8 +33,6 @@
 #include <common.h>
 #include <compiler.h>
 #include <asm/ic/coreboot/tables.h>
-#include <fdt.h>
-#include <coreboot/timestamp.h>
 
 /* Allow a maximum of 16 memory range definitions. */
 #define SYSINFO_MAX_MEM_RANGES 16
@@ -91,8 +89,10 @@ struct sysinfo_t {
 	unsigned long *mbtable; /** Pointer to the multiboot table */
 	void	*vdat_addr;
 	u32	vdat_size;
-	struct fdt_header *sys_fdt;
-	struct timestamp_table *tstamp_table;
+	void	*sys_fdt;
+	void	*tstamp_table;
+	void	*cbmem_cons;
+	void	*mrc_cache;
 };
 
 extern struct sysinfo_t lib_sysinfo;

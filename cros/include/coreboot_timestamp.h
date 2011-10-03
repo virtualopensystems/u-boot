@@ -17,20 +17,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA, 02110-1301 USA
  */
 
-#ifndef __TIMESTAMP_H__
-#define __TIMESTAMP_H__
-
-struct timestamp_entry {
-	uint32_t	entry_id;
-	uint64_t	entry_stamp;
-} __attribute__((packed));
-
-struct timestamp_table {
-	uint64_t	base_time;
-	uint32_t	max_entries;
-	uint32_t	num_entries;
-	struct timestamp_entry entries[0]; /* Variable number of entries */
-} __attribute__((packed));
+#ifndef __COREBOOT_TIMESTAMP_H__
+#define __COREBOOT_TIMESTAMP_H__
 
 enum timestamp_id {
 	TS_BEFORE_INITRAM = 1,

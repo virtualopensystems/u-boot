@@ -197,10 +197,12 @@ struct cb_vdat {
 };
 
 #define CB_TAG_TIMESTAMPS	0x0016
-struct cb_tstamp {
+#define CB_TAG_CBMEM_CONSOLE	0x0017
+#define CB_TAG_MRC_CACHE	0x0018
+struct cb_cbmem_tab {
 	uint32_t tag;
 	uint32_t size;
-	void   *tstamp_tab;
+	void   *cbmem_tab;
 };
 
 #define CB_TAG_CMOS_OPTION_TABLE 0x00c8
