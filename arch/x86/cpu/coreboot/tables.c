@@ -119,7 +119,7 @@ static void cb_parse_gpios(unsigned char *ptr, struct sysinfo_t *info)
 
 static void cb_parse_fdt(unsigned char *ptr, struct sysinfo_t *info)
 {
-	info->sys_fdt = (struct fdt_header *)(((struct cb_fdt *)ptr) + 1);
+	info->sys_fdt = (((struct cb_fdt *)ptr) + 1);
 }
 
 static void cb_parse_vdat(unsigned char *ptr, struct sysinfo_t *info)
@@ -132,7 +132,17 @@ static void cb_parse_vdat(unsigned char *ptr, struct sysinfo_t *info)
 
 static void cb_parse_tstamp(unsigned char *ptr, struct sysinfo_t *info)
 {
-	info->tstamp_table = ((struct cb_tstamp *)ptr)->tstamp_tab;
+	info->tstamp_table = ((struct cb_cbmem_tab *)ptr)->cbmem_tab;
+}
+
+static void cb_parse_cbmem_cons(unsigned char *ptr, struct sysinfo_t *info)
+{
+	info->cbmem_cons = ((struct cb_cbmem_tab *)ptr)->cbmem_tab;
+}
+
+static void cb_parse_mrc_cache(unsigned char *ptr, struct sysinfo_t *info)
+{
+	info->mrc_cache = ((struct cb_cbmem_tab *)ptr)->cbmem_tab;
 }
 
 static void cb_parse_framebuffer(unsigned char *ptr, struct sysinfo_t *info)
@@ -249,6 +259,12 @@ static int cb_parse_header(void *addr, int len, struct sysinfo_t *info)
 			break;
 		case CB_TAG_TIMESTAMPS:
 			cb_parse_tstamp(ptr, info);
+			break;
+		case CB_TAG_CBMEM_CONSOLE:
+			cb_parse_cbmem_cons(ptr, info);
+			break;
+		case CB_TAG_MRC_CACHE:
+			cb_parse_mrc_cache(ptr, info);
 			break;
 		}
 
