@@ -94,6 +94,7 @@
 #define CONFIG_SYS_NS16550_PORT_MAPPED
 
 #define CONFIG_CONSOLE_MUX
+#define CONFIG_CBMEM_CONSOLE
 
 /* turn on command-line edit/hist/auto */
 #define CONFIG_CMDLINE_EDITING	1
@@ -102,8 +103,8 @@
 
 #define CONFIG_SYS_CONSOLE_IS_IN_ENV
 #define CONFIG_STD_DEVICES_SETTINGS     "stdin=vga,serial\0" \
-                                        "stdout=serial\0" \
-                                        "stderr=vga,serial\0"
+					"stdout=serial,cbmem\0" \
+					"stderr=vga,serial,cbmem\0"
 
 /* max. 1 IDE bus	*/
 #define CONFIG_SYS_IDE_MAXBUS		1
