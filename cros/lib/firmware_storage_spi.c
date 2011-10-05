@@ -11,7 +11,6 @@
 /* Implementation of firmware storage access interface for SPI */
 
 #include <common.h>
-#include <libfdt.h>
 #include <malloc.h>
 #include <spi_flash.h>
 #include <chromeos/common.h>
@@ -25,8 +24,6 @@
 #ifndef CONFIG_SF_DEFAULT_MODE
 # define CONFIG_SF_DEFAULT_MODE		SPI_MODE_3
 #endif
-
-DECLARE_GLOBAL_DATA_PTR;
 
 /*
  * Check the right-exclusive range [offset:offset+*count_ptr), and adjust
@@ -54,8 +51,6 @@ static int read_spi(firmware_storage_t *file, uint32_t offset, uint32_t count,
 		void *buf)
 {
 	struct spi_flash *flash = file->context;
-
-	offset += file->firmware_base;
 
 	if (border_check(flash, offset, count))
 		return -1;
@@ -113,8 +108,6 @@ static int write_spi(firmware_storage_t *file, uint32_t offset, uint32_t count,
 	uint32_t k, n;
 	int status, ret = -1;
 
-	offset += file->firmware_base;
-
 	/* We will erase <n> bytes starting from <k> */
 	k = offset;
 	n = count;
@@ -166,7 +159,7 @@ static int close_spi(firmware_storage_t *file)
 	return 0;
 }
 
-int firmware_storage_open_spi(firmware_storage_t *file, uint64_t firmware_base)
+int firmware_storage_open_spi(firmware_storage_t *file)
 {
 	const unsigned int bus = 0;
 	const unsigned int cs = 0;
@@ -179,7 +172,6 @@ int firmware_storage_open_spi(firmware_storage_t *file, uint64_t firmware_base)
 		return -1;
 	}
 
-	file->firmware_base = firmware_base;
 	file->read = read_spi;
 	file->write = write_spi;
 	file->close = close_spi;

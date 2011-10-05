@@ -61,7 +61,7 @@ static int do_vboot_test_fwrw(cmd_tbl_t *cmdtp,
 		target_buf[i] = i & 0xff;
 
 	/* Open firmware storage device. */
-	if (firmware_storage_open_spi(&file, 0)) {
+	if (firmware_storage_open_spi(&file)) {
 		VbExDebug("Failed to open firmware device!\n");
 		return 1;
 	}

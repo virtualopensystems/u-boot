@@ -26,8 +26,6 @@
  * @return 0 if it succeeds, non-zero if it fails
  */
 typedef struct firmware_storage_t {
-	/* The offset of the firmware image inside the ROM. */
-	uint32_t firmware_base;
 	int (*read)(struct firmware_storage_t *file,
 			uint32_t offset, uint32_t count, void *buf);
 	int (*write)(struct firmware_storage_t *file,
@@ -41,10 +39,9 @@ typedef struct firmware_storage_t {
  * This opens SPI flash device
  *
  * @param file - the opened SPI flash device
- * @param firmware_base - the offset of the firmware in the ROM
  * @return 0 if it succeeds, non-zero if it fails
  */
-int firmware_storage_open_spi(firmware_storage_t *file, uint64_t firmware_base);
+int firmware_storage_open_spi(firmware_storage_t *file);
 
 int firmware_storage_open_twostop(firmware_storage_t *file,
 		struct twostop_fmap *fmap);

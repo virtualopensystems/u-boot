@@ -40,8 +40,6 @@ struct twostop_fmap {
 
 	struct fmap_firmware_entry readwrite_a;
 	struct fmap_firmware_entry readwrite_b;
-
-	uint64_t firmware_base;
 };
 
 void dump_fmap(struct twostop_fmap *config);

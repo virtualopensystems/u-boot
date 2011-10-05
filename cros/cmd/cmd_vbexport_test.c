@@ -418,7 +418,7 @@ static uint8_t *read_gbb_from_firmware(void)
 	}
 
 	/* Open firmware storage device. */
-	if (firmware_storage_open_spi(&file, fmap.firmware_base)) {
+	if (firmware_storage_open_spi(&file)) {
 		VbExDebug("Failed to open firmware device!\n");
 		return NULL;
 	}
