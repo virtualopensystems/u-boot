@@ -182,6 +182,11 @@ VbError_t VbExDiskWrite(VbExDiskHandle_t handle, uint64_t lba_start,
 	if (lba_start >= dev->lba || lba_start + lba_count > dev->lba)
 		return VBERROR_DISK_OUT_OF_RANGE;
 
+	if (!dev->block_write) {
+		VBDEBUG(PREFIX "interface (%d) does not support writing.\n",
+			(int)dev->if_type);
+		return VBERROR_DISK_WRITE_ERROR;
+	}
 	if (dev->block_write(dev->dev, lba_start, lba_count, buffer)
 			!= lba_count)
 		return VBERROR_DISK_WRITE_ERROR;
