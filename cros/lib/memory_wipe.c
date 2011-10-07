@@ -11,58 +11,120 @@
 #include <common.h>
 #include <chromeos/common.h>
 #include <chromeos/memory_wipe.h>
+#include <malloc.h>
 
 #include <vboot_api.h>
 
 #define PREFIX		"memory_wipe: "
 
-void memory_wipe_init(memory_wipe_t *wipe, uintptr_t start, uintptr_t end)
+/*
+ * This implementation tracks regions of memory that need to be wiped by
+ * filling them with zeroes. It does that by keeping a linked list of the
+ * edges between regions where memory should be wiped and not wiped. New
+ * regions take precedence over older regions they overlap with. With
+ * increasing addresses, the regions of memory alternate between needing to be
+ * wiped and needing to be left alone. Edges similarly alternate between
+ * starting a wipe region and starting a not wiped region.
+ */
+
+static void memory_wipe_insert_between(memory_wipe_edge_t *before,
+	memory_wipe_edge_t *after, uintptr_t pos)
 {
-	wipe->whole.start = start;
-	wipe->whole.end = end;
-	wipe->excluded_count = 0;
+	memory_wipe_edge_t *new_edge =
+		(memory_wipe_edge_t *)malloc(sizeof(*new_edge));
+
+	assert(new_edge);
+	assert(before != after);
+
+	new_edge->next = after;
+	new_edge->pos = pos;
+	before->next = new_edge;
 }
 
-int memory_wipe_exclude(memory_wipe_t *wipe, uintptr_t start, uintptr_t end)
+void memory_wipe_init(memory_wipe_t *wipe)
 {
-	int i = wipe->excluded_count;
-
-	if (i >= MAX_EXCLUDED_REGIONS) {
-		VBDEBUG(PREFIX "the number of excluded regions reaches"
-				"the maximum: %d\n", MAX_EXCLUDED_REGIONS);
-		return -1;
-	}
-
-	while (i > 0 && wipe->excluded[i - 1].start > start) {
-		wipe->excluded[i].start = wipe->excluded[i - 1].start;
-		wipe->excluded[i].end = wipe->excluded[i - 1].end;
-		i--;
-	}
-	wipe->excluded[i].start = start;
-	wipe->excluded[i].end = end;
-	wipe->excluded_count++;
-
-	return 0;
+	wipe->head.next = NULL;
+	wipe->head.pos = 0;
 }
 
-static void zero_mem(uintptr_t start, uintptr_t end)
+static void memory_wipe_set_region_to(memory_wipe_t *wipe_info,
+	uintptr_t start, uintptr_t end, int new_wiped)
 {
-	if (end > start) {
-		VBDEBUG(PREFIX "\t[0x%08x, 0x%08x)\n", start, end);
-		memset((void *)start, '\0', (size_t)(end - start));
+	/* whether the current region was originally going to be wiped. */
+	int wipe = 0;
+
+	assert(start != end);
+
+	/* prev is never NULL, but cur might be. */
+	memory_wipe_edge_t *prev = &wipe_info->head;
+	memory_wipe_edge_t *cur = prev->next;
+
+	/*
+	 * Find the start of the new region. After this loop, prev will be
+	 * before the start of the new region, and cur will be after it or
+	 * overlapping start. If they overlap, this ensures that the existing
+	 * edge is deleted and we don't end up with two edges in the same spot.
+	 */
+	while (cur && cur->pos < start) {
+		prev = cur;
+		cur = cur->next;
+		wipe = !wipe;
 	}
+
+	/* Add the "start" edge between prev and cur, if needed. */
+	if (new_wiped != wipe) {
+		memory_wipe_insert_between(prev, cur, start);
+		prev = prev->next;
+	}
+
+	/*
+	 * Delete any edges obscured by the new region. After this loop, prev
+	 * will be before the end of the new region or overlapping it, and cur
+	 * will be after if, if there is a edge after it. For the same
+	 * reason as above, we want to ensure that we end up with one edge if
+	 * there's an overlap.
+	 */
+	while (cur && cur->pos <= end) {
+		cur = cur->next;
+		free(prev->next);
+		prev->next = cur;
+		wipe = !wipe;
+	}
+
+	/* Add the "end" edge between prev and cur, if needed. */
+	if (wipe != new_wiped)
+		memory_wipe_insert_between(prev, cur, end);
 }
 
+/* Set a region to "wiped". */
+void memory_wipe_add(memory_wipe_t *wipe, uintptr_t start, uintptr_t end)
+{
+	memory_wipe_set_region_to(wipe, start, end, 1);
+}
+
+/* Set a region to "not wiped". */
+void memory_wipe_sub(memory_wipe_t *wipe, uintptr_t start, uintptr_t end)
+{
+	memory_wipe_set_region_to(wipe, start, end, 0);
+}
+
+/* Actually wipe memory. */
 void memory_wipe_execute(memory_wipe_t *wipe)
 {
-	uintptr_t addr = wipe->whole.start;
-	int i;
+	memory_wipe_edge_t *cur;
 
 	VBDEBUG(PREFIX "Wipe memory regions:\n");
-	for (i = 0; i < wipe->excluded_count; i++) {
-		zero_mem(addr, wipe->excluded[i].start);
-		if (wipe->excluded[i].end > addr)
-			addr = wipe->excluded[i].end;
+	for (cur = wipe->head.next; cur; cur = cur->next->next) {
+		uintptr_t start, end;
+
+		if (!cur->next) {
+			VBDEBUG(PREFIX "Odd number of region edges!\n");
+			return;
+		}
+
+		start = cur->pos;
+		end = cur->next->pos;
+		VBDEBUG(PREFIX "\t[%#08x, 0x%08x)\n", start, end);
+		memset((void *)start, 0, end - start);
 	}
-	zero_mem(addr, wipe->whole.end);
 }

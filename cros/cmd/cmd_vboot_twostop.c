@@ -178,27 +178,28 @@ wipe_unused_memory(crossystem_data_t *cdata, VbCommonParams *cparams)
 	if (fdt_decode_memory(gd->blob, &config))
 		VbExError(PREFIX "FDT decode memory section error\n");
 
-	memory_wipe_init(&wipe, config.start, config.end);
+	memory_wipe_init(&wipe);
+	memory_wipe_add(&wipe, config.start, config.end);
 
 	/* Excludes stack, fdt, gd, bd, heap, u-boot, framebuffer, etc. */
-	memory_wipe_exclude(&wipe, get_current_sp() - STACK_MARGIN, config.end);
+	memory_wipe_sub(&wipe, get_current_sp() - STACK_MARGIN, config.end);
 
 	/* Excludes the shared data between bootstub and main firmware. */
-	memory_wipe_exclude(&wipe, (uintptr_t)cdata,
+	memory_wipe_sub(&wipe, (uintptr_t)cdata,
 			(uintptr_t)cdata + sizeof(*cdata));
-	memory_wipe_exclude(&wipe, (uintptr_t)cparams->gbb_data,
+	memory_wipe_sub(&wipe, (uintptr_t)cparams->gbb_data,
 			(uintptr_t)cparams->gbb_data + cparams->gbb_size);
 
 	/* Excludes the LP0 vector. */
-	memory_wipe_exclude(&wipe,
-			    (uintptr_t)TEGRA_LP0_ADDR,
-			    (uintptr_t)(TEGRA_LP0_ADDR + TEGRA_LP0_SIZE));
+	memory_wipe_sub(&wipe,
+			(uintptr_t)TEGRA_LP0_ADDR,
+			(uintptr_t)(TEGRA_LP0_ADDR + TEGRA_LP0_SIZE));
 
 	/* Excludes the frame buffer. */
 	fb_size = lcd_get_size(&lcd_line_length);
-	memory_wipe_exclude(&wipe,
-			    (uintptr_t)gd->fb_base,
-			    (uintptr_t)gd->fb_base + fb_size);
+	memory_wipe_sub(&wipe,
+			(uintptr_t)gd->fb_base,
+			(uintptr_t)gd->fb_base + fb_size);
 
 	memory_wipe_execute(&wipe);
 #endif

@@ -123,21 +123,22 @@ static int do_vboot_test_memwipe(cmd_tbl_t *cmdtp,
 	const size_t size = strlen(s);
 	uintptr_t base = (uintptr_t)s;
 
-	memory_wipe_init(&wipe, base, base + size);
+	memory_wipe_init(&wipe);
+	memory_wipe_add(&wipe, base, base + size);
 	/* Result: ---------- */
-	memory_wipe_exclude(&wipe, base + 1, base + 2);
+	memory_wipe_sub(&wipe, base + 1, base + 2);
 	/* Result: -B-------- */
-	memory_wipe_exclude(&wipe, base + 5, base + 7);
+	memory_wipe_sub(&wipe, base + 5, base + 7);
 	/* Result: -B---FG--- */
-	memory_wipe_exclude(&wipe, base + 2, base + 3);
+	memory_wipe_sub(&wipe, base + 2, base + 3);
 	/* Result: -BC--FG--- */
-	memory_wipe_exclude(&wipe, base + 9, base + 10);
+	memory_wipe_sub(&wipe, base + 9, base + 10);
 	/* Result: -BC--FG--J */
-	memory_wipe_exclude(&wipe, base + 4, base + 6);
+	memory_wipe_sub(&wipe, base + 4, base + 6);
 	/* Result: -BC-EFG--J */
-	memory_wipe_exclude(&wipe, base + 3, base + 5);
+	memory_wipe_sub(&wipe, base + 3, base + 5);
 	/* Result: -BCDEFG--J */
-	memory_wipe_exclude(&wipe, base + 2, base + 8);
+	memory_wipe_sub(&wipe, base + 2, base + 8);
 	/* Result: -BCDEFGH-J */
 	memory_wipe_execute(&wipe);
 

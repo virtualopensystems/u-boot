@@ -23,32 +23,49 @@
 
 #include <linux/types.h>
 
-#define MAX_EXCLUDED_REGIONS    16
+/* A node in a linked list of edges, each at position "pos". */
+typedef struct memory_wipe_edge_t {
+	struct memory_wipe_edge_t *next;
+	uintptr_t pos;
+} memory_wipe_edge_t;
 
-typedef struct {
-	uintptr_t start;
-	uintptr_t end;
-} memory_region_t;
-
-typedef struct {
-	memory_region_t whole;
-	memory_region_t excluded[MAX_EXCLUDED_REGIONS];
-	int excluded_count;
+/*
+ * Data describing memory to wipe. Contains a linked list of edges between the
+ * regions of memory to wipe and not wipe.
+ */
+typedef struct memory_wipe_t {
+	memory_wipe_edge_t head;
 } memory_wipe_t;
 
 /*
  * Initializes the memory region that needs to be cleared.
+ *
+ * @param wipe		Wipe structure to initialize.
  */
-void memory_wipe_init(memory_wipe_t *wipe, uintptr_t start, uintptr_t end);
+void memory_wipe_init(memory_wipe_t *wipe);
 
 /*
- * Excludes a memory region from the to-be-cleared region.
- * The function returns 0 on success; otherwise -1.
+ * Adds a memory region to be cleared.
+ *
+ * @param wipe		Wipe structure to add the region to.
+ * @param start		The start of the region.
+ * @param end		The end of the region.
  */
-int memory_wipe_exclude(memory_wipe_t *wipe, uintptr_t start, uintptr_t end);
+void memory_wipe_add(memory_wipe_t *wipe, uintptr_t start, uintptr_t end);
 
 /*
- * Executes the memory wipe to the memory regions which was not excluded.
+ * Subtracts a memory region.
+ *
+ * @param wipe		Wipe structure to subtract the region from.
+ * @param start		The start of the region.
+ * @param end		The end of the region.
+ */
+void memory_wipe_sub(memory_wipe_t *wipe, uintptr_t start, uintptr_t end);
+
+/*
+ * Executes the memory wipe.
+ *
+ * @param wipe		Wipe structure to execute.
  */
 void memory_wipe_execute(memory_wipe_t *wipe);
 
