@@ -370,6 +370,15 @@ void spi_init(void)
 
 	/* Disable the BIOS write protect so write commands are allowed. */
 	pci_read_config_byte(dev, 0xdc, &bios_cntl);
+	switch (ich_version) {
+	case 9:
+		/* Deassert SMM BIOS Write Protect Disable. */
+		bios_cntl &= ~(1 << 5);
+		break;
+
+	default:
+		break;
+	}
 	pci_write_config_byte(dev, 0xdc, bios_cntl | 0x1);
 }
 
@@ -599,7 +608,7 @@ int spi_xfer(struct spi_slave *slave, const void *dout,
 			return -1;
 
 		if (status & SPIS_FCERR) {
-			puts("ICH SPI: Transaction error\n");
+			puts("ICH SPI: Command transaction error\n");
 			return -1;
 		}
 
@@ -656,7 +665,7 @@ int spi_xfer(struct spi_slave *slave, const void *dout,
 			return -1;
 
 		if (status & SPIS_FCERR) {
-			puts("ICH SPI: Transaction error\n");
+			puts("ICH SPI: Data transaction error\n");
 			return -1;
 		}
 
