@@ -33,6 +33,8 @@
 #include <asm/cache.h>
 #include <asm/arch-coreboot/tables.h>
 #include <asm/arch-coreboot/sysinfo.h>
+#include <cros/fdt_decode.h>
+#include <cros/firmware_storage.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -119,6 +121,87 @@ int board_eth_init(bd_t *bis)
 
 void setup_pcat_compatibility()
 {
+}
+
+struct mrc_data_container {
+	u32	mrc_data_size;	/* Actual total size of this structure */
+	u8	mrc_data[0];	/* Variable size, platform/run time dependent */
+};
+
+/**
+ * handle_mrc_cache:
+ *
+ *  - find MRC cache in the SPI flash using the FMAP data
+ *  - compare the cache contents passed by coreboot through CBMEM with
+ *    the contents saved in the SPI flash
+ *  - if the two do not match and the new contents would fit into the
+ *    FMAP allocated room - update the contents in the SPI flash.
+ */
+static void handle_mrc_cache(void)
+{
+	struct fmap_entry fme;
+	struct mrc_data_container *saved_entry;
+	struct mrc_data_container *passed_entry;
+	u32 passed_size;
+	u32 saved_size;
+
+	firmware_storage_t file;
+
+	if (fdt_get_mrc_cache_base(gd->fdt_blob, &fme)) {
+		printf("%s: MRC cache not found\n", __func__);
+		return;
+	}
+
+	passed_entry = (struct mrc_data_container *)lib_sysinfo.mrc_cache;
+	passed_size = passed_entry->mrc_data_size;
+	if (passed_size > fme.length) {
+		printf("%s: passed entry of %d won't fit into %d\n",
+		       __func__, passed_size, fme.length);
+		return;
+	}
+
+	/* Open firmware storage device. */
+	if (firmware_storage_open_spi(&file)) {
+		printf("%s: failed to open SPI storage device\n", __func__);
+		return;
+	}
+
+	saved_entry = malloc(fme.length);
+	if (!saved_entry) {
+		printf("%s: failed to allocate %d bytes\n",
+		       __func__, fme.length);
+		return;
+	}
+
+	if (file.read(&file, fme.offset, fme.length, saved_entry)) {
+		printf("%s: failed to read %d bytes\n", __func__, fme.length);
+		free(saved_entry);
+		return;
+	}
+
+	saved_size = saved_entry->mrc_data_size;
+	if ((saved_size != passed_size) ||
+	    memcmp(passed_entry, saved_entry, passed_size)) {
+		printf("%s: cached storage mismatch (%d/%d)\n", __func__,
+		       saved_size, passed_size);
+		if (passed_size <= fme.length) {
+			if (file.write(&file, fme.offset,
+				       passed_size, passed_entry))
+				printf("%s: write failed!\n", __func__);
+		} else {
+			printf("%s: passed size too big (%d)\n",
+			       __func__, passed_size);
+		}
+	} else {
+		printf("%s: cached storage match\n", __func__);
+	}
+	free(saved_entry);
+}
+
+int misc_init_r(void)
+{
+	handle_mrc_cache();
+	return 0;
 }
 
 #define MTRRphysBase_MSR(reg) (0x200 + 2 * (reg))
