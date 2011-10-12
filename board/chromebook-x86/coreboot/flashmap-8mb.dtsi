@@ -13,7 +13,7 @@
 		#address-cells = <1>;
 		#size-cells = <1>;
 		compatible = "chromeos,flashmap";
-		reg = <0x00000000 0x00800000>;
+		reg = <0xff800000 0x00800000>;
 
 		/*
 		 * Non-BIOS section of the Intel Firmware Descriptor image.
