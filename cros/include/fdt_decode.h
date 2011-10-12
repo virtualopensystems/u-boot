@@ -43,4 +43,14 @@ int fdt_decode_chromeos_config_has_prop(const void *fdt, const char *name);
 void *fdt_decode_chromeos_alloc_region(const void *blob,
 		const char *prop_name, size_t *size);
 
+/**
+ * Retrieve the MRC cache base address from the FMAP section of the device
+ * tree.
+ *
+ * @param blob		FDT blob
+ * @param fme		pointer to the return value (offset and length are
+ *			saved in the structure)
+ */
+int fdt_get_mrc_cache_base(const char *blob, struct fmap_entry *fme);
+
 #endif /* CHROMEOS_FDT_DECODE_H_ */

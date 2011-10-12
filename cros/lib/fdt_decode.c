@@ -105,6 +105,21 @@ int decode_firmware_entry(const char *blob, int fmap_offset, const char *name,
 	return err;
 }
 
+int fdt_get_mrc_cache_base(const char *blob, struct fmap_entry *fme)
+{
+	int fmap_offset;
+
+	fmap_offset = fdt_node_offset_by_compatible(blob, -1,
+			"chromeos,flashmap");
+	if (fmap_offset < 0) {
+		VBDEBUG(PREFIX "%s: chromeos,flashmap node is missing\n",
+			__func__);
+		return fmap_offset;
+	}
+
+	return decode_fmap_entry(blob, fmap_offset, "rw", "mrc-cache", fme);
+}
+
 int fdt_decode_twostop_fmap(const void *blob, struct twostop_fmap *config)
 {
 	int fmap_offset;
