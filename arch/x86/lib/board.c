@@ -172,7 +172,6 @@ static int calculate_relocation_address(void)
 
 	/* Calculate destination RAM Address and relocation offset */
 	dest_addr = gd->ram_size;
-	dest_addr -= CONFIG_SYS_STACK_SIZE;
 	dest_addr -= (bss_end - text_start);
 
 	/*
@@ -183,7 +182,7 @@ static int calculate_relocation_address(void)
 
 	rel_offset = dest_addr - text_start;
 
-	gd->start_addr_sp = gd->ram_size;
+	gd->start_addr_sp = dest_addr - CONFIG_SYS_MALLOC_LEN;
 	gd->relocaddr = dest_addr;
 	gd->reloc_off = rel_offset;
 
