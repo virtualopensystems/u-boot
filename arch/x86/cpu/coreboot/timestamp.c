@@ -33,7 +33,7 @@ struct timestamp_table {
 	struct timestamp_entry entries[0]; /* Variable number of entries */
 } __attribute__((packed));
 
-static struct timestamp_table *ts_table;
+static struct timestamp_table *ts_table  __attribute__((section(".data")));
 
 void timestamp_init(void)
 {
