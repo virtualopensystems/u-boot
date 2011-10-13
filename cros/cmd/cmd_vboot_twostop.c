@@ -181,6 +181,40 @@ static void setup_arch_unused_memory(memory_wipe_t *wipe,
 			(uintptr_t)gd->fb_base + fb_size);
 }
 
+#elif defined(CONFIG_SYS_COREBOOT)
+
+static void setup_arch_unused_memory(memory_wipe_t *wipe,
+	crossystem_data_t *cdata, VbCommonParams *cparams)
+{
+	int i;
+
+	/* Add ranges that describe RAM. */
+	for (i = 0; i < lib_sysinfo.n_memranges; i++) {
+		struct memrange *range = &lib_sysinfo.memrange[i];
+		if (range->type == CB_MEM_RAM) {
+			memory_wipe_add(wipe, range->base,
+				range->base + range->size);
+		}
+	}
+	/*
+	 * Remove ranges that don't. These should take precedence, so they're
+	 * done last and in their own loop.
+	 */
+	for (i = 0; i < lib_sysinfo.n_memranges; i++) {
+		struct memrange *range = &lib_sysinfo.memrange[i];
+		if (range->type != CB_MEM_RAM) {
+			memory_wipe_sub(wipe, range->base,
+				range->base + range->size);
+		}
+	}
+	/*
+	 * FIXME This area isn't marked reserved in the e820 map like it should
+	 * FIXME be. Once it is, we won't have to exclude it manually and this
+	 * FIXME code can be removed.
+	 */
+	memory_wipe_sub(wipe, 0xf0000, 0x100000);
+}
+
 #else
 
 static void setup_arch_unused_memory(memory_wipe_t *wipe,
