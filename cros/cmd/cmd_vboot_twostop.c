@@ -238,9 +238,11 @@ twostop_init_vboot_library(firmware_storage_t *file, void *gbb,
 	if (iparams.out_flags & VB_INIT_OUT_ENABLE_DISPLAY)
 		if (gbb_read_bmp_block(gbb, file, gbb_offset))
 			return 1;
-	if (iparams.out_flags & VB_INIT_OUT_ENABLE_RECOVERY)
+	if (cdata->boot_developer_switch ||
+			iparams.out_flags & VB_INIT_OUT_ENABLE_RECOVERY) {
 		if (gbb_read_recovery_key(gbb, file, gbb_offset))
 			return 1;
+	}
 
 	return VBERROR_SUCCESS;
 }
