@@ -119,31 +119,51 @@ static int do_vboot_test_memwipe(cmd_tbl_t *cmdtp,
 {
 	memory_wipe_t wipe;
 	char s[] = "ABCDEFGHIJ";
-	const char r[] = "\0BCDEFGH\0J";
+	const char r[] = "\0BCDE\0GHIJ";
 	const size_t size = strlen(s);
 	uintptr_t base = (uintptr_t)s;
 
 	memory_wipe_init(&wipe);
-	memory_wipe_add(&wipe, base, base + size);
-	/* Result: ---------- */
+	memory_wipe_add(&wipe, base + 0, base + 1);
+	/* Result: -BCDEFGHIJ */
 	memory_wipe_sub(&wipe, base + 1, base + 2);
-	/* Result: -B-------- */
-	memory_wipe_sub(&wipe, base + 5, base + 7);
-	/* Result: -B---FG--- */
-	memory_wipe_sub(&wipe, base + 2, base + 3);
-	/* Result: -BC--FG--- */
-	memory_wipe_sub(&wipe, base + 9, base + 10);
-	/* Result: -BC--FG--J */
-	memory_wipe_sub(&wipe, base + 4, base + 6);
-	/* Result: -BC-EFG--J */
+	/* Result: -BCDEFGHIJ */
+	memory_wipe_add(&wipe, base + 1, base + 2);
+	/* Result: --CDEFGHIJ */
+	memory_wipe_sub(&wipe, base + 1, base + 2);
+	/* Result: -BCDEFGHIJ */
+	memory_wipe_add(&wipe, base + 0, base + 2);
+	/* Result: --CDEFGHIJ */
+	memory_wipe_sub(&wipe, base + 1, base + 3);
+	/* Result: -BCDEFGHIJ */
+	memory_wipe_add(&wipe, base + 4, base + 6);
+	/* Result: -BCD--GHIJ */
+	memory_wipe_add(&wipe, base + 3, base + 4);
+	/* Result: -BC---GHIJ */
+	memory_wipe_sub(&wipe, base + 3, base + 7);
+	/* Result: -BCDEFGHIJ */
+	memory_wipe_add(&wipe, base + 2, base + 8);
+	/* Result: -B------IJ */
+	memory_wipe_sub(&wipe, base + 1, base + 9);
+	/* Result: -BCDEFGHIJ */
+	memory_wipe_add(&wipe, base + 4, base + 7);
+	/* Result: -BCD---HIJ */
 	memory_wipe_sub(&wipe, base + 3, base + 5);
-	/* Result: -BCDEFG--J */
-	memory_wipe_sub(&wipe, base + 2, base + 8);
-	/* Result: -BCDEFGH-J */
+	/* Result: -BCDE--HIJ */
+	memory_wipe_sub(&wipe, base + 6, base + 8);
+	/* Result: -BCDE-GHIJ */
 	memory_wipe_execute(&wipe);
 
 	if (memcmp(s, r, size)) {
-		VbExDebug("Failed to wipe the expected regions!\n");
+		int i;
+
+		VbExDebug("Expected: ");
+		for (i = 0; i < size; i++)
+			VbExDebug("%c", r[i] ? r[i] : '-');
+		VbExDebug("\nGot: ");
+		for (i = 0; i < size; i++)
+			VbExDebug("%c", s[i] ? s[i] : '-');
+		VbExDebug("\nFailed to wipe the expected regions!\n");
 		return 1;
 	}
 
