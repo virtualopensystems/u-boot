@@ -21,24 +21,20 @@ uint32_t VbExIsShutdownRequested(void)
 {
 	cros_gpio_t lidsw, pwrsw;
 
-	if (cros_gpio_fetch(CROS_GPIO_LIDSW, &lidsw) ||
-			cros_gpio_fetch(CROS_GPIO_PWRSW, &pwrsw)) {
-		VBDEBUG(PREFIX "Failed to fetch GPIO!\n");
-		/* still return 0, No-Shutdown-Requested */
-		return 0;
-	}
-
 	/* if lid is NOT OPEN */
-	if (!lidsw.value) {
+	if (!cros_gpio_fetch(CROS_GPIO_LIDSW, &lidsw) && !lidsw.value) {
 		VBDEBUG(PREFIX "Lid-closed is detected.\n");
 		return 1;
 	}
-
-	if (pwrsw.value) {
+	/* if power switch is pressed */
+	if (!cros_gpio_fetch(CROS_GPIO_PWRSW, &pwrsw) && pwrsw.value) {
 		VBDEBUG(PREFIX "Power-key-pressed is detected.\n");
 		return 1;
 	}
-
+	/*
+	 * Either the gpios don't exist, or the lid is up and and power button
+	 * is not pressed. No-Shutdown-Requested.
+	 */
 	return 0;
 }
 
