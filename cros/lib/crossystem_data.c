@@ -291,7 +291,8 @@ int crossystem_data_update_acpi(crossystem_data_t *cdata)
 	acpi_table->vbt0 = BOOT_REASON_OTHER;
 	acpi_table->vbt1 =
 		crossystem_fw_index_vdat_to_binf(vdat->firmware_index);
-	acpi_table->vbt2 = cdata->active_ec_firmware;
+	/* active_ec_firmware(vbt2) is set up by coreboot, so we don't
+	 * set it up here on purpose. */
 	acpi_table->vbt3 =
 		(cdata->boot_write_protect_switch ? CHSW_FIRMWARE_WP_DIS : 0) |
 		(cdata->boot_recovery_switch ? CHSW_RECOVERY_X86 : 0) |
