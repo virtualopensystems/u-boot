@@ -213,12 +213,6 @@ static void setup_arch_unused_memory(memory_wipe_t *wipe,
 				range->base + range->size);
 		}
 	}
-	/*
-	 * FIXME This area isn't marked reserved in the e820 map like it should
-	 * FIXME be. Once it is, we won't have to exclude it manually and this
-	 * FIXME code can be removed.
-	 */
-	memory_wipe_sub(wipe, 0xf0000, 0x100000);
 }
 
 #else
