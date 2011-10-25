@@ -9,6 +9,7 @@
 	compatible = "google,stumpy", "intel,celeron-sandybridge";
 
 	config {
-	       hwid = "X86 STUMPY TEST 0128";
+		hwid = "X86 STUMPY TEST 0128";
+		skip-i8042 = <1>;
 	};
 };
