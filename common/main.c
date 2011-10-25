@@ -1372,9 +1372,8 @@ static int builtin_run_command(const char *cmd, int flag)
 #endif
 
 		/* OK - call function to do the command */
-		if ((cmdtp->cmd) (cmdtp, flag, argc, argv) != 0) {
+		if (cmd_call(cmdtp, flag, argc, argv) != 0)
 			rc = -1;
-		}
 
 		repeatable &= cmdtp->repeatable;
 
