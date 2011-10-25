@@ -27,11 +27,13 @@
 #include <asm/u-boot-x86.h>
 #include <cbfs.h>
 #include <flash.h>
+#include <fdtdec.h>
 #include <malloc.h>
 #include <netdev.h>
 #include <asm/msr.h>
 #include <asm/cache.h>
 #include <asm/io.h>
+#include <asm/arch-coreboot/gpio.h>
 #include <asm/arch-coreboot/tables.h>
 #include <asm/arch-coreboot/sysinfo.h>
 #include <coreboot_timestamp.h>
@@ -212,6 +214,16 @@ int misc_init_r(void)
 {
 	handle_mrc_cache();
 	return 0;
+}
+
+int board_i8042_skip(void)
+{
+	cros_gpio_t devsw;
+
+	cros_gpio_fetch(CROS_GPIO_DEVSW, &devsw);
+	if (devsw.value)
+		return 0;
+	return fdtdec_get_config_int(gd->fdt_blob, "skip-i8042", 0);
 }
 
 #define MTRRphysBase_MSR(reg) (0x200 + 2 * (reg))
