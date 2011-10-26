@@ -42,8 +42,8 @@
  * Memory layout
  */
 /* TODO(sjg): Move these two to the fdt */
-#define CONFIG_VBGLOBAL_BASE		0x00FB0000
-#define CONFIG_SYS_TEXT_BASE		0x00FC0000
+#define CONFIG_VBGLOBAL_BASE		0x01100000
+#define CONFIG_SYS_TEXT_BASE		0x01110000
 
 /* SATA AHCI storage */
 
