@@ -205,6 +205,14 @@ struct cb_cbmem_tab {
 	void   *cbmem_tab;
 };
 
+#define CB_TAG_VBNV		0x0019
+struct cb_vbnv {
+	uint32_t tag;
+	uint32_t size;
+	uint32_t vbnv_start;
+	uint32_t vbnv_size;
+};
+
 #define CB_TAG_CMOS_OPTION_TABLE 0x00c8
 struct cb_cmos_option_table {
 	u32 tag;
