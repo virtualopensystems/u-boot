@@ -33,6 +33,7 @@
  */
 #define CONFIG_SYS_COREBOOT
 #define CONFIG_SHOW_BOOT_PROGRESS
+#define BUILD_CMD_LINE_STUFF 0
 
 /* FDT support */
 #define CONFIG_OF_LIBFDT	/* Device tree support */
@@ -97,9 +98,11 @@
 #define CONFIG_CBMEM_CONSOLE
 
 /* turn on command-line edit/hist/auto */
+#if BUILD_CMD_LINE_STUFF
 #define CONFIG_CMDLINE_EDITING	1
 #define CONFIG_COMMAND_HISTORY
 #define CONFIG_AUTOCOMPLETE
+#endif
 
 #define CONFIG_SYS_CONSOLE_IS_IN_ENV
 #define CONFIG_STD_DEVICES_SETTINGS     "stdin=vga,serial\0" \
@@ -160,11 +163,14 @@
  * Miscellaneous configurable options
  */
 #define V_PROMPT			"boot > "
-#define CONFIG_SYS_LONGHELP
-#define CONFIG_SYS_HUSH_PARSER		/* use "hush" command parser */
 #define CONFIG_SYS_PROMPT_HUSH_PS2	"> "
 #define CONFIG_SYS_PROMPT		V_PROMPT
 #define CONFIG_SILENT_CONSOLE
+
+#if BUILD_CMD_LINE_STUFF
+#define CONFIG_SYS_LONGHELP
+#define CONFIG_SYS_HUSH_PARSER		/* use "hush" command parser */
+#endif
 /*
  * Increasing the size of the IO buffer as default nfsargs size is more
  *  than 256 and so it is not possible to edit it
@@ -260,43 +266,48 @@
 /*-----------------------------------------------------------------------
  * Command line configuration.
  */
+#if BUILD_CMD_LINE_STUFF
 #include <config_cmd_default.h>
 
 #undef CONFIG_CMD_BDI
+#undef CONFIG_CMD_FPGA
+#undef CONFIG_CMD_IMI
+#undef CONFIG_CMD_FLASH
+#undef CONFIG_CMD_IMLS
+#undef CONFIG_CMD_LOADB
+#undef CONFIG_CMD_LOADS
+#undef CONFIG_CMD_NFS
+#undef CONFIG_CMD_SETGETDCR
+#undef CONFIG_CMD_XIMG
+
 #define CONFIG_CMD_BOOTD
 #define CONFIG_CMD_CONSOLE
 #define CONFIG_CMD_DATE
 #define CONFIG_CMD_DHCP
 #define CONFIG_CMD_ECHO
 #define CONFIG_CMD_EDITENV
-#undef CONFIG_CMD_FPGA
-#undef CONFIG_CMD_IMI
-#undef CONFIG_CMD_FLASH
-#undef CONFIG_CMD_IMLS
 #define CONFIG_CMD_IRQ
 #define CONFIG_CMD_ITEST
-#undef CONFIG_CMD_LOADB
-#undef CONFIG_CMD_LOADS
 #define CONFIG_CMD_MEMORY
 #define CONFIG_CMD_MISC
-#define CONFIG_CMD_NET
-#undef CONFIG_CMD_NFS
 #define CONFIG_CMD_PCI
 #define CONFIG_CMD_PING
 #define CONFIG_CMD_RUN
 #define CONFIG_CMD_SAVEENV
-#undef CONFIG_CMD_SETGETDCR
 #define CONFIG_CMD_SOURCE
-#define CONFIG_CMD_SCSI
 #define CONFIG_CMD_SF
-#define CONFIG_CMD_SPI
 #define CONFIG_CMD_TIME
+#define CONFIG_CMD_TPM
 #define CONFIG_CMD_CBFS
 #define CONFIG_CMD_FAT
 #define CONFIG_CMD_EXT2
+#endif
+
+/* These also control whether some generic support is built. */
+#define CONFIG_CMD_SPI
 #define CONFIG_CMD_USB
-#define CONFIG_CMD_TPM
-#undef CONFIG_CMD_XIMG
+#define CONFIG_CMD_SCSI
+#define CONFIG_CMD_NET
 
 /* Board specific late time init */
 #define CONFIG_MISC_INIT_R
