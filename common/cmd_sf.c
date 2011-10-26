@@ -293,7 +293,7 @@ done:
 		return ret;
 
 usage:
-	return cmd_usage(cmdtp);
+	return CMD_RET_USAGE;
 }
 
 U_BOOT_CMD(

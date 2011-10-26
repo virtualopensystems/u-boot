@@ -236,7 +236,7 @@ static int netboot_common(enum proto_t proto, cmd_tbl_t *cmdtp, int argc,
 #endif
 	default:
 		bootstage_error(BOOTSTAGE_ID_NET_START);
-		return cmd_usage(cmdtp);
+		return CMD_RET_USAGE;
 	}
 
 	bootstage_mark(BOOTSTAGE_ID_NET_START);
@@ -276,7 +276,7 @@ int do_ping (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 
 	NetPingIP = string_to_ip(argv[1]);
 	if (NetPingIP == 0)
-		return cmd_usage(cmdtp);
+		return CMD_RET_USAGE;
 
 	if (NetLoop(PING) < 0) {
 		printf("ping failed; host %s is not alive\n", argv[1]);
@@ -382,7 +382,7 @@ U_BOOT_CMD(
 int do_dns(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	if (argc == 1)
-		return cmd_usage(cmdtp);
+		return CMD_RET_USAGE;
 
 	/*
 	 * We should check for a valid hostname:
