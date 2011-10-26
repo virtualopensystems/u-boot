@@ -78,31 +78,12 @@ static void cb_parse_serial(unsigned char *ptr, struct sysinfo_t *info)
 	info->ser_ioport = ser->baseaddr;
 }
 
-static void cb_parse_optiontable(unsigned char *ptr, struct sysinfo_t *info)
+static void cb_parse_vbnv(unsigned char *ptr, struct sysinfo_t *info)
 {
-	struct cb_cmos_option_table *otp = (struct cb_cmos_option_table *)ptr;
-	struct cb_cmos_entries* cme;
+	struct cb_vbnv *vbnv = (struct cb_vbnv *)ptr;
 
-	info->option_table = otp;
-	cme = (struct cb_cmos_entries*) ((u32) otp + otp->header_length);
-	/* find the offset and size of the vbnv area */
-	while ((((char*) cme - (char*)otp) < otp->size) &&
-	       (cme->tag == CB_TAG_OPTION)) {
-		if (!strncmp("vbnv", (char*) cme->name, sizeof(cme->name))) {
-			info->vbnv_start = cme->bit >> 3;
-			info->vbnv_size = cme->length >> 3;
-			break;
-		}
-		cme = (struct cb_cmos_entries*) ((char*)cme + cme->size);
-	}
-}
-
-static void cb_parse_checksum(unsigned char *ptr, struct sysinfo_t *info)
-{
-	struct cb_cmos_checksum *cmos_cksum = (struct cb_cmos_checksum *)ptr;
-	info->cmos_range_start = cmos_cksum->range_start;
-	info->cmos_range_end = cmos_cksum->range_end;
-	info->cmos_checksum_location = cmos_cksum->location;
+	info->vbnv_start = vbnv->vbnv_start;
+	info->vbnv_size = vbnv->vbnv_size;
 }
 
 static void cb_parse_gpios(unsigned char *ptr, struct sysinfo_t *info)
@@ -205,12 +186,6 @@ static int cb_parse_header(void *addr, int len, struct sysinfo_t *info)
 		case CB_TAG_SERIAL:
 			cb_parse_serial(ptr, info);
 			break;
-		case CB_TAG_CMOS_OPTION_TABLE:
-			cb_parse_optiontable(ptr, info);
-			break;
-		case CB_TAG_OPTION_CHECKSUM:
-			cb_parse_checksum(ptr, info);
-			break;
 		case CB_TAG_VERSION:
 			cb_parse_string(ptr, &info->version);
 			break;
@@ -265,6 +240,9 @@ static int cb_parse_header(void *addr, int len, struct sysinfo_t *info)
 			break;
 		case CB_TAG_MRC_CACHE:
 			cb_parse_mrc_cache(ptr, info);
+			break;
+		case CB_TAG_VBNV:
+			cb_parse_vbnv(ptr, info);
 			break;
 		}
 
