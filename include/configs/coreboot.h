@@ -34,6 +34,7 @@
 #define CONFIG_SYS_COREBOOT
 #define CONFIG_SHOW_BOOT_PROGRESS
 #define BUILD_CMD_LINE_STUFF 0
+#define BUILD_IDE_STUFF 0
 
 /* FDT support */
 #define CONFIG_OF_LIBFDT	/* Device tree support */
@@ -109,6 +110,7 @@
 					"stdout=serial,cbmem\0" \
 					"stderr=vga,serial,cbmem\0"
 
+#if BUILD_IDE_STUFF
 /* max. 1 IDE bus	*/
 #define CONFIG_SYS_IDE_MAXBUS		1
 /* max. 1 drive per IDE bus */
@@ -120,6 +122,7 @@
 #define CONFIG_SYS_ATA_DATA_OFFSET	0
 #define CONFIG_SYS_ATA_REG_OFFSET	0
 #define CONFIG_SYS_ATA_ALT_OFFSET	0x200
+#endif
 
 #define CONFIG_GENERIC_MMC
 
