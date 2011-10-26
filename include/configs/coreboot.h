@@ -125,8 +125,6 @@
 #define CONFIG_SYS_ATA_ALT_OFFSET	0x200
 #endif
 
-#define CONFIG_GENERIC_MMC
-
 #define CONFIG_SUPPORT_VFAT
 
 /************************************************************
