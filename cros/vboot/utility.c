@@ -104,3 +104,9 @@ void *Memcpy(void *dest, const void *src, uint64_t n)
 {
 	return memcpy(dest, src, (size_t) n);
 }
+
+void *Memset(void *d, const uint8_t c, uint64_t n)
+{
+	return memset(d, c, n);
+}
+
