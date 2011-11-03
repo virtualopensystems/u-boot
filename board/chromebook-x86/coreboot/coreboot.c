@@ -29,6 +29,8 @@
 #include <flash.h>
 #include <malloc.h>
 #include <netdev.h>
+#include <asm/msr.h>
+#include <asm/cache.h>
 #include <asm/arch-coreboot/tables.h>
 #include <asm/arch-coreboot/sysinfo.h>
 
@@ -115,4 +117,20 @@ int board_eth_init(bd_t *bis)
 
 void setup_pcat_compatibility()
 {
+}
+
+#define MTRRphysBase_MSR(reg) (0x200 + 2 * (reg))
+#define MTRRphysMask_MSR(reg) (0x200 + 2 * (reg) + 1)
+
+int board_final_cleanup(void)
+{
+	/* Un-cache the ROM so the kernel has one
+	 * more MTRR available.
+	 */
+	disable_cache();
+	wrmsr(MTRRphysBase_MSR(7), 0);
+	wrmsr(MTRRphysMask_MSR(7), 0);
+	enable_cache();
+
+	return 0;
 }
