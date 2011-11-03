@@ -166,16 +166,18 @@ static void handle_mrc_cache(void)
 		return;
 	}
 
+#ifndef CONFIG_HARDWARE_MAPPED_SPI
 	saved_entry = malloc(fme.length);
 	if (!saved_entry) {
 		printf("%s: failed to allocate %d bytes\n",
 		       __func__, fme.length);
 		return;
 	}
+#endif
 
-	if (file.read(&file, fme.offset, fme.length, saved_entry)) {
+	if (file.read(&file, fme.offset, fme.length, BT_EXTRA saved_entry)) {
 		printf("%s: failed to read %d bytes\n", __func__, fme.length);
-		free(saved_entry);
+		FREE_IF_NEEDED(saved_entry);
 		return;
 	}
 
@@ -195,7 +197,7 @@ static void handle_mrc_cache(void)
 	} else {
 		printf("%s: cached storage match\n", __func__);
 	}
-	free(saved_entry);
+	FREE_IF_NEEDED(saved_entry);
 }
 
 int misc_init_r(void)
