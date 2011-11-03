@@ -47,19 +47,61 @@ static int border_check(struct spi_flash *flash, uint32_t offset,
 	return 0;
 }
 
+#ifdef CONFIG_HARDWARE_MAPPED_SPI
+
+#include <libfdt.h>
+
+DECLARE_GLOBAL_DATA_PTR;
+
+/*
+ * When using hardware mapped SPI the offset passed to the file_read()
+ * function should be added to the base address of the SPI flash in the CPI
+ * memory. set_spi_flash_base() retrieves the flash chip base address from the
+ * flash map device tree section.
+ */
+static uint32_t spi_flash_base_addr;
+
+void set_spi_flash_base(void)
+{
+	int fmap_offset;
+	uint32_t *property;
+	int length;
+	const void *blob = gd->blob;
+
+	fmap_offset = fdt_node_offset_by_compatible(blob, -1,
+			"chromeos,flashmap");
+	if (fmap_offset < 0) {
+		VBDEBUG(PREFIX "chromeos,flashmap node is missing\n");
+		return;
+	}
+	property = (uint32_t *)fdt_getprop(blob, fmap_offset, "reg", &length);
+	if (!property) {
+		VBDEBUG(PREFIX "reg property missing in flashmap!'\n");
+		return;
+	}
+	spi_flash_base_addr = fdt32_to_cpu(property[0]);
+}
+
+#endif
+
 static int read_spi(firmware_storage_t *file, uint32_t offset, uint32_t count,
-		void *buf)
+		read_buf_type buf)
 {
 	struct spi_flash *flash = file->context;
 
 	if (border_check(flash, offset, count))
 		return -1;
 
+#ifndef CONFIG_HARDWARE_MAPPED_SPI
 	if (flash->read(flash, offset, count, buf)) {
 		VBDEBUG(PREFIX "SPI read fail\n");
 		return -1;
 	}
-
+#else
+	if (!spi_flash_base_addr)
+		set_spi_flash_base();
+	*buf =  (void *) (spi_flash_base_addr + offset);
+#endif
 	return 0;
 }
 

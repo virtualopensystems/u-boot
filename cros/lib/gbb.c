@@ -16,8 +16,9 @@
 
 #define PREFIX "gbb: "
 
-int gbb_init(void *gbb, firmware_storage_t *file, uint32_t gbb_offset)
+int gbb_init(read_buf_type gbb, firmware_storage_t *file, uint32_t gbb_offset)
 {
+#ifndef CONFIG_HARDWARE_MAPPED_SPI
 	GoogleBinaryBlockHeader *gbbh = (GoogleBinaryBlockHeader *)gbb;
 
 	if (file->read(file, gbb_offset, sizeof(*gbbh), gbbh)) {
@@ -38,10 +39,18 @@ int gbb_init(void *gbb, firmware_storage_t *file, uint32_t gbb_offset)
 		VBDEBUG(PREFIX "failed to read root key\n");
 		return 1;
 	}
+#else
+	if (file->read(file, gbb_offset,
+		       sizeof(GoogleBinaryBlockHeader), gbb)) {
+		VBDEBUG(PREFIX "failed to read GBB header\n");
+		return 1;
+	}
+#endif
 
 	return 0;
 }
 
+#ifndef CONFIG_HARDWARE_MAPPED_SPI
 int gbb_read_bmp_block(void *gbb, firmware_storage_t *file, uint32_t gbb_offset)
 {
 	GoogleBinaryBlockHeader *gbbh = (GoogleBinaryBlockHeader *)gbb;
@@ -70,6 +79,7 @@ int gbb_read_recovery_key(void *gbb,
 
 	return 0;
 }
+#endif
 
 int gbb_check_integrity(uint8_t *gbb)
 {

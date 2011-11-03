@@ -49,7 +49,8 @@ VbError_t VbExHashFirmwareBody(VbCommonParams* cparams, uint32_t firmware_index)
 	 */
 	s->fw[i].size = firmware_body_size((uintptr_t)s->fw[i].vblock);
 
-	if (file->read(file, s->fw[i].offset, s->fw[i].size, s->fw[i].cache)) {
+	if (file->read(file, s->fw[i].offset,
+		       s->fw[i].size, BT_EXTRA(s->fw[i].cache))) {
 		VBDEBUG(PREFIX "fail to read firmware: %d\n", firmware_index);
 		return 1;
 	}

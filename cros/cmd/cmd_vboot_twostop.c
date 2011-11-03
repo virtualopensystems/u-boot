@@ -313,6 +313,7 @@ twostop_make_selection(struct twostop_fmap *fmap, firmware_storage_t *file,
 
 	fparams.verification_size_A = fparams.verification_size_B = vlength;
 
+#ifndef CONFIG_HARDWARE_MAPPED_SPI
 	fparams.verification_block_A = memalign(CACHE_LINE_SIZE, vlength);
 	if (!fparams.verification_block_A) {
 		VBDEBUG(PREFIX "failed to allocate vblock A\n");
@@ -323,14 +324,14 @@ twostop_make_selection(struct twostop_fmap *fmap, firmware_storage_t *file,
 		VBDEBUG(PREFIX "failed to allocate vblock B\n");
 		goto out;
 	}
-
+#endif
 	if (file->read(file, fmap->readwrite_a.vblock.offset, vlength,
-				fparams.verification_block_A)) {
+				BT_EXTRA fparams.verification_block_A)) {
 		VBDEBUG(PREFIX "fail to read vblock A\n");
 		goto out;
 	}
 	if (file->read(file, fmap->readwrite_b.vblock.offset, vlength,
-				fparams.verification_block_B)) {
+				BT_EXTRA fparams.verification_block_B)) {
 		VBDEBUG(PREFIX "fail to read vblock B\n");
 		goto out;
 	}
@@ -344,6 +345,7 @@ twostop_make_selection(struct twostop_fmap *fmap, firmware_storage_t *file,
 	s.fw[0].size = fmap->readwrite_a.boot.length;
 	s.fw[1].size = fmap->readwrite_b.boot.length;
 
+#ifndef CONFIG_HARDWARE_MAPPED_SPI
 	s.fw[0].cache = memalign(CACHE_LINE_SIZE, s.fw[0].size);
 	if (!s.fw[0].cache) {
 		VBDEBUG(PREFIX "failed to allocate cache A\n");
@@ -354,6 +356,7 @@ twostop_make_selection(struct twostop_fmap *fmap, firmware_storage_t *file,
 		VBDEBUG(PREFIX "failed to allocate cache B\n");
 		goto out;
 	}
+#endif
 
 	s.file = file;
 	cparams->caller_context = &s;
@@ -368,17 +371,17 @@ twostop_make_selection(struct twostop_fmap *fmap, firmware_storage_t *file,
 
 out:
 
-	free(fparams.verification_block_A);
-	free(fparams.verification_block_B);
+	FREE_IF_NEEDED(fparams.verification_block_A);
+	FREE_IF_NEEDED(fparams.verification_block_B);
 
 	if (selection == VB_SELECT_FIRMWARE_A) {
 		*fw_blob_ptr = s.fw[0].cache;
 		*fw_size_ptr = s.fw[0].size;
-		free(s.fw[1].cache);
+		FREE_IF_NEEDED(s.fw[1].cache);
 	} else if (selection == VB_SELECT_FIRMWARE_B) {
 		*fw_blob_ptr = s.fw[1].cache;
 		*fw_size_ptr = s.fw[1].size;
-		free(s.fw[0].cache);
+		FREE_IF_NEEDED(s.fw[0].cache);
 	}
 
 	return selection;
@@ -394,7 +397,11 @@ twostop_select_and_set_main_firmware(struct twostop_fmap *fmap,
 	uint32_t selection;
 	uint32_t id_offset = 0, id_length = 0;
 	int firmware_type;
+#ifndef CONFIG_HARDWARE_MAPPED_SPI
 	uint8_t firmware_id[ID_LEN];
+#else
+	uint8_t *firmware_id;
+#endif
 	VbCommonParams cparams;
 
 	bootstage_mark(BOOTSTAGE_VBOOT_SELECT_AND_SET,
@@ -440,7 +447,7 @@ twostop_select_and_set_main_firmware(struct twostop_fmap *fmap,
 
 	if (file->read(file, id_offset,
 				MIN(sizeof(firmware_id), id_length),
-				firmware_id)) {
+				BT_EXTRA firmware_id)) {
 		VBDEBUG(PREFIX "failed to read active firmware id\n");
 		firmware_id[0] = '\0';
 	}
@@ -493,12 +500,18 @@ twostop_jump(crossystem_data_t *cdata, void *fw_blob, uint32_t fw_size)
 
 static int
 twostop_init(struct twostop_fmap *fmap, firmware_storage_t *file,
-	     void *gbb, crossystem_data_t *cdata, void *vb_shared_data)
+	     void **gbbp, crossystem_data_t *cdata, void *vb_shared_data)
 {
 	cros_gpio_t wpsw, recsw, devsw;
-	GoogleBinaryBlockHeader *gbbh = (GoogleBinaryBlockHeader *)gbb;
-	uint8_t hardware_id[ID_LEN], readonly_firmware_id[ID_LEN];
+	GoogleBinaryBlockHeader *gbbh;
+	uint8_t hardware_id[ID_LEN];
+#ifndef CONFIG_HARDWARE_MAPPED_SPI
+	uint8_t  readonly_firmware_id[ID_LEN];
+#else
+	uint8_t *readonly_firmware_id;
+#endif
 	int ret = -1;
+	void *gbb;
 
 	bootstage_mark(BOOTSTAGE_VBOOT_TWOSTOP_INIT, "twostop_init");
 	if (cros_gpio_fetch(CROS_GPIO_WPSW, &wpsw) ||
@@ -527,18 +540,28 @@ twostop_init(struct twostop_fmap *fmap, firmware_storage_t *file,
 	if (file->read(file, fmap->readonly.firmware_id.offset,
 				MIN(sizeof(readonly_firmware_id),
 					fmap->readonly.firmware_id.length),
-				readonly_firmware_id)) {
+				BT_EXTRA readonly_firmware_id)) {
 		VBDEBUG(PREFIX "failed to read firmware ID\n");
 		readonly_firmware_id[0] = '\0';
 	}
 	VBDEBUG(PREFIX "read-only firmware id: \"%s\"\n", readonly_firmware_id);
 
 	/* Load basic parts of gbb blob */
+#ifdef CONFIG_HARDWARE_MAPPED_SPI
+	if (gbb_init(gbbp, file, fmap->readonly.gbb.offset)) {
+		VBDEBUG(PREFIX "failed to read gbb\n");
+		goto out;
+	}
+	gbb = *gbbp;
+#else
+	gbb = *gbbp;
 	if (gbb_init(gbb, file, fmap->readonly.gbb.offset)) {
 		VBDEBUG(PREFIX "failed to read gbb\n");
 		goto out;
 	}
+#endif
 
+	gbbh = (GoogleBinaryBlockHeader *)gbb;
 	memcpy(hardware_id, gbb + gbbh->hwid_offset,
 			MIN(sizeof(hardware_id), gbbh->hwid_size));
 	VBDEBUG(PREFIX "hardware id: \"%s\"\n", hardware_id);
@@ -637,8 +660,10 @@ static int setup_gbb_and_cdata(void **gbb, crossystem_data_t **cdata,
 {
 	size_t size;
 
+#ifdef CONFIG_HARDWARE_MAPPED_SPI
 	*gbb = fdt_decode_chromeos_alloc_region(gd->blob,
 			"google-binary-block", &size);
+#endif
 	*cdata = fdt_decode_chromeos_alloc_region(gd->blob, "cros-system-data",
 						 &size);
 	if (!*gbb || !*cdata) {
@@ -680,7 +705,7 @@ twostop_boot(void)
 		return VB_SELECT_ERROR;
 
 	vb_shared_data = cdata->vb_shared_data;
-	if (twostop_init(&fmap, &file, gbb, cdata, vb_shared_data)) {
+	if (twostop_init(&fmap, &file, &gbb, cdata, vb_shared_data)) {
 		VBDEBUG(PREFIX "failed to init twostop boot\n");
 		return VB_SELECT_ERROR;
 	}

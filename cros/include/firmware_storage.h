@@ -15,6 +15,16 @@
 
 #include <chromeos/fdt_decode.h>
 
+#ifndef CONFIG_HARDWARE_MAPPED_SPI
+typedef void *read_buf_type;
+#define BT_EXTRA
+#define FREE_IF_NEEDED(p) free(p)
+#else
+typedef void **read_buf_type;
+#define BT_EXTRA (read_buf_type) &
+#define FREE_IF_NEEDED(p)
+#endif
+
 /**
  * These read or write [count] bytes starting from [offset] of storage into or
  * from the [buf].
@@ -27,7 +37,7 @@
  */
 typedef struct firmware_storage_t {
 	int (*read)(struct firmware_storage_t *file,
-			uint32_t offset, uint32_t count, void *buf);
+			uint32_t offset, uint32_t count, read_buf_type buf);
 	int (*write)(struct firmware_storage_t *file,
 			uint32_t offset, uint32_t count, void *buf);
 	int (*close)(struct firmware_storage_t *file);
