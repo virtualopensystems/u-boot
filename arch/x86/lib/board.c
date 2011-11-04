@@ -280,7 +280,7 @@ void board_init_r(gd_t *id, ulong dest_addr)
 	static gd_t gd_data;
 	init_fnc_t **init_fnc_ptr;
 
-	show_boot_progress(0x21);
+	show_boot_progress(BOOTSTAGE_ID_BOARD_INIT_R);
 
 	/* Global data pointer is now writable */
 	gd = &gd_data;
@@ -291,7 +291,7 @@ void board_init_r(gd_t *id, ulong dest_addr)
 
 	gd->bd = &bd_data;
 	memset(gd->bd, 0, sizeof(bd_t));
-	show_boot_progress(0x22);
+	show_boot_progress(BOOTSTAGE_ID_BOARD_GLOBAL_DATA);
 
 	gd->baudrate =  CONFIG_BAUDRATE;
 
@@ -302,7 +302,7 @@ void board_init_r(gd_t *id, ulong dest_addr)
 		if ((*init_fnc_ptr)() != 0)
 			hang();
 	}
-	show_boot_progress(0x23);
+	show_boot_progress(BOOTSTAGE_ID_BOARD_INIT_SEQ);
 
 #ifdef CONFIG_SERIAL_MULTI
 	serial_initialize();
@@ -312,14 +312,14 @@ void board_init_r(gd_t *id, ulong dest_addr)
 	/* configure available FLASH banks */
 	size = flash_init();
 	display_flash_config(size);
-	show_boot_progress(0x24);
+	show_boot_progress(BOOTSTAGE_ID_BOARD_FLASH);
 #endif
 
-	show_boot_progress(0x25);
+	show_boot_progress(BOOTSTAGE_ID_BOARD_FLASH_37);
 
 	/* initialize environment */
 	env_relocate();
-	show_boot_progress(0x26);
+	show_boot_progress(BOOTSTAGE_ID_BOARD_ENV);
 
 
 #ifdef CONFIG_CMD_NET
@@ -334,7 +334,7 @@ void board_init_r(gd_t *id, ulong dest_addr)
 	pci_init();
 #endif
 
-	show_boot_progress(0x27);
+	show_boot_progress(BOOTSTAGE_ID_BOARD_PCI);
 
 
 	stdio_init();
@@ -363,7 +363,7 @@ void board_init_r(gd_t *id, ulong dest_addr)
 
 	/* enable exceptions */
 	enable_interrupts();
-	show_boot_progress(0x28);
+	show_boot_progress(BOOTSTAGE_ID_BOARD_INTERRUPTS);
 
 #ifdef CONFIG_STATUS_LED
 	status_led_set(STATUS_LED_BOOT, STATUS_LED_BLINKING);
@@ -432,7 +432,7 @@ void board_init_r(gd_t *id, ulong dest_addr)
 	post_run(NULL, POST_RAM | post_bootmode_get(0));
 #endif
 
-	show_boot_progress(0x29);
+	show_boot_progress(BOOTSTAGE_ID_BOARD_DONE);
 
 	/* main_loop() can return to retry autoboot, if so just run it again. */
 	for (;;)
