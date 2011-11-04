@@ -230,13 +230,13 @@ static int netboot_common(enum proto_t proto, cmd_tbl_t *cmdtp, int argc,
 		break;
 #endif
 	default:
-		show_boot_progress (-80);
+		show_boot_error(80);
 		return cmd_usage(cmdtp);
 	}
 
 	show_boot_progress (80);
 	if ((size = NetLoop(proto)) < 0) {
-		show_boot_progress (-81);
+		show_boot_error(81);
 		return 1;
 	}
 
@@ -246,7 +246,7 @@ static int netboot_common(enum proto_t proto, cmd_tbl_t *cmdtp, int argc,
 
 	/* done if no file was loaded (no errors though) */
 	if (size == 0) {
-		show_boot_progress (-82);
+		show_boot_error(82);
 		return 0;
 	}
 
@@ -257,7 +257,7 @@ static int netboot_common(enum proto_t proto, cmd_tbl_t *cmdtp, int argc,
 	rcode = bootm_maybe_autostart(cmdtp, argv[0]);
 
 	if (rcode < 0)
-		show_boot_progress (-83);
+		show_boot_error(83);
 	else
 		show_boot_progress (84);
 	return rcode;
