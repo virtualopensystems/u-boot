@@ -30,7 +30,9 @@ SOBJS-$(CONFIG_SYS_PCI_BIOS)	+= bios_pci.o
 SOBJS-$(CONFIG_SYS_X86_REALMODE)	+= realmode_switch.o
 
 COBJS-$(CONFIG_SYS_PC_BIOS)	+= bios_setup.o
-COBJS-y	+= board.o
+ifeq ($(CONFIG_SYS_GENERIC_BOARD),)
+COBJS-y += board.o
+endif
 COBJS-y	+= bootm.o
 COBJS-y	+= gcc.o
 COBJS-y	+= interrupts.o

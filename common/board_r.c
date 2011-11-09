@@ -56,12 +56,15 @@ static int initr_reloc(void)
  * Some of these functions are needed purely because the functions they
  * call return void. If we change them to return 0, these stubs can go away.
  */
+#ifdef CONFIG_ARM
 static int initr_caches(void)
 {
+	/* TODO: sort out x86 code here */
 	/* Enable caches */
 	enable_caches();
 	return 0;
 }
+#endif
 
 static int initr_reloc_global_data(void)
 {
@@ -232,11 +235,13 @@ static int initr_api(void)
 #endif
 
 /* enable exceptions */
+#ifdef CONFIG_ARM
 static int initr_enable_interrupts(void)
 {
 	enable_interrupts();
 	return 0;
 }
+#endif
 
 #ifdef CONFIG_CMD_NET
 static int initr_ethaddr(void)
