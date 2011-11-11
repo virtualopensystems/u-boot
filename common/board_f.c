@@ -305,6 +305,7 @@ static int reserve_uboot(void)
 	return 0;
 }
 
+#ifndef CONFIG_SPL_BUILD
 /* reserve memory for malloc() area */
 static int reserve_malloc(void)
 {
@@ -324,6 +325,7 @@ static int reserve_board(void)
 			sizeof(bd_t), gd->dest_addr_sp);
 	return 0;
 }
+#endif
 
 static int setup_machine(void)
 {
@@ -342,6 +344,7 @@ static int reserve_global_data(void)
 	return 0;
 }
 
+#ifndef CONFIG_SPL_BUILD
 static int reserve_stacks(void)
 {
 	/* setup stack pointer for exceptions */
@@ -359,6 +362,17 @@ static int reserve_stacks(void)
 
 	return 0;
 }
+#endif
+
+#ifdef CONFIG_SPL_BUILD
+static int reserve_stacks_spl(void)
+{
+	/* Why not -= ? */
+	gd->dest_addr_sp += 128;	/* leave 32 words for abort-stack */
+	gd->irq_sp = gd->dest_addr_sp;
+	return 0;
+}
+#endif
 
 static int display_new_sp(void)
 {
@@ -458,11 +472,17 @@ static init_fnc_t init_sequence_f[] = {
 	reserve_lcd,
 #endif
 	reserve_uboot,
+#ifndef CONFIG_SPL_BUILD
 	reserve_malloc,
 	reserve_board,
+#endif
 	setup_machine,
 	reserve_global_data,
+#ifdef CONFIG_SPL_BUILD
+	reserve_stacks_spl,
+#else
 	reserve_stacks,
+#endif
 	setup_baud_rate,
 	display_new_sp,
 	jump_to_copy,
