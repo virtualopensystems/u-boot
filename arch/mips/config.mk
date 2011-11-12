@@ -27,6 +27,9 @@ CONFIG_STANDALONE_LOAD_ADDR ?= 0x80200000 -T mips.lds
 
 PLATFORM_CPPFLAGS += -DCONFIG_MIPS -D__MIPS__
 
+# Move to unified board system later
+CONFIG_SYS_LEGACY_BOARD := y
+
 #
 # From Linux arch/mips/Makefile
 #

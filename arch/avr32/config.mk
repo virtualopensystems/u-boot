@@ -31,3 +31,6 @@ PLATFORM_RELFLAGS	+= -ffunction-sections -fdata-sections
 LDFLAGS_u-boot		= --gc-sections --relax
 
 LDSCRIPT			= $(SRCTREE)/$(CPUDIR)/u-boot.lds
+
+# Move to unified board system later
+CONFIG_SYS_LEGACY_BOARD := y

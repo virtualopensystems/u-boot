@@ -48,3 +48,6 @@ NORMAL_LIBGCC = $(shell $(CC) $(CFLAGS) -print-libgcc-file-name)
 PREFIXED_LIBGCC = $(OBJTREE)/arch/$(ARCH)/lib/$(shell basename $(NORMAL_LIBGCC))
 
 export USE_PRIVATE_LIBGCC=$(shell dirname $(PREFIXED_LIBGCC))
+
+# Move to unified board system later
+CONFIG_SYS_LEGACY_BOARD := y

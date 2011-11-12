@@ -19,3 +19,6 @@
 
 PLATFORM_CPPFLAGS += -DCONFIG_SANDBOX -D__SANDBOX__
 PLATFORM_LIBS += -lrt
+
+# Move to unified board system later
+CONFIG_SYS_LEGACY_BOARD := y

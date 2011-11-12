@@ -29,6 +29,9 @@ PLATFORM_RELFLAGS += -fpic -mrelocatable -ffunction-sections -fdata-sections
 PLATFORM_CPPFLAGS += -DCONFIG_PPC -D__powerpc__
 PLATFORM_LDFLAGS  += -n
 
+# Move to unified board system later
+CONFIG_SYS_LEGACY_BOARD := y
+
 #
 # When cross-compiling on NetBSD, we have to define __PPC__ or else we
 # will pick up a va_list declaration that is incompatible with the

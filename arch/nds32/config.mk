@@ -33,3 +33,6 @@ PLATFORM_RELFLAGS	+= -gdwarf-2
 PLATFORM_CPPFLAGS	+= -DCONFIG_NDS32 -D__nds32__ -G0 -ffixed-10 -fpie
 
 LDFLAGS_u-boot		= --gc-sections --relax
+
+# Move to unified board system later
+CONFIG_SYS_LEGACY_BOARD := y

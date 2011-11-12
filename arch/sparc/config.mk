@@ -26,3 +26,6 @@ CROSS_COMPILE ?= sparc-elf-
 CONFIG_STANDALONE_LOAD_ADDR ?= 0x00000000 -L $(gcclibdir) -T sparc.lds
 
 PLATFORM_CPPFLAGS += -DCONFIG_SPARC -D__sparc__
+
+# Move to unified board system later
+CONFIG_SYS_LEGACY_BOARD := y

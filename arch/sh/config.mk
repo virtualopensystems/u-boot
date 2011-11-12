@@ -31,3 +31,6 @@ endif
 PLATFORM_CPPFLAGS += -DCONFIG_SH -D__SH__
 PLATFORM_LDFLAGS += -e $(CONFIG_SYS_TEXT_BASE) --defsym reloc_dst=$(CONFIG_SYS_TEXT_BASE)
 LDFLAGS_FINAL = --gc-sections
+
+# Move to unified board system later
+CONFIG_SYS_LEGACY_BOARD := y

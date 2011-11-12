@@ -29,3 +29,6 @@ PLATFORM_CPPFLAGS += -DCONFIG_M68K -D__M68K__
 PLATFORM_LDFLAGS  += -n
 PLATFORM_RELFLAGS              += -ffunction-sections -fdata-sections
 LDFLAGS_FINAL                  += --gc-sections
+
+# Move to unified board system later
+CONFIG_SYS_LEGACY_BOARD := y

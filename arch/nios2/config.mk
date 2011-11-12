@@ -31,3 +31,6 @@ PLATFORM_CPPFLAGS += -G0
 
 LDFLAGS_FINAL += --gc-sections
 PLATFORM_RELFLAGS += -ffunction-sections -fdata-sections
+
+# Move to unified board system later
+CONFIG_SYS_LEGACY_BOARD := y
