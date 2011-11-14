@@ -85,6 +85,7 @@ typedef struct ich_spi_controller {
 
 	uint8_t *opmenu;
 	int menubytes;
+	uint16_t *preop;
 	uint16_t *optype;
 	uint32_t *addr;
 	uint8_t *data;
@@ -343,6 +344,7 @@ void spi_init(void)
 			cntlr.status = (uint8_t *)&ich7_spi->spis;
 			cntlr.control = &ich7_spi->spic;
 			cntlr.bbar = &ich7_spi->bbar;
+			cntlr.preop = &ich7_spi->preop;
 			break;
 		}
 	case 9:
@@ -360,6 +362,7 @@ void spi_init(void)
 			cntlr.status = &ich9_spi->ssfs;
 			cntlr.control = (uint16_t *)ich9_spi->ssfc;
 			cntlr.bbar = &ich9_spi->bbar;
+			cntlr.preop = &ich9_spi->preop;
 			break;
 		}
 	default:
@@ -590,8 +593,22 @@ int spi_xfer(struct spi_slave *slave, const void *dout,
 	if ((with_address = spi_setup_offset(&trans)) < 0)
 		return -1;
 
+	if (!ichspi_lock && trans.opcode == 0x06) {
+		/*
+		 * Treat Write Enable as Atomic Pre-Op if possible
+		 * in order to prevent the Management Engine from
+		 * issuing a transaction between WREN and DATA.
+		 */
+		writew_(trans.opcode, cntlr.preop);
+		return 0;
+	}
+
 	/* Preset control fields */
 	control = SPIC_SCGO | ((opcode_index & 0x07) << 4);
+
+	/* Issue atomic preop cycle if needed */
+	if (readw_(cntlr.preop))
+		control |= SPIC_ACS;
 
 	if (!trans.bytesout && !trans.bytesin) {
 		/*
@@ -676,5 +693,9 @@ int spi_xfer(struct spi_slave *slave, const void *dout,
 				trans.offset += data_length;
 		}
 	}
+
+	/* Clear atomic preop now that xfer is done */
+	writew_(0, cntlr.preop);
+
 	return 0;
 }
