@@ -15,6 +15,7 @@
 #include <chromeos/fmap.h>
 #include <fdt_decode.h>
 #include <linux/string.h>
+#include <malloc.h>
 
 #define PREFIX "chromeos/fdt_decode: "
 
@@ -161,9 +162,24 @@ void *fdt_decode_chromeos_alloc_region(const void *blob,
 		const char *prop_name, size_t *size)
 {
 	int node = fdt_path_offset(blob, "/chromeos-config");
+	void *ptr;
 
-	if (node < 0)
+	if (node < 0) {
+		VBDEBUG(PREFIX "failed to find /chromeos-config in fdt'\n");
 		return NULL;
+	}
 
-	return fdt_decode_alloc_region(blob, node, prop_name, size);
+	if (fdt_decode_region(blob, node, prop_name, &ptr, size)) {
+		VBDEBUG(PREFIX "failed to find %s in /chromeos-config'\n",
+			prop_name);
+		return NULL;
+	}
+
+	if (!ptr)
+		ptr = malloc(*size);
+	if (!ptr) {
+		VBDEBUG(PREFIX "failed to alloc %d bytes for %s'\n",
+			*size, prop_name);
+	}
+	return ptr;
 }
