@@ -660,7 +660,7 @@ static int setup_gbb_and_cdata(void **gbb, crossystem_data_t **cdata,
 {
 	size_t size;
 
-#ifdef CONFIG_HARDWARE_MAPPED_SPI
+#ifndef CONFIG_HARDWARE_MAPPED_SPI
 	*gbb = fdt_decode_chromeos_alloc_region(gd->blob,
 			"google-binary-block", &size);
 #endif
