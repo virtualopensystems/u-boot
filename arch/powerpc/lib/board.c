@@ -1065,7 +1065,7 @@ void board_init_r(gd_t *id, ulong dest_addr)
 void hang(void)
 {
 	puts("### ERROR ### Please RESET the board ###\n");
-	show_boot_error(BOOTSTAGE_ID_NEED_RESET);
+	bootstage_error(BOOTSTAGE_ID_NEED_RESET);
 	for (;;)
 		;
 }
