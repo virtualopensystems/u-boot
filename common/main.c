@@ -270,7 +270,7 @@ int abortboot(int bootdelay)
 /*
  * Return 0 on success, or != 0 on error.
  */
-int run_command2(const char *cmd, int flag)
+int run_command(const char *cmd, int flag)
 {
 #ifndef CONFIG_SYS_HUSH_PARSER
 	/*
@@ -355,7 +355,7 @@ void main_loop (void)
 		int prev = disable_ctrlc(1);	/* disable Control C checking */
 # endif
 
-		run_command2(p, 0);
+		run_command(p, 0);
 
 # ifdef CONFIG_AUTOBOOT_KEYED
 		disable_ctrlc(prev);	/* restore Control C checking */
@@ -403,7 +403,7 @@ void main_loop (void)
 		int prev = disable_ctrlc(1);	/* disable Control C checking */
 # endif
 
-		run_command2(s, 0);
+		run_command(s, 0);
 
 # ifdef CONFIG_AUTOBOOT_KEYED
 		disable_ctrlc(prev);	/* restore Control C checking */
@@ -414,7 +414,7 @@ void main_loop (void)
 	if (menukey == CONFIG_MENUKEY) {
 		s = getenv("menucmd");
 		if (s)
-			run_command2(s, 0);
+			run_command(s, 0);
 	}
 #endif /* CONFIG_MENUKEY */
 #endif /* CONFIG_BOOTDELAY */
@@ -1424,7 +1424,7 @@ int do_run (cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
 			return 1;
 		}
 
-		if (run_command2(arg, flag) != 0)
+		if (run_command(arg, flag) != 0)
 			return 1;
 	}
 	return 0;
