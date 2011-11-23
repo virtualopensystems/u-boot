@@ -33,3 +33,5 @@ CFLAGS_lib/initcall.o += -march=armv4t
 endif
 
 USE_PRIVATE_LIBGCC = yes
+
+CONFIG_ARCH_DEVICE_TREE := tegra20
