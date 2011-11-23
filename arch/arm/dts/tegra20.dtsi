@@ -173,7 +173,8 @@
 		reg = <0xc5000000 0x4000>;
 		interrupts = < 52 >;
 		phy_type = "utmi";
-		clocks = <&periph_clk 22>;	/* PERIPH_ID_USBD */
+		clocks = <&tegra_car 22>;	/* PERIPH_ID_USBD */
+		nvidia,has-legacy-mode;
 	};
 
 	usb@c5004000 {
@@ -181,7 +182,7 @@
 		reg = <0xc5004000 0x4000>;
 		interrupts = < 53 >;
 		phy_type = "ulpi";
-		clocks = <&periph_clk 58>;	/* PERIPH_ID_USB2 */
+		clocks = <&tegra_car 58>;	/* PERIPH_ID_USB2 */
 	};
 
 	usb@c5008000 {
@@ -189,7 +190,7 @@
 		reg = <0xc5008000 0x4000>;
 		interrupts = < 129 >;
 		phy_type = "utmi";
-		clocks = <&periph_clk 59>;	/* PERIPH_ID_USB3 */
+		clocks = <&tegra_car 59>;	/* PERIPH_ID_USB3 */
 	};
 
 };
