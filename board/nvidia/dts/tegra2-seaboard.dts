@@ -71,7 +71,7 @@
 
 	usb@c5000000 {
 		nvidia,vbus-gpio = <&gpio 24 0>; /* PD0 */
-		support-host-mode;
+		dr_mode = "otg";
 	};
 
 	usb@c5004000 {
