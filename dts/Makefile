@@ -86,7 +86,7 @@ $(obj)dt.o: $(DT_BIN)
 	\
 	cd $(dir ${DT_BIN}) && \
 	$(OBJCOPY) -I binary -O $${oformat} -B $${oarch} \
-		$(notdir ${DT_BIN}) $@
+		--prefix-sections=.dts $(notdir ${DT_BIN}) $@
 	rm $(DT_BIN)
 
 OBJS-$(CONFIG_OF_EMBED)	:= dt.o

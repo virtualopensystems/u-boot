@@ -43,6 +43,11 @@ SECTIONS
 
 	. = ALIGN(4);
 	.data : {
+		/*
+		 * Sadly objcopy seems to ignore --section-alignment.
+		 * Put any embedded device tree first so it is aligned.
+		 */
+		*(.dts.data)
 		*(.data)
 	}
 
