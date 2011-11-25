@@ -197,5 +197,9 @@
 		clocks = <&tegra_car 59>;	/* PERIPH_ID_USB3 */
 	};
 
+	kbc@7000e200 {
+		compatible = "nvidia,tegra20-kbc";
+		reg = <0x7000e200 0x0078>;
+	};
 };
 
