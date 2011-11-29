@@ -275,11 +275,24 @@ void spi_free_slave(struct spi_slave *_slave)
 	free(slave);
 }
 
-static inline int spi_is_cougarpoint_lpc(uint16_t device_id)
+/*
+ * Check if this device ID matches one of supported Intel PCH devices.
+ *
+ * Return the ICH version if there is a match, or zero otherwise.
+ */
+static inline int get_ich_version(uint16_t device_id)
 {
-	return device_id >= PCI_DEVICE_ID_INTEL_COUGARPOINT_LPC_MIN &&
-		device_id <= PCI_DEVICE_ID_INTEL_COUGARPOINT_LPC_MAX;
-};
+	if (device_id == PCI_DEVICE_ID_INTEL_TGP_LPC)
+		return 7;
+
+	if ((device_id >= PCI_DEVICE_ID_INTEL_COUGARPOINT_LPC_MIN &&
+	     device_id <= PCI_DEVICE_ID_INTEL_COUGARPOINT_LPC_MAX) ||
+	    (device_id >= PCI_DEVICE_ID_INTEL_PANTHERPOINT_LPC_MIN &&
+	     device_id <= PCI_DEVICE_ID_INTEL_PANTHERPOINT_LPC_MAX))
+		return 9;
+
+	return 0;
+}
 
 void spi_init(void)
 {
@@ -298,7 +311,7 @@ void spi_init(void)
 		return;
 	}
 
-	for (bus = 0; bus <= last_bus; bus++) {
+	for (bus = 0; (bus <= last_bus) && !ich_version; bus++) {
 		uint32_t ids;
 		uint16_t vendor_id, device_id;
 
@@ -310,13 +323,7 @@ void spi_init(void)
 		if (vendor_id != PCI_VENDOR_ID_INTEL)
 			continue;
 
-		if (device_id == PCI_DEVICE_ID_INTEL_TGP_LPC) {
-			ich_version = 7;
-			break;
-		} else if (spi_is_cougarpoint_lpc(device_id)) {
-			ich_version = 9;
-			break;
-		}
+		ich_version = get_ich_version(device_id);
 	}
 
 	if (!ich_version) {
