@@ -229,11 +229,11 @@ init_fnc_t *init_sequence[] = {
 #if defined(CONFIG_ARCH_CPU_INIT)
 	arch_cpu_init,		/* basic arch cpu dependent setup */
 #endif
-#if defined(CONFIG_BOARD_EARLY_INIT_F)
-	board_early_init_f,
-#endif
 #ifdef CONFIG_OF_CONTROL
 	fdtdec_check_fdt,
+#endif
+#if defined(CONFIG_BOARD_EARLY_INIT_F)
+	board_early_init_f,
 #endif
 	timer_init,		/* initialize timer */
 #ifdef CONFIG_FSL_ESDHC
