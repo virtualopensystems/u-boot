@@ -52,6 +52,7 @@
 #define CONFIG_SYS_BOARD_ODMDATA	0x300d8011 /* lp1, 1GB */
 
 #define CONFIG_BOARD_EARLY_INIT_F
+#define CONFIG_BOARD_LATE_INIT		/* Make sure LCD init is complete */
 
 /* So our flasher can verify that all is well */
 #define CONFIG_CRC32_VERIFY
@@ -104,6 +105,13 @@
 
 #undef TEGRA2_DEVICE_SETTINGS
 #define TEGRA2_DEVICE_SETTINGS	"stdin=serial,tegra-kbc\0" \
-					"stdout=serial\0" \
-					"stderr=serial\0"
+					"stdout=serial,lcd\0" \
+					"stderr=serial,lcd\0"
+
+/* LCD support */
+#define CONFIG_LCD
+#define CONFIG_VIDEO_TEGRA
+#define LCD_BPP				LCD_COLOR16
+#define CONFIG_SYS_WHITE_ON_BLACK
+#define CONSOLE_SCROLL_LINES		10
 #endif /* __CONFIG_H */
