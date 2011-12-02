@@ -35,7 +35,7 @@ LIB	=  $(obj)lib$(SOC).o
 SOBJS	:= lowlevel_init.o
 COBJS-y	:= ap20.o board.o clock.o funcmux.o pinmux.o sys_info.o timer.o
 COBJS-$(CONFIG_USB_EHCI_TEGRA) += usb.o
-COBJS-$(CONFIG_VIDEO_TEGRA) += pwfm.o
+COBJS-$(CONFIG_VIDEO_TEGRA) += display.o pwfm.o
 
 COBJS	:= $(COBJS-y)
 SRCS	:= $(SOBJS:.o=.S) $(COBJS:.o=.c)
