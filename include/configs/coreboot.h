@@ -107,7 +107,7 @@
 #endif
 
 #define CONFIG_SYS_CONSOLE_IS_IN_ENV
-#define CONFIG_STD_DEVICES_SETTINGS     "stdin=vga,serial\0" \
+#define CONFIG_STD_DEVICES_SETTINGS     "stdin=usbkbd,vga,serial\0" \
 					"stdout=serial,cbmem\0" \
 					"stderr=vga,serial,cbmem\0"
 
@@ -261,6 +261,8 @@
 #define CONFIG_SYS_USB_EHCI_MAX_ROOT_PORTS     12
 #define CONFIG_USB_MAX_CONTROLLER_COUNT        2
 #define CONFIG_USB_STORAGE
+#define CONFIG_SYS_USB_EVENT_POLL_VIA_CONTROL_EP
+#define CONFIG_USB_KEYBOARD
 
 #if BUILD_NETWORK_STUFF
 #define CONFIG_USB_HOST_ETHER
