@@ -23,6 +23,7 @@
 #include <chromeos/hasher_state.h>
 #include <chromeos/memory_wipe.h>
 #include <chromeos/power_management.h>
+#include <usb.h>
 
 #include <gbb_header.h> /* for GoogleBinaryBlockHeader */
 #include <tss_constants.h>
@@ -109,6 +110,18 @@ str_selection(uint32_t selection)
 		return str[selection];
 }
 #endif /* VBOOT_DEBUG */
+
+/*
+ * Implement a weak default function for boards that optionally
+ * need to initialize the USB stack to detect their keyboard.
+ */
+int __board_use_usb_keyboard(void)
+{
+	/* default: no USB keyboard as primary input */
+	return 0;
+}
+int board_use_usb_keyboard(int boot_mode)
+	__attribute__((weak, alias("__board_use_usb_keyboard")));
 
 /*
  * Check if two stop boot secuence can be interrupted. If configured - use the
@@ -731,6 +744,15 @@ twostop_boot(void)
 	/*
 	 * TODO: Now, load drivers for rec/normal/dev main firmware.
 	 */
+#ifdef CONFIG_USB_KEYBOARD
+	if (board_use_usb_keyboard(boot_mode)) {
+		int cnt;
+		/* enumerate USB devices to find the keyboard */
+		cnt = usb_init();
+		if (cnt >= 0)
+			drv_usb_kbd_init();
+	}
+#endif
 
 	VBDEBUG(PREFIX "boot_mode: %d\n", boot_mode);
 
