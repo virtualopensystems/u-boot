@@ -11,5 +11,6 @@
 	config {
 		hwid = "X86 STUMPY TEST 0128";
 		skip-i8042 = <1>;
+		usb-keyboard;
 	};
 };
