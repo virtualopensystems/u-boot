@@ -38,6 +38,7 @@
 #include <asm/arch-coreboot/sysinfo.h>
 #include <coreboot_timestamp.h>
 #include <cros/common.h>
+#include <cros/crossystem_data.h>
 #include <cros/fdt_decode.h>
 #include <cros/firmware_storage.h>
 #include <cros/power_management.h>
@@ -224,6 +225,22 @@ int board_i8042_skip(void)
 	if (devsw.value)
 		return 0;
 	return fdtdec_get_config_int(gd->fdt_blob, "skip-i8042", 0);
+}
+
+int board_use_usb_keyboard(int boot_mode)
+{
+	cros_gpio_t devsw;
+
+	/* the keyboard is needed only in developer mode and recovery mode */
+	cros_gpio_fetch(CROS_GPIO_DEVSW, &devsw);
+	if (!devsw.value && (boot_mode != FIRMWARE_TYPE_RECOVERY))
+		return 0;
+
+	/* does this machine have a USB keyboard as primary input ? */
+	if (fdtdec_get_config_bool(gd->fdt_blob, "usb-keyboard"))
+		return 1;
+
+	return 0;
 }
 
 #define MTRRphysBase_MSR(reg) (0x200 + 2 * (reg))
