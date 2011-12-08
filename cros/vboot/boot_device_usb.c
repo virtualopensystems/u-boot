@@ -15,20 +15,35 @@
 
 #include <vboot_api.h>
 
+static int is_enumerated;
+
 static int boot_device_usb_start(uint32_t disk_flags)
 {
+	int enumerate = 1;
+
 	/* If we aren't looking for removable disks, skip USB */
 	if (!(disk_flags & VB_DISK_FLAG_REMOVABLE))
 		return 0;
 
 	/*
-	 * We should stop all USB devices first. Otherwise we can't detect any
-	 * new devices.
+	 * if the USB devices have already been enumerated, redo it
+	 * only if something has been plugged on unplugged.
 	 */
-	usb_stop();
+	if (is_enumerated)
+		enumerate = usb_detect_change();
 
-	if (usb_init() >= 0)
-		usb_stor_scan(/*mode=*/1);
+	if (enumerate) {
+		/*
+		 * We should stop all USB devices first. Otherwise we can't
+		 * detect any new devices.
+		 */
+		usb_stop();
+
+		if (usb_init() >= 0) {
+			usb_stor_scan(/*mode=*/1);
+			is_enumerated = 1;
+		}
+	}
 	return 1;
 }
 
