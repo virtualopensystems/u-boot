@@ -477,15 +477,19 @@ int drv_usb_kbd_init(void)
 		if (error)
 			return error;
 
-		/* Check if this is the standard input device. */
-		if (strcmp(stdinname, DEVNAME))
-			return 1;
-
 		/* Reassign the console */
 		if (overwrite_console())
 			return 1;
 
+		/* Check if this is the standard input device. */
+#ifdef CONFIG_CONSOLE_MUX
+		error = iomux_doenv(stdin, stdinname);
+#else
+		if (strcmp(stdinname, DEVNAME))
+			return 1;
+
 		error = console_assign(stdin, DEVNAME);
+#endif
 		if (error)
 			return error;
 
