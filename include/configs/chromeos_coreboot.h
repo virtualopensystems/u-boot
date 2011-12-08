@@ -15,4 +15,4 @@
 
 #include "chromeos.h"
 
-#endif /* __configs_chromeos_tegra2_twostop_h__ */
+#endif /* __configs_chromeos_coreboot_h__ */
