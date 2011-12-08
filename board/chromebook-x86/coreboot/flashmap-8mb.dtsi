@@ -22,7 +22,7 @@
 		 */
 		si-all@0 {
 			label = "si-all";
-			reg = <0x00000000 0x00200000>;
+			reg = <0x00000000 0x00180000>;
 		};
 
 		/*
@@ -42,7 +42,7 @@
 		 */
 		si-me@0 {
 			label = "si-me";
-			reg = <0x00001000 0x001ff000>;
+			reg = <0x00001000 0x0017f000>;
 			type = "wiped";
 			wipe-value = [ff];
 		};
@@ -54,7 +54,7 @@
 		 */
 		si-bios@0 {
 			label ="si-bios";
-			reg = <0x00200000 0x00600000>;
+			reg = <0x00180000 0x00680000>;
 		};
 
 		/*
@@ -64,7 +64,7 @@
 		 */
 		coreboot-extra@0 {
 			label = "coreboot-extra";
-			reg = <0x00200000 0x001ff000>;
+			reg = <0x00180000 0x0027f000>;
 			type = "wiped";
 			wipe-value = [ff];
 		};
