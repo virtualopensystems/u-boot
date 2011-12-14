@@ -62,9 +62,9 @@
 		 * extensions. cros_bundle_firmware dislikes holes in the
 		 * FMAP, so we cover all empty space here.
 		 */
-		coreboot-extra@0 {
-			label = "coreboot-extra";
-			reg = <0x00180000 0x0026b000>;
+		rw-unused@0 {
+			label = "rw-unused";
+			reg = <0x00180000 0x0006b000>;
 			type = "wiped";
 			wipe-value = [ff];
 		};
@@ -73,7 +73,7 @@
 		rw-mrc-cache@0 {
 			label = "rw-mrc-cache";
 			/* Alignment: 4k (for updating) */
-			reg = <0x003eb000 0x00010000>;
+			reg = <0x001eb000 0x00010000>;
 			type = "wiped";
 			wipe-value = [ff];
 		};
@@ -82,7 +82,7 @@
 		rw-vpd@0 {
 			label = "rw-vpd";
 			/* Alignment: 4k (for updating) */
-			reg = <0x003fb000 0x00001000>;
+			reg = <0x001fb000 0x00001000>;
 			type = "wiped";
 			wipe-value = [ff];
 		};
@@ -94,7 +94,7 @@
 			 * Alignment: 4k, and must occupy bottom of U-Boot
 			 * firmware -- check CONFIG_ENV_OFFSET
 			 */
-			reg = <0x003fc000 0x00004000>;
+			reg = <0x001fc000 0x00004000>;
 
 			/*
 			 * We could put the dev environment here, but U-Boot has
@@ -109,7 +109,7 @@
 		rw-a@0 {
 			label = "rw-section-a";
 			/* Alignment: 4k (for updating) */
-			reg = <0x00400000 0x00100000>;
+			reg = <0x00200000 0x00100000>;
 		};
 		rw-a-vblock@0 {
 			label = "vblock-a";
@@ -117,7 +117,7 @@
 			 * Alignment: 4k (for updating) and must be in start of
 			 * each RW_SECTION.
 			 */
-			reg = <0x00400000 0x00010000>;
+			reg = <0x00200000 0x00010000>;
 			type = "keyblock boot";
 			keyblock = "firmware.keyblock";
 			signprivate = "firmware_data_key.vbprivk";
@@ -128,13 +128,13 @@
 		rw-a-boot@0 {
 			/* Alignment: no requirement (yet). */
 			label = "fw-main-a";
-			reg = <0x00410000 0x000effc0>;
+			reg = <0x00210000 0x000effc0>;
 			type = "blob boot";
 		};
 		rw-a-firmware-id@0 {
 			/* Alignment: no requirement. */
 			label = "rw-fwid-a";
-			reg = <0x004fffc0 0x00000040>;
+			reg = <0x002fffc0 0x00000040>;
 			read-only;
 			type = "blobstring fwid";
 		};
@@ -143,7 +143,7 @@
 		rw-b@0 {
 			label = "rw-section-b";
 			/* Alignment: 4k (for updating) */
-			reg = <0x00500000 0x00100000>;
+			reg = <0x00300000 0x00100000>;
 		};
 		rw-b-vblock@0 {
 			label = "vblock-b";
@@ -151,7 +151,7 @@
 			 * Alignment: 4k (for updating) and must be in start of
 			 * each RW_SECTION.
 			 */
-			reg = <0x00500000 0x00010000>;
+			reg = <0x00300000 0x00010000>;
 			type = "keyblock boot";
 			keyblock = "firmware.keyblock";
 			signprivate = "firmware_data_key.vbprivk";
@@ -162,15 +162,27 @@
 		rw-b-boot@0 {
 			label = "fw-main-b";
 			/* Alignment: no requirement (yet). */
-			reg = <0x00510000 0x000effc0>;
+			reg = <0x00310000 0x000effc0>;
 			type = "blob boot";
 		};
 		rw-b-firmware-id@0 {
 			label = "rw-fwid-b";
 			/* Alignment: no requirement. */
-			reg = <0x005fffc0 0x00000040>;
+			reg = <0x003fffc0 0x00000040>;
 			read-only;
 			type = "blobstring fwid";
+		};
+
+		/*
+		 * This space is currently unused and reserved for future
+		 * extensions. cros_bundle_firmware dislikes holes in the
+		 * FMAP, so we cover all empty space here.
+		 */
+		ro-unused@0 {
+			label = "ro-unused";
+			reg = <0x00400000 0x00250000>;
+			type = "wiped";
+			wipe-value = [ff];
 		};
 
                 /* ---- Section: Vital-product data (VPD) ---- */
@@ -178,7 +190,7 @@
 			label = "ro-vpd";
 
 			/* VPD offset must be aligned to 4K bytes */
-			reg = <0x00600000 0x00020000>; /* 128 KB */
+			reg = <0x00650000 0x00020000>; /* 128 KB */
 			read-only;
 			type = "wiped";
 			wipe-value = [ff];
@@ -186,8 +198,8 @@
 
                 /* ---- Section: Read-only ---- */
 		ro-section@0 {
-                        label = "ro-section";
-			reg = <0x00620000 0x001e0000>;
+			label = "ro-section";
+			reg = <0x00670000 0x00190000>;
 			read-only;
 		};
 		ro-fmap@0 {
