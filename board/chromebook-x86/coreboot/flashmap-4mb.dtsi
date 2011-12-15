@@ -169,8 +169,8 @@
 			wipe-value = [00];
 		};
 		/* ---- Section: Rewritable private 16 KB---- */
-		dev-cfg@0 {
-			label = "dev-cfg";
+		rw-environment@0 {
+			label = "rw-environment";
 			/* Alignment: 4k, and must occupy bottom of U-Boot
 			 * firmware -- check CONFIG_ENV_OFFSET */
 			reg = <0x0001c000 0x00004000>;

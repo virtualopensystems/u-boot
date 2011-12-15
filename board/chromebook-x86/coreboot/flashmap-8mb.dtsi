@@ -73,7 +73,7 @@
 		 */
 		rw-unused@0 {
 			label = "rw-unused";
-			reg = <0x00181000 0x0006b000>;
+			reg = <0x00181000 0x00067000>;
 			type = "wiped";
 			wipe-value = [ff];
 		};
@@ -83,7 +83,21 @@
 			/* Alignment: 4k (for updating).
 			 * Anything in this range may be updated in recovery. */
 			label = "rw-shared";
-			reg = <0x001ec000 0x00014000>;
+			reg = <0x001e8000 0x00018000>;
+		};
+
+		/* ---- Section: Rewritable u-boot environment 16 KB---- */
+		rw-environment@0 {
+			label = "rw-environment";
+			/* Alignment 4k: (for updating) */
+			reg = <0x001e8000 0x00004000>;
+			/*
+			 * We could put the dev environment here, but U-Boot has
+			 * a default built in. Devs can 'saveenv' to set this
+			 * up.
+			 */
+			type = "wiped";
+			wipe-value = [00];
 		};
 
 		/* ---- Section: Rewritable MRC cache 64 KB ---- */
@@ -98,17 +112,8 @@
 		/* ---- Section: Rewritable private 16 KB---- */
 		dev-cfg@0 {
 			label = "dev-cfg";
-			/*
-			 * Alignment: 4k, and must occupy bottom of U-Boot
-			 * firmware -- check CONFIG_ENV_OFFSET
-			 */
+			/* Alignment: 4k (for updating) */
 			reg = <0x001fc000 0x00004000>;
-
-			/*
-			 * We could put the dev environment here, but U-Boot has
-			 * a default built in. Devs can 'saveenv' to set this
-			 * up.
-			 */
 			type = "wiped";
 			wipe-value = [00];
 		};
