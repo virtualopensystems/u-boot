@@ -40,6 +40,7 @@ struct twostop_fmap {
 
 	struct fmap_firmware_entry readwrite_a;
 	struct fmap_firmware_entry readwrite_b;
+	u32  flash_base;
 };
 
 void dump_fmap(struct twostop_fmap *config);

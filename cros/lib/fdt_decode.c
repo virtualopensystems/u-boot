@@ -125,6 +125,8 @@ int fdt_decode_twostop_fmap(const void *blob, struct twostop_fmap *config)
 {
 	int fmap_offset;
 	int err;
+	uint32_t *property;
+	int length;
 
 	fmap_offset = fdt_node_offset_by_compatible(blob, -1,
 			"chromeos,flashmap");
@@ -132,6 +134,15 @@ int fdt_decode_twostop_fmap(const void *blob, struct twostop_fmap *config)
 		VBDEBUG(PREFIX "chromeos,flashmap node is missing\n");
 		return fmap_offset;
 	}
+
+	property = (uint32_t *)fdt_getprop(blob, fmap_offset, "reg", &length);
+	if (!property || (length != 8)) {
+		VBDEBUG(PREFIX "Flashmap node missing the `reg' property\n");
+		return -FDT_ERR_MISSING;
+	}
+
+	config->flash_base = fdt32_to_cpu(property[0]);
+
 	err = decode_firmware_entry(blob, fmap_offset, "rw-a",
 			&config->readwrite_a);
 	err |= decode_firmware_entry(blob, fmap_offset, "rw-b",

@@ -661,9 +661,11 @@ twostop_main_firmware(struct twostop_fmap *fmap, void *gbb,
 }
 
 /**
- * Get address of the gbb and cdata, and optionally verify them.
+ * Get address of the cdata (and gbb, if not mapping SPI flash directly), and
+ * optionally verify them.
  *
- * @param gbb		returns pointer to GBB
+ * @param gbb returns pointer to GBB when SPI flash is not mapped directly.
+ *            Contains pointer to gbb otherwise.
  * @param cdata		returns pointer to crossystem data
  * @param verify	1 to verify data, 0 to skip this step
  * @return 0 if ok, -1 on error
@@ -676,11 +678,18 @@ static int setup_gbb_and_cdata(void **gbb, crossystem_data_t **cdata,
 #ifndef CONFIG_HARDWARE_MAPPED_SPI
 	*gbb = fdt_decode_chromeos_alloc_region(gd->blob,
 			"google-binary-block", &size);
+
+	if (!*gbb) {
+		VBDEBUG(PREFIX "google-binary-block missing "
+			"from fdt, or malloc failed\n");
+		return -1;
+	}
+
 #endif
 	*cdata = fdt_decode_chromeos_alloc_region(gd->blob, "cros-system-data",
 						 &size);
-	if (!*gbb || !*cdata) {
-		VBDEBUG(PREFIX "google-binary-block/cros-system-data missing "
+	if (!*cdata) {
+		VBDEBUG(PREFIX "cros-system-data missing "
 				"from fdt, or malloc failed\n");
 		return -1;
 	}
@@ -695,7 +704,7 @@ static int setup_gbb_and_cdata(void **gbb, crossystem_data_t **cdata,
 	}
 
 	if (verify && gbb_check_integrity(*gbb)) {
-		VBDEBUG(PREFIX "invalid gbb\n");
+		VBDEBUG(PREFIX "invalid gbb at %p\n", *gbb);
 		return -1;
 	}
 	return 0;
@@ -778,14 +787,17 @@ twostop_readwrite_main_firmware(void)
 	crossystem_data_t *cdata;
 	void *gbb;
 
-	if (setup_gbb_and_cdata(&gbb, &cdata, 1))
-		return VB_SELECT_ERROR;
-
 	if (fdt_decode_twostop_fmap(gd->blob, &fmap)) {
 		VBDEBUG(PREFIX "failed to decode fmap\n");
 		return VB_SELECT_ERROR;
 	}
 	dump_fmap(&fmap);
+
+#ifdef CONFIG_HARDWARE_MAPPED_SPI
+	gbb = (void *) (fmap.readonly.gbb.offset + fmap.flash_base);
+#endif
+	if (setup_gbb_and_cdata(&gbb, &cdata, 1))
+		return VB_SELECT_ERROR;
 
 	/*
 	 * VbSelectAndLoadKernel() assumes the TPM interface has already been
