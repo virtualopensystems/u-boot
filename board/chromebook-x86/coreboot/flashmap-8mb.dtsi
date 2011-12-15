@@ -57,6 +57,15 @@
 			reg = <0x00180000 0x00680000>;
 		};
 
+		/* ---- Section: Rewritable VPD 4 KB ---- */
+		rw-vpd@0 {
+			label = "rw-vpd";
+			/* Alignment: 4k (for updating) */
+			reg = <0x00180000 0x00001000>;
+			type = "wiped";
+			wipe-value = [ff];
+		};
+
 		/*
 		 * This space is currently unused and reserved for future
 		 * extensions. cros_bundle_firmware dislikes holes in the
@@ -64,25 +73,24 @@
 		 */
 		rw-unused@0 {
 			label = "rw-unused";
-			reg = <0x00180000 0x0006b000>;
+			reg = <0x00181000 0x0006b000>;
 			type = "wiped";
 			wipe-value = [ff];
+		};
+
+		/* ---- Section: Rewritable shared 80 KB---- */
+		shared-section@0 {
+			/* Alignment: 4k (for updating).
+			 * Anything in this range may be updated in recovery. */
+			label = "rw-shared";
+			reg = <0x001ec000 0x00014000>;
 		};
 
 		/* ---- Section: Rewritable MRC cache 64 KB ---- */
 		rw-mrc-cache@0 {
 			label = "rw-mrc-cache";
 			/* Alignment: 4k (for updating) */
-			reg = <0x001eb000 0x00010000>;
-			type = "wiped";
-			wipe-value = [ff];
-		};
-
-		/* ---- Section: Rewritable VPD 4 KB ---- */
-		rw-vpd@0 {
-			label = "rw-vpd";
-			/* Alignment: 4k (for updating) */
-			reg = <0x001fb000 0x00001000>;
+			reg = <0x001ec000 0x00010000>;
 			type = "wiped";
 			wipe-value = [ff];
 		};
