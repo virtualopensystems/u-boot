@@ -16,6 +16,7 @@
 #include <common.h>
 #include <malloc.h>
 #include <chromeos/common.h>
+#include <chromeos/hda_codec.h>
 #include <chromeos/power_management.h>
 
 /* Import the definition of vboot_wrapper interfaces. */
@@ -89,10 +90,17 @@ void VbExSleepMs(uint32_t msec)
 
 VbError_t VbExBeep(uint32_t msec, uint32_t frequency)
 {
-	/* TODO Implement it later. */
-	VbExSleepMs(msec);
-	VBDEBUG("Beep!\n");
-	return VBERROR_NO_SOUND;
+	if (frequency)
+		enable_beep();
+	else
+		disable_beep();
+
+	if (msec > 0) {
+		VbExSleepMs(msec);
+		disable_beep();
+	}
+
+	return VBERROR_SUCCESS;
 }
 
 int Memcmp(const void *src1, const void *src2, size_t n)
