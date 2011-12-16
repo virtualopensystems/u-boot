@@ -134,7 +134,8 @@ typedef struct {
 	uint32_t	vbt8;		/* 192 recovery reason */
 	uint32_t	vbt9;		/* 196 fmap base address */
 	uint8_t		vdat[3072];	/* 19a */
-					/* d9a */
+	uint32_t	vbt10;		/* d9a */
+					/* d9e */
 } __attribute__((packed)) chromeos_acpi_t;
 
 #define assert_offset(MEMBER, OFFSET) \

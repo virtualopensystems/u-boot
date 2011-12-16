@@ -308,6 +308,9 @@ int crossystem_data_update_acpi(crossystem_data_t *cdata)
 	acpi_table->vbt7 = cdata->firmware_type;
 	acpi_table->vbt8 = RECOVERY_REASON_NONE;
 	acpi_table->vbt9 = cdata->fmap_offset;
+
+	strncpy((char *)acpi_table->vbt10,
+			(const char *)cdata->firmware_id, 64);
 	return 0;
 }
 #endif
