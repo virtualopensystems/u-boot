@@ -186,9 +186,9 @@
 		 * extensions. cros_bundle_firmware dislikes holes in the
 		 * FMAP, so we cover all empty space here.
 		 */
-		ro-unused@0 {
-			label = "ro-unused";
-			reg = <0x00400000 0x00250000>;
+		ro-unused-1@0 {
+			label = "ro-unused-1";
+			reg = <0x00400000 0x00170000>;
 			type = "wiped";
 			wipe-value = [ff];
 		};
@@ -198,8 +198,20 @@
 			label = "ro-vpd";
 
 			/* VPD offset must be aligned to 4K bytes */
-			reg = <0x00650000 0x00020000>; /* 128 KB */
+			reg = <0x00570000 0x00020000>; /* 128 KB */
 			read-only;
+			type = "wiped";
+			wipe-value = [ff];
+		};
+
+		/*
+		 * This space is currently unused and reserved for future
+		 * extensions. cros_bundle_firmware dislikes holes in the
+		 * FMAP, so we cover all empty space here.
+		 */
+		ro-unused-2@0 {
+			label = "ro-unused-2";
+			reg = <0x00590000 0x000e0000>;
 			type = "wiped";
 			wipe-value = [ff];
 		};
