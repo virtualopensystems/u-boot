@@ -90,6 +90,7 @@ void VbExSleepMs(uint32_t msec)
 
 VbError_t VbExBeep(uint32_t msec, uint32_t frequency)
 {
+#if defined(CONFIG_SYS_COREBOOT)
 	if (frequency)
 		enable_beep();
 	else
@@ -101,6 +102,12 @@ VbError_t VbExBeep(uint32_t msec, uint32_t frequency)
 	}
 
 	return VBERROR_SUCCESS;
+#else
+	/* TODO Implement it later. */
+	VbExSleepMs(msec);
+	VBDEBUG("Beep!\n");
+	return VBERROR_NO_SOUND;
+#endif
 }
 
 int Memcmp(const void *src1, const void *src2, size_t n)
