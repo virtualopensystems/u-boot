@@ -584,17 +584,24 @@ int console_assign(int file, const char *devname)
 	return -1;
 }
 
-/* Called before relocation - use serial functions */
-int console_init_f(void)
+int console_ready(void)
 {
-	gd->have_console = 1;
-
 #ifdef CONFIG_SILENT_CONSOLE
 	if (getenv("silent") != NULL)
 		gd->flags |= GD_FLG_SILENT;
 #endif
-
+	gd->have_console = 1;
 	print_pre_console_buffer();
+
+	return 0;
+}
+
+/* Called before relocation - use serial functions */
+int console_init_f(void)
+{
+#ifndef CONFIG_DELAY_CONSOLE
+	console_ready();
+#endif
 
 	return 0;
 }
