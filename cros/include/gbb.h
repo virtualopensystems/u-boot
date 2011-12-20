@@ -22,11 +22,9 @@
  * @param gbb		Buffer for holding GBB
  * @param file		Flashrom device handle
  * @param gbb_offset	Offset of GBB in flashrom device
- * @param gbb_size	Size of the buffer holding GBB
  * @return zero if this succeeds, non-zero if this fails
  */
-int gbb_init(read_buf_type gbb, firmware_storage_t *file, uint32_t gbb_offset,
-	     size_t gbb_size);
+int gbb_init(read_buf_type gbb, firmware_storage_t *file, uint32_t gbb_offset);
 
 #ifndef CONFIG_HARDWARE_MAPPED_SPI
 /**
@@ -35,11 +33,10 @@ int gbb_init(read_buf_type gbb, firmware_storage_t *file, uint32_t gbb_offset,
  * @param gbb		Buffer for holding GBB
  * @param file		Flashrom device handle
  * @param gbb_offset	Offset of GBB in flashrom device
- * @param gbb_size	Size of the buffer holding GBB
  * @return zero if this succeeds, non-zero if this fails
  */
-int gbb_read_bmp_block(read_buf_type gbb, firmware_storage_t *file,
-		       uint32_t gbb_offset, size_t gbb_size);
+int gbb_read_bmp_block(read_buf_type gbb,
+		firmware_storage_t *file, uint32_t gbb_offset);
 
 /*
  * This loads the recovery key of GBB from flashrom.
@@ -47,11 +44,10 @@ int gbb_read_bmp_block(read_buf_type gbb, firmware_storage_t *file,
  * @param gbb		Buffer for holding GBB
  * @param file		Flashrom device handle
  * @param gbb_offset	Offset of GBB in flashrom device
- * @param gbb_size	Size of the buffer holding GBB
  * @return zero if this succeeds, non-zero if this fails
  */
-int gbb_read_recovery_key(read_buf_type gbb, firmware_storage_t *file,
-			  uint32_t gbb_offset, size_t gbb_size);
+int gbb_read_recovery_key(read_buf_type gbb,
+		firmware_storage_t *file, uint32_t gbb_offset);
 
 #else
 
