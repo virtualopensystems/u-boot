@@ -34,12 +34,15 @@
 static int border_check(struct spi_flash *flash, uint32_t offset,
 		uint32_t count)
 {
+	uint32_t max_offset = offset + count;
+
 	if (offset >= flash->size) {
 		VBDEBUG(PREFIX "at EOF\n");
 		return -1;
 	}
 
-	if (offset + count > flash->size) {
+	/* max_offset will be less than offset iff overflow occurred. */
+	if (max_offset < offset || max_offset > flash->size) {
 		VBDEBUG(PREFIX "exceed range\n");
 		return -1;
 	}
