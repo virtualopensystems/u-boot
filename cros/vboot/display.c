@@ -10,10 +10,12 @@
 
 #include <common.h>
 #ifdef CONFIG_LCD
+#define HAVE_DISPLAY
 #include <lcd.h>
 #endif
 #ifdef CONFIG_CFB_CONSOLE
 #include <video.h>
+#define HAVE_DISPLAY
 #endif
 #include <chromeos/common.h>
 #include <lzma/LzmaTypes.h>
@@ -36,6 +38,7 @@ struct display_callbacks {
 	int (*dc_display_clear) (void);
 };
 
+#ifdef HAVE_DISPLAY
 static struct display_callbacks display_callbacks_ = {
 #ifdef CONFIG_LCD
 	.dc_get_pixel_width = lcd_get_pixel_width,
@@ -47,7 +50,7 @@ static struct display_callbacks display_callbacks_ = {
 	.dc_display_bitmap = lcd_display_bitmap,
 	.dc_display_clear = lcd_clear,
 
-#else
+#elif defined(CONFIG_VIDEO)
 	.dc_get_pixel_width = video_get_pixel_width,
 	.dc_get_pixel_height = video_get_pixel_height,
 	.dc_get_screen_columns = video_get_screen_columns,
@@ -58,11 +61,17 @@ static struct display_callbacks display_callbacks_ = {
 	.dc_display_clear = video_clear
 #endif
 };
+#endif
 
 VbError_t VbExDisplayInit(uint32_t *width, uint32_t *height)
 {
+#ifdef HAVE_DISPLAY
 	*width = display_callbacks_.dc_get_pixel_width();
 	*height = display_callbacks_.dc_get_pixel_height();
+#else
+	*width = 640;
+	*height = 480;
+#endif
 	return VBERROR_SUCCESS;
 }
 
@@ -72,6 +81,7 @@ VbError_t VbExDisplayBacklight(uint8_t enable)
 	return VBERROR_SUCCESS;
 }
 
+#ifdef HAVE_DISPLAY
 /* Print the message on the center of LCD. */
 static void print_on_center(const char *message)
 {
@@ -92,9 +102,11 @@ static void print_on_center(const char *message)
 	for (i = i + text_length; i < screen_size; i++)
 		display_callbacks_.dc_puts(".");
 }
+#endif
 
 VbError_t VbExDisplayScreen(uint32_t screen_type)
 {
+#ifdef HAVE_DISPLAY
 	/*
 	 * Show the debug messages for development. It is a backup method
 	 * when GBB does not contain a full set of bitmaps.
@@ -124,6 +136,7 @@ VbError_t VbExDisplayScreen(uint32_t screen_type)
 					screen_type);
 			return 1;
 	}
+#endif
 	return VBERROR_SUCCESS;
 }
 
@@ -159,25 +172,33 @@ VbError_t VbExDecompress(void *inbuf, uint32_t in_size,
 VbError_t VbExDisplayImage(uint32_t x, uint32_t y,
                            void *buffer, uint32_t buffersize)
 {
+#ifdef HAVE_DISPLAY
 	int ret;
+
 	ret = display_callbacks_.dc_display_bitmap((ulong)buffer, x, y);
 	if (ret) {
 		VBDEBUG("LCD display error.\n");
 		return VBERROR_UNKNOWN;
 	}
-
+#endif
 	return VBERROR_SUCCESS;
 }
 
 VbError_t VbExDisplayDebugInfo(const char *info_str)
 {
+#ifdef HAVE_DISPLAY
 	display_callbacks_.dc_position_cursor(0, 0);
 	display_callbacks_.dc_puts(info_str);
+#endif
 	return VBERROR_SUCCESS;
 }
 
 /* this function is not technically part of the vboot interface */
 int display_clear(void)
 {
+#ifdef HAVE_DISPLAY
 	return display_callbacks_.dc_display_clear();
+#else
+	return 0;
+#endif
 }

@@ -25,6 +25,11 @@
 #include <chromeos/power_management.h>
 #include <usb.h>
 
+#ifdef CONFIG_VIDEO_TEGRA2
+/* for tegra_lcd_check_next_stage() */
+#include <asm/arch-tegra/dc.h>
+#endif
+
 #include <gbb_header.h> /* for GoogleBinaryBlockHeader */
 #include <tss_constants.h>
 #include <vboot_api.h>
@@ -174,7 +179,6 @@ twostop_init_cparams(struct twostop_fmap *fmap, void *gbb,
 static void setup_arch_unused_memory(memory_wipe_t *wipe,
 	crossystem_data_t *cdata, VbCommonParams *cparams)
 {
-	int fb_size, lcd_line_length;
 	struct fdt_memory config, ramoops;
 
 	if (fdt_decode_memory(gd->blob, "/memory", &config))
@@ -193,11 +197,17 @@ static void setup_arch_unused_memory(memory_wipe_t *wipe,
 			(uintptr_t)TEGRA_LP0_ADDR,
 			(uintptr_t)(TEGRA_LP0_ADDR + TEGRA_LP0_SIZE));
 
-	/* Excludes the frame buffer. */
-	fb_size = lcd_get_size(&lcd_line_length);
-	memory_wipe_sub(wipe,
-			(uintptr_t)gd->fb_base,
-			(uintptr_t)gd->fb_base + fb_size);
+#ifdef CONFIG_LCD
+	{
+		int fb_size, lcd_line_length;
+
+		/* Excludes the frame buffer. */
+		fb_size = lcd_get_size(&lcd_line_length);
+		memory_wipe_sub(wipe,
+				(uintptr_t)gd->fb_base,
+				(uintptr_t)gd->fb_base + fb_size);
+	}
+#endif
 }
 
 #elif defined(CONFIG_SYS_COREBOOT)
@@ -290,6 +300,9 @@ twostop_init_vboot_library(firmware_storage_t *file, void *gbb,
 		return err;
 	}
 
+#ifdef CONFIG_VIDEO_TEGRA2
+	tegra_lcd_check_next_stage(gd->blob, 0);
+#endif
 	VBDEBUG(PREFIX "iparams.out_flags: %08x\n", iparams.out_flags);
 
 	if (iparams.out_flags & VB_INIT_OUT_CLEAR_RAM)
@@ -597,6 +610,9 @@ twostop_init(struct twostop_fmap *fmap, firmware_storage_t *file,
 	}
 
 	ret = 0;
+#ifdef CONFIG_VIDEO_TEGRA2
+	tegra_lcd_check_next_stage(gd->blob, 0);
+#endif
 
 out:
 	if (ret)
