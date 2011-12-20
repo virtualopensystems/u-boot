@@ -14,6 +14,9 @@
 #include "boot_device.h"
 
 #include <vboot_api.h>
+#include <chromeos/crossystem_data.h>
+
+extern int board_use_usb_keyboard(int boot_mode);
 
 static int is_enumerated;
 
@@ -40,6 +43,10 @@ static int boot_device_usb_start(uint32_t disk_flags)
 		usb_stop();
 
 		if (usb_init() >= 0) {
+#ifdef CONFIG_USB_KEYBOARD
+			if (board_use_usb_keyboard(FIRMWARE_TYPE_RECOVERY))
+				drv_usb_kbd_init();
+#endif
 			usb_stor_scan(/*mode=*/1);
 			is_enumerated = 1;
 		}
