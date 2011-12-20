@@ -268,8 +268,8 @@ static void wipe_unused_memory(crossystem_data_t *cdata,
 
 static VbError_t
 twostop_init_vboot_library(firmware_storage_t *file, void *gbb,
-			   uint32_t gbb_offset, crossystem_data_t *cdata,
-			   VbCommonParams *cparams)
+			   uint32_t gbb_offset, size_t gbb_size,
+			   crossystem_data_t *cdata, VbCommonParams *cparams)
 {
 	VbError_t err;
 	VbInitParams iparams;
@@ -297,11 +297,11 @@ twostop_init_vboot_library(firmware_storage_t *file, void *gbb,
 
 	/* Load required information of GBB */
 	if (iparams.out_flags & VB_INIT_OUT_ENABLE_DISPLAY)
-		if (gbb_read_bmp_block(gbb, file, gbb_offset))
+		if (gbb_read_bmp_block(gbb, file, gbb_offset, gbb_size))
 			return 1;
 	if (cdata->boot_developer_switch ||
 			iparams.out_flags & VB_INIT_OUT_ENABLE_RECOVERY) {
-		if (gbb_read_recovery_key(gbb, file, gbb_offset))
+		if (gbb_read_recovery_key(gbb, file, gbb_offset, gbb_size))
 			return 1;
 	}
 
@@ -402,8 +402,8 @@ out:
 
 static uint32_t
 twostop_select_and_set_main_firmware(struct twostop_fmap *fmap,
-				     firmware_storage_t *file,
-				     void *gbb, crossystem_data_t *cdata,
+				     firmware_storage_t *file, void *gbb,
+				     size_t gbb_size, crossystem_data_t *cdata,
 				     void *vb_shared_data, int *boot_mode,
 				     void **fw_blob_ptr, uint32_t *fw_size_ptr)
 {
@@ -425,7 +425,7 @@ twostop_select_and_set_main_firmware(struct twostop_fmap *fmap,
 	}
 
 	if (twostop_init_vboot_library(file, gbb, fmap->readonly.gbb.offset,
-				       cdata, &cparams)
+				       gbb_size, cdata, &cparams)
 			!= VBERROR_SUCCESS) {
 		VBDEBUG(PREFIX "failed to init vboot library\n");
 		return VB_SELECT_ERROR;
@@ -513,7 +513,8 @@ twostop_jump(crossystem_data_t *cdata, void *fw_blob, uint32_t fw_size)
 
 static int
 twostop_init(struct twostop_fmap *fmap, firmware_storage_t *file,
-	     void **gbbp, crossystem_data_t *cdata, void *vb_shared_data)
+	     void **gbbp, size_t gbb_size, crossystem_data_t *cdata,
+	     void *vb_shared_data)
 {
 	cros_gpio_t wpsw, recsw, devsw;
 	GoogleBinaryBlockHeader *gbbh;
@@ -561,14 +562,14 @@ twostop_init(struct twostop_fmap *fmap, firmware_storage_t *file,
 
 	/* Load basic parts of gbb blob */
 #ifdef CONFIG_HARDWARE_MAPPED_SPI
-	if (gbb_init(gbbp, file, fmap->readonly.gbb.offset)) {
+	if (gbb_init(gbbp, file, fmap->readonly.gbb.offset, gbb_size)) {
 		VBDEBUG(PREFIX "failed to read gbb\n");
 		goto out;
 	}
 	gbb = *gbbp;
 #else
 	gbb = *gbbp;
-	if (gbb_init(gbb, file, fmap->readonly.gbb.offset)) {
+	if (gbb_init(gbb, file, fmap->readonly.gbb.offset, gbb_size)) {
 		VBDEBUG(PREFIX "failed to read gbb\n");
 		goto out;
 	}
@@ -670,14 +671,14 @@ twostop_main_firmware(struct twostop_fmap *fmap, void *gbb,
  * @param verify	1 to verify data, 0 to skip this step
  * @return 0 if ok, -1 on error
  */
-static int setup_gbb_and_cdata(void **gbb, crossystem_data_t **cdata,
-			       int verify)
+static int setup_gbb_and_cdata(void **gbb, size_t *gbb_size,
+			       crossystem_data_t **cdata, int verify)
 {
 	size_t size;
 
 #ifndef CONFIG_HARDWARE_MAPPED_SPI
 	*gbb = fdt_decode_chromeos_alloc_region(gd->blob,
-			"google-binary-block", &size);
+			"google-binary-block", gbb_size);
 
 	if (!*gbb) {
 		VBDEBUG(PREFIX "google-binary-block missing "
@@ -717,23 +718,25 @@ twostop_boot(void)
 	firmware_storage_t file;
 	crossystem_data_t *cdata;
 	void *gbb;
+	size_t gbb_size = 0;
 	void *vb_shared_data;
 	void *fw_blob = NULL;
 	uint32_t fw_size = 0;
 	uint32_t selection;
 	int boot_mode = FIRMWARE_TYPE_NORMAL;
 
-	if (setup_gbb_and_cdata(&gbb, &cdata, 0))
+	if (setup_gbb_and_cdata(&gbb, &gbb_size, &cdata, 0))
 		return VB_SELECT_ERROR;
 
 	vb_shared_data = cdata->vb_shared_data;
-	if (twostop_init(&fmap, &file, &gbb, cdata, vb_shared_data)) {
+	if (twostop_init(&fmap, &file, &gbb, gbb_size, cdata,
+			 vb_shared_data)) {
 		VBDEBUG(PREFIX "failed to init twostop boot\n");
 		return VB_SELECT_ERROR;
 	}
 
 	selection = twostop_select_and_set_main_firmware(&fmap, &file,
-			gbb, cdata, vb_shared_data,
+			gbb, gbb_size, cdata, vb_shared_data,
 			&boot_mode, &fw_blob, &fw_size);
 	VBDEBUG(PREFIX "selection of bootstub: %s\n", str_selection(selection));
 
@@ -786,6 +789,7 @@ twostop_readwrite_main_firmware(void)
 	struct twostop_fmap fmap;
 	crossystem_data_t *cdata;
 	void *gbb;
+	size_t gbb_size;
 
 	if (fdt_decode_twostop_fmap(gd->blob, &fmap)) {
 		VBDEBUG(PREFIX "failed to decode fmap\n");
@@ -796,7 +800,7 @@ twostop_readwrite_main_firmware(void)
 #ifdef CONFIG_HARDWARE_MAPPED_SPI
 	gbb = (void *) (fmap.readonly.gbb.offset + fmap.flash_base);
 #endif
-	if (setup_gbb_and_cdata(&gbb, &cdata, 1))
+	if (setup_gbb_and_cdata(&gbb, &gbb_size, &cdata, 1))
 		return VB_SELECT_ERROR;
 
 	/*

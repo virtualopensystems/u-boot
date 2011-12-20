@@ -403,10 +403,10 @@ static uint8_t *read_gbb_from_firmware(void)
 	firmware_storage_t file;
 	struct twostop_fmap fmap;
 	void *gbb;
-	size_t size;
+	size_t gbb_size;
 
 	gbb = fdt_decode_chromeos_alloc_region(gd->blob,
-			"google-binary-block", &size);
+			"google-binary-block", &gbb_size);
 	if (!gbb) {
 		VbExDebug("Failed to find gbb region!\n");
 		return NULL;
@@ -423,12 +423,13 @@ static uint8_t *read_gbb_from_firmware(void)
 		return NULL;
 	}
 
-	if (gbb_init(gbb, &file, fmap.readonly.gbb.offset)) {
+	if (gbb_init(gbb, &file, fmap.readonly.gbb.offset, gbb_size)) {
 		VbExDebug("Failed to read GBB!\n");
 		return NULL;
 	}
 
-	if (gbb_read_bmp_block(gbb, &file, fmap.readonly.gbb.offset)) {
+	if (gbb_read_bmp_block(gbb, &file, fmap.readonly.gbb.offset,
+			       gbb_size)) {
 		VbExDebug("Failed to load BMP Block in GBB!\n");
 		return NULL;
 	}
