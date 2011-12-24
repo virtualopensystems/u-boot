@@ -243,6 +243,8 @@ int board_use_usb_keyboard(int boot_mode)
 	return 0;
 }
 
+#define MTRR_TYPE_WP          5
+#define MTRRcap_MSR           0xfe
 #define MTRRphysBase_MSR(reg) (0x200 + 2 * (reg))
 #define MTRRphysMask_MSR(reg) (0x200 + 2 * (reg) + 1)
 
@@ -250,11 +252,20 @@ int board_final_cleanup(void)
 {
 	/* Un-cache the ROM so the kernel has one
 	 * more MTRR available.
+	 *
+	 * Coreboot should have assigned this to the
+	 * top available variable MTRR.
 	 */
-	disable_cache();
-	wrmsr(MTRRphysBase_MSR(7), 0);
-	wrmsr(MTRRphysMask_MSR(7), 0);
-	enable_cache();
+	u8 top_mtrr = (rdmsr(MTRRcap_MSR) & 0xff) - 1;
+	u8 top_type = rdmsr(MTRRphysBase_MSR(top_mtrr)) & 0xff;
+
+	/* Make sure this MTRR is the correct Write-Protected type */
+	if (top_type == MTRR_TYPE_WP) {
+		disable_cache();
+		wrmsr(MTRRphysBase_MSR(top_mtrr), 0);
+		wrmsr(MTRRphysMask_MSR(top_mtrr), 0);
+		enable_cache();
+	}
 
 	return 0;
 }
