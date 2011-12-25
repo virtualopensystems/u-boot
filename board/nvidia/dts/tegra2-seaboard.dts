@@ -16,11 +16,43 @@
 		usb0 = "/usb@c5008000";
 		usb1 = "/usb@c5000000";
 		console = "/serial@70006300";
+		i2c0 = "/i2c@7000d000";
+		i2c1 = "/i2c@7000c000";
+		i2c2 = "/i2c@7000c400";
+		i2c3 = "/i2c@7000c500";
 	};
 
 	memory {
 		device_type = "memory";
 		reg = < 0x00000000 0x40000000 >;
+	};
+
+	/* This is not used in U-Boot, but is expected to be in kernel .dts */
+	i2c@7000d000 {
+		clock-frequency = <100000>;
+		pmic@34 {
+			compatible = "ti,tps6586x";
+			reg = <0x34>;
+
+			clk_32k: clock {
+				compatible = "fixed-clock";
+				/*
+				 * leave out for now due to CPP:
+				 * #clock-cells = <0>;
+				 */
+				clock-frequency = <32768>;
+			};
+		};
+	};
+
+	clocks {
+		osc {
+			clock-frequency = <12000000>;
+		};
+	};
+
+	clock@60006000 {
+		clocks = <&clk_32k &osc>;
 	};
 
 	serial@70006300 {
@@ -44,5 +76,17 @@
 
 	usb@c5004000 {
 		status = "disabled";
+	};
+
+	i2c@7000c000 {
+		clock-frequency = <100000>;
+	};
+
+	i2c@7000c400 {
+		status = "disabled";
+	};
+
+	i2c@7000c500 {
+		clock-frequency = <100000>;
 	};
 };
