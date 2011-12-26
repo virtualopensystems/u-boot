@@ -41,6 +41,8 @@ static struct ehci_ctrl {
 	struct QH qh_list __attribute__((aligned(32)));
 	struct QH qh_pool __attribute__((aligned(32)));
 	struct qTD td_pool[3] __attribute__((aligned (32)));
+	struct QH periodic_queue __attribute__((aligned(32)));
+	uint32_t *periodic_list;
 	int ntds;
 } ehcic[CONFIG_USB_MAX_CONTROLLER_COUNT];
 
@@ -821,6 +823,7 @@ void *usb_lowlevel_init(int index)
 	struct ehci_hccr *hccr;
 	volatile struct ehci_hcor *hcor;
 	struct QH *qh_list;
+	struct QH *periodic;
 
 	if (ehci_hcd_init(index, &hccr, (struct ehci_hcor **)&hcor) != 0)
 		return NULL;
@@ -852,6 +855,32 @@ void *usb_lowlevel_init(int index)
 
 	/* Set async. queue head pointer. */
 	ehci_writel(&hcor->or_asynclistaddr, (uint32_t)qh_list);
+
+	/* Set up periodic list */
+	/* Step 1: Parent QH for all periodic transfers. */
+	periodic = &ehcic[index].periodic_queue;
+	memset(periodic, 0, sizeof(*periodic));
+	periodic->qh_link = cpu_to_hc32(QH_LINK_TERMINATE);
+	periodic->qh_overlay.qt_next = cpu_to_hc32(QT_NEXT_TERMINATE);
+	periodic->qh_overlay.qt_altnext = cpu_to_hc32(QT_NEXT_TERMINATE);
+
+	/* Step 2: Setup frame-list: Every microframe, USB tries the same list.
+	 *         In particular, device specifications on polling frequency
+	 *         are disregarded. Keyboards seem to send NAK/NYet reliably
+	 *         when polled with an empty buffer.
+	 *
+	 *         Split Transactions will be spread across microframes using
+	 *         S-mask and C-mask.
+	 */
+	ehcic[index].periodic_list = memalign(4096, 1024*4);
+	int i;
+	for (i = 0; i < 1024; i++)
+		ehcic[index].periodic_list[i] = (uint32_t)periodic
+						| QH_LINK_TYPE_QH;
+
+	/* Set periodic list base address */
+	ehci_writel(&hcor->or_periodiclistbase,
+		(uint32_t)ehcic[index].periodic_list);
 
 	reg = ehci_readl(&hccr->cr_hcsparams);
 	descriptor.hub.bNbrPorts = HCS_N_PORTS(reg);
@@ -919,14 +948,260 @@ submit_control_msg(struct usb_device *dev, unsigned long pipe, void *buffer,
 	return ehci_submit_async(dev, pipe, buffer, length, setup);
 }
 
+struct int_queue {
+	struct QH *first;
+	struct QH *current;
+	struct QH *last;
+	struct qTD *tds;
+};
+
+#define NEXT_QH(qh) (struct QH *)((qh)->qh_link & ~0x1f)
+
+static int
+enable_periodic(struct ehci_ctrl *ctrl)
+{
+	uint32_t cmd;
+	volatile struct ehci_hcor *hcor = ctrl->hcor;
+	cmd = ehci_readl(&hcor->or_usbcmd);
+	cmd |= CMD_PSE;
+	ehci_writel(&hcor->or_usbcmd, cmd);
+
+	int ret = handshake((uint32_t *)&hcor->or_usbsts,
+			STD_PSS, STD_PSS, 100 * 1000);
+	if (ret < 0) {
+		printf("EHCI failed: timeout when enabling periodic list\n");
+		return -1;
+	}
+	udelay(1000);
+	return 0;
+}
+
+static int
+disable_periodic(struct ehci_ctrl *ctrl)
+{
+	uint32_t cmd;
+	volatile struct ehci_hcor *hcor = ctrl->hcor;
+	cmd = ehci_readl(&hcor->or_usbcmd);
+	cmd &= ~CMD_PSE;
+	ehci_writel(&hcor->or_usbcmd, cmd);
+
+	int ret = handshake((uint32_t *)&hcor->or_usbsts,
+			STD_PSS, 0, 100 * 1000);
+	if (ret < 0) {
+		printf("EHCI failed: timeout when enabling periodic list\n");
+		return -1;
+	}
+	return 0;
+}
+
+int periodic_schedules;
+
+struct int_queue *
+create_int_queue(struct usb_device *dev, unsigned long pipe, int queuesize,
+		 int elementsize, void *buffer)
+{
+	int i;
+	struct ehci_ctrl *ctrl = dev->controller;
+	struct int_queue *result = NULL;
+	debug("Enter create_int_queue\n");
+	if (usb_pipetype(pipe) != PIPE_INTERRUPT) {
+		debug("non-interrupt pipe (type=%lu)", usb_pipetype(pipe));
+		return NULL;
+	}
+
+	/* limit to 4 full pages worth of data -
+	 * we can safely fit them in a single TD,
+	 * no matter the alignment
+	 */
+	if (elementsize >= 16384) {
+		debug("too large elements for interrupt transfers\n");
+		return NULL;
+	}
+
+	result = malloc(sizeof(*result));
+	if (!result) {
+		debug("ehci intr queue: out of memory\n");
+		goto fail1;
+	}
+	result->first = memalign(32, sizeof(struct QH) * queuesize);
+	if (!result->first) {
+		debug("ehci intr queue: out of memory\n");
+		goto fail2;
+	}
+	result->current = result->first;
+	result->last = result->first + elementsize - 1;
+	result->tds = memalign(32, sizeof(struct qTD) * queuesize);
+	if (!result->tds) {
+		debug("ehci intr queue: out of memory\n");
+		goto fail3;
+	}
+	memset(result->first, 0, sizeof(struct QH) * queuesize);
+	memset(result->tds, 0, sizeof(struct qTD) * queuesize);
+
+	for (i = 0; i < queuesize; i++) {
+		struct QH *qh = result->first + i;
+		struct qTD *td = result->tds + i;
+		void **buf = (void **)qh->fill;
+
+		qh->qh_link = (uint32_t)(qh+1) | QH_LINK_TYPE_QH;
+		if (i == queuesize - 1)
+			qh->qh_link = QH_LINK_TERMINATE;
+
+		qh->qh_overlay.qt_next = (uint32_t)td;
+		qh->qh_endpt1 = (0 << 28) | /* No NAK reload (ehci 4.9) */
+			(usb_maxpacket(dev, pipe) << 16) | /* MPS */
+			(1 << 14) | /* TODO: Data Toggle Control */
+			(usb_pipespeed(pipe) << 12) | /* EPS */
+			(usb_pipeendpoint(pipe) << 8) | /* Endpoint Number */
+			(usb_pipedevice(pipe) << 0);
+		qh->qh_endpt2 = (1 << 30); /* 1 Tx per mframe */
+		if (usb_pipespeed(pipe) < 2) { /* full or low speed */
+			debug("TT: port: %d, hub address: %d\n",
+				dev->portnr, dev->parent->devnum);
+			qh->qh_endpt2 |= (dev->portnr << 23) |
+				(dev->parent->devnum << 16) |
+				(0x1c << 8) | /* C-mask: microframes 2-4 */
+				(1 << 0); /* S-mask: microframe 0 */
+		}
+
+		td->qt_next = QT_NEXT_TERMINATE;
+		td->qt_altnext = QT_NEXT_TERMINATE;
+		debug("communication direction is '%s'\n",
+		      usb_pipein(pipe) ? "in" : "out");
+		td->qt_token = (elementsize << 16) |
+			((usb_pipein(pipe) ? 1 : 0) << 8) | /* IN/OUT token */
+			0x80; /* active */
+		td->qt_buffer[0] = (uint32_t)buffer + i * elementsize;
+		td->qt_buffer[1] = (td->qt_buffer[0] + 0x1000) & ~0xfff;
+		td->qt_buffer[2] = (td->qt_buffer[0] + 0x2000) & ~0xfff;
+		td->qt_buffer[3] = (td->qt_buffer[0] + 0x3000) & ~0xfff;
+		td->qt_buffer[4] = (td->qt_buffer[0] + 0x4000) & ~0xfff;
+
+		*buf = buffer + i * elementsize;
+	}
+
+	if (disable_periodic(ctrl) < 0) {
+		debug("FATAL: periodic should never fail, but did");
+		goto fail3;
+	}
+
+	/* hook up to periodic list */
+	struct QH *list = &ctrl->periodic_queue;
+	result->last->qh_link = list->qh_link;
+	list->qh_link = (uint32_t)result->first | QH_LINK_TYPE_QH;
+
+	if (enable_periodic(ctrl) < 0) {
+		debug("FATAL: periodic should never fail, but did");
+		goto fail3;
+	}
+	periodic_schedules++;
+
+	debug("Exit create_int_queue\n");
+	return result;
+fail3:
+	if (result->tds)
+		free(result->tds);
+fail2:
+	if (result->first)
+		free(result->first);
+	if (result)
+		free(result);
+fail1:
+	return NULL;
+}
+
+/* TODO: requeue depleted buffers */
+void *
+poll_int_queue(struct usb_device *dev, struct int_queue *queue)
+{
+	struct QH *cur = queue->current;
+	/* depleted queue */
+	if (cur == NULL) {
+		debug("Exit poll_int_queue with completed queue\n");
+		return NULL;
+	}
+	/* still active */
+	if (cur->qh_overlay.qt_token & 0x80) {
+		debug("Exit poll_int_queue with no completed intr transfer. "
+		      "token is %x\n", cur->qh_overlay.qt_token);
+		return NULL;
+	}
+	/* TODO: Handle failures */
+	if (!(cur->qh_link & QH_LINK_TERMINATE))
+		queue->current++;
+	else
+		queue->current = NULL;
+	debug("Exit poll_int_queue with completed intr transfer. "
+	      "token is %x at %p (first at %p)\n", cur->qh_overlay.qt_token,
+	      &cur->qh_overlay.qt_token, queue->first);
+	return *(void **)cur->fill;
+}
+
+/* Do not free buffers associated with QHs, they're owned by someone else */
+int
+destroy_int_queue(struct usb_device *dev, struct int_queue *queue)
+{
+	struct ehci_ctrl *ctrl = dev->controller;
+	int result = -1;
+
+	if (disable_periodic(ctrl) < 0) {
+		debug("FATAL: periodic should never fail, but did");
+		goto out;
+	}
+	periodic_schedules--;
+
+	struct QH *cur = &ctrl->periodic_queue;
+	while (!(cur->qh_link & QH_LINK_TERMINATE)) {
+		debug("considering %p, with qh_link %x\n", cur, cur->qh_link);
+		if (NEXT_QH(cur) == queue->first) {
+			debug("found candidate. removing from chain\n");
+			cur->qh_link = queue->last->qh_link;
+			result = 0;
+			goto out;
+		}
+		cur = NEXT_QH(cur);
+	}
+
+	if (periodic_schedules > 0)
+		if (enable_periodic(ctrl) < 0) {
+			debug("FATAL: periodic should never fail, but did");
+			result = -1;
+		}
+
+out:
+	free(queue->tds);
+	free(queue->first);
+	free(queue);
+	return result;
+}
+
 int
 submit_int_msg(struct usb_device *dev, unsigned long pipe, void *buffer,
 	       int length, int interval)
 {
+	void *backbuffer;
+	struct int_queue *queue;
 
 	debug("dev=%p, pipe=%lu, buffer=%p, length=%d, interval=%d",
 	      dev, pipe, buffer, length, interval);
-	return ehci_submit_async(dev, pipe, buffer, length, NULL);
+
+	queue = create_int_queue(dev, pipe, 1, length, buffer);
+
+	/* TODO: pick some useful timeout rule */
+	while ((backbuffer = poll_int_queue(dev, queue)) == NULL)
+		;
+
+	if (backbuffer != buffer) {
+		debug("got wrong buffer back (%x instead of %x)\n",
+		      (uint32_t)backbuffer, (uint32_t)buffer);
+		return -1;
+	}
+
+	if (destroy_int_queue(dev, queue) == -1)
+		return -1;
+
+	/* everything worked out fine */
+	return 0;
 }
 
 #ifdef CONFIG_SYS_USB_EVENT_POLL
