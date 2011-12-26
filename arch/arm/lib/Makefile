@@ -37,7 +37,9 @@ GLSOBJS	+= _umodsi3.o
 
 GLCOBJS	+= div0.o
 
-COBJS-y	+= board.o
+ifeq ($(CONFIG_SYS_GENERIC_BOARD),)
+COBJS-y += board.o
+endif
 COBJS-y	+= bootm.o
 COBJS-y	+= cache.o
 COBJS-y	+= cache-cp15.o

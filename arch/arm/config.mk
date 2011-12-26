@@ -33,9 +33,6 @@ endif
 
 PLATFORM_CPPFLAGS += -DCONFIG_ARM -D__ARM__
 
-# Move to unified board system later
-CONFIG_SYS_LEGACY_BOARD := y
-
 # Explicitly specifiy 32-bit ARM ISA since toolchain default can be -mthumb:
 PF_CPPFLAGS_ARM := $(call cc-option,-marm,)
 
