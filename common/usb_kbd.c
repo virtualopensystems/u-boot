@@ -323,6 +323,9 @@ static inline void usb_kbd_poll_for_event(struct usb_device *dev)
 			1, 0, data->new, sizeof(data->new));
 	if (memcmp(data->old, data->new, sizeof(data->new)))
 		usb_kbd_irq_worker(dev);
+#else
+	usb_kbd_generic_poll();
+	usb_kbd_irq_worker(dev);
 #endif
 }
 
