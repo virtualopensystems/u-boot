@@ -108,8 +108,13 @@ static int display_text_info(void)
 {
 	ulong bss_start, bss_end;
 
+#ifdef CONFIG_SYS_SYM_OFFSETS
 	bss_start = _bss_start_ofs + _TEXT_BASE;
 	bss_end = _bss_end_ofs + _TEXT_BASE;
+#else
+	bss_start = (ulong)&__bss_start;
+	bss_end = (ulong)&__bss_end;
+#endif
 	debug("U-Boot code: %08X -> %08lX  BSS: -> %08lX\n",
 	      CONFIG_SYS_TEXT_BASE, bss_start, bss_end);
 
@@ -186,7 +191,11 @@ static int zero_global_data(void)
 
 static int setup_mon_len(void)
 {
+#ifdef CONFIG_SYS_SYM_OFFSETS
 	gd->mon_len = _bss_end_ofs;
+#else
+	gd->mon_len = (ulong)&__bss_end - (ulong)&__text_start;
+#endif
 	return 0;
 }
 
@@ -423,6 +432,7 @@ static int jump_to_copy(void)
 
 static init_fnc_t init_sequence_f[] = {
 	setup_global_data_ptr,
+	zero_global_data,
 	setup_fdt,
 	setup_mon_len,
 #if defined(CONFIG_ARCH_CPU_INIT)
@@ -457,6 +467,7 @@ static init_fnc_t init_sequence_f[] = {
 #ifdef CONFIG_POST
 	init_post,
 #endif
+	setup_dram_config,
 	setup_reloc,
 #if defined(CONFIG_LOGBUFFER) && !defined(CONFIG_ALT_LB_ADDR)
 	reserve_logbuffer,
