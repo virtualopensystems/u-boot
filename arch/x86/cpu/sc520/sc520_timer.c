@@ -81,7 +81,7 @@ void sc520_udelay(unsigned long usec)
 	long temp;
 
 	temp = readw(&sc520_mmcr->swtmrmilli);
-	temp = readw(&sc520_mmcr->swtmrmicro);
+	temp += readw(&sc520_mmcr->swtmrmicro);
 
 	do {
 		m += readw(&sc520_mmcr->swtmrmilli);
