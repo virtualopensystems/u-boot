@@ -44,6 +44,8 @@ typedef struct global_data {
 	bd_t		*bd;
 	unsigned long	flags;
 	unsigned long	baudrate;
+	unsigned long	cpu_clk;	/* CPU clock in Hz!		*/
+	unsigned long	bus_clk;
 #if defined(CONFIG_LCD) || defined(CONFIG_VIDEO)
 	unsigned long	fb_base;	/* Base address of framebuffer mem */
 #endif
