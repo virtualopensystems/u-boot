@@ -41,6 +41,7 @@
 #include <ide.h>
 #include <serial.h>
 #include <asm/u-boot-x86.h>
+#include <asm-generic/sections.h>
 #include <elf.h>
 
 #ifdef CONFIG_BITBANGMII
