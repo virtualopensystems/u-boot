@@ -292,6 +292,22 @@ int mac_read_from_eeprom(void);
 extern u8 _binary_dt_dtb_start[];	/* embedded device tree blob */
 int set_cpu_clk_info(void);
 
+#ifdef CONFIG_SYS_GENERIC_BOARD
+/*
+ * Reset the watchdog timer, always returns 0
+ *
+ * This function is here since it is shared between board_f() and board_r().
+ */
+int init_func_watchdog_reset(void);
+#endif
+
+#if defined(CONFIG_WATCHDOG)
+#define INIT_FUNC_WATCHDOG_RESET	init_func_watchdog_reset,
+#else
+#define INIT_FUNC_WATCHDOG_RESET	/* undef */
+#endif /* CONFIG_WATCHDOG */
+
+
 /*
  * Called when console output is requested before the console is available.
  * The board should do its best to get the character out to the user any way
