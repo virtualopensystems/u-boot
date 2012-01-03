@@ -267,6 +267,10 @@ int board_final_cleanup(void)
 		enable_cache();
 	}
 
+	/* Issue SMI to Coreboot to lock down ME and registers */
+	printf("Finalizing Coreboot\n");
+	outb(0xcb, 0xb2);
+
 	return 0;
 }
 
