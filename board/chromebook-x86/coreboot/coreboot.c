@@ -39,9 +39,10 @@
 #include <coreboot_timestamp.h>
 #include <cros/common.h>
 #include <cros/crossystem_data.h>
-#include <cros/fdt_decode.h>
+#include <cros/cros_fdtdec.h>
 #include <cros/firmware_storage.h>
 #include <cros/power_management.h>
+#include <spi_flash.h>
 #ifdef CONFIG_HW_WATCHDOG
 #include <watchdog.h>
 #endif
@@ -134,10 +135,16 @@ void setup_pcat_compatibility()
 {
 }
 
+#define MRC_DATA_SIGNATURE (('M' << 0) | ('R' << 8) | ('C' << 16) | ('D' << 24))
+#define MRC_DATA_ALIGN     0x1000
+
 struct mrc_data_container {
+	u32	mrc_signature;	/* 'MRCD' */
 	u32	mrc_data_size;	/* Actual total size of this structure */
+	u32	mrc_checksum;	/* IP style checksum */
+	u32	reserved;	/* For header alignment */
 	u8	mrc_data[0];	/* Variable size, platform/run time dependent */
-};
+} __packed;
 
 /**
  * handle_mrc_cache:
@@ -153,8 +160,9 @@ static void handle_mrc_cache(void)
 	struct fmap_entry fme;
 	struct mrc_data_container *saved_entry;
 	struct mrc_data_container *passed_entry;
-	u32 passed_size;
-	u32 saved_size;
+	struct mrc_data_container *entry, *next_entry;
+	u32 passed_size, entry_size, container_size;
+	u32 next_offset = 0;
 
 	firmware_storage_t file;
 
@@ -165,6 +173,7 @@ static void handle_mrc_cache(void)
 
 	passed_entry = (struct mrc_data_container *)lib_sysinfo.mrc_cache;
 	passed_size = passed_entry->mrc_data_size;
+	entry_size = sizeof(*passed_entry) + passed_size;
 	if (passed_size > fme.length) {
 		printf("%s: passed entry of %d won't fit into %d\n",
 		       __func__, passed_size, fme.length);
@@ -192,14 +201,43 @@ static void handle_mrc_cache(void)
 		return;
 	}
 
-	saved_size = saved_entry->mrc_data_size;
-	if ((saved_size != passed_size) ||
-	    memcmp(passed_entry, saved_entry, passed_size)) {
+	/* Size is aligned to flash sector size. */
+	container_size = passed_entry->mrc_data_size + sizeof(*passed_entry);
+	if (container_size & (MRC_DATA_ALIGN - 1UL)) {
+		container_size &= ~(MRC_DATA_ALIGN - 1UL);
+		container_size += MRC_DATA_ALIGN;
+	}
+
+	/* Find the last entry in the region. */
+	next_entry = saved_entry;
+	do {
+		entry = next_entry;
+		next_offset += container_size;
+		next_entry = (struct mrc_data_container *)
+			((u8 *)saved_entry + next_offset);
+	} while (next_entry && next_entry->mrc_signature == MRC_DATA_SIGNATURE);
+
+	/* Adjust entry offset back to the entry we want to examine. */
+	if (entry->mrc_signature != MRC_DATA_SIGNATURE)
+		next_offset = 0;
+
+	if ((entry->mrc_data_size != passed_size) ||
+	    memcmp(passed_entry, entry, entry_size)) {
 		printf("%s: cached storage mismatch (%d/%d)\n", __func__,
-		       saved_size, passed_size);
-		if (passed_size <= fme.length) {
-			if (file.write(&file, fme.offset,
-				       passed_size, passed_entry))
+		       entry->mrc_data_size, passed_size);
+
+		/* Erase entire region and start over at entry 0. */
+		if ((next_offset + container_size) > fme.length) {
+			struct spi_flash *flash = file.context;
+			flash->erase(flash, fme.offset, fme.length);
+			next_offset = 0;
+			printf("%s: region full, erase and start over\n",
+			       __func__);
+		}
+
+		if ((next_offset + container_size) <= fme.length) {
+			if (file.write(&file, fme.offset + next_offset,
+				       entry_size, passed_entry))
 				printf("%s: write failed!\n", __func__);
 		} else {
 			printf("%s: passed size too big (%d)\n",
