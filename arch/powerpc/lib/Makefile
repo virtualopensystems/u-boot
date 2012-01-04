@@ -44,7 +44,9 @@ SOBJS-y	+= ticks.o
 SOBJS-y	+= reloc.o
 
 COBJS-$(CONFIG_BAT_RW) += bat_rw.o
-COBJS-y	+= board.o
+ifeq ($(CONFIG_SYS_GENERIC_BOARD),)
+COBJS-y += board.o
+endif
 COBJS-y	+= bootm.o
 COBJS-$(CONFIG_BOOTCOUNT_LIMIT) += bootcount.o
 COBJS-y	+= cache.o

@@ -27,6 +27,11 @@
 #include "config.h"
 #include "asm/types.h"
 
+#ifdef CONFIG_SYS_GENERIC_BOARD
+/* Use the generic board which requires a unified global_data */
+#include <asm-generic/global_data.h>
+#else
+
 /*
  * The following data structure is placed in some memory wich is
  * available very early after boot (like DPRAM on MPC8xx/MPC82xx, or
@@ -197,6 +202,8 @@ typedef	struct	global_data {
 #define	GD_FLG_LOGINIT		0x00020	/* Log Buffer has been initialized	*/
 #define GD_FLG_DISABLE_CONSOLE	0x00040	/* Disable console (in & out)		*/
 #define GD_FLG_ENV_READY	0x00080	/* Environment imported into hash table	*/
+
+#endif /* nCONFIG_SYS_GENERIC_BOARD */
 
 #if 1
 #define DECLARE_GLOBAL_DATA_PTR     register volatile gd_t *gd asm ("r2")
