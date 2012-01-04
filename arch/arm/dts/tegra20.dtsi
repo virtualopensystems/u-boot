@@ -4,6 +4,33 @@
 	compatible = "nvidia,tegra20";
 	interrupt-parent = <&intc>;
 
+	clocks = <&osc_clk>;
+	clock-names = "osc_clk";
+	clock-ranges;
+
+	clocks {
+		#address-cells = <1>;
+		#size-cells = <1>;
+
+		/* The frequency of this clock is board-specific */
+		osc_clk: oscclk {
+			compatible = "fixed-clock";
+			#clock-cells = <0>;
+		};
+
+		/*
+		 * This node provides clocks to all peripherals. We don't
+		 * enumerate the clock names for now since there are no
+		 * users of this information.
+		 */
+		periph_clk: periphclk {
+			compatible = "tegra,periphclk";
+			#clock-cells = <1>;
+			clocks = <&osc_clk>;
+			reg = <0x60006000 400>;
+		};
+	};
+
 	intc: interrupt-controller@50041000 {
 		compatible = "nvidia,tegra20-gic";
 		interrupt-controller;

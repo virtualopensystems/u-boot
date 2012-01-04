@@ -1,0 +1,51 @@
+Clock controllers
+
+(there isn't yet a binding in Linux, so this describes what is in U-Boot)
+
+The device node for a clock controller is as described in the document
+"Open Firmware Recommended Practice : Universal Serial Bus" with the
+following modifications and additions :
+
+This is based on Grant Likely's proposed patch for clock bindings.
+
+Required properties :
+ - compatible : Should be "tegra,periphclk" for peripheral clock controller
+ - clocks : Should contain a single phandle pointing to the oscillator clock
+
+Peripherals which refer to a clock should have a property called "clocks" with
+two cells: phandle of the peripheral clock and the clock ID number (which
+is the bit number in the peripheral clock controller enable register numbered
+from 0).
+
+Example:
+
+clocks {
+	#address-cells = <1>;
+	#size-cells = <1>;
+
+	/* The frequency of this clock is board-specific */
+	osc_clk: oscclk {
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+	};
+
+	/*
+	 * This node provides clocks to all peripherals. We don't
+	 * enumerate the clock names for now since there are no
+	 * users of this information.
+	 */
+	periph_clk: periphclk {
+		compatible = "tegra,periphclk";
+		#clock-cells = <1>;
+		clocks = <&osc_clk>;
+		reg = <0x60006000 400>;
+	};
+};
+
+usb@c5004000 {
+	compatible = "nvidia,tegra20-ehci", "usb-ehci";
+	reg = <0xc5004000 0x4000>;
+	interrupts = < 53 >;
+	phy_type = "ulpi";
+	clocks = <&periph_clk 58>;	// PERIPH_ID_USB2
+};
