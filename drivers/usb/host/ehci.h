@@ -194,7 +194,7 @@ struct QH {
 	 * Add dummy fill value to make the size of this struct
 	 * aligned to 32 bytes
 	 */
-	uint8_t fill[16];
+	uint32_t fill[4];
 };
 
 /* Low level init functions */

@@ -1134,7 +1134,7 @@ poll_int_queue(struct usb_device *dev, struct int_queue *queue)
 	debug("Exit poll_int_queue with completed intr transfer. "
 	      "token is %x at %p (first at %p)\n", cur->qh_overlay.qt_token,
 	      &cur->qh_overlay.qt_token, queue->first);
-	return *(void **)cur->fill;
+	return (void *)cur->fill[0];
 }
 
 /* Do not free buffers associated with QHs, they're owned by someone else */
