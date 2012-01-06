@@ -28,6 +28,8 @@
 # file with compatible flags
 ifdef CONFIG_TEGRA2
 CFLAGS_arch/arm/lib/board.o += -march=armv4t
+CFLAGS_common/board_f.o += -march=armv4t
+CFLAGS_lib/initcall.o += -march=armv4t
 endif
 
 USE_PRIVATE_LIBGCC = yes
