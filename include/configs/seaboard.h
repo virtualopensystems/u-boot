@@ -27,6 +27,8 @@
 #include <asm/sizes.h>
 #include "tegra2-common.h"
 
+#define CONFIG_SYS_GENERIC_BOARD
+
 /* High-level configuration options */
 #define TEGRA2_SYSMEM		"mem=384M@0M nvmem=128M@384M mem=512M@512M"
 #define V_PROMPT		"Tegra2 (SeaBoard) # "
