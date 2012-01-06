@@ -318,4 +318,12 @@ static inline phys_addr_t virt_to_phys(void * vaddr)
 #endif
 }
 
+/*
+ * TODO: The kernel offers some more advanced versions of barriers, it might
+ * have some advantages to use them instead of the simple one here.
+ */
+#define dmb()		__asm__ __volatile__ ("" : : : "memory")
+#define __iormb()	dmb()
+#define __iowmb()	dmb()
+
 #endif
