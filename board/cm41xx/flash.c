@@ -28,6 +28,7 @@
  */
 
 #include <common.h>
+#include <asm-generic/sections.h>
 #include <linux/byteorder/swab.h>
 
 

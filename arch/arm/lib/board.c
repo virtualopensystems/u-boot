@@ -39,6 +39,7 @@
  */
 
 #include <common.h>
+#include <asm-generic/sections.h>
 #include <command.h>
 #include <malloc.h>
 #include <stdio_dev.h>
