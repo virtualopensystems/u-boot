@@ -431,7 +431,7 @@ int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	printf("ip_addr     = %pI4\n", &bd->bi_ip_addr);
 	print_mhz("ethspeed",	    bd->bi_ethspeed);
 #endif
-	printf("baudrate    = %d bps\n", bd->bi_baudrate);
+	printf("baudrate    = %ld bps\n", bd->bi_baudrate);
 
 	return 0;
 }
