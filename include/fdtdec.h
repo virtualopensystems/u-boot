@@ -232,6 +232,19 @@ const char *fdtdec_get_compatible(enum fdt_compat_id id);
 int fdtdec_lookup_phandle(const void *blob, int node, const char *prop_name);
 
 /**
+ * Look up a phandle and follow it to its node. Then return the register
+ * address of that node as a pointer. This can be used to access the
+ * peripheral directly.
+ *
+ * @param blob		FDT blob
+ * @param node		node to examine
+ * @param prop_name	name of property to find
+ * @return pointer to node's register address
+ */
+void *fdtdec_lookup_phandle_reg(const void *blob, int node,
+		const char *prop_name);
+
+/**
  * Look up a property in a node and return its contents in an integer
  * array of given length. The property must have at least enough data for
  * the array (4*count bytes). It may have more, but this will be ignored.

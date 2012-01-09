@@ -304,6 +304,17 @@ int fdtdec_lookup_phandle(const void *blob, int node, const char *prop_name)
 	return lookup;
 }
 
+void *fdtdec_lookup_phandle_reg(const void *blob, int node,
+		const char *prop_name)
+{
+	int lookup;
+
+	lookup = fdtdec_lookup_phandle(blob, node, prop_name);
+	if (lookup < 0)
+		return NULL;
+	return (void *)fdtdec_get_addr(blob, lookup, "reg");
+}
+
 /**
  * Look up a property in a node and check that it has a minimum length.
  *
