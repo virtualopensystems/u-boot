@@ -175,6 +175,15 @@ void lcd_ctrl_init(void *lcdbase)
 		return;
 	}
 
+	/* For write-through or cache off, change the LCD memory region */
+	if (!(config.cache_type & FDT_LCD_CACHE_WRITE_BACK))
+		mmu_set_region_dcache(config.frame_buffer, size,
+			config.cache_type & FDT_LCD_CACHE_WRITE_THROUGH ?
+				DCACHE_WRITETHROUGH : DCACHE_OFF);
+
+	/* Enable flushing after LCD writes if requested */
+	lcd_set_flush_dcache(config.cache_type & FDT_LCD_CACHE_FLUSH);
+
 	debug("LCD frame buffer at %p\n", lcd_base);
 }
 
