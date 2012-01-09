@@ -148,4 +148,25 @@
 			0x1f04008a>;
 		linux,fn-keymap = <0x05040002>;
 	};
+
+	display@0x54200000 {
+		nvidia,pwfm = <&pwfm2>;
+		nvidia,frame-buffer = <0x2f680000>;
+		nvidia,backlight-enable-gpios = <&gpio 28 0>;	/* PD4 */
+		nvidia,lvds-shutdown-gpios = <&gpio 10 0>;	/* PB2 */
+		nvidia,backlight-vdd-gpios = <&gpio 176 0>;	/* PW0 */
+		nvidia,panel-vdd-gpios = <&gpio 22 0>;		/* PC6 */
+		nvidia,panel-timings = <4 203 17 15>;
+
+		lcd {
+			compatible = "nvidia,lcd";
+			nvidia,width = <1366>;
+			nvidia,height = <768>;
+			nvidia,bits-per-pixel = <16>;
+			nvidia,pixel-clock = <70600000>;
+
+			nvidia,horiz-timing = <11 58 58 58>;
+			nvidia,vert-timing = <1 4 4 4>;
+		};
+	};
 };
