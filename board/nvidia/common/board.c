@@ -28,6 +28,7 @@
 #include <asm/arch/sys_proto.h>
 
 #include <asm/arch/board.h>
+#include <asm/arch/display.h>
 #include <asm/arch/clk_rst.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/pinmux.h>
@@ -64,6 +65,9 @@ void pin_mux_usb(void) __attribute__((weak, alias("__pin_mux_usb")));
  */
 int board_init(void)
 {
+#ifdef CONFIG_VIDEO_TEGRA2
+	tegra_lcd_check_next_stage(gd->blob, 0);
+#endif
 	/* Do clocks and UART first so that printf() works */
 	clock_init();
 	clock_verify();
@@ -87,6 +91,9 @@ int board_init(void)
 	pin_mux_usb();
 	board_usb_init(gd->fdt_blob);
 #endif
+#if defined(CONFIG_VIDEO_TEGRA)
+	tegra_lcd_check_next_stage(gd->fdt_blob, 0);
+#endif
 
 	return 0;
 }
@@ -102,6 +109,18 @@ int board_early_init_f(void)
 #else
 	gpio_config_uart();
 #endif
-	return 0;
+#if defined(CONFIG_VIDEO_TEGRA)
+	tegra_lcd_early_init(gd->fdt_blob);
+#endif
+return 0;
 }
 #endif	/* EARLY_INIT */
+
+int board_late_init(void)
+{
+#ifdef CONFIG_VIDEO_TEGRA
+	/* Make sure we finish initing the LCD */
+	tegra_lcd_check_next_stage(gd->fdt_blob, 1);
+#endif
+	return 0;
+}
