@@ -135,7 +135,8 @@ typedef struct {
 	uint32_t	vbt9;		/* 196 fmap base address */
 	uint8_t		vdat[3072];	/* 19a */
 	uint32_t	vbt10;		/* d9a */
-					/* d9e */
+	uint32_t	mehh[8];	/* d9e management enging hash */
+					/* dbe */
 } __attribute__((packed)) chromeos_acpi_t;
 
 #define assert_offset(MEMBER, OFFSET) \
