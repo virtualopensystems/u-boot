@@ -414,3 +414,16 @@ int fdtdec_setup_gpio(struct fdt_gpio_state *gpio)
 		return -1;
 	return 0;
 }
+
+int fdtdec_decode_periph_id(const void *blob, int node)
+{
+	u32 cell[2];
+	int err;
+
+	err = fdtdec_get_int_array(blob, node, "clocks", cell,
+				   ARRAY_SIZE(cell));
+	if (err)
+		return -1;
+
+	return cell[1];
+}

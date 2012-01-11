@@ -272,3 +272,16 @@ int fdtdec_decode_gpio(const void *blob, int node, const char *prop_name,
  * @return 0 if all ok or gpio was FDT_GPIO_NONE; -1 on error
  */
 int fdtdec_setup_gpio(struct fdt_gpio_state *gpio);
+
+/**
+ * Decode a peripheral ID from a device tree node. This may be a temporary
+ * function depending on what happens with clocks in the Linux fdt.
+ *
+ * This works by looking up the peripheral's 'clocks' node and reading out
+ * the second cell, which is the clock number / peripheral ID.
+ *
+ * @param blob		FDT blob to use
+ * @param node		Node to look at
+ * @return
+ */
+int fdtdec_decode_periph_id(const void *blob, int node);
