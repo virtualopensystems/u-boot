@@ -127,7 +127,7 @@ static void display_flash_config(ulong size)
  */
 typedef int (init_fnc_t) (void);
 
-static int calculate_relocation_address(void);
+int calculate_relocation_address(void);
 static int copy_uboot_to_ram(void);
 static int clear_bss(void);
 static int do_elf_reloc_fixups(void);
@@ -162,7 +162,10 @@ init_fnc_t *init_sequence_r[] = {
 
 gd_t *gd;
 
-static int calculate_relocation_address(void)
+int calculate_relocation_address(void)
+	__attribute__((weak, alias("__calculate_relocation_address")));
+
+int __calculate_relocation_address(void)
 {
 	ulong text_start = (ulong)&__text_start;
 	/* keep .bss variables aligned */
