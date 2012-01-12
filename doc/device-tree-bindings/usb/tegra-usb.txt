@@ -11,3 +11,7 @@ Required properties :
  - phy_type : Should be one of "ulpi" or "utmi".
  - nvidia,vbus-gpio : If present, specifies a gpio that needs to be
    activated for the bus to be powered.
+
+Optional properties:
+ - support-host-mode : If present then this peripheral can switch between
+   host and device mode
