@@ -150,8 +150,16 @@ int fdtdec_next_alias(const void *blob, const char *name,
 	return node;
 }
 
-/* TODO: Can we tighten this code up a little? */
 int fdtdec_find_aliases_for_id(const void *blob, const char *name,
+			enum fdt_compat_id id, int *node_list, int maxcount)
+{
+	memset(node_list, '\0', sizeof(*node_list) * maxcount);
+
+	return fdtdec_add_aliases_for_id(blob, name, id, node_list, maxcount);
+}
+
+/* TODO: Can we tighten this code up a little? */
+int fdtdec_add_aliases_for_id(const void *blob, const char *name,
 			enum fdt_compat_id id, int *node_list, int maxcount)
 {
 	int name_len = strlen(name);
@@ -183,8 +191,6 @@ int fdtdec_find_aliases_for_id(const void *blob, const char *name,
 		       __func__, name);
 
 	/* Now find all the aliases */
-	memset(node_list, '\0', sizeof(*node_list) * maxcount);
-
 	for (offset = fdt_first_property_offset(blob, alias_node);
 			offset > 0;
 			offset = fdt_next_property_offset(blob, offset)) {
@@ -231,11 +237,13 @@ int fdtdec_find_aliases_for_id(const void *blob, const char *name,
 		 * it as done.
 		 */
 		if (fdtdec_get_is_enabled(blob, node)) {
+			if (node_list[number])
+				continue;
 			node_list[number] = node;
 			if (number >= num_found)
 				num_found = number + 1;
 		}
-		nodes[j] = 0;
+		nodes[found] = 0;
 	}
 
 	/* Add any nodes not mentioned by an alias */

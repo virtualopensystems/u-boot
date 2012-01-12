@@ -199,6 +199,21 @@ int fdtdec_find_aliases_for_id(const void *blob, const char *name,
 			enum fdt_compat_id id, int *node_list, int maxcount);
 
 /*
+ * This function is similar to fdtdec_find_aliases_for_id() except that it
+ * adds to the node_list that is passed in. Any 0 elements are considered
+ * available for allocation - others are considered already used and are
+ * skipped.
+ *
+ * You can use this by calling fdtdec_find_aliases_for_id() with an
+ * uninitialised array, then setting the elements that are returned to -1,
+ * say, then calling this function, perhaps with a different compat id.
+ * Any elements you get back that are >0 are new nodes added by the call
+ * to this function.
+ */
+int fdtdec_add_aliases_for_id(const void *blob, const char *name,
+			enum fdt_compat_id id, int *node_list, int maxcount);
+
+/*
  * Get the name for a compatible ID
  *
  * @param id		Compatible ID to look for
