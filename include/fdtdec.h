@@ -242,6 +242,14 @@ int fdtdec_find_aliases_for_id(const void *blob, const char *name,
  * say, then calling this function, perhaps with a different compat id.
  * Any elements you get back that are >0 are new nodes added by the call
  * to this function.
+ *
+ * Note that if you have some nodes with aliases and some without, you are
+ * sailing close to the wind. The call to fdtdec_find_aliases_for_id() with
+ * one compat_id may fill in positions for which you have aliases defined
+ * for another compat_id. When you later call *this* function with the second
+ * compat_id, the alias positions may already be used. A debug warning may
+ * be generated in this case, but it is safest to define aliases for all
+ * nodes when you care about the ordering.
  */
 int fdtdec_add_aliases_for_id(const void *blob, const char *name,
 			enum fdt_compat_id id, int *node_list, int maxcount);

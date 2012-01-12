@@ -253,8 +253,14 @@ int fdtdec_add_aliases_for_id(const void *blob, const char *name,
 		 * it as done.
 		 */
 		if (fdtdec_get_is_enabled(blob, node)) {
-			if (node_list[number])
+			if (node_list[number]) {
+				debug("%s: warning: alias '%s' requires that "
+				      "a node be placed in the list in a "
+				      "position which is already filled by "
+				      "node '%s'\n", __func__, path,
+				      fdt_get_name(blob, node, NULL));
 				continue;
+			}
 			node_list[number] = node;
 			if (number >= num_found)
 				num_found = number + 1;
