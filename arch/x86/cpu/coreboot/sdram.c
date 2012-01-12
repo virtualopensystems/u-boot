@@ -54,6 +54,53 @@ unsigned install_e820_map(unsigned max_entries, struct e820entry *entries)
 extern uint8_t __text_start;
 extern uint8_t __bss_end;
 
+int __calculate_relocation_address(void);
+
+/*
+ * This function looks for the highest region of memory lower than 4GB which
+ * has enough space for U-Boot where U-Boot is aligned on a page boundary. It
+ * overrides the default implementation found elsewhere which simply picks the
+ * end of ram, wherever that may be. The location of the stack, the relocation
+ * address, and how far U-Boot is moved by relocation are set in the global
+ * data structure.
+ */
+int calculate_relocation_address(void)
+{
+	uint64_t uboot_size = &__bss_end - &__text_start;
+	uintptr_t dest_addr = 0;
+	int i;
+
+	for (i = 0; i < lib_sysinfo.n_memranges; i++) {
+		struct memrange *memrange = &lib_sysinfo.memrange[i];
+		/* Force U-Boot to relocate to a page aligned address. */
+		uint64_t start = roundup(memrange->base, 1 << 12);
+		uint64_t end = memrange->base + memrange->size;
+
+		/* Ignore non-memory regions. */
+		if (memrange->type != CB_MEM_RAM)
+			continue;
+
+		/* Filter memory over 4GB and regions that are too small. */
+		if (end > 0xffffffffULL)
+			end = 0x100000000ULL;
+		if (end - start < uboot_size)
+			continue;
+
+		if (end - uboot_size > dest_addr)
+			dest_addr = ROUND((end - uboot_size), 1 << 12);
+	}
+
+	/* If no suitable area was found, return an error. */
+	if (!dest_addr)
+		return 1;
+
+	gd->start_addr_sp = dest_addr - CONFIG_SYS_MALLOC_LEN;
+	gd->relocaddr = dest_addr;
+	gd->reloc_off = dest_addr - (uintptr_t)&__text_start;
+
+	return 0;
+}
+
 int dram_init_f(void)
 {
 	int i;
@@ -62,10 +109,6 @@ int dram_init_f(void)
 	for (i = 0; i < lib_sysinfo.n_memranges; i++) {
 		struct memrange *memrange = &lib_sysinfo.memrange[i];
 		unsigned long long end = memrange->base + memrange->size;
-
-		/* Ignore memory over 4GB, we can't use it. */
-		if (memrange->base > 0xffffffff)
-			continue;
 
 		if (memrange->type == CB_MEM_RAM && end > ram_size)
 			ram_size = end;
