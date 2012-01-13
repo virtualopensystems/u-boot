@@ -80,40 +80,55 @@ DECLARE_GLOBAL_DATA_PTR;
 /* The margin to keep extra stack region that not to be wiped. */
 #define STACK_MARGIN		1024
 
-/*
- * A sentinel value indicates an error occured when selecting main firmware or
- * kernel. This value must be unique to enum VbSelectFirmware_t.
- */
-#define VB_SELECT_ERROR		0xff
 
 /*
- * A dummy value indicates that VbSelectAndLoadKernel requires U-Boot to show up
- * a command line. This value must be unique to enum VbSelectFirmware_t.
+ * Combine VbSelectFirmware_t with VbError_t for this one file.
+ * TODO(wfrichar): Clean this up, either by changing vboot or refactoring here.
  */
-#define VB_SELECT_POWER_OFF	0xfe
-/* TODO Implement the "returning to command line" in vboot_reference. */
-#define VB_SELECT_COMMAND_LINE	0xfd
+enum {
+	/* VbSelectFirmware_t */
+	TWOSTOP_SELECT_FIRMWARE_RECOVERY =    VB_SELECT_FIRMWARE_RECOVERY,
+	TWOSTOP_SELECT_FIRMWARE_A        =    VB_SELECT_FIRMWARE_A,
+	TWOSTOP_SELECT_FIRMWARE_B        =    VB_SELECT_FIRMWARE_B,
+	TWOSTOP_SELECT_FIRMWARE_READONLY =    VB_SELECT_FIRMWARE_READONLY,
+	/* More choices */
+	TWOSTOP_SELECT_ERROR,
+	TWOSTOP_SELECT_POWER_OFF,
+	TWOSTOP_SELECT_COMMAND_LINE
+};
+
 
 #ifdef VBOOT_DEBUG
+#define MY_ENUM_TO_STR(a) #a
 static const char *
 str_selection(uint32_t selection)
 {
-	static const char const *str[] = {
-		"VB_SELECT_FIRMWARE_RECOVERY",
-		"VB_SELECT_FIRMWARE_A",
-		"VB_SELECT_FIRMWARE_B",
-		"VB_SELECT_FIRMWARE_READONLY"
-	};
-
-	if (selection == VB_SELECT_ERROR)
-		return "VB_SELECT_ERROR";
-	else if (selection == VB_SELECT_POWER_OFF)
-		return "VB_SELECT_POWER_OFF";
-	else if (selection == VB_SELECT_COMMAND_LINE)
-		return "VB_SELECT_COMMAND_LINE";
-	else
-		return str[selection];
+	switch (selection) {
+	case TWOSTOP_SELECT_FIRMWARE_RECOVERY:
+		return MY_ENUM_TO_STR(TWOSTOP_SELECT_FIRMWARE_RECOVERY);
+		break;
+	case TWOSTOP_SELECT_FIRMWARE_A:
+		return MY_ENUM_TO_STR(TWOSTOP_SELECT_FIRMWARE_A);
+		break;
+	case TWOSTOP_SELECT_FIRMWARE_B:
+		return MY_ENUM_TO_STR(TWOSTOP_SELECT_FIRMWARE_B);
+		break;
+	case TWOSTOP_SELECT_FIRMWARE_READONLY:
+		return MY_ENUM_TO_STR(TWOSTOP_SELECT_FIRMWARE_READONLY);
+		break;
+	case TWOSTOP_SELECT_ERROR:
+		return MY_ENUM_TO_STR(TWOSTOP_SELECT_ERROR);
+		break;
+	case TWOSTOP_SELECT_POWER_OFF:
+		return MY_ENUM_TO_STR(TWOSTOP_SELECT_POWER_OFF);
+		break;
+	case TWOSTOP_SELECT_COMMAND_LINE:
+		return MY_ENUM_TO_STR(TWOSTOP_SELECT_COMMAND_LINE);
+		break;
+	}
+	return "<UNKNOWN>";
 }
+#undef MY_ENUM_TO_STR
 #endif /* VBOOT_DEBUG */
 
 /*
@@ -311,11 +326,11 @@ twostop_init_vboot_library(firmware_storage_t *file, void *gbb,
 	/* Load required information of GBB */
 	if (iparams.out_flags & VB_INIT_OUT_ENABLE_DISPLAY)
 		if (gbb_read_bmp_block(gbb, file, gbb_offset, gbb_size))
-			return 1;
+			return VBERROR_INVALID_GBB;
 	if (cdata->boot_developer_switch ||
 			iparams.out_flags & VB_INIT_OUT_ENABLE_RECOVERY) {
 		if (gbb_read_recovery_key(gbb, file, gbb_offset, gbb_size))
-			return 1;
+			return VBERROR_INVALID_GBB;
 	}
 
 	return VBERROR_SUCCESS;
@@ -326,7 +341,7 @@ twostop_make_selection(struct twostop_fmap *fmap, firmware_storage_t *file,
 		       VbCommonParams *cparams, void **fw_blob_ptr,
 		       uint32_t *fw_size_ptr)
 {
-	uint32_t selection = VB_SELECT_ERROR;
+	uint32_t selection = TWOSTOP_SELECT_ERROR;
 	VbError_t err;
 	uint32_t vlength;
 	VbSelectFirmwareParams fparams;
@@ -434,14 +449,14 @@ twostop_select_and_set_main_firmware(struct twostop_fmap *fmap,
 		       "twostop_select_and_set_main_firmware");
 	if (twostop_init_cparams(fmap, gbb, vb_shared_data, &cparams)) {
 		VBDEBUG(PREFIX "failed to init cparams\n");
-		return VB_SELECT_ERROR;
+		return TWOSTOP_SELECT_ERROR;
 	}
 
 	if (twostop_init_vboot_library(file, gbb, fmap->readonly.gbb.offset,
 				       gbb_size, cdata, &cparams)
 			!= VBERROR_SUCCESS) {
 		VBDEBUG(PREFIX "failed to init vboot library\n");
-		return VB_SELECT_ERROR;
+		return TWOSTOP_SELECT_ERROR;
 	}
 
 	selection = twostop_make_selection(fmap, file, &cparams,
@@ -449,8 +464,8 @@ twostop_select_and_set_main_firmware(struct twostop_fmap *fmap,
 
 	VBDEBUG(PREFIX "selection: %s\n", str_selection(selection));
 
-	if (selection == VB_SELECT_ERROR)
-		return VB_SELECT_ERROR;
+	if (selection == TWOSTOP_SELECT_ERROR)
+		return TWOSTOP_SELECT_ERROR;
 
 	switch(selection) {
 	case VB_SELECT_FIRMWARE_RECOVERY:
@@ -493,7 +508,7 @@ twostop_select_and_set_main_firmware(struct twostop_fmap *fmap,
 	if (crossystem_data_set_main_firmware(cdata,
 				firmware_type, firmware_id)) {
 		VBDEBUG(PREFIX "failed to set active main firmware\n");
-		return VB_SELECT_ERROR;
+		return TWOSTOP_SELECT_ERROR;
 	}
 
 	return selection;
@@ -521,7 +536,7 @@ twostop_jump(crossystem_data_t *cdata, void *fw_blob, uint32_t fw_size)
 	((void(*)(void))CONFIG_SYS_TEXT_BASE)();
 
 	/* It is an error if readwrite firmware returns */
-	return VB_SELECT_ERROR;
+	return TWOSTOP_SELECT_ERROR;
 }
 
 static int
@@ -634,7 +649,7 @@ twostop_main_firmware(struct twostop_fmap *fmap, void *gbb,
 		       "twostop_main_firmware");
 	if (twostop_init_cparams(fmap, gbb, vb_shared_data, &cparams)) {
 		VBDEBUG(PREFIX "failed to init cparams\n");
-		return VB_SELECT_ERROR;
+		return TWOSTOP_SELECT_ERROR;
 	}
 
 	kparams.kernel_buffer = fdt_decode_chromeos_alloc_region(gd->blob,
@@ -648,11 +663,15 @@ twostop_main_firmware(struct twostop_fmap *fmap, void *gbb,
 
 	if ((err = VbSelectAndLoadKernel(&cparams, &kparams))) {
 		VBDEBUG(PREFIX "VbSelectAndLoadKernel: %d\n", err);
-		return VbExIsShutdownRequested() ?
-			VB_SELECT_POWER_OFF : VB_SELECT_ERROR;
+		switch (err) {
+		case VBERROR_SHUTDOWN_REQUESTED:
+			return TWOSTOP_SELECT_POWER_OFF;
+			break;
+		case VBERROR_BIOS_SHELL_REQUESTED:
+			return TWOSTOP_SELECT_COMMAND_LINE;
+		}
+		return TWOSTOP_SELECT_ERROR;
 	}
-
-	/* TODO: Check kparams.out_flags and return VB_SELECT_COMMAND_LINE. */
 
 	VBDEBUG(PREFIX "kparams:\n");
 	VBDEBUG(PREFIX "- disk_handle:        : %p\n", kparams.disk_handle);
@@ -674,7 +693,7 @@ twostop_main_firmware(struct twostop_fmap *fmap, void *gbb,
 	boot_kernel(&kparams, cdata);
 
 	/* It is an error if boot_kenel returns */
-	return VB_SELECT_ERROR;
+	return TWOSTOP_SELECT_ERROR;
 }
 
 /**
@@ -742,13 +761,13 @@ twostop_boot(void)
 	int boot_mode = FIRMWARE_TYPE_NORMAL;
 
 	if (setup_gbb_and_cdata(&gbb, &gbb_size, &cdata, 0))
-		return VB_SELECT_ERROR;
+		return TWOSTOP_SELECT_ERROR;
 
 	vb_shared_data = cdata->vb_shared_data;
 	if (twostop_init(&fmap, &file, &gbb, gbb_size, cdata,
 			 vb_shared_data)) {
 		VBDEBUG(PREFIX "failed to init twostop boot\n");
-		return VB_SELECT_ERROR;
+		return TWOSTOP_SELECT_ERROR;
 	}
 
 	selection = twostop_select_and_set_main_firmware(&fmap, &file,
@@ -759,8 +778,8 @@ twostop_boot(void)
 	file.close(&file); /* We don't care even if it fails */
 
 	/* Don't we bother to free(fw_blob) if there was an error? */
-	if (selection == VB_SELECT_ERROR)
-		return VB_SELECT_ERROR;
+	if (selection == TWOSTOP_SELECT_ERROR)
+		return TWOSTOP_SELECT_ERROR;
 
 	if (selection == VB_SELECT_FIRMWARE_A ||
 			selection == VB_SELECT_FIRMWARE_B)
@@ -788,7 +807,7 @@ twostop_boot(void)
 	VBDEBUG(PREFIX "selection of read-only main firmware: %s\n",
 			str_selection(selection));
 
-	if (selection != VB_SELECT_COMMAND_LINE)
+	if (selection != TWOSTOP_SELECT_COMMAND_LINE)
 		return selection;
 
 	/*
@@ -796,7 +815,7 @@ twostop_boot(void)
 	 * returning back to the command line.
 	 */
 
-	return VB_SELECT_COMMAND_LINE;
+	return TWOSTOP_SELECT_COMMAND_LINE;
 }
 
 static uint32_t
@@ -809,7 +828,7 @@ twostop_readwrite_main_firmware(void)
 
 	if (fdt_decode_twostop_fmap(gd->blob, &fmap)) {
 		VBDEBUG(PREFIX "failed to decode fmap\n");
-		return VB_SELECT_ERROR;
+		return TWOSTOP_SELECT_ERROR;
 	}
 	dump_fmap(&fmap);
 
@@ -817,7 +836,7 @@ twostop_readwrite_main_firmware(void)
 	gbb = (void *) (fmap.readonly.gbb.offset + fmap.flash_base);
 #endif
 	if (setup_gbb_and_cdata(&gbb, &gbb_size, &cdata, 1))
-		return VB_SELECT_ERROR;
+		return TWOSTOP_SELECT_ERROR;
 
 	/*
 	 * VbSelectAndLoadKernel() assumes the TPM interface has already been
@@ -828,7 +847,7 @@ twostop_readwrite_main_firmware(void)
 	 */
 	if (VbExTpmInit() != TPM_SUCCESS) {
 		VBDEBUG(PREFIX "failed to init tpm interface\n");
-		return VB_SELECT_ERROR;
+		return TWOSTOP_SELECT_ERROR;
 	}
 
 	/* TODO Now, initialize device that bootstub did not initialize */
@@ -866,13 +885,13 @@ do_vboot_twostop(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	VBDEBUG(PREFIX "selection of main firmware: %s\n",
 			str_selection(selection));
 
-	if (selection == VB_SELECT_COMMAND_LINE)
+	if (selection == TWOSTOP_SELECT_COMMAND_LINE)
 		return 0;
 
-	if (selection == VB_SELECT_POWER_OFF)
+	if (selection == TWOSTOP_SELECT_POWER_OFF)
 		power_off();
 
-	assert(selection == VB_SELECT_ERROR);
+	assert(selection == TWOSTOP_SELECT_ERROR);
 
 	cold_reboot();
 	return 0;
