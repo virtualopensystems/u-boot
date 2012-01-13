@@ -109,6 +109,7 @@
 #endif
 
 #define CONFIG_SYS_CONSOLE_IS_IN_ENV
+#define CONFIG_SYS_STDIO_DEREGISTER
 #define CONFIG_STD_DEVICES_SETTINGS     "stdin=usbkbd,vga,serial\0" \
 					"stdout=serial,cbmem\0" \
 					"stderr=vga,serial,cbmem\0"
