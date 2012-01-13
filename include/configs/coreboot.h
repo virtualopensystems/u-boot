@@ -36,6 +36,7 @@
 #define BUILD_CMD_LINE_STUFF 0
 #define BUILD_IDE_STUFF 0
 #define BUILD_NETWORK_STUFF 0
+#define BUILD_PART_FS_STUFF 0
 
 /* FDT support */
 #define CONFIG_OF_LIBFDT	/* Device tree support */
@@ -128,6 +129,7 @@
 #define CONFIG_SYS_ATA_ALT_OFFSET	0x200
 #endif
 
+#if BUILD_PART_FS_STUFF
 #define CONFIG_SUPPORT_VFAT
 
 /************************************************************
@@ -135,6 +137,7 @@
  ************************************************************/
 #define CONFIG_EFI_PARTITION
 #define CONFIG_DOS_PARTITION
+#endif
 
 
 /*-----------------------------------------------------------------------
