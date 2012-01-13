@@ -248,12 +248,6 @@ void dev_print (block_dev_desc_t *dev_desc)
      defined(CONFIG_MMC)		|| \
      defined(CONFIG_SYSTEMACE) )
 
-#if defined(CONFIG_MAC_PARTITION) || \
-    defined(CONFIG_DOS_PARTITION) || \
-    defined(CONFIG_ISO_PARTITION) || \
-    defined(CONFIG_AMIGA_PARTITION) || \
-    defined(CONFIG_EFI_PARTITION)
-
 void init_part (block_dev_desc_t * dev_desc)
 {
 #ifdef CONFIG_ISO_PARTITION
@@ -349,6 +343,12 @@ int get_partition_info (block_dev_desc_t *dev_desc, int part
 	return (-1);
 }
 
+#if defined(CONFIG_MAC_PARTITION) || \
+    defined(CONFIG_DOS_PARTITION) || \
+    defined(CONFIG_ISO_PARTITION) || \
+    defined(CONFIG_AMIGA_PARTITION) || \
+    defined(CONFIG_EFI_PARTITION)
+
 static void print_part_header (const char *type, block_dev_desc_t * dev_desc)
 {
 	puts ("\nPartition Map for ");
@@ -381,6 +381,8 @@ static void print_part_header (const char *type, block_dev_desc_t * dev_desc)
 	printf (" device %d  --   Partition Type: %s\n\n",
 			dev_desc->dev, type);
 }
+
+#endif
 
 void print_part (block_dev_desc_t * dev_desc)
 {
@@ -427,12 +429,5 @@ void print_part (block_dev_desc_t * dev_desc)
 	}
 	puts ("## Unknown partition table\n");
 }
-
-
-#else	/* neither MAC nor DOS nor ISO nor AMIGA nor EFI partition configured */
-# error neither CONFIG_MAC_PARTITION nor CONFIG_DOS_PARTITION
-# error nor CONFIG_ISO_PARTITION nor CONFIG_AMIGA_PARTITION
-# error nor CONFIG_EFI_PARTITION configured!
-#endif
 
 #endif
