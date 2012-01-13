@@ -471,9 +471,9 @@ int drv_usb_kbd_init(void)
 		USB_KBD_PRINTF("USB KBD: found set up device.\n");
 		old_dev = stdio_get_by_name(DEVNAME);
 		if (old_dev) {
-			/* Already registered, just return ok. */
+			/* Already registered, remove the old one */
 			USB_KBD_PRINTF("USB KBD: is already registered.\n");
-			return 1;
+			usb_kbd_deregister();
 		}
 
 		/* Register the keyboard */
