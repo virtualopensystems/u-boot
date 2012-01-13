@@ -28,7 +28,7 @@
  */
 
 static void memory_wipe_insert_between(memory_wipe_edge_t *before,
-	memory_wipe_edge_t *after, uintptr_t pos)
+	memory_wipe_edge_t *after, phys_addr_t pos)
 {
 	memory_wipe_edge_t *new_edge =
 		(memory_wipe_edge_t *)malloc(sizeof(*new_edge));
@@ -48,7 +48,7 @@ void memory_wipe_init(memory_wipe_t *wipe)
 }
 
 static void memory_wipe_set_region_to(memory_wipe_t *wipe_info,
-	uintptr_t start, uintptr_t end, int new_wiped)
+	phys_addr_t start, phys_addr_t end, int new_wiped)
 {
 	/* whether the current region was originally going to be wiped. */
 	int wipe = 0;
@@ -97,13 +97,13 @@ static void memory_wipe_set_region_to(memory_wipe_t *wipe_info,
 }
 
 /* Set a region to "wiped". */
-void memory_wipe_add(memory_wipe_t *wipe, uintptr_t start, uintptr_t end)
+void memory_wipe_add(memory_wipe_t *wipe, phys_addr_t start, phys_addr_t end)
 {
 	memory_wipe_set_region_to(wipe, start, end, 1);
 }
 
 /* Set a region to "not wiped". */
-void memory_wipe_sub(memory_wipe_t *wipe, uintptr_t start, uintptr_t end)
+void memory_wipe_sub(memory_wipe_t *wipe, phys_addr_t start, phys_addr_t end)
 {
 	memory_wipe_set_region_to(wipe, start, end, 0);
 }
@@ -112,10 +112,11 @@ void memory_wipe_sub(memory_wipe_t *wipe, uintptr_t start, uintptr_t end)
 void memory_wipe_execute(memory_wipe_t *wipe)
 {
 	memory_wipe_edge_t *cur;
+	const phys_addr_t max_addr = (phys_addr_t)~(uintptr_t)0;
 
 	VBDEBUG(PREFIX "Wipe memory regions:\n");
 	for (cur = wipe->head.next; cur; cur = cur->next->next) {
-		uintptr_t start, end;
+		phys_addr_t start, end;
 
 		if (!cur->next) {
 			VBDEBUG(PREFIX "Odd number of region edges!\n");
@@ -123,8 +124,12 @@ void memory_wipe_execute(memory_wipe_t *wipe)
 		}
 
 		start = cur->pos;
+		if ((start & max_addr) != start)
+			break;
 		end = cur->next->pos;
+		if ((end & max_addr) != end)
+			end = 0;
 		VBDEBUG(PREFIX "\t[%#08x, 0x%08x)\n", start, end);
-		memset((void *)start, 0, end - start);
+		memset((void *)(uintptr_t)start, 0, end - start);
 	}
 }

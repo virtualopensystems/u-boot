@@ -21,12 +21,13 @@
 #ifndef CHROMEOS_MEMORY_WIPE_H_
 #define CHROMEOS_MEMORY_WIPE_H_
 
+#include <asm/types.h>
 #include <linux/types.h>
 
 /* A node in a linked list of edges, each at position "pos". */
 typedef struct memory_wipe_edge_t {
 	struct memory_wipe_edge_t *next;
-	uintptr_t pos;
+	phys_addr_t pos;
 } memory_wipe_edge_t;
 
 /*
@@ -51,7 +52,7 @@ void memory_wipe_init(memory_wipe_t *wipe);
  * @param start		The start of the region.
  * @param end		The end of the region.
  */
-void memory_wipe_add(memory_wipe_t *wipe, uintptr_t start, uintptr_t end);
+void memory_wipe_add(memory_wipe_t *wipe, phys_addr_t start, phys_addr_t end);
 
 /*
  * Subtracts a memory region.
@@ -60,7 +61,7 @@ void memory_wipe_add(memory_wipe_t *wipe, uintptr_t start, uintptr_t end);
  * @param start		The start of the region.
  * @param end		The end of the region.
  */
-void memory_wipe_sub(memory_wipe_t *wipe, uintptr_t start, uintptr_t end);
+void memory_wipe_sub(memory_wipe_t *wipe, phys_addr_t start, phys_addr_t end);
 
 /*
  * Executes the memory wipe.
