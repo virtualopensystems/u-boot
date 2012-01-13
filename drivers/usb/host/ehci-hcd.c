@@ -1143,6 +1143,7 @@ destroy_int_queue(struct usb_device *dev, struct int_queue *queue)
 {
 	struct ehci_ctrl *ctrl = dev->controller;
 	int result = -1;
+	unsigned long timeout;
 
 	if (disable_periodic(ctrl) < 0) {
 		debug("FATAL: periodic should never fail, but did");
@@ -1151,6 +1152,7 @@ destroy_int_queue(struct usb_device *dev, struct int_queue *queue)
 	periodic_schedules--;
 
 	struct QH *cur = &ctrl->periodic_queue;
+	timeout = get_timer(0) + 500; /* abort after 500ms */
 	while (!(cur->qh_link & QH_LINK_TERMINATE)) {
 		debug("considering %p, with qh_link %x\n", cur, cur->qh_link);
 		if (NEXT_QH(cur) == queue->first) {
@@ -1160,6 +1162,11 @@ destroy_int_queue(struct usb_device *dev, struct int_queue *queue)
 			goto out;
 		}
 		cur = NEXT_QH(cur);
+		if (get_timer(0) > timeout) {
+			printf("Timeout destroying interrupt endpoint queue\n");
+			result = -1;
+			break;
+		}
 	}
 
 	if (periodic_schedules > 0)
@@ -1181,15 +1188,21 @@ submit_int_msg(struct usb_device *dev, unsigned long pipe, void *buffer,
 {
 	void *backbuffer;
 	struct int_queue *queue;
+	unsigned long timeout;
+	int result = 0;
 
 	debug("dev=%p, pipe=%lu, buffer=%p, length=%d, interval=%d",
 	      dev, pipe, buffer, length, interval);
 
 	queue = create_int_queue(dev, pipe, 1, length, buffer);
 
-	/* TODO: pick some useful timeout rule */
+	timeout = get_timer(0) + USB_TIMEOUT_MS(pipe);
 	while ((backbuffer = poll_int_queue(dev, queue)) == NULL)
-		;
+		if (get_timer(0) > timeout) {
+			printf("Timeout poll on interrupt endpoint\n");
+			result = -1;
+			break;
+		}
 
 	if (backbuffer != buffer) {
 		debug("got wrong buffer back (%x instead of %x)\n",
@@ -1201,7 +1214,7 @@ submit_int_msg(struct usb_device *dev, unsigned long pipe, void *buffer,
 		return -1;
 
 	/* everything worked out fine */
-	return 0;
+	return result;
 }
 
 #ifdef CONFIG_SYS_USB_EVENT_POLL
