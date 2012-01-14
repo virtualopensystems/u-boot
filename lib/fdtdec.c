@@ -411,7 +411,7 @@ static int fdtdec_decode_gpios(const void *blob, int node,
 	}
 
 	/* We will use the name to tag the GPIO */
-	name = fdt_string(blob, prop->nameoff);
+	name = fdt_string(blob, fdt32_to_cpu(prop->nameoff));
 	cell = (u32 *)prop->data;
 	len /= sizeof(u32) * 3;		/* 3 cells per GPIO record */
 	if (len > max_count) {
@@ -437,6 +437,7 @@ int fdtdec_decode_gpio(const void *blob, int node, const char *prop_name,
 
 	debug("%s: %s\n", __func__, prop_name);
 	gpio->gpio = FDT_GPIO_NONE;
+	gpio->name = NULL;
 	err = fdtdec_decode_gpios(blob, node, prop_name, gpio, 1);
 	return err == 1 ? 0 : err;
 }
