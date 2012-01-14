@@ -51,6 +51,9 @@ unsigned install_e820_map(unsigned max_entries, struct e820entry *entries)
 	return num_entries;
 }
 
+extern uint8_t __text_start;
+extern uint8_t __bss_end;
+
 int dram_init_f(void)
 {
 	int i;
