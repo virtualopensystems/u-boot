@@ -134,12 +134,23 @@ void lcd_set_flush_dcache(int flush)
 
 static void console_scrollup (void)
 {
+	int rows = 1;
+
+#ifdef CONSOLE_SCROLL_LINES
+	rows = CONSOLE_SCROLL_LINES;
+#endif
 	/* Copy up rows ignoring the first one */
-	memcpy (CONSOLE_ROW_FIRST, CONSOLE_ROW_SECOND, CONSOLE_SCROLL_SIZE);
+	memcpy(CONSOLE_ROW_FIRST,
+	       lcd_console_address + CONSOLE_ROW_SIZE * rows,
+	       CONSOLE_SIZE - CONSOLE_ROW_SIZE * rows);
 
 	/* Clear the last one */
-	memset (CONSOLE_ROW_LAST, COLOR_MASK(lcd_color_bg), CONSOLE_ROW_SIZE);
+	memset(lcd_console_address + CONSOLE_SIZE - CONSOLE_ROW_SIZE * rows,
+		COLOR_MASK(lcd_color_bg),
+	       CONSOLE_ROW_SIZE * rows);
+
 	lcd_sync();
+	console_row -= rows;
 }
 
 /*----------------------------------------------------------------------*/
