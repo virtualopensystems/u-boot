@@ -39,6 +39,35 @@
 #define I8042_STATUS_REG    (CONFIG_SYS_ISA_IO + 0x0064)    /* keyboard status read */
 #define I8042_COMMAND_REG   (CONFIG_SYS_ISA_IO + 0x0064)    /* keyboard ctrl write */
 
+/* Status register bits */
+#define I8042_STR_PARITY        0x80
+#define I8042_STR_TIMEOUT       0x40
+#define I8042_STR_AUXDATA       0x20
+#define I8042_STR_KEYLOCK       0x10
+#define I8042_STR_CMDDAT        0x08
+#define I8042_STR_MUXERR        0x04
+#define I8042_STR_IBF           0x02
+#define I8042_STR_OBF           0x01
+
+/* Command port commands (to i8042 controller) */
+#define I8042_CMD_SET_CMD_BYTE  0x60
+#define I8042_CMD_ENABLE_KBD    0xae
+
+/* Data port commands (to PS/2 device) */
+#define I8042_DATA_LED_WRITE    0xed
+#define I8042_DATA_KBD_RESET    0xff
+
+/* LED bits */
+#define I8042_LED_SCROLL_LOCK   0x01
+#define I8042_LED_NUM_LOCK      0x02
+#define I8042_LED_CAPS_LOCK     0x04
+#define I8042_LED_MASK          (I8042_LED_SCROLL_LOCK | \
+				 I8042_LED_NUM_LOCK    | \
+				 I8042_LED_CAPS_LOCK)
+
+
+
+
 #define KBD_US              0        /* default US layout */
 #define KBD_GER             1        /* german layout */
 

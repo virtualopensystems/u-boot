@@ -45,273 +45,250 @@ static int blinkCount = CONFIG_SYS_CONSOLE_BLINK_COUNT;
 static int cursor_state;
 #endif
 
+/*
+ * Use a simple FIFO to convert some keys into escape sequences and to handle
+ * tstc vs getc.  The FIFO length must be a power of two.  Minimal function
+ * requires that it be large enough to contain the generated escape sequence for
+ * one key.
+ */
+#define KBC_FIFO_LENGTH	(1 << 3)
+
+static int kbc_fifo[KBC_FIFO_LENGTH];
+static int kbc_fifo_read;
+static int kbc_fifo_write;
+
+
 /* locals */
 
-static int  kbd_input	 = -1;		/* no input yet */
 static int  kbd_mapping	 = KBD_US;	/* default US keyboard */
 static int  kbd_flags	 = NORMAL;	/* after reset */
 static int  kbd_state;			/* unshift code */
+static int  kbd_key_release;		/* key release in progress */
 
-static void kbd_conv_char(unsigned char scan_code);
-static void kbd_led_set(void);
-static void kbd_normal(unsigned char scan_code);
-static void kbd_shift(unsigned char scan_code);
-static void kbd_ctrl(unsigned char scan_code);
-static void kbd_num(unsigned char scan_code);
-static void kbd_caps(unsigned char scan_code);
-static void kbd_scroll(unsigned char scan_code);
-static void kbd_alt(unsigned char scan_code);
-static int  kbd_input_empty(void);
+static int  kbd_conv_usb(unsigned char scan_code);
+static void kbd_led_set(int ps2_leds);
+static int  i8042_ready(void);
 static int  kbd_reset(void);
 
-static unsigned char kbd_fct_map[144] = {
-	/* kbd_fct_map table for scan code */
-	 0,  AS,  AS,  AS,  AS,  AS,  AS,  AS, /* scan  0- 7 */
-	AS,  AS,  AS,  AS,  AS,  AS,  AS,  AS, /* scan  8- F */
-	AS,  AS,  AS,  AS,  AS,  AS,  AS,  AS, /* scan 10-17 */
-	AS,  AS,  AS,  AS,  AS,  CN,  AS,  AS, /* scan 18-1F */
-	AS,  AS,  AS,  AS,  AS,  AS,  AS,  AS, /* scan 20-27 */
-	AS,  AS,  SH,  AS,  AS,  AS,  AS,  AS, /* scan 28-2F */
-	AS,  AS,  AS,  AS,  AS,  AS,  SH,  AS, /* scan 30-37 */
-	AS,  AS,  CP,   0,   0,   0,   0,   0, /* scan 38-3F */
-	 0,   0,   0,   0,   0,  NM,  ST,  ES, /* scan 40-47 */
-	ES,  ES,  ES,  ES,  ES,  ES,  ES,  ES, /* scan 48-4F */
-	ES,  ES,  ES,  ES,   0,   0,  AS,   0, /* scan 50-57 */
-	 0,   0,   0,   0,   0,   0,   0,   0, /* scan 58-5F */
-	 0,   0,   0,   0,   0,   0,   0,   0, /* scan 60-67 */
-	 0,   0,   0,   0,   0,   0,   0,   0, /* scan 68-6F */
-	AS,   0,   0,  AS,   0,   0,  AS,   0, /* scan 70-77 */
-	 0,  AS,   0,   0,   0,  AS,   0,   0, /* scan 78-7F */
-	AS,  CN,  AS,  AS,  AK,  ST,  EX,  EX, /* enhanced */
-	AS,  EX,  EX,  AS,  EX,  AS,  EX,  EX  /* enhanced */
-	};
 
-static unsigned char kbd_key_map[2][5][144] = {
-	{ /* US keyboard */
-	{ /* unshift code */
-	   0, 0x1b,  '1',  '2',  '3',  '4',  '5',  '6', /* scan  0- 7 */
-	 '7',  '8',  '9',  '0',  '-',  '=', 0x08, '\t', /* scan  8- F */
-	 'q',  'w',  'e',  'r',  't',  'y',  'u',  'i', /* scan 10-17 */
-	 'o',  'p',  '[',  ']', '\r',   CN,  'a',  's', /* scan 18-1F */
-	 'd',  'f',  'g',  'h',  'j',  'k',  'l',  ';', /* scan 20-27 */
-	'\'',  '`',   SH, '\\',  'z',  'x',  'c',  'v', /* scan 28-2F */
-	 'b',  'n',  'm',  ',',  '.',  '/',   SH,  '*', /* scan 30-37 */
-	 ' ',  ' ',   CP,    0,    0,    0,    0,    0, /* scan 38-3F */
-	   0,    0,    0,    0,    0,   NM,   ST,  '7', /* scan 40-47 */
-	 '8',  '9',  '-',  '4',  '5',  '6',  '+',  '1', /* scan 48-4F */
-	 '2',  '3',  '0',  '.',    0,    0,    0,    0, /* scan 50-57 */
-	   0,    0,    0,    0,    0,    0,    0,    0, /* scan 58-5F */
-	   0,    0,    0,    0,    0,    0,    0,    0, /* scan 60-67 */
-	   0,    0,    0,    0,    0,    0,    0,    0, /* scan 68-6F */
-	   0,    0,    0,    0,    0,    0,    0,    0, /* scan 70-77 */
-	   0,    0,    0,    0,    0,    0,    0,    0, /* scan 78-7F */
-	'\r',   CN,  '/',  '*',  ' ',   ST,  'F',  'A', /* extended */
-	   0,  'D',  'C',    0,  'B',    0,  '@',  'P'  /* extended */
-	},
-	{ /* shift code */
-	   0, 0x1b,  '!',  '@',  '#',  '$',  '%',  '^', /* scan  0- 7 */
-	 '&',  '*',  '(',  ')',  '_',  '+', 0x08, '\t', /* scan  8- F */
-	 'Q',  'W',  'E',  'R',  'T',  'Y',  'U',  'I', /* scan 10-17 */
-	 'O',  'P',  '{',  '}', '\r',   CN,  'A',  'S', /* scan 18-1F */
-	 'D',  'F',  'G',  'H',  'J',  'K',  'L',  ':', /* scan 20-27 */
-	 '"',  '~',   SH,  '|',  'Z',  'X',  'C',  'V', /* scan 28-2F */
-	 'B',  'N',  'M',  '<',  '>',  '?',   SH,  '*', /* scan 30-37 */
-	 ' ',  ' ',   CP,    0,    0,    0,    0,    0, /* scan 38-3F */
-	   0,    0,    0,    0,    0,   NM,   ST,  '7', /* scan 40-47 */
-	 '8',  '9',  '-',  '4',  '5',  '6',  '+',  '1', /* scan 48-4F */
-	 '2',  '3',  '0',  '.',    0,    0,    0,    0, /* scan 50-57 */
-	   0,    0,    0,    0,    0,    0,    0,    0, /* scan 58-5F */
-	   0,    0,    0,    0,    0,    0,    0,    0, /* scan 60-67 */
-	   0,    0,    0,    0,    0,    0,    0,    0, /* scan 68-6F */
-	   0,    0,    0,    0,    0,    0,    0,    0, /* scan 70-77 */
-	   0,    0,    0,    0,    0,    0,    0,    0, /* scan 78-7F */
-	'\r',   CN,  '/',  '*',  ' ',   ST,  'F',  'A', /* extended */
-	   0,  'D',  'C',    0,  'B',    0,  '@',  'P'  /* extended */
-	},
-	{ /* control code */
-	0xff, 0x1b, 0xff, 0x00, 0xff, 0xff, 0xff, 0xff, /* scan  0- 7 */
-	0x1e, 0xff, 0xff, 0xff, 0x1f, 0xff, 0xff, '\t', /* scan  8- F */
-	0x11, 0x17, 0x05, 0x12, 0x14, 0x19, 0x15, 0x09, /* scan 10-17 */
-	0x0f, 0x10, 0x1b, 0x1d, '\r',   CN, 0x01, 0x13, /* scan 18-1F */
-	0x04, 0x06, 0x07, 0x08, 0x0a, 0x0b, 0x0c, 0xff, /* scan 20-27 */
-	0xff, 0x1c,   SH, 0xff, 0x1a, 0x18, 0x03, 0x16, /* scan 28-2F */
-	0x02, 0x0e, 0x0d, 0xff, 0xff, 0xff,   SH, 0xff, /* scan 30-37 */
-	0xff, 0xff,   CP, 0xff, 0xff, 0xff, 0xff, 0xff, /* scan 38-3F */
-	0xff, 0xff, 0xff, 0xff, 0xff,   NM,   ST, 0xff, /* scan 40-47 */
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* scan 48-4F */
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* scan 50-57 */
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* scan 58-5F */
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* scan 60-67 */
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* scan 68-6F */
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* scan 70-77 */
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* scan 78-7F */
-	'\r',   CN,  '/',  '*',  ' ',   ST, 0xff, 0xff, /* extended */
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff  /* extended */
-	},
-	{ /* non numeric code */
-	   0, 0x1b,  '1',  '2',  '3',  '4',  '5',  '6', /* scan  0- 7 */
-	 '7',  '8',  '9',  '0',  '-',  '=', 0x08, '\t', /* scan  8- F */
-	 'q',  'w',  'e',  'r',  't',  'y',  'u',  'i', /* scan 10-17 */
-	 'o',  'p',  '[',  ']', '\r',   CN,  'a',  's', /* scan 18-1F */
-	 'd',  'f',  'g',  'h',  'j',  'k',  'l',  ';', /* scan 20-27 */
-	'\'',  '`',   SH, '\\',  'z',  'x',  'c',  'v', /* scan 28-2F */
-	 'b',  'n',  'm',  ',',  '.',  '/',   SH,  '*', /* scan 30-37 */
-	 ' ',  ' ',   CP,    0,    0,    0,    0,    0, /* scan 38-3F */
-	   0,    0,    0,    0,    0,   NM,   ST,  'w', /* scan 40-47 */
-	 'x',  'y',  'l',  't',  'u',  'v',  'm',  'q', /* scan 48-4F */
-	 'r',  's',  'p',  'n',    0,    0,    0,    0, /* scan 50-57 */
-	   0,    0,    0,    0,    0,    0,    0,    0, /* scan 58-5F */
-	   0,    0,    0,    0,    0,    0,    0,    0, /* scan 60-67 */
-	   0,    0,    0,    0,    0,    0,    0,    0, /* scan 68-6F */
-	   0,    0,    0,    0,    0,    0,    0,    0, /* scan 70-77 */
-	   0,    0,    0,    0,    0,    0,    0,    0, /* scan 78-7F */
-	'\r',   CN,  '/',  '*',  ' ',   ST,  'F',  'A', /* extended */
-	   0,  'D',  'C',    0,  'B',    0,  '@',  'P'  /* extended */
-	},
-	{ /* right alt mode - not used in US keyboard */
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* scan  0 - 7 */
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* scan 8 - F */
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* scan 10 -17 */
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* scan 18 -1F */
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* scan 20 -27 */
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* scan 28 -2F */
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* scan 30 -37 */
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* scan 38 -3F */
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* scan 40 -47 */
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* scan 48 -4F */
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* scan 50 -57 */
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* scan 58 -5F */
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* scan 60 -67 */
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* scan 68 -6F */
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* scan 70 -77 */
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* scan 78 -7F */
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* extended */
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff  /* extended */
-	}
-	},
-	{ /* german keyboard */
-	{ /* unshift code */
-	   0, 0x1b,  '1',  '2',  '3',  '4',  '5',  '6', /* scan  0- 7 */
-	 '7',  '8',  '9',  '0', 0xe1, '\'', 0x08, '\t', /* scan  8- F */
-	 'q',  'w',  'e',  'r',  't',  'z',  'u',  'i', /* scan 10-17 */
-	 'o',  'p', 0x81,  '+', '\r',   CN,  'a',  's', /* scan 18-1F */
-	 'd',  'f',  'g',  'h',  'j',  'k',  'l', 0x94, /* scan 20-27 */
-	0x84,  '^',   SH,  '#',  'y',  'x',  'c',  'v', /* scan 28-2F */
-	 'b',  'n',  'm',  ',',  '.',  '-',   SH,  '*', /* scan 30-37 */
-	 ' ',  ' ',   CP,    0,    0,    0,    0,    0, /* scan 38-3F */
-	   0,    0,    0,    0,    0,   NM,   ST,  '7', /* scan 40-47 */
-	 '8',  '9',  '-',  '4',  '5',  '6',  '+',  '1', /* scan 48-4F */
-	 '2',  '3',  '0',  ',',    0,    0,  '<',    0, /* scan 50-57 */
-	   0,    0,    0,    0,    0,    0,    0,    0, /* scan 58-5F */
-	   0,    0,    0,    0,    0,    0,    0,    0, /* scan 60-67 */
-	   0,    0,    0,    0,    0,    0,    0,    0, /* scan 68-6F */
-	   0,    0,    0,    0,    0,    0,    0,    0, /* scan 70-77 */
-	   0,    0,    0,    0,    0,    0,    0,    0, /* scan 78-7F */
-	'\r',   CN,  '/',  '*',  ' ',   ST,  'F',  'A', /* extended */
-	   0,  'D',  'C',    0,  'B',    0,  '@',  'P'  /* extended */
-	},
-	{ /* shift code */
-	   0, 0x1b,  '!',  '"', 0x15,  '$',  '%',  '&', /* scan  0- 7 */
-	 '/',  '(',  ')',  '=',  '?',  '`', 0x08, '\t', /* scan  8- F */
-	 'Q',  'W',  'E',  'R',  'T',  'Z',  'U',  'I', /* scan 10-17 */
-	 'O',  'P', 0x9a,  '*', '\r',   CN,  'A',  'S', /* scan 18-1F */
-	 'D',  'F',  'G',  'H',  'J',  'K',  'L', 0x99, /* scan 20-27 */
-	0x8e, 0xf8,   SH, '\'',  'Y',  'X',  'C',  'V', /* scan 28-2F */
-	 'B',  'N',  'M',  ';',  ':',  '_',   SH,  '*', /* scan 30-37 */
-	 ' ',  ' ',   CP,    0,    0,    0,    0,    0, /* scan 38-3F */
-	   0,    0,    0,    0,    0,   NM,   ST,  '7', /* scan 40-47 */
-	 '8',  '9',  '-',  '4',  '5',  '6',  '+',  '1', /* scan 48-4F */
-	 '2',  '3',  '0',  ',',    0,    0,  '>',    0, /* scan 50-57 */
-	   0,    0,    0,    0,    0,    0,    0,    0, /* scan 58-5F */
-	   0,    0,    0,    0,    0,    0,    0,    0, /* scan 60-67 */
-	   0,    0,    0,    0,    0,    0,    0,    0, /* scan 68-6F */
-	   0,    0,    0,    0,    0,    0,    0,    0, /* scan 70-77 */
-	   0,    0,    0,    0,    0,    0,    0,    0, /* scan 78-7F */
-	'\r',   CN,  '/',  '*',  ' ',   ST,  'F',  'A', /* extended */
-	   0,  'D',  'C',    0,  'B',    0,  '@',  'P'  /* extended */
-	},
-	{ /* control code */
-	0xff, 0x1b, 0xff, 0x00, 0xff, 0xff, 0xff, 0xff, /* scan  0- 7 */
-	0x1e, 0xff, 0xff, 0xff, 0x1f, 0xff, 0xff, '\t', /* scan  8- F */
-	0x11, 0x17, 0x05, 0x12, 0x14, 0x19, 0x15, 0x09, /* scan 10-17 */
-	0x0f, 0x10, 0x1b, 0x1d, '\r',   CN, 0x01, 0x13, /* scan 18-1F */
-	0x04, 0x06, 0x07, 0x08, 0x0a, 0x0b, 0x0c, 0xff, /* scan 20-27 */
-	0xff, 0x1c,   SH, 0xff, 0x1a, 0x18, 0x03, 0x16, /* scan 28-2F */
-	0x02, 0x0e, 0x0d, 0xff, 0xff, 0xff,   SH, 0xff, /* scan 30-37 */
-	0xff, 0xff,   CP, 0xff, 0xff, 0xff, 0xff, 0xff, /* scan 38-3F */
-	0xff, 0xff, 0xff, 0xff, 0xff,   NM,   ST, 0xff, /* scan 40-47 */
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* scan 48-4F */
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* scan 50-57 */
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* scan 58-5F */
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* scan 60-67 */
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* scan 68-6F */
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* scan 70-77 */
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* scan 78-7F */
-	'\r',   CN,  '/',  '*',  ' ',   ST, 0xff, 0xff, /* extended */
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff  /* extended */
-	},
-	{ /* non numeric code */
-	   0, 0x1b,  '1',  '2',  '3',  '4',  '5',  '6', /* scan  0- 7 */
-	 '7',  '8',  '9',  '0', 0xe1, '\'', 0x08, '\t', /* scan  8- F */
-	 'q',  'w',  'e',  'r',  't',  'z',  'u',  'i', /* scan 10-17 */
-	 'o',  'p', 0x81,  '+', '\r',   CN,  'a',  's', /* scan 18-1F */
-	 'd',  'f',  'g',  'h',  'j',  'k',  'l', 0x94, /* scan 20-27 */
-	0x84,  '^',   SH,    0,  'y',  'x',  'c',  'v', /* scan 28-2F */
-	 'b',  'n',  'm',  ',',  '.',  '-',   SH,  '*', /* scan 30-37 */
-	 ' ',  ' ',   CP,    0,    0,    0,    0,    0, /* scan 38-3F */
-	   0,    0,    0,    0,    0,   NM,   ST,  'w', /* scan 40-47 */
-	 'x',  'y',  'l',  't',  'u',  'v',  'm',  'q', /* scan 48-4F */
-	 'r',  's',  'p',  'n',    0,    0,  '<',    0, /* scan 50-57 */
-	   0,    0,    0,    0,    0,    0,    0,    0, /* scan 58-5F */
-	   0,    0,    0,    0,    0,    0,    0,    0, /* scan 60-67 */
-	   0,    0,    0,    0,    0,    0,    0,    0, /* scan 68-6F */
-	   0,    0,    0,    0,    0,    0,    0,    0, /* scan 70-77 */
-	   0,    0,    0,    0,    0,    0,    0,    0, /* scan 78-7F */
-	'\r',   CN,  '/',  '*',  ' ',   ST,  'F',  'A', /* extended */
-	   0,  'D',  'C',    0,  'B',    0,  '@',  'P'  /* extended */
-	},
-	{ /* Right alt mode - is used in German keyboard */
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* scan  0 - 7 */
-	 '{',  '[',  ']',  '}', '\\', 0xff, 0xff, 0xff, /* scan  8 - F */
-	 '@', 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* scan 10 -17 */
-	0xff, 0xff, 0xff,  '~', 0xff, 0xff, 0xff, 0xff, /* scan 18 -1F */
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* scan 20 -27 */
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* scan 28 -2F */
-	0xff, 0xff, 0xe6, 0xff, 0xff, 0xff, 0xff, 0xff, /* scan 30 -37 */
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* scan 38 -3F */
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* scan 40 -47 */
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* scan 48 -4F */
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff,  '|', 0xff, /* scan 50 -57 */
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* scan 58 -5F */
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* scan 60 -67 */
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* scan 68 -6F */
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* scan 70 -77 */
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* scan 78 -7F */
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* extended */
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff  /* extended */
-	}
-	}
-	};
+/*
+ * Translate PS/2 Keyboard Scan Code Set 1 values into the USB Scan Codes
+ *
+ * Reasons to use USB scan codes:
+ *	o	Standard
+ *	o	Simple conversion to ASCII / ANSI 3.64
+ *	o	Ability to share complex processing / state code
+ *	o	Shared international keymaps in higher level code
+ *
+ * Extended codes (pseudo PS/2 scan codes >= 0x80) are positionally
+ * translated from "0xE0 + scan code" using a linear table to save
+ * data size; we intentionally do not support odd multibyte sequences.
+ */
 
-static unsigned char ext_key_map[] = {
-	0x1c, /* keypad enter */
-	0x1d, /* right control */
-	0x35, /* keypad slash */
-	0x37, /* print screen */
-	0x38, /* right alt */
-	0x46, /* break */
-	0x47, /* editpad home */
-	0x48, /* editpad up */
-	0x49, /* editpad pgup */
-	0x4b, /* editpad left */
-	0x4d, /* editpad right */
-	0x4f, /* editpad end */
-	0x50, /* editpad dn */
-	0x51, /* editpad pgdn */
-	0x52, /* editpad ins */
-	0x53, /* editpad del */
-	0x00  /* map end */
-	};
+/* Scan codes following a 0xE0 scan code... */
+static unsigned char ext_0_key_usb[] = {
+	0x00,	/* UNSUPPORTED: Print Screen (multibyte) */
+	0x00,	/* UNSUPPORTED: Pause (multibyte) */
+	0x00,	/* RESERVED: Keypad 5 (undefined action key) */
+
+	0x5E,	/* Power */
+	0x5F,	/* RESERVED: Sleep (maps to Keyboard Power) */
+	0x63,	/* RESERVED: Wake (maps to Keyboard Power) */
+
+	0x35,	/* Keypad Enter */
+	0x1C,	/* Keypad / */
+	0x5B,	/* Left GUI */
+	0x1D,	/* Right Control */
+	0x38,	/* Right Alt / Alt GR */
+	0x5C,	/* Right GUI */
+
+	0x52,	/* Insert */
+	0x47,	/* Home */
+	0x49,	/* Page Up */
+	0x53,	/* Delete Forward */
+	0x4F,	/* End */
+	0x51,	/* Page Down */
+	0x4D,	/* Right */
+	0x4B,	/* Left */
+	0x50,	/* Down */
+	0x48	/* Up */
+};
+#define EXT_0_KEY_USB_SIZE	ARRAY_SIZE(ext_0_key_usb)
+
+static unsigned char sc_to_usb[0x80 + EXT_0_KEY_USB_SIZE] = {
+	0x00, 0x29, 0x1E, 0x1F, 0x20, 0x21, 0x22, 0x23, /* scan 00-07 */
+	0x24, 0x25, 0x26, 0x27, 0x2D, 0x2E, 0x2A, 0x2B, /* scan 08-0F */
+	0x14, 0x1A, 0x08, 0x15, 0x17, 0x1C, 0x18, 0x0C, /* scan 10-17 */
+	0x12, 0x13, 0x2F, 0x30, 0x28, 0xE0, 0x04, 0x16, /* scan 18-1F */
+	0x07, 0x09, 0x0A, 0x0B, 0x0D, 0x0E, 0x0F, 0x33, /* scan 20-27 */
+	0x34, 0x35, 0xE1, 0x31, 0x1D, 0x1B, 0x06, 0x19, /* scan 28-2F */
+	0x05, 0x11, 0x10, 0x36, 0x37, 0x38, 0xE5, 0x55, /* scan 30-37 */
+	0xE2, 0x2C, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E, /* scan 38-3F */
+	0x3F, 0x40, 0x41, 0x42, 0x43, 0x53, 0x47, 0x5F, /* scan 40-47 */
+	0x60, 0x61, 0x56, 0x5C, 0x5D, 0x5E, 0x57, 0x59, /* scan 48-4F */
+	0x5A, 0x5B, 0x62, 0x63, 0x00, 0x00, 0x00, 0x44, /* scan 50-57 */
+	0x45, 0x00, 0x00, 0x00, 0x00, 0x32, 0x00, 0x00, /* scan 58-5F */
+	0x00, 0x64, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* scan 60-67 */
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* scan 68-6F */
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* scan 70-77 */
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* scan 78-7F */
+	0x00, 0x00, 0x00, 0x66, 0x66, 0x66, 0x58, 0x54, /* extended*/
+	0xE3, 0xE4, 0xE6, 0x5C, 0x49, 0x4A, 0x4B, 0x4C, /* extended*/
+	0x4D, 0x4E, 0x4F, 0x50, 0x51, 0x52              /* extended*/
+};
+
+/*
+ * USB scan code to ANSI 3.64 escape sequence table.  This table is
+ * incomplete in that it does not include all possible extra keys, nor
+ * the 0xE1 report keys.
+ */
+static struct map364 {
+	unsigned char usb_scan_code;
+	char *string;
+} usb_to_ansi364[] = {
+	{ 0x49, "\033[2~"},	/* Insert */
+	{ 0x4A, "\033[0H"},	/* Home */
+	{ 0x4B, "\033[5~"},	/* Page Up */
+	{ 0x4C, "\033[3~"},	/* Delete Forward */
+	{ 0x4D, "\033[0F"},	/* End */
+	{ 0x4E, "\033[3~"},	/* Page Down */
+	{ 0x4F, "\033[C"},	/* Right */
+	{ 0x50, "\033[D"},	/* Left */
+	{ 0x51, "\033[B"},	/* Down */
+	{ 0x52, "\033[A"},	/* Up */
+	{ 0x3A, "\033[OP" },	/* F1 */
+	{ 0x3B, "\033[OQ" },	/* F2 */
+	{ 0x3C, "\033[OR" },	/* F3 */
+	{ 0x3D, "\033[OS" },	/* F4 */
+	{ 0x3E, "\033[15~" },	/* F5 */
+	{ 0x3F, "\033[17~" },	/* F6 */
+	{ 0x40, "\033[18~" },	/* F7 */
+	{ 0x41, "\033[19~" },	/* F8 */
+	{ 0x42, "\033[20~" },	/* F9 */
+	{ 0x43, "\033[21~" },	/* F10 */
+	{ 0x44, "\033[23~" },	/* F11 */
+	{ 0x45, "\033[24~" }	/* F12 */
+};
+#define USB_TO_ANSI364_SIZE	ARRAY_SIZE(usb_to_ansi364)
+
+/* Modifier bits */
+#define LEFT_CNTR	(1 << 0)
+#define LEFT_SHIFT	(1 << 1)
+#define LEFT_ALT	(1 << 2)
+#define LEFT_GUI	(1 << 3)
+#define RIGHT_CNTR	(1 << 4)
+#define RIGHT_SHIFT	(1 << 5)
+#define RIGHT_ALT	(1 << 6)
+#define RIGHT_GUI	(1 << 7)
+
+/* USB locking modifier keys */
+#define USB_KEY_NUM_LOCK	0x53
+#define USB_KEY_CAPS_LOCK	0x39
+#define USB_KEY_SCROLL_LOCK	0x47
+
+/* Masking for lower to upper case conversion */
+#define CAPITAL_MASK	0x20
+
+/* USB LED bit order; the mask is to avoid sending unknown bits */
+#define USB_KBD_NUMLOCK		(1 << 0)
+#define USB_KBD_CAPSLOCK	(1 << 1)
+#define USB_KBD_SCROLLLOCK	(1 << 2)
+#define USB_KBD_LEDMASK		\
+	(USB_KBD_NUMLOCK | USB_KBD_CAPSLOCK | USB_KBD_SCROLLLOCK)
+
+/*
+ * Convert from USB "Set LEDs" command bit order to PS/2 Port 0x60
+ * Command 0xED bit order.
+ */
+static unsigned char usb_kbd_led_to_ps2(unsigned char usb_led_bits)
+{
+	return (((usb_led_bits) << 1) & 0x03) |
+	       ((usb_led_bits & USB_KBD_SCROLLLOCK) ? 0x01 : 0x00);
+}
+
+
+static unsigned char bits_modifiers;	/* individual modifier keys */
+static unsigned char bits_state;	/* modifier state (includes LED bits) */
+
+/* States for the FSA that manages input of PS/2 scan codes */
+enum ps2_kbd_state_t {
+	KS_BASE = 0,	/* Base state */
+	KS_EXTENDED_0,	/* Extended (E0) scan code byte expected */
+	KS_EXTENDED_1A,	/* Extended (E1) scan code first byte expected */
+	KS_EXTENDED_1B,	/* Extended (E1) scan code second byte expected */
+};
+
+static enum ps2_kbd_state_t ps2_kbd_state = KS_BASE;
+
+/* Keyboard maps */
+static const unsigned char usb_kbd_numkey[] = {
+	'1', '2', '3', '4', '5', '6', '7', '8', '9', '0',
+	'\r', 0x1b, '\b', '\t', ' ', '-', '=', '[', ']',
+	'\\', '#', ';', '\'', '`', ',', '.', '/'
+};
+static const unsigned char usb_kbd_numkey_shifted[] = {
+	'!', '@', '#', '$', '%', '^', '&', '*', '(', ')',
+	'\r', 0x1b, '\b', '\t', ' ', '_', '+', '{', '}',
+	'|', '~', ':', '"', '~', '<', '>', '?'
+};
+static const unsigned char usb_kbd_numkey_ctrled[] = {
+	'1', '2', '3', '4', '5', '6', '7', '8', '9', '0',
+	'\n', 0x1b, '\b', '\t', ' ', '-', '=', '[', ']',
+	'\\', '#', ';', '\'', '`', ',', '.', '/'
+};
+
+
+
+/*
+ * Simple FIFO for conversion of input characters to escape sequences
+ */
+
+/* Return true if there are no characters in the FIFO. */
+static int kbd_fifo_empty(void)
+{
+	return kbc_fifo_read == kbc_fifo_write;
+}
+
+/* Return number of characters of free space in the FIFO. */
+static int kbd_fifo_free_space(void)
+{
+	return KBC_FIFO_LENGTH - (kbc_fifo_write - kbc_fifo_read);
+}
+
+/*
+ * Insert a character into the FIFO.  Calling this function when the FIFO is
+ * full will overwrite the oldest character in the FIFO.
+ */
+static void kbd_fifo_insert(int key)
+{
+	int index = kbc_fifo_write & (KBC_FIFO_LENGTH - 1);
+
+	/* Special case for unregocnized keys */
+	if (key == 0x00)
+		return;
+
+	assert(kbd_fifo_free_space() > 0);
+
+	kbc_fifo[index] = key;
+
+	kbc_fifo_write++;
+}
+
+/*
+ * Remove a character from the FIFO, it is an error to call this function when
+ * the FIFO is empty.
+ */
+static int kbd_fifo_remove(void)
+{
+	int index = kbc_fifo_read & (KBC_FIFO_LENGTH - 1);
+	int key   = kbc_fifo[index];
+
+	assert(!kbd_fifo_empty());
+
+	kbc_fifo_read++;
+
+	return key;
+}
 
 /******************************************************************************/
 
@@ -362,18 +339,17 @@ void i8042_flush(void)
  */
 int i8042_disable(void)
 {
-	if (kbd_input_empty() == 0)
+	if (i8042_ready() == 0)
 		return -1;
 
 	/* Disable keyboard */
 	out8(I8042_COMMAND_REG, 0xad);
 
-	if (kbd_input_empty() == 0)
+	if (i8042_ready() == 0)
 		return -1;
 
 	return 0;
 }
-
 
 /*******************************************************************************
  *
@@ -407,7 +383,7 @@ int i8042_kbd_init(void)
 			kbd_mapping = keymap;
 			kbd_flags   = NORMAL;
 			kbd_state   = 0;
-			kbd_led_set();
+			kbd_led_set(0);	  /* Start with LEDs off */
 			return 0;
 		}
 	}
@@ -423,6 +399,11 @@ int i8042_kbd_init(void)
 int i8042_tstc(void)
 {
 	unsigned char scan_code = 0;
+	int kbd_input;
+
+	/* If there's something in the fifo, we're done. */
+	if (!kbd_fifo_empty())
+		return 1;
 
 #ifdef CONFIG_CONSOLE_CURSOR
 	if (--blinkCount == 0) {
@@ -433,34 +414,33 @@ int i8042_tstc(void)
 	}
 #endif
 
-	if ((in8(I8042_STATUS_REG) & 0x01) == 0) {
+	if ((in8(I8042_STATUS_REG) & I8042_STR_OBF) == 0) {
 		return 0;
 	} else {
 		scan_code = in8(I8042_DATA_REG);
 		if (scan_code == 0xfa)
 			return 0;
 
-		kbd_conv_char(scan_code);
-
-		if (kbd_input != -1)
+		kbd_input = kbd_conv_usb(scan_code);
+		if (kbd_input != -1) {
+			kbd_fifo_insert(kbd_input);
 			return 1;
+		}
 	}
 	return 0;
 }
 
 
-/*******************************************************************************
- *
- * i8042_getc - wait till keyboard input is available
- *		option: turn on/off cursor while waiting
- */
-int i8042_getc(void)
+/******************************************************************************/
+
+/* option: turn on/off cursor while waiting */
+static void kbd_fetch_char(int test)
 {
-	int ret_chr;
 	unsigned char scan_code;
+	int kbd_input = -1;
 
 	while (kbd_input == -1) {
-		while ((in8(I8042_STATUS_REG) & 0x01) == 0) {
+		while ((in8(I8042_STATUS_REG) & I8042_STR_OBF) == 0) {
 #ifdef CONFIG_CONSOLE_CURSOR
 			if (--blinkCount == 0) {
 				cursor_state ^= 1;
@@ -470,213 +450,272 @@ int i8042_getc(void)
 			udelay(10);
 #endif
 		}
+
 		scan_code = in8(I8042_DATA_REG);
-		if (scan_code != 0xfa)
-			kbd_conv_char (scan_code);
-	}
-	ret_chr = kbd_input;
-	kbd_input = -1;
-	return ret_chr;
-}
 
-
-/******************************************************************************/
-
-static void kbd_conv_char(unsigned char scan_code)
-{
-	if (scan_code == 0xe0) {
-		kbd_flags |= EXT;
-		return;
-	}
-
-	/* if high bit of scan_code, set break flag */
-	if (scan_code & 0x80)
-		kbd_flags |=  BRK;
-	else
-		kbd_flags &= ~BRK;
-
-	if ((scan_code == 0xe1) || (kbd_flags & E1)) {
-		if (scan_code == 0xe1) {
-			kbd_flags ^= BRK;    /* reset the break flag */
-			kbd_flags ^= E1;     /* bitwise EXOR with E1 flag */
-		}
-		return;
-	}
-
-	scan_code &= 0x7f;
-
-	if (kbd_flags & EXT) {
-		int i;
-
-		kbd_flags ^= EXT;
-		for (i = 0; ext_key_map[i]; i++) {
-			if (ext_key_map[i] == scan_code) {
-				scan_code = 0x80 + i;
+		if (scan_code != 0xfa) {
+			kbd_input = kbd_conv_usb(scan_code);
+			if (kbd_input != -1)
 				break;
-			}
 		}
-		/* not found ? */
-		if (!ext_key_map[i])
-			return;
 	}
 
-	switch (kbd_fct_map[scan_code]) {
-	case AS:
-		kbd_normal(scan_code);
-		break;
-	case SH:
-		kbd_shift(scan_code);
-		break;
-	case CN:
-		kbd_ctrl(scan_code);
-		break;
-	case NM:
-		kbd_num(scan_code);
-		break;
-	case CP:
-		kbd_caps(scan_code);
-		break;
-	case ST:
-		kbd_scroll(scan_code);
-		break;
-	case AK:
-		kbd_alt(scan_code);
-		break;
-	}
-	return;
+	kbd_fifo_insert(kbd_input);
+}
+
+/*******************************************************************************
+ *
+ * i8042_getc - wait till keyboard input is available
+ */
+int i8042_getc(void)
+{
+	if (kbd_fifo_empty())
+		kbd_fetch_char(0);
+
+	return kbd_fifo_remove();
 }
 
 
 /******************************************************************************/
 
-static void kbd_normal(unsigned char scan_code)
+static unsigned char scan_code_convert_ps2_usb(unsigned char scan_code)
 {
-	unsigned char chr;
+	unsigned char cooked_scan_code = (scan_code & 0x7F);
+	unsigned char usb_scan_code = 0x00;	/* keep compiler happy */
+	int offset;
 
-	if ((kbd_flags & BRK) == NORMAL) {
-		chr = kbd_key_map[kbd_mapping][kbd_state][scan_code];
-		if ((chr == 0xff) || (chr == 0x00))
-			return;
+	/* Reset the FSA on illegal scan codes */
+	if (ps2_kbd_state != KS_BASE &&
+	    (scan_code == 0xE0 || scan_code == 0xE1)) {
+		ps2_kbd_state = KS_BASE;
+		return 0x00;
+	}
 
-		/* if caps lock convert upper to lower */
-		if (((kbd_flags & CAPS) == CAPS) &&
-				(chr >= 'a' && chr <= 'z')) {
-			chr -= 'a' - 'A';
+	/*
+	 * If the high bit is set, this is a break code, otherwise it is a
+	 * make code.
+	 */
+	if (scan_code & 0x80)
+		kbd_key_release = 1;
+	else
+		kbd_key_release = 0;
+
+	/* PS/2 Scan code FSA */
+	switch (ps2_kbd_state) {
+	case KS_BASE:
+		if (scan_code == 0xE0) {
+			ps2_kbd_state = KS_EXTENDED_0;
+			usb_scan_code = 0x00;
+			break;
 		}
-		kbd_input = chr;
-	}
-}
+		/* 0xE1 is Only used by the Pause / Break key */
+		if (scan_code == 0xE1) {
+			ps2_kbd_state = KS_EXTENDED_1A;
+			usb_scan_code = 0x00;
+			break;
+		}
 
+		/*
+		 * Convert the cooked scan code.  For unrecognized scan
+		 * codes, we have explicit 0x00 values in the table.
+		 */
+		usb_scan_code = sc_to_usb[cooked_scan_code];
+		break;
 
-/******************************************************************************/
+	case KS_EXTENDED_0:
 
-static void kbd_shift(unsigned char scan_code)
-{
-	if ((kbd_flags & BRK) == BRK) {
-		kbd_state = AS;
-		kbd_flags &= (~SHIFT);
-	} else {
-		kbd_state = SH;
-		kbd_flags |= SHIFT;
-	}
-}
+		for (offset = 0; offset < EXT_0_KEY_USB_SIZE; offset++) {
+			if (cooked_scan_code != ext_0_key_usb[offset])
+				continue;
+			usb_scan_code = sc_to_usb[0x80 + offset];
+			break;
+		}
 
+		/*
+		 * Note: Reset to base here precludes parsing Print Screen
+		 *       sequence 0xE0 0x2A 0xE0 0x37, and inverse sequence
+		 *       0xE0 0xB7 0xE0 0xAA (Note inverse break scan code
+		 *       order if you intend to handle this case!).
+		 */
+		ps2_kbd_state = KS_BASE;
 
-/******************************************************************************/
+		/* Unrecognized scan code following 0xE0 */
+		if (offset == EXT_0_KEY_USB_SIZE)
+			usb_scan_code = 0x00;
+		break;
 
-static void kbd_ctrl(unsigned char scan_code)
-{
-	if ((kbd_flags & BRK) == BRK) {
-		kbd_state = AS;
-		kbd_flags &= (~CTRL);
-	} else {
-		kbd_state = CN;
-		kbd_flags |= CTRL;
-	}
-}
-
-
-/******************************************************************************/
-
-static void kbd_caps(unsigned char scan_code)
-{
-	if ((kbd_flags & BRK) == NORMAL) {
-		kbd_flags ^= CAPS;
-		kbd_led_set();    /* update keyboard LED */
-	}
-}
-
-
-/******************************************************************************/
-
-static void kbd_num(unsigned char scan_code)
-{
-	if ((kbd_flags & BRK) == NORMAL) {
-		kbd_flags ^= NUM;
-		kbd_state = (kbd_flags & NUM) ? AS : NM;
-		kbd_led_set();    /* update keyboard LED */
-	}
-}
-
-
-/******************************************************************************/
-
-static void kbd_scroll(unsigned char scan_code)
-{
-	if ((kbd_flags & BRK) == NORMAL) {
-		kbd_flags ^= STP;
-		kbd_led_set();    /* update keyboard LED */
-		if (kbd_flags & STP)
-			kbd_input = 0x13;
+	case KS_EXTENDED_1A:
+	case KS_EXTENDED_1B:
+		/* The Pause key sends 2 bytes following the state change */
+		if (ps2_kbd_state == KS_EXTENDED_1A)
+			ps2_kbd_state = KS_EXTENDED_1B;
 		else
-			kbd_input = 0x11;
+			ps2_kbd_state = KS_BASE;
+
+		/*
+		 * Note: The Pause key make sequence is 0xE1 0x1D 0x45; it
+		 *       is always immediately followed by its break sequence
+		 *       of 0xE1, 0x9D, 0xC5; there is no persistent make
+		 *       state duration for the Pause key, for which reason
+		 *       it is normally treated as a toggle by upper level
+		 *       software.  Handling is not recommended.
+		 */
+		usb_scan_code = 0x00;
+		break;
 	}
-}
 
-/******************************************************************************/
+	/* Locking modifier keys notify on press and again on release. */
+	if (!kbd_key_release) {
+		unsigned char old_bits_state = bits_state;
 
-static void kbd_alt(unsigned char scan_code)
-{
-	if ((kbd_flags & BRK) == BRK) {
-		kbd_state = AS;
-		kbd_flags &= (~ALT);
-	} else {
-		kbd_state = AK;
-		kbd_flags &= ALT;
+		switch (usb_scan_code) {
+		case USB_KEY_NUM_LOCK:
+			bits_state ^= USB_KBD_NUMLOCK;
+			break;
+		case USB_KEY_CAPS_LOCK:
+			bits_state ^= USB_KBD_CAPSLOCK;
+			break;
+		case USB_KEY_SCROLL_LOCK:
+			bits_state ^= USB_KBD_SCROLLLOCK;
+			break;
+		}
+		/* If we changed any bits, poke the LEDs. */
+		if (old_bits_state != bits_state)
+			kbd_led_set(usb_kbd_led_to_ps2(bits_state));
 	}
+
+	return usb_scan_code;
 }
 
-
-/******************************************************************************/
-
-static void kbd_led_set(void)
+/*
+ * For a given USB scan code, cook the value into zero or more character
+ * codes.  Because Ctrl-Space is NUL, we return an integer value which may
+ * be -1 in the case that the key doesn't result in a character code.
+ */
+static int usb_cook_scan_code(unsigned char usb_scan_code)
 {
-	kbd_input_empty();
-	out8(I8042_DATA_REG, 0xed);    /* SET LED command */
-	kbd_input_empty();
-	out8(I8042_DATA_REG, (kbd_flags & 0x7));    /* LED bits only */
+	int index;
+
+	/*
+	 * Handle in-band modifier keys.
+	 *
+	 * Note: These are not generated by USB keyboards with working
+	 *       USB 1.1 HID compliant firmware, but broken firmware
+	 *	 exists.  This conversion is therefore safe for all keyboards.
+	 */
+	if (usb_scan_code >= 0xE0 && usb_scan_code <= 0xE7) {
+		unsigned char bit = (1 << (usb_scan_code - 0xE0));
+
+		if (kbd_key_release)
+			bits_modifiers &= ~bit;
+		else
+			bits_modifiers |= bit;
+
+		return -1;
+	}
+
+	/*
+	 * Key up only changes modifier state.
+	 *
+	 * LATER: Add shadow matrix support so u-boot clients can query the
+	 *	  state of keys.  This will allow the upper level code to
+	 *	  implement things like continuing to hold the power button
+	 *	  to enter DFU mode, or use Ctrl-Alt-T to enter target disk
+	 *	  node, etc..
+	 */
+	if (kbd_key_release)
+		return -1;
+
+	/* Handle special sequence keys; this doesn't need performance */
+	for (index = 0; index < USB_TO_ANSI364_SIZE; index++) {
+		char *p;
+		if (usb_scan_code != usb_to_ansi364[index].usb_scan_code)
+			continue;
+		/* Stuff the FIFO ourselves; sign coerce static strings */
+		for (p = usb_to_ansi364[index].string; *p; p++)
+			kbd_fifo_insert((unsigned char)*p);
+		/* If not, this is an unsupported key */
+		return -1;
+	}
+
+	/* Handle numeric keypad keys */
+	if ((usb_scan_code > 0x1d) && (usb_scan_code < 0x3a)) {
+		int shifted;
+
+		if (bits_modifiers & (LEFT_CNTR | RIGHT_CNTR))
+			return usb_kbd_numkey_ctrled[usb_scan_code - 0x1e];
+
+		/* Shift inverts Num Lock state */
+		shifted = (bits_modifiers & (LEFT_SHIFT | RIGHT_SHIFT)) != 0;
+		if (bits_state & USB_KBD_NUMLOCK)
+			shifted = !shifted;
+
+		if (shifted)
+			return usb_kbd_numkey_shifted[usb_scan_code - 0x1e];
+		else
+			return usb_kbd_numkey[usb_scan_code - 0x1e];
+	}
+
+	/* Handle control keys */
+	/*
+	 * Note: This is a compromise; it gets the right values for the
+	 *       right keys, but for unexpected keys, the control character
+	 *       sent will depend on the usb_scan_code.  This approximates
+	 *       PS/2 historical behaviour.
+	 */
+	if (bits_modifiers & (LEFT_CNTR | RIGHT_CNTR))
+		return (usb_scan_code - 0x03) & 0x1F;
+
+	/* Handle ordinary alphanumerics */
+	if ((usb_scan_code > 0x03) && (usb_scan_code <= 0x1D)) {
+		int keycode = usb_scan_code - 0x04 + 'a';
+
+		/* Caps Lock */
+		if (bits_state & USB_KBD_CAPSLOCK)
+			keycode &= ~CAPITAL_MASK;
+
+		/* Shift inverts Caps Lock state */
+		if (bits_modifiers & (LEFT_SHIFT | RIGHT_SHIFT)) {
+			if (keycode & CAPITAL_MASK)
+				keycode &= ~CAPITAL_MASK;
+			else
+				keycode |= CAPITAL_MASK;
+		}
+		return keycode;
+	}
+	return -1;
+}
+
+static int kbd_conv_usb(unsigned char scan_code)
+{
+	unsigned char usbcode;
+
+	usbcode = scan_code_convert_ps2_usb(scan_code);
+	return usb_cook_scan_code(usbcode);
 }
 
 
 /******************************************************************************/
 
-static int kbd_input_empty(void)
+static void kbd_led_set(int ps2_leds)
+{
+	i8042_ready();
+	out8(I8042_DATA_REG, I8042_DATA_LED_WRITE);	/* SET LED command */
+	i8042_ready();
+	out8(I8042_DATA_REG, (ps2_leds & I8042_LED_MASK)); /* LED bits only */
+}
+
+
+/*******************************************************************************
+ *
+ * i8042_ready - wait for the i8042 to finish processing commands/data
+ *		 or a timeout
+ */
+static int i8042_ready(void)
 {
 	int kbdTimeout = KBD_TIMEOUT * 1000;
 
-	while ((in8(I8042_STATUS_REG) & 0x02) && kbdTimeout--)
-		udelay(1);
-
-	return kbdTimeout != -1;
-}
-
-/******************************************************************************/
-
-static int wait_until_kbd_output_full(void)
-{
-	int kbdTimeout = KBD_TIMEOUT * 1000;
-
-	while (((in8(I8042_STATUS_REG) & 0x01) == 0) && kbdTimeout--)
+	while ((in8(I8042_STATUS_REG) & I8042_STR_IBF) && kbdTimeout--)
 		udelay(1);
 
 	return kbdTimeout != -1;
@@ -686,42 +725,45 @@ static int wait_until_kbd_output_full(void)
 
 static int kbd_reset(void)
 {
-	/* KB Reset */
-	if (kbd_input_empty() == 0)
+	if (i8042_ready() == 0)
 		return -1;
 
-	out8(I8042_DATA_REG, 0xff);
+	out8(I8042_DATA_REG, I8042_DATA_KBD_RESET);
 
-	if (wait_until_kbd_output_full() == 0)
+	if (i8042_ready() == 0)
 		return -1;
 
-	if (in8(I8042_DATA_REG) != 0xfa) /* ACK */
+	out8(I8042_COMMAND_REG, I8042_CMD_SET_CMD_BYTE);
+
+	if (i8042_ready() == 0)
 		return -1;
 
-	if (wait_until_kbd_output_full() == 0)
-		return -1;
-
-	if (in8(I8042_DATA_REG) != 0xaa) /* Test Pass*/
-		return -1;
-
-	if (kbd_input_empty() == 0)
-		return -1;
-
-	/* Set KBC mode */
-	out8(I8042_COMMAND_REG, 0x60);
-
-	if (kbd_input_empty() == 0)
-		return -1;
-
+	/*
+	 * Command byte - bitmask:
+	 *
+	 * 7   0 = unused; set to 0
+	 * 6   0 = no scan code conversion
+	 *     1 = standard scan code conversion
+	 * 5   0 = check parity, with scan code conversion
+	 *     1 = ignore parity, no scan code coversion
+	 * 4   0 = Enable keyboard
+	 *     1 = Disable keyboard by forcing CLK low
+	 * 3   0 = Normal keyboard inhibit function
+	 *     1 = Override keyboard inhibit function (used for POST)
+	 * 2   0 = System flag status bit indicates reset by power on
+	 *     1 = System flag after successful controller self test
+	 * 1   0 = unused; set to 0
+	 * 0   0 = Do not interrupt on output buffer full
+	 *     1 = Output buffer full causes interrupt on IRQ 1
+	 */
 	out8(I8042_DATA_REG, 0x45);
 
-	if (kbd_input_empty() == 0)
+	if (i8042_ready() == 0)
 		return -1;
 
-	/* Enable Keyboard */
-	out8(I8042_COMMAND_REG, 0xae);
+	out8(I8042_COMMAND_REG, I8042_CMD_ENABLE_KBD);
 
-	if (kbd_input_empty() == 0)
+	if (i8042_ready() == 0)
 		return -1;
 
 	return 0;
