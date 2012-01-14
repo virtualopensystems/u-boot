@@ -1,0 +1,88 @@
+LCD Display
+-----------
+
+(there isn't yet a generic binding in Linux, so this describes what is in
+U-Boot)
+
+The device node for a display device is as described in the document
+"Open Firmware Recommended Practice : Universal Serial Bus" with the
+following modifications and additions :
+
+Required properties :
+ - compatible : Should be "nvidia,tegra20-display"
+ - nvidia,pwfm: phandle of PWFM to use for backlight
+
+Note: This is just a phande and provides no information, nor a backlight
+node. The PWM is still under discussion I think:
+	http://patchwork.ozlabs.org/patch/132386/
+
+We don't support any parameters as yet - the setting is hard-coded.
+
+ - nvidia,width: width of display in pixels
+ - nvidia,height: height of display in pixels
+ - nvidia,bits-per-pixel: number of bits per pixel (depth)
+ - nvidia,pixel-clock : Pixel clock in Hz
+ - nvidia,horiz-timing; horizontal timing: ref_to_sync, sync_width. back_porch,
+	front_porch
+ - nvidia,vert-timing; vertical timing: ref_to_sync, sync_width. back_porch,
+	front_porch
+
+This node should sit inside its controller.
+
+
+Nvidia Tegra2x Display Controller
+---------------------------------
+
+The device node for a NAND flash controller is as described in the document
+"Open Firmware Recommended Practice : Universal Serial Bus" with the
+following modifications and additions :
+
+Required properties:
+ - compatible: should be "tegra20-display"
+ - panel-timings: 4 cells containing required timings in ms:
+	* delay between panel_vdd-rise and data-rise
+	* delay between data-rise and backlight_vdd-rise
+	* delay between backlight_vdd and pwm-rise
+	* delay between pwm-rise and backlight_en-rise
+
+(should we use us here, or perhaps call it panel-timings-ms?)
+
+Optional properties:
+ - nvidia,frame-buffer: address of frame buffer (if omitted it will be
+		calculated)
+	- This may be useful to share an address between U-Boot and Linux and
+		avoid boot-time corruption / flicker
+
+Optional GPIO properies all have (phandle, GPIO number, flags):
+ - nvidia,backlight-enable-gpios: backlight enable GPIO
+ - nvidia,lvds-shutdown-gpios: LVDS power shutdown GPIO
+ - nvidia,backlight-vdd-gpios: backlight power GPIO
+ - nvidia,panel-vdd-gpios: panel power GPIO
+
+(Perhap use polariy bit so that lvds-shutdown becomes lvds-enable?)
+
+I have put these into the display controller since I don't think they are
+generic enough to go in the lcd node.
+
+Example:
+
+display@0x54200000 {
+	nvidia,pwfm = <&pwfm2>;
+	nvidia,frame-buffer = <0x2f680000>;
+	nvidia,backlight-enable-gpios = <&gpio 28 0>;	/* PD4 */
+	nvidia,lvds-shutdown-gpios = <&gpio 10 0>;	/* PB2 */
+	nvidia,backlight-vdd-gpios = <&gpio 176 0>;	/* PW0 */
+	nvidia,panel-vdd-gpios = <&gpio 22 0>;		/* PC6 */
+	nvidia,panel-timings = <4 203 17 15>;
+
+	lcd {
+		compatible = "nvidia,lcd";
+		nvidia,width = <1366>;
+		nvidia,height = <768>;
+		nvidia,bits-per-pixel = <16>;
+		nvidia,pixel-clock = <70600000>;
+
+		nvidia,horiz-timing = <11 58 58 58>;
+		nvidia,vert-timing = <1 4 4 4>;
+	};
+};

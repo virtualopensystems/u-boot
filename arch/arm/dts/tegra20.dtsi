@@ -201,5 +201,30 @@
 		compatible = "nvidia,tegra20-kbc";
 		reg = <0x7000e200 0x0078>;
 	};
+
+	pwfm0: pwm@7000a000 {
+		compatible = "nvidia,tegra20-pwfm";
+		reg = <0x7000a000 0x4>;
+	};
+
+	pwfm1: pwm@7000a010 {
+		compatible = "nvidia,tegra20-pwfm";
+		reg = <0x7000a010 0x4>;
+	};
+
+	pwfm2: pwm@7000a020 {
+		compatible = "nvidia,tegra20-pwfm";
+		reg = <0x7000a020 0x4>;
+	};
+
+	pwfm3: pwm@7000a030 {
+		compatible = "nvidia,tegra20-pwfm";
+		reg = <0x7000a030 0x4>;
+	};
+
+	display1: display@0x54200000 {
+		compatible = "nvidia,tegra20-display";
+		reg = <0x54200000 0x40000>;
+	};
 };
 
