@@ -191,6 +191,9 @@ twostop_init_cparams(struct twostop_fmap *fmap, void *gbb,
 
 #if defined(CONFIG_OF_CONTROL) && defined(CONFIG_TEGRA2)
 
+extern uint8_t _start;
+extern uint8_t __bss_end__;
+
 static void setup_arch_unused_memory(memory_wipe_t *wipe,
 	crossystem_data_t *cdata, VbCommonParams *cparams)
 {
@@ -226,6 +229,9 @@ static void setup_arch_unused_memory(memory_wipe_t *wipe,
 }
 
 #elif defined(CONFIG_SYS_COREBOOT)
+
+extern uint8_t __text_start;
+extern uint8_t __bss_end;
 
 static void setup_arch_unused_memory(memory_wipe_t *wipe,
 	crossystem_data_t *cdata, VbCommonParams *cparams)
@@ -280,7 +286,13 @@ static void wipe_unused_memory(crossystem_data_t *cdata,
 	setup_arch_unused_memory(&wipe, cdata, cparams);
 
 	/* Exclude relocated u-boot structures. */
-	memory_wipe_sub(&wipe, get_current_sp() - STACK_MARGIN, gd->ram_size);
+	memory_wipe_sub(&wipe, get_current_sp() - STACK_MARGIN,
+#if defined(CONFIG_SYS_COREBOOT)
+			gd->relocaddr + (&__bss_end - &__text_start)
+#elif defined(CONFIG_OF_CONTROL) && defined(CONFIG_TEGRA2)
+			gd->relocaddr + (&__bss_end__ - &_start)
+#endif
+			);
 
 	/* Exclude the shared data between bootstub and main firmware. */
 	memory_wipe_sub(&wipe, (uintptr_t)cdata,
