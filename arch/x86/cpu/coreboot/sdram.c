@@ -66,7 +66,9 @@ int __calculate_relocation_address(void);
  */
 int calculate_relocation_address(void)
 {
-	uint64_t uboot_size = &__bss_end - &__text_start;
+	const uint64_t uboot_size = &__bss_end - &__text_start;
+	const uint64_t total_size = uboot_size + CONFIG_SYS_MALLOC_LEN +
+		CONFIG_SYS_STACK_SIZE;
 	uintptr_t dest_addr = 0;
 	int i;
 
@@ -80,14 +82,16 @@ int calculate_relocation_address(void)
 		if (memrange->type != CB_MEM_RAM)
 			continue;
 
-		/* Filter memory over 4GB and regions that are too small. */
+		/* Filter memory over 4GB. */
 		if (end > 0xffffffffULL)
 			end = 0x100000000ULL;
-		if (end - start < uboot_size)
+		/* Skip this region if it's too small. */
+		if (end - start < total_size)
 			continue;
 
+		/* Use this address if it's the largest so far. */
 		if (end - uboot_size > dest_addr)
-			dest_addr = ROUND((end - uboot_size), 1 << 12);
+			dest_addr = (end - uboot_size) & ~((1 << 12) - 1);
 	}
 
 	/* If no suitable area was found, return an error. */
