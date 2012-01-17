@@ -243,7 +243,7 @@ static int do_elf_reloc_fixups(void)
 				*offset_ptr_ram += gd->reloc_off;
 			}
 		}
-	} while (re_src++ < re_end);
+	} while (++re_src < re_end);
 
 	return 0;
 }
