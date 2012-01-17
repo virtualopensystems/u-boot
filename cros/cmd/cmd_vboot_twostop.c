@@ -25,7 +25,7 @@
 #include <chromeos/power_management.h>
 #include <usb.h>
 
-#ifdef CONFIG_VIDEO_TEGRA2
+#ifdef CONFIG_VIDEO_TEGRA
 /* for tegra_lcd_check_next_stage() */
 #include <asm/arch-tegra/dc.h>
 #endif
@@ -327,7 +327,7 @@ twostop_init_vboot_library(firmware_storage_t *file, void *gbb,
 		return err;
 	}
 
-#ifdef CONFIG_VIDEO_TEGRA2
+#ifdef CONFIG_VIDEO_TEGRA
 	tegra_lcd_check_next_stage(gd->blob, 0);
 #endif
 	VBDEBUG(PREFIX "iparams.out_flags: %08x\n", iparams.out_flags);
@@ -637,7 +637,7 @@ twostop_init(struct twostop_fmap *fmap, firmware_storage_t *file,
 	}
 
 	ret = 0;
-#ifdef CONFIG_VIDEO_TEGRA2
+#ifdef CONFIG_VIDEO_TEGRA
 	tegra_lcd_check_next_stage(gd->blob, 0);
 #endif
 
