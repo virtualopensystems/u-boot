@@ -12,6 +12,7 @@
 #include <chromeos/common.h>
 #include <chromeos/memory_wipe.h>
 #include <malloc.h>
+#include <physmem.h>
 
 #include <vboot_api.h>
 
@@ -112,7 +113,6 @@ void memory_wipe_sub(memory_wipe_t *wipe, phys_addr_t start, phys_addr_t end)
 void memory_wipe_execute(memory_wipe_t *wipe)
 {
 	memory_wipe_edge_t *cur;
-	const phys_addr_t max_addr = (phys_addr_t)~(uintptr_t)0;
 
 	VBDEBUG(PREFIX "Wipe memory regions:\n");
 	for (cur = wipe->head.next; cur; cur = cur->next->next) {
@@ -124,12 +124,12 @@ void memory_wipe_execute(memory_wipe_t *wipe)
 		}
 
 		start = cur->pos;
-		if ((start & max_addr) != start)
-			break;
 		end = cur->next->pos;
-		if ((end & max_addr) != end)
-			end = 0;
-		VBDEBUG(PREFIX "\t[%#08x, 0x%08x)\n", start, end);
-		memset((void *)(uintptr_t)start, 0, end - start);
+
+		VBDEBUG(sizeof(phys_addr_t) == 8 ?
+			PREFIX "\t[%#016llx, %#016llx)\n" :
+			PREFIX "\t[%#08x, %#08x)\n",
+			start, end);
+		arch_phys_memset(start, 0, end - start);
 	}
 }
