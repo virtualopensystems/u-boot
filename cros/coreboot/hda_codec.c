@@ -10,16 +10,19 @@
 
 /* Implementation of per-board codec beeping */
 
-#include <chromeos/hda_codec.h>
 #include <common.h>
 #include <asm/global_data.h>
 #include <asm/io.h>
 #include <pci.h>
+#include <chromeos/hda_codec.h>
 
 #define HDA_CMD_REG 0x5C
 #define HDA_ICII_REG 0x64
 #define   HDA_ICII_BUSY (1 << 0)
 #define   HDA_ICII_VALID  (1 << 1)
+
+#define BEEP_FREQ_MAGIC 0x00C70A00
+#define BEEP_FREQ_BASE 12000
 
 /**
  *  Wait 50usec for the codec to indicate it is ready
@@ -116,24 +119,34 @@ static u32 get_hda_base(void)
 }
 
 static const u32 beep_cmd[] = {
-	0x00170500, /* power up codec */
-	0x00270500, /* power up DAC */
-	0x00670500, /* power up speaker */
-	0x00670740, /* enable speaker output */
-	0x0023B04B, /* set DAC gain */
-	0x00C70A0C, /* enable beep generator 1 kHz */
-};
+	0x00170500,			/* power up codec */
+	0x00270500,			/* power up DAC */
+	0x00670500,			/* power up speaker */
+	0x00670740,			/* enable speaker output */
+	0x0023B04B,			/* set DAC gain */
+};					/* and follow with BEEP_FREQ_MAGIC */
 
-void enable_beep(void)
+void enable_beep(uint32_t frequency)
 {
 	uint32_t base;
+	uint8_t divider_val;
 	int i;
+
+	if (0 == frequency)
+		divider_val = 0;	/* off */
+	else if (frequency > BEEP_FREQ_BASE)
+		divider_val = 1;
+	else if (frequency < BEEP_FREQ_BASE / 0xFF)
+		divider_val = 0xff;
+	else
+		divider_val = (uint8_t)(0xFF & (BEEP_FREQ_BASE / frequency));
 
 	base = get_hda_base();
 	for (i = 0; i < sizeof(beep_cmd)/sizeof(beep_cmd[0]); i++) {
 		if (write_one_verb(base, beep_cmd[i]))
 			return;
 	}
+	write_one_verb(base, BEEP_FREQ_MAGIC|divider_val);
 }
 
 void disable_beep(void)

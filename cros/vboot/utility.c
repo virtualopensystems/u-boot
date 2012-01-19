@@ -92,7 +92,7 @@ VbError_t VbExBeep(uint32_t msec, uint32_t frequency)
 {
 #if defined(CONFIG_SYS_COREBOOT)
 	if (frequency)
-		enable_beep();
+		enable_beep(frequency);
 	else
 		disable_beep();
 
