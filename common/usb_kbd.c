@@ -93,6 +93,34 @@ static const unsigned char usb_kbd_num_keypad[] = {
 	'.', 0, 0, 0, '='
 };
 
+static char *usb_kbd_special[] = {
+	/* 0x3A */ "\033[OP",  /* F1 */
+	/* 0x3B */ "\033[OQ",  /* F2 */
+	/* 0x3C */ "\033[OR",  /* F3 */
+	/* 0x3D */ "\033[OS",  /* F4 */
+	/* 0x3E */ "\033[15~", /* F5 */
+	/* 0x3F */ "\033[17~", /* F6 */
+	/* 0x40 */ "\033[18~", /* F7 */
+	/* 0x41 */ "\033[19~", /* F8 */
+	/* 0x42 */ "\033[20~", /* F9 */
+	/* 0x43 */ "\033[21~", /* F10 */
+	/* 0x44 */ "\033[23~", /* F11 */
+	/* 0x45 */ "\033[24~", /* F12 */
+	/* 0x46 */ NULL,       /* - */
+	/* 0x47 */ NULL,       /* - */
+	/* 0x48 */ NULL,       /* - */
+	/* 0x49 */ "\033[2~",  /* Insert */
+	/* 0x4A */ "\033[0H",  /* Home */
+	/* 0x4B */ "\033[5~",  /* Page Up */
+	/* 0x4C */ "\033[3~",  /* Delete Forward */
+	/* 0x4D */ "\033[0F",  /* End */
+	/* 0x4E */ "\033[3~",  /* Page Down */
+	/* 0x4F */ "\033[C",   /* Right */
+	/* 0x50 */ "\033[D",   /* Left */
+	/* 0x51 */ "\033[B",   /* Down */
+	/* 0x52 */ "\033[A",   /* Up */
+};
+
 /*
  * NOTE: It's important for the NUM, CAPS, SCROLL-lock bits to be in this
  *       order. See usb_kbd_setled() function!
@@ -223,6 +251,14 @@ static int usb_kbd_translate(struct usb_kbd_pdata *data, unsigned char scancode,
 		else
 			keycode = usb_kbd_numkey[scancode - 0x1e];
 	}
+
+	/* Special keys translated to ANSI 3.64 sequences */
+	if ((scancode >= 0x3a) && (scancode <= 0x52))
+		if (usb_kbd_special[scancode - 0x3a]) {
+			char *c;
+			for (c = usb_kbd_special[scancode - 0x3a]; *c; c++)
+				usb_kbd_put_queue(data, *c);
+		}
 
 	/* Numeric keypad */
 	if ((scancode >= 0x54) && (scancode <= 0x67))
