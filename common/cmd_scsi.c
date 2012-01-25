@@ -186,6 +186,13 @@ removable:
 		scsi_curr_dev=0;
 	else
 		scsi_curr_dev = -1;
+
+	printf("Found %d device(s).\n", scsi_max_devs);
+}
+
+int scsi_get_disk_count(void)
+{
+	return scsi_max_devs;
 }
 
 #ifdef CONFIG_PCI

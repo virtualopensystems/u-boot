@@ -15,8 +15,10 @@
 
 static int boot_device_scsi_start(uint32_t disk_flags)
 {
-	/* We expect to have at least one SCSI device */
-	return 1;
+	/* boot_interface->start() returns the number of
+	 * hard drives/boot devices for that interface
+	 */
+	return scsi_get_disk_count();
 }
 
 static int boot_device_scsi_scan(block_dev_desc_t **desc, int max_devs,
