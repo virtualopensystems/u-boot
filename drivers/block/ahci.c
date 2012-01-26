@@ -68,7 +68,6 @@ static void ahci_setup_port(struct ahci_ioports *port, unsigned long base,
 
 
 #define msleep(a) udelay(a * 1000)
-#define ssleep(a) msleep(a * 1000)
 
 static int waiting_for_cmd_completed(volatile u8 *offset,
 				     int timeout_msec,
@@ -153,6 +152,7 @@ static int ahci_host_init(struct ahci_probe_ent *probe_ent)
 		tmp = readl(port_mmio + PORT_CMD);
 		if (tmp & (PORT_CMD_LIST_ON | PORT_CMD_FIS_ON |
 			   PORT_CMD_FIS_RX | PORT_CMD_START)) {
+			debug("Port %d is active. Deactivating.\n", i);
 			tmp &= ~(PORT_CMD_LIST_ON | PORT_CMD_FIS_ON |
 				 PORT_CMD_FIS_RX | PORT_CMD_START);
 			writel_with_flush(tmp, port_mmio + PORT_CMD);
@@ -163,16 +163,21 @@ static int ahci_host_init(struct ahci_probe_ent *probe_ent)
 			msleep(500);
 		}
 
+		debug("Spinning up port %d... ", i);
 		writel(PORT_CMD_SPIN_UP, port_mmio + PORT_CMD);
 
 		j = 0;
-		while (j < 100) {
-			msleep(10);
+		while (j < 1000) {
+			msleep(1);
 			tmp = readl(port_mmio + PORT_SCR_STAT);
 			if ((tmp & 0xf) == 0x3)
 				break;
 			j++;
 		}
+		if (j == 1000)
+			debug("timeout.\n");
+		else
+			debug("ok.\n");
 
 		tmp = readl(port_mmio + PORT_SCR_ERR);
 		debug("PORT_SCR_ERR 0x%x\n", tmp);
