@@ -97,6 +97,10 @@
 #define CONFIG_USB_EHCI_TXFIFO_THRESH	10
 
 #define CONFIG_EHCI_IS_TDI
+
+/* Total I2C ports on Tegra2 */
+#define TEGRA_I2C_NUM_CONTROLLERS	4
+
 /* include default commands */
 #include <config_cmd_default.h>
 
