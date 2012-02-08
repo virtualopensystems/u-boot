@@ -36,6 +36,24 @@ lowlevel_init:
 	ldr	sp, =CONFIG_IRAM_STACK
 	stmdb	r13!, {ip,lr}
 
+	/*
+	 * It is for EVT0 silicon only and should be removed as soon as
+	 * we can deprecate EVT0.
+	 */
+	ldr    r0, =EXYNOS5_TZPC1_DECPROT1SET
+	mov    r1, #0xF        /* [DBGEN, NIDEN, SPIDEN, SPNIDEN] = [1,1,1,1] */
+	str    r1, [r0]
+
+	/*
+	 * The reason we don't write out the instructions dsb/isb/sev:
+	 * While ARM Cortex-A8 supports ARM v7 instruction set (-march=armv7a),
+	 * we compile with -march=armv5 to allow more compilers to work.
+	 * For U-Boot code this has no performance impact.
+	 */
+	.word  0xF57FF04F      /* dsb; darn -march=armv5 */
+	.word  0xF57FF06F      /* isb; darn -march=armv5 */
+	.word  0xE320F004      /* sev; darn -march=armv5 */
+
 	/* check reset status */
 	ldr	r0, =(EXYNOS5_POWER_BASE + INFORM1_OFFSET)
 	ldr	r1, [r0]
