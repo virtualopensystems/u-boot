@@ -27,15 +27,19 @@
  */
 
 #include <common.h>
-#include <asm/arch/s3c24x0_cpu.h>
+#include <asm/arch/clk.h>
+#include <asm/arch/cpu.h>
+#include <asm/arch/gpio.h>
 
 #include <asm/io.h>
 #include <i2c.h>
 #include "s3c24x0_i2c.h"
 
+/* TODO(crosbug.com/26861): Add back support of S3C24X0 via device tree. */
+
 #ifdef CONFIG_HARD_I2C
 
-#define	I2C_WRITE	0
+#define I2C_WRITE	0
 #define I2C_READ	1
 
 #define I2C_OK		0
@@ -52,36 +56,24 @@
 #define I2C_START_STOP	0x20	/* START / STOP */
 #define I2C_TXRX_ENA	0x10	/* I2C Tx/Rx enable */
 
-#define I2C_TIMEOUT 1		/* 1 second */
+#define I2C_TIMEOUT	1	/* 1 second */
 
-static int GetI2CSDA(void)
+static struct s3c24x0_i2c *get_base_i2c(void)
 {
-	struct s3c24x0_gpio *gpio = s3c24x0_get_base_gpio();
-
-#ifdef CONFIG_S3C2410
-	return (readl(&gpio->gpedat) & 0x8000) >> 15;
-#endif
-#ifdef CONFIG_S3C2400
-	return (readl(&gpio->pgdat) & 0x0020) >> 5;
-#endif
+	return (struct s3c24x0_i2c *)(samsung_get_base_i2c());
 }
 
-static void SetI2CSCL(int x)
+static inline struct exynos5_gpio_part1 *exynos_get_base_gpio1(int nr)
 {
-	struct s3c24x0_gpio *gpio = s3c24x0_get_base_gpio();
-
-#ifdef CONFIG_S3C2410
-	writel((readl(&gpio->gpedat) & ~0x4000) | (x & 1) << 14, &gpio->gpedat);
-#endif
-#ifdef CONFIG_S3C2400
-	writel((readl(&gpio->pgdat) & ~0x0040) | (x & 1) << 6, &gpio->pgdat);
-#endif
+	return (struct exynos5_gpio_part1 *)(s5p_gpio_base(nr));
 }
 
 static int WaitForXfer(void)
 {
-	struct s3c24x0_i2c *i2c = s3c24x0_get_base_i2c();
+	struct s3c24x0_i2c *i2c;
 	int i;
+
+	i2c = get_base_i2c();
 
 	i = I2C_TIMEOUT * 10000;
 	while (!(readl(&i2c->iiccon) & I2CCON_IRPND) && (i > 0)) {
@@ -94,79 +86,26 @@ static int WaitForXfer(void)
 
 static int IsACK(void)
 {
-	struct s3c24x0_i2c *i2c = s3c24x0_get_base_i2c();
+	struct s3c24x0_i2c *i2c;
 
+	i2c = get_base_i2c();
 	return !(readl(&i2c->iicstat) & I2CSTAT_NACK);
 }
 
 static void ReadWriteByte(void)
 {
-	struct s3c24x0_i2c *i2c = s3c24x0_get_base_i2c();
+	struct s3c24x0_i2c *i2c;
 
+	i2c = get_base_i2c();
 	writel(readl(&i2c->iiccon) & ~I2CCON_IRPND, &i2c->iiccon);
 }
 
-void i2c_init(int speed, int slaveadd)
+static void i2c_ch_init(int speed, int slaveadd, struct s3c24x0_i2c *i2c)
 {
-	struct s3c24x0_i2c *i2c = s3c24x0_get_base_i2c();
-	struct s3c24x0_gpio *gpio = s3c24x0_get_base_gpio();
 	ulong freq, pres = 16, div;
-	int i;
 
-	/* wait for some time to give previous transfer a chance to finish */
-
-	i = I2C_TIMEOUT * 1000;
-	while ((readl(&i2c->iicstat) & I2CSTAT_BSY) && (i > 0)) {
-		udelay(1000);
-		i--;
-	}
-
-	if ((readl(&i2c->iicstat) & I2CSTAT_BSY) || GetI2CSDA() == 0) {
-#ifdef CONFIG_S3C2410
-		ulong old_gpecon = readl(&gpio->gpecon);
-#endif
-#ifdef CONFIG_S3C2400
-		ulong old_gpecon = readl(&gpio->pgcon);
-#endif
-		/* bus still busy probably by (most) previously interrupted
-		   transfer */
-
-#ifdef CONFIG_S3C2410
-		/* set I2CSDA and I2CSCL (GPE15, GPE14) to GPIO */
-		writel((readl(&gpio->gpecon) & ~0xF0000000) | 0x10000000,
-		       &gpio->gpecon);
-#endif
-#ifdef CONFIG_S3C2400
-		/* set I2CSDA and I2CSCL (PG5, PG6) to GPIO */
-		writel((readl(&gpio->pgcon) & ~0x00003c00) | 0x00001000,
-		       &gpio->pgcon);
-#endif
-
-		/* toggle I2CSCL until bus idle */
-		SetI2CSCL(0);
-		udelay(1000);
-		i = 10;
-		while ((i > 0) && (GetI2CSDA() != 1)) {
-			SetI2CSCL(1);
-			udelay(1000);
-			SetI2CSCL(0);
-			udelay(1000);
-			i--;
-		}
-		SetI2CSCL(1);
-		udelay(1000);
-
-		/* restore pin functions */
-#ifdef CONFIG_S3C2410
-		writel(old_gpecon, &gpio->gpecon);
-#endif
-#ifdef CONFIG_S3C2400
-		writel(old_gpecon, &gpio->pgcon);
-#endif
-	}
-
+	freq = get_i2c_clk();
 	/* calculate prescaler and divisor values */
-	freq = get_PCLK();
 	if ((freq / pres / (16 + 1)) > speed)
 		/* set prescaler to 512 */
 		pres = 512;
@@ -175,8 +114,7 @@ void i2c_init(int speed, int slaveadd)
 	while ((freq / pres / (div + 1)) > speed)
 		div++;
 
-	/* set prescaler, divisor according to freq, also set
-	 * ACKGEN, IRQ */
+	/* set prescaler, divisor according to freq, also set ACKGEN, IRQ */
 	writel((div & 0x0F) | 0xA0 | ((pres == 512) ? 0x40 : 0), &i2c->iiccon);
 
 	/* init to SLAVE REVEIVE and set slaveaddr */
@@ -184,7 +122,27 @@ void i2c_init(int speed, int slaveadd)
 	writel(slaveadd, &i2c->iicadd);
 	/* program Master Transmit (and implicit STOP) */
 	writel(I2C_MODE_MT | I2C_TXRX_ENA, &i2c->iicstat);
+}
 
+void i2c_init(int speed, int slaveadd)
+{
+	struct s3c24x0_i2c *i2c;
+	struct exynos5_gpio_part1 *gpio;
+	int i;
+
+	i2c = get_base_i2c();
+
+	/* wait for some time to give previous transfer a chance to finish */
+	i = I2C_TIMEOUT * 1000;
+	while ((readl(&i2c->iicstat) & I2CSTAT_BSY) && (i > 0)) {
+		udelay(1000);
+		i--;
+	}
+
+	gpio = exynos_get_base_gpio1(4);
+	writel((readl(&gpio->b3.con) & ~0x00FF) | 0x0022, &gpio->b3.con);
+
+	i2c_ch_init(speed, slaveadd, i2c);
 }
 
 /*
@@ -194,19 +152,21 @@ void i2c_init(int speed, int slaveadd)
  * by the char, we could make it larger if needed. If it is
  * 0 we skip the address write cycle.
  */
-static
-int i2c_transfer(unsigned char cmd_type,
-		 unsigned char chip,
-		 unsigned char addr[],
-		 unsigned char addr_len,
-		 unsigned char data[], unsigned short data_len)
+static int i2c_transfer(unsigned char cmd_type,
+			unsigned char chip,
+			unsigned char addr[],
+			unsigned char addr_len,
+			unsigned char data[],
+			unsigned short data_len)
 {
-	struct s3c24x0_i2c *i2c = s3c24x0_get_base_i2c();
+	struct s3c24x0_i2c *i2c;
 	int i, result;
 
+	i2c = get_base_i2c();
+
 	if (data == 0 || data_len == 0) {
-		/*Don't support data transfer of no length or to address 0 */
-		printf("i2c_transfer: bad call\n");
+		/* Don't support data transfer of no length or to address 0 */
+		debug("i2c_transfer: bad call\n");
 		return I2C_NOK;
 	}
 
@@ -335,7 +295,7 @@ int i2c_transfer(unsigned char cmd_type,
 		break;
 
 	default:
-		printf("i2c_transfer: bad call\n");
+		debug("i2c_transfer: bad call\n");
 		result = I2C_NOK;
 		break;
 	}
@@ -363,7 +323,7 @@ int i2c_read(uchar chip, uint addr, int alen, uchar *buffer, int len)
 	int ret;
 
 	if (alen > 4) {
-		printf("I2C read: addr len %d not supported\n", alen);
+		debug("I2C read: addr len %d not supported\n", alen);
 		return 1;
 	}
 
@@ -390,10 +350,10 @@ int i2c_read(uchar chip, uint addr, int alen, uchar *buffer, int len)
 		chip |= ((addr >> (alen * 8)) &
 			 CONFIG_SYS_I2C_EEPROM_ADDR_OVERFLOW);
 #endif
-	if ((ret =
-	     i2c_transfer(I2C_READ, chip << 1, &xaddr[4 - alen], alen,
-			  buffer, len)) != 0) {
-		printf("I2c read: failed %d\n", ret);
+	ret = i2c_transfer(I2C_READ, chip << 1, &xaddr[4 - alen], alen,
+			buffer, len);
+	if (ret) {
+		debug("I2c read: failed %d\n", ret);
 		return 1;
 	}
 	return 0;
@@ -404,7 +364,7 @@ int i2c_write(uchar chip, uint addr, int alen, uchar *buffer, int len)
 	uchar xaddr[4];
 
 	if (alen > 4) {
-		printf("I2C write: addr len %d not supported\n", alen);
+		debug("I2C write: addr len %d not supported\n", alen);
 		return 1;
 	}
 
@@ -434,4 +394,5 @@ int i2c_write(uchar chip, uint addr, int alen, uchar *buffer, int len)
 		(I2C_WRITE, chip << 1, &xaddr[4 - alen], alen, buffer,
 		 len) != 0);
 }
+
 #endif /* CONFIG_HARD_I2C */
