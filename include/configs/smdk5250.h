@@ -115,6 +115,13 @@
 
 #define CONFIG_BOOTCOMMAND	"mmc read 40007000 451 2000; bootm 40007000"
 
+/* I2C */
+#define CONFIG_HARD_I2C
+#define CONFIG_CMD_I2C
+#define CONFIG_SYS_I2C_SPEED	100000		/* 100 Kbps */
+#define CONFIG_DRIVER_S3C24X0_I2C
+#define CONFIG_I2C_MULTI_BUS
+
 /* Miscellaneous configurable options */
 #define CONFIG_SYS_LONGHELP		/* undef to save memory */
 #define CONFIG_SYS_HUSH_PARSER		/* use "hush" command parser	*/
