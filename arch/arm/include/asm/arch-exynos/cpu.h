@@ -26,6 +26,9 @@
 
 #define EXYNOS_PRO_ID			0x10000000
 
+/* Address of address of function that copys data from SD or MMC */
+#define COPY_BL2_FNPTR_ADDR	0x02020030
+
 #ifndef __ASSEMBLY__
 #include <asm/io.h>
 /* CPU detection macros */

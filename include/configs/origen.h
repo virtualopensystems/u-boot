@@ -95,7 +95,6 @@
 #define CONFIG_ZERO_BOOTDELAY_CHECK
 /* MMC SPL */
 #define CONFIG_SPL
-#define COPY_BL2_FNPTR_ADDR	0x02020030
 
 #define CONFIG_BOOTCOMMAND	"fatload mmc 0 40007000 uImage; bootm 40007000"
 
