@@ -20,18 +20,36 @@
  * MA 02111-1307 USA
  */
 
-#include<common.h>
-#include<config.h>
-#include<asm/arch/sys_proto.h>
+#include <common.h>
+#include <config.h>
+
+/**
+ * Copy data from SD or MMC device to RAM.
+ *
+ * @param offset	Block offset of the data
+ * @param nblock	Number of blocks
+ * @param dst		Destination address
+ * @return 1 = True or 0 = False
+ */
+typedef u32 (*mmc_copy_fnptr)(u32 offset, u32 nblock, u32 dst);
+
+/* Copy U-Boot image to RAM */
+static void copy_uboot_to_ram(void)
+{
+	mmc_copy_fnptr mmc_copy = (void *) *(u32 *)COPY_BL2_FNPTR_ADDR;
+
+	mmc_copy(BL2_START_OFFSET, BL2_SIZE_BLOC_COUNT, CONFIG_SYS_TEXT_BASE);
+}
 
 void board_init_f(unsigned long bootflag)
 {
 	__attribute__((noreturn)) void (*uboot)(void);
+
 	copy_uboot_to_ram();
 
 	/* Jump to U-Boot image */
 	uboot = (void *)CONFIG_SYS_TEXT_BASE;
-	(*uboot)();
+	uboot();
 	/* Never returns Here */
 }
 

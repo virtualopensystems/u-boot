@@ -30,10 +30,6 @@ ifndef CONFIG_SPL_BUILD
 COBJS	+= smdkv310.o
 endif
 
-ifdef CONFIG_SPL_BUILD
-COBJS	+= copy_uboot.o
-endif
-
 SRCS	:= $(SOBJS:.o=.S) $(COBJS:.o=.c)
 OBJS	:= $(addprefix $(obj),$(COBJS) $(SOBJS))
 

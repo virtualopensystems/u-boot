@@ -24,14 +24,12 @@ include $(TOPDIR)/config.mk
 
 LIB	= $(obj)lib$(BOARD).o
 
-ifdef CONFIG_SPL_BUILD
-COBJS-y += copy_uboot.o
-else
-COBJS-y += smdk5250.o
+ifndef CONFIG_SPL_BUILD
+COBJS	:= smdk5250.o
 endif
 
-SRCS	:= $(SOBJS:.o=.S) $(COBJS-y:.o=.c)
-OBJS	:= $(addprefix $(obj),$(COBJS-y) $(SOBJS))
+SRCS	:= $(SOBJS:.o=.S) $(COBJS:.o=.c)
+OBJS	:= $(addprefix $(obj),$(COBJS) $(SOBJS))
 
 ALL	:=	 $(obj).depend $(LIB)
 

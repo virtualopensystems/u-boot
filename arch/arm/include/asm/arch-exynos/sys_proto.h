@@ -29,6 +29,4 @@ void invalidate_dcache(u32);
 void l2_cache_disable(void);
 void l2_cache_enable(void);
 
-void copy_uboot_to_ram(void);
-
 #endif
