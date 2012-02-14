@@ -29,6 +29,14 @@
 /* Address of address of function that copys data from SD or MMC */
 #define EXYNOS_COPY_MMC_FNPTR_ADDR	0x02020030
 
+/* Address of address of function that copys data through USB */
+#define EXYNOS_COPY_USB_FNPTR_ADDR	0x02020070
+
+/* Boot mode values */
+#define EXYNOS_USB_SECONDARY_BOOT	0xfeed0002
+
+#define EXYNOS_IRAM_SECONDARY_BASE	0x02020018
+
 #ifndef __ASSEMBLY__
 #include <asm/io.h>
 /* CPU detection macros */

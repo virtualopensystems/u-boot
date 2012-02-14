@@ -33,10 +33,47 @@
  */
 typedef u32 (*mmc_copy_fnptr)(u32 offset, u32 nblock, u32 dst);
 
+/**
+ * Copy data through USB.
+ *
+ * @return 1 = True or 0 = False
+ */
+typedef u32 (*usb_copy_fnptr)(void);
+
+/*
+ * Set/clear program flow prediction and return the previous state.
+ */
+static int config_branch_prediction(int set_cr_z)
+{
+	unsigned int cr;
+
+	/* System Control Register: 11th bit Z Branch prediction enable */
+	cr = get_cr();
+	set_cr(set_cr_z ? cr | CR_Z : cr & ~CR_Z);
+
+	return cr & CR_Z;
+}
+
 /* Copy U-Boot image to RAM */
 static void copy_uboot_to_ram(void)
 {
+	unsigned int sec_boot_check;
+	int is_cr_z_set;
 	mmc_copy_fnptr mmc_copy = (void *) *(u32 *)EXYNOS_COPY_MMC_FNPTR_ADDR;
+	usb_copy_fnptr usb_copy = (void *) *(u32 *)EXYNOS_COPY_USB_FNPTR_ADDR;
+
+	/* Read iRAM location to check for secondary USB boot mode */
+	sec_boot_check = readl(EXYNOS_IRAM_SECONDARY_BASE);
+	if (sec_boot_check == EXYNOS_USB_SECONDARY_BOOT) {
+		/*
+		 * iROM needs program flow prediction to be disabled
+		 * before copy from USB device to RAM
+		 */
+		is_cr_z_set = config_branch_prediction(0);
+		usb_copy();
+		config_branch_prediction(is_cr_z_set);
+		return;
+	}
 
 	mmc_copy(BL2_START_OFFSET, BL2_SIZE_BLOC_COUNT, CONFIG_SYS_TEXT_BASE);
 }
