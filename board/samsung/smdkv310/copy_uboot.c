@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2010 Samsung Electrnoics
- * Minkyu Kang <mk7.kang@samsung.com>
+ * Copyright (C) 2011 Samsung Electronics
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -21,14 +20,17 @@
  * MA 02111-1307 USA
  */
 
-#ifndef _SYS_PROTO_H_
-#define _SYS_PROTO_H_
+#include<common.h>
+#include<config.h>
 
-u32 get_device_type(void);
-void invalidate_dcache(u32);
-void l2_cache_disable(void);
-void l2_cache_enable(void);
+/*
+* Copy U-boot from mmc to RAM:
+* COPY_BL2_FNPTR_ADDR: Address in iRAM, which Contains
+* API (Data transfer from mmc to ram)
+*/
+void copy_uboot_to_ram(void)
+{
+	u32 (*copy_bl2)(u32, u32, u32) = (void *)COPY_BL2_FNPTR_ADDR;
 
-void copy_uboot_to_ram(void);
-
-#endif
+	copy_bl2(BL2_START_OFFSET, BL2_SIZE_BLOC_COUNT, CONFIG_SYS_TEXT_BASE);
+}

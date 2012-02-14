@@ -22,18 +22,7 @@
 
 #include<common.h>
 #include<config.h>
-
-/*
-* Copy U-boot from mmc to RAM:
-* COPY_BL2_FNPTR_ADDR: Address in iRAM, which Contains
-* Pointer to API (Data transfer from mmc to ram)
-*/
-void copy_uboot_to_ram(void)
-{
-	u32 (*copy_bl2)(u32, u32, u32)  = (void *) *(u32 *)COPY_BL2_FNPTR_ADDR;
-
-	copy_bl2(BL2_START_OFFSET, BL2_SIZE_BLOC_COUNT, CONFIG_SYS_TEXT_BASE);
-}
+#include<asm/arch/sys_proto.h>
 
 void board_init_f(unsigned long bootflag)
 {

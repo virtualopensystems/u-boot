@@ -22,10 +22,11 @@ include $(TOPDIR)/config.mk
 
 LIB	= $(obj)lib$(SOC).o
 
-COBJS	+= clock.o soc.o
+COBJS-y	+= clock.o soc.o
+COBJS-$(CONFIG_SPL_BUILD) += spl_boot.o
 
-SRCS	:= $(SOBJS:.o=.S) $(COBJS:.o=.c)
-OBJS	:= $(addprefix $(obj),$(COBJS) $(SOBJS))
+SRCS	:= $(SOBJS:.o=.S) $(COBJS-y:.o=.c)
+OBJS	:= $(addprefix $(obj),$(COBJS-y) $(SOBJS))
 
 all:	 $(obj).depend $(LIB)
 

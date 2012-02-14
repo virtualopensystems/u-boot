@@ -42,7 +42,7 @@ COBJS	+= smdk5250.o
 endif
 
 ifdef CONFIG_SPL_BUILD
-COBJS	+= mmc_boot.o
+COBJS	+= copy_uboot.o
 endif
 
 SRCS	:= $(SOBJS:.o=.S) $(COBJS:.o=.c)
