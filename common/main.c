@@ -30,6 +30,7 @@
 #include <common.h>
 #include <watchdog.h>
 #include <command.h>
+#include <malloc.h>
 #include <version.h>
 #ifdef CONFIG_MODEM_SUPPORT
 #include <malloc.h>		/* for free() prototype */
@@ -1373,6 +1374,77 @@ int run_command(const char *cmd, int flag)
 	return parse_string_outer(cmd,
 			FLAG_PARSE_SEMICOLON | FLAG_EXIT_FROM_LOOP);
 #endif
+}
+
+#ifndef CONFIG_SYS_HUSH_PARSER
+static int builtin_run_command_list(char *cmd, int flag)
+{
+	char *line, *next;
+	int rcode = 0;
+
+	/*
+	 * Break into individual lines, and execute each line; terminate on
+	 * error.
+	 */
+	line = next = cmd;
+	while (*next) {
+		if (*next == '\n') {
+			*next = '\0';
+			/* run only non-empty commands */
+			if (*line) {
+				debug("** exec: \"%s\"\n", line);
+				if (builtin_run_command(line, 0) < 0) {
+					rcode = 1;
+					break;
+				}
+			}
+			line = next + 1;
+		}
+		++next;
+	}
+	if (rcode == 0 && *cmd)
+		rcode = (builtin_run_command(cmd, 0) >= 0);
+
+	return rcode;
+}
+#endif
+
+/*
+ * Run a list of commands separated by ;
+ *
+ * Note that if 'len' is not -1, then the command may not be \0 terminated,
+ * Memory will be allocated for the command in that case.
+ *
+ * @param cmd	List of commands to run, each separated bu semicolon
+ * @param len	Length of command excluding terminator if known (-1 if not)
+ * @param flag	Execution flags (CMD_FLAG_...)
+ * @return 0 on success, or != 0 on error.
+ */
+int run_command_list(const char *cmd, int len, int flag)
+{
+	int need_buff = 1;
+	char *buff = (char *)cmd;
+	int rcode = 0;
+
+	if (len == -1) {
+		len = strlen(cmd);
+		need_buff = strchr(cmd, '\n') != NULL;
+	}
+	if (need_buff) {
+		buff = malloc(len + 1);
+		if (!buff)
+			return 1;
+		memcpy(buff, cmd, len + 1);
+	}
+#ifdef CONFIG_SYS_HUSH_PARSER
+	rcode = parse_string_outer(buff, FLAG_PARSE_SEMICOLON);
+#else
+	rcode = builtin_run_command_list(buff, flag);
+#endif
+	if (need_buff)
+		free(buff);
+
+	return rcode;
 }
 
 /****************************************************************************/
