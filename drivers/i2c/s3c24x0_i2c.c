@@ -31,6 +31,7 @@
 
 #include <asm/io.h>
 #include <i2c.h>
+#include "s3c24x0_i2c.h"
 
 #ifdef CONFIG_HARD_I2C
 
