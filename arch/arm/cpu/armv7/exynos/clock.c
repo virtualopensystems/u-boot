@@ -414,6 +414,28 @@ static void exynos5_set_mmc_clk(int dev_index, unsigned int div)
 	writel(val, addr);
 }
 
+/*
+ * I2C
+ */
+/* exynos5: obtaining the I2C clock */
+static unsigned long exynos5_get_i2c_clk(void)
+{
+	struct exynos5_clock *clk =
+		(struct exynos5_clock *)samsung_get_base_clock();
+	unsigned long aclk_66, aclk_66_pre, sclk;
+	unsigned int ratio;
+
+	sclk = get_pll_clk(MPLL);
+
+	ratio = ((readl(&clk->div_top1)) >> 24);
+	ratio &= (0x7);
+	aclk_66_pre = sclk/(ratio+1);
+	ratio = readl(&clk->div_top0);
+	ratio &= (0x7);
+	aclk_66 = aclk_66_pre/(ratio+1);
+	return aclk_66;
+}
+
 unsigned long get_pll_clk(int pllreg)
 {
 	if (cpu_is_exynos5())
@@ -452,4 +474,13 @@ void set_mmc_clk(int dev_index, unsigned int div)
 		exynos5_set_mmc_clk(dev_index, div);
 	else
 		exynos4_set_mmc_clk(dev_index, div);
+}
+unsigned long get_i2c_clk(void)
+{
+	if (cpu_is_exynos5()) {
+		return exynos5_get_i2c_clk();
+	} else {
+		debug("I2C clock is not set for this CPU\n");
+		return 0;
+	}
 }
