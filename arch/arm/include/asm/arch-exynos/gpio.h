@@ -141,6 +141,8 @@ unsigned int s5p_gpio_get_value(struct s5p_gpio_bank *bank, int gpio);
 void s5p_gpio_set_pull(struct s5p_gpio_bank *bank, int gpio, int mode);
 void s5p_gpio_set_drv(struct s5p_gpio_bank *bank, int gpio, int mode);
 void s5p_gpio_set_rate(struct s5p_gpio_bank *bank, int gpio, int mode);
+struct s5p_gpio_bank *s5p_gpio_get_bank(unsigned gpio);
+int s5p_gpio_get_pin(unsigned gpio);
 
 /* GPIO pins per bank  */
 #define GPIO_PER_BANK 8
