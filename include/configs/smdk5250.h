@@ -41,6 +41,12 @@
 #define CONFIG_DDR3
 /* #define CONFIG_LPDDR2 */
 
+/* Enable fdt support for SMDK5250 */
+#define CONFIG_DEFAULT_DEVICE_TREE      exynos5250-smdk5250
+#define CONFIG_OF_CONTROL
+#define CONFIG_OF_SEPARATE
+#define CONFIG_ARCH_DEVICE_TREE		exynos5250
+
 /* Keep L2 Cache Disabled */
 #define CONFIG_SYS_DCACHE_OFF
 
