@@ -115,7 +115,7 @@ void i2c_init(int speed, int slaveadd)
 	/* wait for some time to give previous transfer a chance to finish */
 
 	i = I2C_TIMEOUT * 1000;
-	while ((readl(&i2c->iicstat) && I2CSTAT_BSY) && (i > 0)) {
+	while ((readl(&i2c->iicstat) & I2CSTAT_BSY) && (i > 0)) {
 		udelay(1000);
 		i--;
 	}
