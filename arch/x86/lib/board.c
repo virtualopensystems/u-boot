@@ -45,6 +45,7 @@
 #include <asm-generic/sections.h>
 #include <spi.h>
 #include <elf.h>
+#include <fdt_decode.h>
 
 #ifdef CONFIG_BITBANGMII
 #include <miiphy.h>
@@ -287,6 +288,24 @@ void board_init_f(ulong boot_flags)
 		;
 }
 
+/*
+ * Tell if it's OK to load the environment early in boot.
+ *
+ * If CONFIG_OF_LOAD_ENVIRONMENT is defined, we'll check with the FDT to see
+ * if this is OK (defaulting to saying it's not OK).
+ *
+ * NOTE: Loading the environment early can be a bad idea if security is
+ *       important, since no verification is done on the environment.
+ */
+static int should_load_env(void)
+{
+#ifdef CONFIG_OF_LOAD_ENVIRONMENT
+	return fdt_decode_get_config_int(gd->blob, "load_env", 0);
+#else
+	return 1;
+#endif
+}
+
 void board_init_r(gd_t *id, ulong dest_addr)
 {
 #if defined(CONFIG_CMD_NET)
@@ -339,7 +358,10 @@ void board_init_r(gd_t *id, ulong dest_addr)
 	bootstage_mark(BOOTSTAGE_ID_BOARD_FLASH_37);
 
 	/* initialize environment */
-	env_relocate();
+	if (should_load_env())
+		env_relocate();
+	else
+		env_set_default();
 	bootstage_mark(BOOTSTAGE_ID_BOARD_ENV);
 
 #ifdef CONFIG_CMD_NET
