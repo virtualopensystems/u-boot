@@ -30,6 +30,7 @@
 #include <asm/io.h>
 #include <asm/pci.h>
 
+#if CONFIG_VGA_CONSOLE
 /* basic textmode I/O from linux kernel */
 static char *vidmem = (char *)0xb8000;
 static int vidport;
@@ -161,7 +162,7 @@ static void video_puts(const char *s)
 	outb_p(0xff & (pos >> 1), vidport+1);
 }
 
-int video_init(void)
+static int video_init(void)
 {
 	u16 pos;
 
@@ -218,14 +219,18 @@ int video_init(void)
 
 	return 0;
 }
-
+#endif
 
 int drv_video_init(void)
 {
+#if CONFIG_VGA_CONSOLE
 #if !defined CONFIG_NO_REALMODE_CODE
 	if (video_bios_init())
 		return 1;
 #endif
 
 	return video_init();
+#else
+	return 1;
+#endif
 }

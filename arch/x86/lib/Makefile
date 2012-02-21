@@ -44,8 +44,8 @@ COBJS-$(CONFIG_SYS_X86_REALMODE)	+= realmode.o
 COBJS-y += physmem.o
 COBJS-y	+= string.o
 COBJS-$(CONFIG_SYS_X86_ISR_TIMER)	+= timer.o
-COBJS-$(CONFIG_VIDEO)	+= video_bios.o
-COBJS-$(CONFIG_VIDEO)	+= video.o
+COBJS-$(CONFIG_VGA_CONSOLE)	+= video_bios.o
+COBJS-$(CONFIG_VGA_CONSOLE)	+= video.o
 COBJS-$(CONFIG_CMD_ZBOOT)	+= zimage.o
 
 SRCS	:= $(SOBJS-y:.o=.S) $(COBJS-y:.o=.c)
