@@ -162,6 +162,9 @@ typedef struct NS16550 *NS16550_t;
 /* useful defaults for LCR */
 #define UART_LCR_8N1	0x03
 
+#if defined(CONFIG_SYS_NS16550_RUNTIME_MAPPED)
+void   NS16550_is_io_mapped(int io_mapped);
+#endif
 void NS16550_init(NS16550_t com_port, int baud_divisor);
 void NS16550_putc(NS16550_t com_port, char c);
 char NS16550_getc(NS16550_t com_port);
