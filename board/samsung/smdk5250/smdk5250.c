@@ -98,6 +98,14 @@ static void smc9115_pre_init(void)
 
 int board_init(void)
 {
+	/* TODO(clchiou): Declare a struct for PMIC registers */
+	const unsigned int ps_hold_addr = 0x1004330c;
+	u32 ps_hold;
+
+	/* Set PS-Hold high */
+	ps_hold = readl(ps_hold_addr) | 0x100;
+	writel(ps_hold, ps_hold_addr);
+
 #ifdef CONFIG_OF_CONTROL
 	gd->bd->bi_arch_number = fdtdec_get_config_int(gd->fdt_blob,
 				"machine-arch-id", -1);
