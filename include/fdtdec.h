@@ -335,6 +335,16 @@ int fdtdec_get_config_int(const void *blob, const char *prop_name,
 		int default_val);
 
 /**
+ * Look in the FDT for a config item with the given name and return its value
+ * as a string.
+ *
+ * @param blob          FDT blob
+ * @param prop_name     property name to look up
+ * @returns property string, NULL on error.
+ */
+char *fdtdec_get_config_string(const void *blob, const char *prop_name);
+
+/**
  * Decode a peripheral ID from a device tree node. This may be a temporary
  * function depending on what happens with clocks in the Linux fdt.
  *
