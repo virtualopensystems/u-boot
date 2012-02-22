@@ -181,6 +181,12 @@ RELFLAGS= $(PLATFORM_RELFLAGS)
 DBGFLAGS= -g # -DDEBUG
 OPTFLAGS= -Os #-fomit-frame-pointer
 
+ifdef VBOOT_DEBUG
+DBGFLAGS += -DVBOOT_DEBUG
+endif
+ifdef VBOOT_PERFORMANCE
+DBGFLAGS += -DVBOOT_PERFORMANCE
+endif
 OBJCFLAGS += --gap-fill=0xff
 
 gccincdir := $(shell $(CC) -print-file-name=include)
@@ -225,6 +231,11 @@ endif
 CPPFLAGS += -I$(TOPDIR)/include
 CPPFLAGS += -fno-builtin -ffreestanding -nostdinc	\
 	-isystem $(gccincdir) -pipe $(PLATFORM_CPPFLAGS)
+
+ifdef VBOOT
+CPPFLAGS += -I$(if $(VBOOT_SOURCE),$(VBOOT_SOURCE)/firmware/include,\
+		$(VBOOT)/include/vboot)
+endif
 
 ifdef BUILD_TAG
 CFLAGS := $(CPPFLAGS) -Wall -Wstrict-prototypes \
