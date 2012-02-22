@@ -13,7 +13,7 @@
 #include <cros/common.h>
 #include <cros/fdt_decode.h>
 #include <cros/fmap.h>
-#include <fdt_decode.h>
+#include <fdtdec.h>
 #include <linux/string.h>
 #include <malloc.h>
 
@@ -180,7 +180,7 @@ void *fdt_decode_chromeos_alloc_region(const void *blob,
 		return NULL;
 	}
 
-	if (fdt_decode_region(blob, node, prop_name, &ptr, size)) {
+	if (fdtdec_decode_region(blob, node, prop_name, &ptr, size)) {
 		VBDEBUG(PREFIX "failed to find %s in /chromeos-config'\n",
 			prop_name);
 		return NULL;
