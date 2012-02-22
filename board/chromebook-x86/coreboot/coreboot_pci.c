@@ -31,9 +31,6 @@
 
 static struct pci_controller coreboot_hose;
 
-#define X86_PCI_CONFIG_ADDR 0xCF8
-#define X86_PCI_CONFIG_DATA 0xCFC
-
 static void config_pci_bridge(struct pci_controller *hose, pci_dev_t dev,
                               struct pci_config_table *table)
 {
@@ -60,8 +57,7 @@ void pci_init_board(void)
 		PCI_REGION_MEM);
 	coreboot_hose.region_count = 1;
 
-	pci_setup_type1(&coreboot_hose, X86_PCI_CONFIG_ADDR,
-		X86_PCI_CONFIG_DATA);
+	pci_setup_type1(&coreboot_hose);
 
 	pci_register_hose(&coreboot_hose);
 
