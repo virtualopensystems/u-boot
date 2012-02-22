@@ -268,7 +268,7 @@ static int crossystem_fw_index_vdat_to_binf(int index)
 
 int crossystem_data_update_acpi(crossystem_data_t *cdata)
 {
-	const void *fdt = gd->blob;
+	const void *fdt = gd->fdt_blob;
 	int node_offset, len;
 	const uint32_t *cell;
 	chromeos_acpi_t *acpi_table;

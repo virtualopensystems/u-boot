@@ -155,7 +155,8 @@ static int check_ro_normal_support(void)
 {
 	int rc = 0;
 #ifdef CONFIG_OF_CONTROL
-	if (fdt_decode_chromeos_config_has_prop(gd->blob, "twostop-optional"))
+	if (fdt_decode_chromeos_config_has_prop(gd->fdt_blob,
+						"twostop-optional"))
 		rc = VB_INIT_FLAG_RO_NORMAL_SUPPORT;
 #endif
 	VBDEBUG(PREFIX "%stwostop-optional\n", rc ? "" : "not ");
@@ -199,13 +200,13 @@ static void setup_arch_unused_memory(memory_wipe_t *wipe,
 {
 	struct fdt_memory config, ramoops;
 
-	if (fdt_decode_memory(gd->blob, "/memory", &config))
+	if (fdt_decode_memory(gd->fdt_blob, "/memory", &config))
 		VbExError(PREFIX "FDT decode memory section error\n");
 
 	memory_wipe_add(wipe, config.start, config.end);
 
 	/* Excludes kcrashmem if in FDT */
-	if (fdt_decode_memory(gd->blob, "/ramoops", &ramoops))
+	if (fdt_decode_memory(gd->fdt_blob, "/ramoops", &ramoops))
 		VBDEBUG(PREFIX "RAMOOPS not contained within FDT\n");
 	else
 		memory_wipe_sub(wipe, ramoops.start, ramoops.end);
@@ -328,7 +329,7 @@ twostop_init_vboot_library(firmware_storage_t *file, void *gbb,
 	}
 
 #ifdef CONFIG_VIDEO_TEGRA
-	tegra_lcd_check_next_stage(gd->blob, 0);
+	tegra_lcd_check_next_stage(gd->fdt_blob, 0);
 #endif
 	VBDEBUG(PREFIX "iparams.out_flags: %08x\n", iparams.out_flags);
 
@@ -578,7 +579,7 @@ twostop_init(struct twostop_fmap *fmap, firmware_storage_t *file,
 	cros_gpio_dump(&recsw);
 	cros_gpio_dump(&devsw);
 
-	if (fdt_decode_twostop_fmap(gd->blob, fmap)) {
+	if (fdt_decode_twostop_fmap(gd->fdt_blob, fmap)) {
 		VBDEBUG(PREFIX "failed to decode fmap\n");
 		return -1;
 	}
@@ -638,7 +639,7 @@ twostop_init(struct twostop_fmap *fmap, firmware_storage_t *file,
 
 	ret = 0;
 #ifdef CONFIG_VIDEO_TEGRA
-	tegra_lcd_check_next_stage(gd->blob, 0);
+	tegra_lcd_check_next_stage(gd->fdt_blob, 0);
 #endif
 
 out:
@@ -664,7 +665,7 @@ twostop_main_firmware(struct twostop_fmap *fmap, void *gbb,
 		return TWOSTOP_SELECT_ERROR;
 	}
 
-	kparams.kernel_buffer = fdt_decode_chromeos_alloc_region(gd->blob,
+	kparams.kernel_buffer = fdt_decode_chromeos_alloc_region(gd->fdt_blob,
 		"kernel", &size);
 	kparams.kernel_buffer_size = size;
 
@@ -724,7 +725,7 @@ static int setup_gbb_and_cdata(void **gbb, size_t *gbb_size,
 	size_t size;
 
 #ifndef CONFIG_HARDWARE_MAPPED_SPI
-	*gbb = fdt_decode_chromeos_alloc_region(gd->blob,
+	*gbb = fdt_decode_chromeos_alloc_region(gd->fdt_blob,
 			"google-binary-block", gbb_size);
 
 	if (!*gbb) {
@@ -734,8 +735,8 @@ static int setup_gbb_and_cdata(void **gbb, size_t *gbb_size,
 	}
 
 #endif
-	*cdata = fdt_decode_chromeos_alloc_region(gd->blob, "cros-system-data",
-						 &size);
+	*cdata = fdt_decode_chromeos_alloc_region(gd->fdt_blob,
+						  "cros-system-data", &size);
 	if (!*cdata) {
 		VBDEBUG(PREFIX "cros-system-data missing "
 				"from fdt, or malloc failed\n");
@@ -838,7 +839,7 @@ twostop_readwrite_main_firmware(void)
 	void *gbb;
 	size_t gbb_size;
 
-	if (fdt_decode_twostop_fmap(gd->blob, &fmap)) {
+	if (fdt_decode_twostop_fmap(gd->fdt_blob, &fmap)) {
 		VBDEBUG(PREFIX "failed to decode fmap\n");
 		return TWOSTOP_SELECT_ERROR;
 	}

@@ -69,7 +69,7 @@ void set_spi_flash_base(void)
 	int fmap_offset;
 	uint32_t *property;
 	int length;
-	const void *blob = gd->blob;
+	const void *blob = gd->fdt_blob;
 
 	fmap_offset = fdt_node_offset_by_compatible(blob, -1,
 			"chromeos,flashmap");

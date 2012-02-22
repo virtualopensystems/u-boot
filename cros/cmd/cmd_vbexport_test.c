@@ -399,13 +399,13 @@ static int show_screen_and_delay(uint32_t screen_type)
 
 static uint8_t *read_gbb_from_firmware(void)
 {
-	void *fdt_ptr = (void *)gd->blob;
+	void *fdt_ptr = (void *)gd->fdt_blob;
 	firmware_storage_t file;
 	struct twostop_fmap fmap;
 	void *gbb;
 	size_t gbb_size;
 
-	gbb = fdt_decode_chromeos_alloc_region(gd->blob,
+	gbb = fdt_decode_chromeos_alloc_region(gd->fdt_blob,
 			"google-binary-block", &gbb_size);
 	if (!gbb) {
 		VbExDebug("Failed to find gbb region!\n");
