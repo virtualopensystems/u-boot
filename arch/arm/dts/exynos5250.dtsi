@@ -410,4 +410,9 @@
 			#gpio-cells = <4>;
 		};
 	};
+
+	sromc@12250000 {
+		compatible = "samsung,exynos5250-srom";
+		reg = <0x12250000 0x20>;
+	};
 };

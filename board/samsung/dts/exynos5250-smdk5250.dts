@@ -10,17 +10,48 @@
 */
 
 /dts-v1/;
-/include/ "exynos5250.dtsi"
+/include/ ARCH_CPU_DTS
 
 / {
 	model = "SAMSUNG SMDK5250 board based on EXYNOS5250";
 	compatible = "samsung,smdk5250", "samsung,exynos5250";
 
+	aliases {
+		serial0 = "/serial@12C10000";
+		sdmmc0 = "/sdhci@12220000";
+	};
+
+	serial@12C10000 {
+		id = <1>;
+	};
+
+	config {
+		machine-arch-id = <3774>;
+	};
+
 	memory {
 		reg = <0x40000000 0x80000000>;
 	};
 
-	chosen {
-		bootargs = "root=/dev/ram0 rw ramdisk=8192 rootfstype=squashfs initrd=0x41000000,8M console=ttySAC1,115200 init=/linuxrc";
+	sdhci@12220000 {
+		id = <2>;
+		samsung,sdhci-bus-width = <4>;
+	};
+
+	sdhci@12200000 {
+		status = "disabled";
+	};
+
+	sdhci@12210000 {
+		status = "disabled";
+	};
+
+	sdhci@12230000 {
+		status = "disabled";
+	};
+
+	sromc@12250000 {
+		bank = <1>;
+		srom-timing = <1 9 12 1 6 1 1>;
 	};
 };
