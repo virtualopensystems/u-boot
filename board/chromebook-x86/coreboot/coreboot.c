@@ -87,7 +87,7 @@ int board_early_init_r(void)
 		printf("%s.\n", file_cbfs_error());
 		goto cbfs_failed;
 	}
-	gd->blob = dtb;
+	gd->fdt_blob = dtb;
 cbfs_failed:
 #endif /* CONFIG_CMD_CBFS && CONFIG_OF_CONTROL */
 	return 0;
