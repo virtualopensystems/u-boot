@@ -403,8 +403,8 @@ void board_init_f(ulong bootflag)
 	 * must relocate it. If it is embedded in the data section, then it
 	 * will be relocated with other data.
 	 */
-	if (gd->blob) {
-		fdt_size = ALIGN(fdt_totalsize(gd->blob) + 0x1000, 32);
+	if (gd->fdt_blob) {
+		fdt_size = ALIGN(fdt_totalsize(gd->fdt_blob) + 0x1000, 32);
 
 		addr_sp -= fdt_size;
 		new_fdt = (void *)addr_sp;
@@ -452,8 +452,8 @@ void board_init_f(ulong bootflag)
 	gd->reloc_off = addr - _TEXT_BASE;
 	debug("relocation Offset is: %08lx\n", gd->reloc_off);
 	if (new_fdt) {
-		memcpy(new_fdt, gd->blob, fdt_size);
-		gd->blob = new_fdt;
+		memcpy(new_fdt, gd->fdt_blob, fdt_size);
+		gd->fdt_blob = new_fdt;
 	}
 	memcpy(id, (void *)gd, sizeof(gd_t));
 
@@ -478,7 +478,7 @@ static char *failed = "*** failed ***\n";
 static int should_load_env(void)
 {
 #ifdef CONFIG_OF_LOAD_ENVIRONMENT
-	return fdt_decode_get_config_int(gd->blob, "load_env", 0);
+	return fdt_decode_get_config_int(gd->fdt_blob, "load_env", 0);
 #else
 	return 1;
 #endif
@@ -618,7 +618,7 @@ void board_init_r(gd_t *id, ulong dest_addr)
 #ifdef CONFIG_DISPLAY_BOARDINFO_LATE
 # ifdef CONFIG_OF_CONTROL
 	/* Put this here so it appears on the LCD, now it is ready */
-	printf("Model: %s\n", fdt_decode_get_model(gd->blob));
+	printf("Model: %s\n", fdt_decode_get_model(gd->fdt_blob));
 # else
 	checkboard();
 # endif
