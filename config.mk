@@ -232,6 +232,10 @@ CPPFLAGS += -I$(TOPDIR)/include
 CPPFLAGS += -fno-builtin -ffreestanding -nostdinc	\
 	-isystem $(gccincdir) -pipe $(PLATFORM_CPPFLAGS)
 
+ifneq ($(CONFIG_CHROMEOS),)
+CPPFLAGS += -I$(TOPDIR)/cros/include
+endif
+
 ifdef VBOOT
 CPPFLAGS += -I$(if $(VBOOT_SOURCE),$(VBOOT_SOURCE)/firmware/include,\
 		$(VBOOT)/include/vboot)
