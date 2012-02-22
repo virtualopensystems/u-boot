@@ -13,7 +13,7 @@
 #ifndef CHROMEOS_FIRMWARE_STORAGE_H_
 #define CHROMEOS_FIRMWARE_STORAGE_H_
 
-#include <chromeos/fdt_decode.h>
+#include <cros/fdt_decode.h>
 
 #ifndef CONFIG_HARDWARE_MAPPED_SPI
 typedef void *read_buf_type;

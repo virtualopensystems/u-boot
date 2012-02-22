@@ -9,8 +9,8 @@
  */
 
 #include <common.h>
-#include <chromeos/common.h>
-#include <chromeos/cros_gpio.h>
+#include <cros/common.h>
+#include <cros/cros_gpio.h>
 #include <vboot_api.h>
 
 #include "boot_device.h"

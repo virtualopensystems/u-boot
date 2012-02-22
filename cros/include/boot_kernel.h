@@ -11,7 +11,7 @@
 #ifndef CHROMEOS_BOOT_KERNEL_H
 #define CHROMEOS_BOOT_KERNEL_H
 
-#include <chromeos/crossystem_data.h>
+#include <cros/crossystem_data.h>
 #include <vboot_api.h>
 
 /**

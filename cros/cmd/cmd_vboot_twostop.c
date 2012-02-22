@@ -13,16 +13,16 @@
 #include <fdt_decode.h>
 #include <lcd.h>
 #include <malloc.h>
-#include <chromeos/boot_kernel.h>
-#include <chromeos/common.h>
-#include <chromeos/crossystem_data.h>
-#include <chromeos/cros_gpio.h>
-#include <chromeos/fdt_decode.h>
-#include <chromeos/firmware_storage.h>
-#include <chromeos/gbb.h>
-#include <chromeos/hasher_state.h>
-#include <chromeos/memory_wipe.h>
-#include <chromeos/power_management.h>
+#include <cros/boot_kernel.h>
+#include <cros/common.h>
+#include <cros/crossystem_data.h>
+#include <cros/cros_gpio.h>
+#include <cros/fdt_decode.h>
+#include <cros/firmware_storage.h>
+#include <cros/gbb.h>
+#include <cros/hasher_state.h>
+#include <cros/memory_wipe.h>
+#include <cros/power_management.h>
 #include <usb.h>
 
 #ifdef CONFIG_VIDEO_TEGRA

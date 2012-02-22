@@ -9,8 +9,8 @@
  */
 
 #include <common.h>
-#include <chromeos/common.h>
-#include <chromeos/gbb.h>
+#include <cros/common.h>
+#include <cros/gbb.h>
 
 #include <gbb_header.h>
 

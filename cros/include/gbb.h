@@ -11,7 +11,7 @@
 #ifndef CHROMEOS_GBB_H_
 #define CHROMEOS_GBB_H_
 
-#include <chromeos/firmware_storage.h>
+#include <cros/firmware_storage.h>
 
 /**
  * This loads the basic parts of GBB from flashrom. These include:

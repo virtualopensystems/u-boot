@@ -9,7 +9,7 @@
  */
 
 #include <common.h>
-#include <chromeos/common.h>
+#include <cros/common.h>
 
 /* Import the header files from vboot_reference. */
 #include <vboot_api.h>

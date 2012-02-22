@@ -38,7 +38,7 @@
 
 #include <common.h>
 #include <malloc.h>
-#include <chromeos/firmware_storage.h>
+#include <cros/firmware_storage.h>
 
 /* TODO Replace mem_seek/read with spi_seek/read when moving firmware storage
  * from NAND to SPI Flash */

@@ -10,8 +10,8 @@
 
 #include <common.h>
 #include <gbb_header.h> /* for GoogleBinaryBlockHeader */
-#include <chromeos/common.h>
-#include <chromeos/crossystem_data.h>
+#include <cros/common.h>
+#include <cros/crossystem_data.h>
 #include <linux/string.h>
 
 #ifdef CONFIG_OF_LIBFDT

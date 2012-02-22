@@ -11,9 +11,9 @@
 #include <common.h>
 #include <malloc.h>
 #include <mmc.h>
-#include <chromeos/common.h>
-#include <chromeos/firmware_storage.h>
-#include <chromeos/os_storage.h>
+#include <cros/common.h>
+#include <cros/firmware_storage.h>
+#include <cros/os_storage.h>
 
 #define PREFIX "firmware_storage_twostop: "
 

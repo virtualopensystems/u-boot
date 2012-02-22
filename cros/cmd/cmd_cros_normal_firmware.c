@@ -15,13 +15,13 @@
 #include <fat.h>
 #include <malloc.h>
 #include <mmc.h>
-#include <chromeos/common.h>
-#include <chromeos/firmware_storage.h>
-#include <chromeos/load_firmware_helper.h>
-#include <chromeos/load_kernel_helper.h>
-#include <chromeos/os_storage.h>
-#include <chromeos/power_management.h>
-#include <chromeos/vboot_nvstorage_helper.h>
+#include <cros/common.h>
+#include <cros/firmware_storage.h>
+#include <cros/load_firmware_helper.h>
+#include <cros/load_kernel_helper.h>
+#include <cros/os_storage.h>
+#include <cros/power_management.h>
+#include <cros/vboot_nvstorage_helper.h>
 
 #include <load_kernel_fw.h>
 #include <tss_constants.h>

@@ -13,8 +13,8 @@
 #include <common.h>
 #include <malloc.h>
 #include <spi_flash.h>
-#include <chromeos/common.h>
-#include <chromeos/firmware_storage.h>
+#include <cros/common.h>
+#include <cros/firmware_storage.h>
 
 #define PREFIX "firmware_storage_spi: "
 

@@ -10,9 +10,9 @@
 
 #include <common.h>
 #include <libfdt.h>
-#include <chromeos/common.h>
-#include <chromeos/fdt_decode.h>
-#include <chromeos/fmap.h>
+#include <cros/common.h>
+#include <cros/fdt_decode.h>
+#include <cros/fmap.h>
 #include <fdt_decode.h>
 #include <linux/string.h>
 #include <malloc.h>

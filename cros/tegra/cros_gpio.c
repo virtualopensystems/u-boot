@@ -15,8 +15,8 @@
 #include <asm/arch/gpio.h>
 #include <asm/arch/tegra2.h>
 #include <asm/global_data.h>
-#include <chromeos/common.h>
-#include <chromeos/cros_gpio.h>
+#include <cros/common.h>
+#include <cros/cros_gpio.h>
 
 #define PREFIX "cros_gpio: "
 

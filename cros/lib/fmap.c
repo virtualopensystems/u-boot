@@ -9,8 +9,8 @@
  */
 
 #include <common.h>
-#include <chromeos/common.h>
-#include <chromeos/fmap.h>
+#include <cros/common.h>
+#include <cros/fmap.h>
 
 #define PREFIX "chromeos/fdt_decode: "
 

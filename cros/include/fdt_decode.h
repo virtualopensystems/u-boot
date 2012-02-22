@@ -11,7 +11,7 @@
 #ifndef CHROMEOS_FDT_DECODE_H_
 #define CHROMEOS_FDT_DECODE_H_
 
-#include <chromeos/fmap.h>
+#include <cros/fmap.h>
 
 /* Decode Chrome OS specific configuration from fdt */
 

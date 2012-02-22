@@ -9,8 +9,8 @@
  */
 
 #include <common.h>
-#include <chromeos/common.h>
-#include <chromeos/hasher_state.h>
+#include <cros/common.h>
+#include <cros/hasher_state.h>
 
 #include <vboot_api.h>
 #include <vboot_struct.h>

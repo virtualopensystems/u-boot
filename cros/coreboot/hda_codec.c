@@ -14,7 +14,7 @@
 #include <asm/global_data.h>
 #include <asm/io.h>
 #include <pci.h>
-#include <chromeos/hda_codec.h>
+#include <cros/hda_codec.h>
 
 #define HDA_CMD_REG 0x5C
 #define HDA_ICII_REG 0x64

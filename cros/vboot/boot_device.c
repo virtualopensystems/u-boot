@@ -10,7 +10,7 @@
 
 #include <common.h>
 #include <part.h>
-#include <chromeos/common.h>
+#include <cros/common.h>
 #include <linux/list.h>
 
 /* Import the header files from vboot_reference. */

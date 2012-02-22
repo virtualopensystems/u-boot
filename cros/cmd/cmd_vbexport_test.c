@@ -17,8 +17,8 @@
 #include <common.h>
 #include <command.h>
 #include <gbb_header.h>
-#include <chromeos/firmware_storage.h>
-#include <chromeos/gbb.h>
+#include <cros/firmware_storage.h>
+#include <cros/gbb.h>
 
 #include <vboot_api.h>
 

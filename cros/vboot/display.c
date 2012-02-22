@@ -17,7 +17,7 @@
 #include <video.h>
 #define HAVE_DISPLAY
 #endif
-#include <chromeos/common.h>
+#include <cros/common.h>
 #include <lzma/LzmaTypes.h>
 #include <lzma/LzmaDec.h>
 #include <lzma/LzmaTools.h>

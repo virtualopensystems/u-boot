@@ -14,7 +14,7 @@
 #include "boot_device.h"
 
 #include <vboot_api.h>
-#include <chromeos/crossystem_data.h>
+#include <cros/crossystem_data.h>
 
 extern int board_use_usb_keyboard(int boot_mode);
 

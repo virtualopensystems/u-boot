@@ -14,8 +14,8 @@
 #include <asm/ic/coreboot/ipchecksum.h>
 #include <asm/ic/coreboot/sysinfo.h>
 #include <asm/ic/coreboot/tables.h>
-#include <chromeos/common.h>
-#include <chromeos/cros_gpio.h>
+#include <cros/common.h>
+#include <cros/cros_gpio.h>
 #define PREFIX "cros_gpio: "
 
 DECLARE_GLOBAL_DATA_PTR;

@@ -39,8 +39,8 @@
 #include <common.h>
 #include "../../common/lcd/gpinit/gpinit.h"
 
-#include <chromeos/common.h>
-#include <chromeos/gpio.h>
+#include <cros/common.h>
+#include <cros/gpio.h>
 
 #define GPIO_ACTIVE_HIGH	0
 #define GPIO_ACTIVE_LOW		1

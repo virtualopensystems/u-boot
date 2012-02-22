@@ -9,7 +9,7 @@
  */
 
 #include <common.h>
-#include <chromeos/common.h>
+#include <cros/common.h>
 
 /* Import the definition of vboot_wrapper interfaces. */
 #include <vboot_api.h>

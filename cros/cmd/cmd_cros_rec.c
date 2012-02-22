@@ -16,14 +16,14 @@
 #include <lcd.h>
 #include <malloc.h>
 #include <usb.h> /* for wait_ms() */
-#include <chromeos/common.h>
-#include <chromeos/firmware_storage.h>
-#include <chromeos/load_firmware_helper.h>
-#include <chromeos/load_kernel_helper.h>
-#include <chromeos/gbb_bmpblk.h>
-#include <chromeos/gpio.h>
-#include <chromeos/os_storage.h>
-#include <chromeos/vboot_nvstorage_helper.h>
+#include <cros/common.h>
+#include <cros/firmware_storage.h>
+#include <cros/load_firmware_helper.h>
+#include <cros/load_kernel_helper.h>
+#include <cros/gbb_bmpblk.h>
+#include <cros/gpio.h>
+#include <cros/os_storage.h>
+#include <cros/vboot_nvstorage_helper.h>
 
 #include <bmpblk_header.h>
 #include <gbb_header.h>

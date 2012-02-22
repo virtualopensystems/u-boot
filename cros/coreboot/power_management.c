@@ -10,7 +10,7 @@
 
 /* Implementation of per-board power management function */
 
-#include <chromeos/power_management.h>
+#include <cros/power_management.h>
 #include <common.h>
 #include <asm/global_data.h>
 #include <asm/io.h>

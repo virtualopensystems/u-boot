@@ -10,9 +10,9 @@
 
 #include <common.h>
 #include <part.h>
-#include <chromeos/boot_kernel.h>
-#include <chromeos/common.h>
-#include <chromeos/crossystem_data.h>
+#include <cros/boot_kernel.h>
+#include <cros/common.h>
+#include <cros/crossystem_data.h>
 #ifdef CONFIG_X86
 #include <asm/zimage.h>
 #endif

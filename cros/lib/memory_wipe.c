@@ -9,8 +9,8 @@
  */
 
 #include <common.h>
-#include <chromeos/common.h>
-#include <chromeos/memory_wipe.h>
+#include <cros/common.h>
+#include <cros/memory_wipe.h>
 #include <malloc.h>
 #include <physmem.h>
 

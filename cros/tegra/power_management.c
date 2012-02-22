@@ -13,8 +13,8 @@
 #include <common.h>
 #include <i2c.h>
 
-#include <chromeos/common.h>
-#include <chromeos/power_management.h>
+#include <cros/common.h>
+#include <cros/power_management.h>
 
 #define PREFIX "cold_reboot: "
 

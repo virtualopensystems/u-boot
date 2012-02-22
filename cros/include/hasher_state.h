@@ -11,7 +11,7 @@
 #ifndef CHROMEOS_HASHER_STATE_H_
 #define CHROMEOS_HASHER_STATE_H_
 
-#include <chromeos/firmware_storage.h>
+#include <cros/firmware_storage.h>
 
 typedef struct {
 	firmware_storage_t *file;

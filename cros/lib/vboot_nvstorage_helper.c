@@ -35,8 +35,8 @@
  */
 
 #include <common.h>
-#include <chromeos/power_management.h>
-#include <chromeos/vboot_nvstorage_helper.h>
+#include <cros/power_management.h>
+#include <cros/vboot_nvstorage_helper.h>
 
 /*
  * TODO It should averagely distributed erase/write operation to entire flash

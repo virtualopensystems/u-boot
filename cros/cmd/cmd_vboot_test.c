@@ -14,10 +14,10 @@
 
 #include <common.h>
 #include <command.h>
-#include <chromeos/cros_gpio.h>
-#include <chromeos/fdt_decode.h>
-#include <chromeos/firmware_storage.h>
-#include <chromeos/memory_wipe.h>
+#include <cros/cros_gpio.h>
+#include <cros/fdt_decode.h>
+#include <cros/firmware_storage.h>
+#include <cros/memory_wipe.h>
 #include <vboot_api.h>
 
 /*
