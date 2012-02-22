@@ -323,6 +323,7 @@ LIBS += $(CPUDIR)/s5p-common/libs5p-common.o
 endif
 ifeq ($(SOC),exynos)
 LIBS += $(CPUDIR)/s5p-common/libs5p-common.o
+LIBS += $(CPUDIR)/exynos/exynos5/libexynos5.o
 endif
 
 LIBS := $(addprefix $(obj),$(sort $(LIBS)))

@@ -58,6 +58,8 @@ LIBS-$(CONFIG_SPL_ONENAND_SUPPORT) += drivers/mtd/onenand/libonenand.o
 LIBS-$(CONFIG_SPL_DMA_SUPPORT) += drivers/dma/libdma.o
 LIBS-$(CONFIG_SPL_POST_MEM_SUPPORT) += post/drivers/memory.o
 
+LIBS-$(CONFIG_EXYNOS5) += $(CPUDIR)/$(SOC)/exynos5/libexynos5.o
+
 ifneq ($(CONFIG_AM33XX)$(CONFIG_OMAP34XX)$(CONFIG_OMAP44XX)$(CONFIG_OMAP54XX),)
 LIBS-y += $(CPUDIR)/omap-common/libomap-common.o
 endif
