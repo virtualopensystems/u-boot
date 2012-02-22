@@ -21,6 +21,7 @@
  */
 
 #include <common.h>
+#include <fdtdec.h>
 #include <asm/io.h>
 #include <netdev.h>
 #include <asm/arch/cpu.h>
@@ -54,6 +55,13 @@ static void smc9115_pre_init(void)
 
 int board_init(void)
 {
+#ifdef CONFIG_OF_CONTROL
+	gd->bd->bi_arch_number = fdtdec_get_config_int(gd->fdt_blob,
+				"machine-arch-id", -1);
+	if (gd->bd->bi_arch_number == -1U)
+		debug("Warning: No /config/machine-arch-id defined in fdt\n");
+#endif
+
 	gd->bd->bi_boot_params = (PHYS_SDRAM_1 + 0x100UL);
 	return 0;
 }
