@@ -300,7 +300,7 @@ void board_init_f(ulong boot_flags)
 static int should_load_env(void)
 {
 #ifdef CONFIG_OF_LOAD_ENVIRONMENT
-	return fdt_decode_get_config_int(gd->blob, "load_env", 0);
+	return fdt_decode_get_config_int(gd->fdt_blob, "load_env", 0);
 #else
 	return 1;
 #endif
@@ -327,7 +327,7 @@ void board_init_r(gd_t *id, ulong dest_addr)
 	/* compiler optimization barrier needed for GCC >= 3.4 */
 	__asm__ __volatile__("" : : : "memory");
 
-	gd->blob = NULL;
+	gd->fdt_blob = NULL;
 
 	gd->bd = &bd_data;
 	memset(gd->bd, 0, sizeof(bd_t));
