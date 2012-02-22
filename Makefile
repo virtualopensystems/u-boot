@@ -229,6 +229,13 @@ LIBS  = lib/libgeneric.o
 LIBS += lib/lzma/liblzma.o
 LIBS += lib/lzo/liblzo.o
 LIBS += lib/zlib/libz.o
+
+ifdef CONFIG_CHROMEOS
+LIBS += cros/lib/libcros.o
+LIBS += cros/vboot/libvboot.o
+LIBS += cros/$(SOC_FAMILY)/libcros_board.o
+endif
+
 LIBS += $(shell if [ -f board/$(VENDOR)/common/Makefile ]; then echo \
 	"board/$(VENDOR)/common/lib$(VENDOR).o"; fi)
 LIBS += $(CPUDIR)/lib$(CPU).o
