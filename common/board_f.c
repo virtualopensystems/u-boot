@@ -35,6 +35,7 @@
 #include <asm/mp.h>
 #endif
 #include <environment.h>
+#include <fdtdec.h>
 #if defined(CONFIG_CMD_IDE)
 #include <ide.h>
 #endif
