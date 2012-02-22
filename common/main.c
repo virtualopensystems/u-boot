@@ -30,6 +30,7 @@
 #include <common.h>
 #include <watchdog.h>
 #include <command.h>
+#include <fdtdec.h>
 #include <malloc.h>
 #include <version.h>
 #ifdef CONFIG_MODEM_SUPPORT
@@ -39,11 +40,6 @@
 #ifdef CONFIG_SYS_HUSH_PARSER
 #include <hush.h>
 #endif
-
-#ifdef CONFIG_OF_CONTROL
-#include <fdt_decode.h>
-#endif /* CONFIG_OF_CONTROL */
-
 #ifdef CONFIG_OF_LIBFDT
 #include <fdt_support.h>
 #endif /* CONFIG_OF_LIBFDT */
@@ -443,7 +439,7 @@ void main_loop (void)
 		s = getenv ("bootcmd");
 #ifdef CONFIG_OF_CONTROL
 	/* Allow the fdt to override the boot command */
-	env = fdt_decode_get_config_string(gd->blob, "bootcmd");
+	env = fdtdec_get_config_string(gd->fdt_blob, "bootcmd");
 	if (env)
 		s = env;
 
@@ -452,7 +448,7 @@ void main_loop (void)
 	 * Always use 'env' in this case, since bootsecure requres that the
 	 * bootcmd was specified in the FDT too.
 	 */
-	if (fdt_decode_get_config_int(gd->blob, "bootsecure", 0))
+	if (fdtdec_get_config_int(gd->fdt_blob, "bootsecure", 0))
 		secure_boot_cmd(env);
 
 #endif /* CONFIG_OF_CONTROL */
@@ -481,7 +477,7 @@ void main_loop (void)
 #endif /* CONFIG_BOOTDELAY */
 
 #if defined CONFIG_OF_CONTROL
-	set_working_fdt_addr((void *)gd->blob);
+	set_working_fdt_addr((void *)gd->fdt_blob);
 #endif /* CONFIG_OF_CONTROL */
 
 	/*
