@@ -26,81 +26,17 @@
 #include <asm/arch/cpu.h>
 #include <asm/arch/gpio.h>
 #include <asm/arch/mmc.h>
+#include <asm/arch/pinmux.h>
 #include <asm/arch/sromc.h>
 
 DECLARE_GLOBAL_DATA_PTR;
-struct exynos5_gpio_part1 *gpio1;
 
 #ifdef CONFIG_SMC911X
 static void smc9115_pre_init(void)
 {
 	u32 smc_bw_conf, smc_bc_conf;
-	int i;
 
-	/*
-	 * SROM:CS1 and EBI
-	 *
-	 * GPY0[0]	SROM_CSn[0]
-	 * GPY0[1]	SROM_CSn[1](2)
-	 * GPY0[2]	SROM_CSn[2]
-	 * GPY0[3]	SROM_CSn[3]
-	 * GPY0[4]	EBI_OEn(2)
-	 * GPY0[5]	EBI_EEn(2)
-	 *
-	 * GPY1[0]	EBI_BEn[0](2)
-	 * GPY1[1]	EBI_BEn[1](2)
-	 * GPY1[2]	SROM_WAIT(2)
-	 * GPY1[3]	EBI_DATA_RDn(2)
-	 */
-	s5p_gpio_cfg_pin(&gpio1->y0, CONFIG_ENV_SROM_BANK, GPIO_FUNC(2));
-	s5p_gpio_cfg_pin(&gpio1->y0, 4, GPIO_FUNC(2));
-	s5p_gpio_cfg_pin(&gpio1->y0, 5, GPIO_FUNC(2));
-
-	for (i = 0; i < 4; i++)
-		s5p_gpio_cfg_pin(&gpio1->y1, i, GPIO_FUNC(2));
-
-	/*
-	 * EBI: 8 Addrss Lines
-	 *
-	 * GPY3[0]	EBI_ADDR[0](2)
-	 * GPY3[1]	EBI_ADDR[1](2)
-	 * GPY3[2]	EBI_ADDR[2](2)
-	 * GPY3[3]	EBI_ADDR[3](2)
-	 * GPY3[4]	EBI_ADDR[4](2)
-	 * GPY3[5]	EBI_ADDR[5](2)
-	 * GPY3[6]	EBI_ADDR[6](2)
-	 * GPY3[7]	EBI_ADDR[7](2)
-	 *
-	 * EBI: 16 Data Lines
-	 *
-	 * GPY5[0]	EBI_DATA[0](2)
-	 * GPY5[1]	EBI_DATA[1](2)
-	 * GPY5[2]	EBI_DATA[2](2)
-	 * GPY5[3]	EBI_DATA[3](2)
-	 * GPY5[4]	EBI_DATA[4](2)
-	 * GPY5[5]	EBI_DATA[5](2)
-	 * GPY5[6]	EBI_DATA[6](2)
-	 * GPY5[7]	EBI_DATA[7](2)
-	 *
-	 * GPY6[0]	EBI_DATA[8](2)
-	 * GPY6[1]	EBI_DATA[9](2)
-	 * GPY6[2]	EBI_DATA[10](2)
-	 * GPY6[3]	EBI_DATA[11](2)
-	 * GPY6[4]	EBI_DATA[12](2)
-	 * GPY6[5]	EBI_DATA[13](2)
-	 * GPY6[6]	EBI_DATA[14](2)
-	 * GPY6[7]	EBI_DATA[15](2)
-	 */
-	for (i = 0; i < 8; i++) {
-		s5p_gpio_cfg_pin(&gpio1->y3, i, GPIO_FUNC(2));
-		s5p_gpio_set_pull(&gpio1->y3, i, GPIO_PULL_UP);
-
-		s5p_gpio_cfg_pin(&gpio1->y5, i, GPIO_FUNC(2));
-		s5p_gpio_set_pull(&gpio1->y5, i, GPIO_PULL_UP);
-
-		s5p_gpio_cfg_pin(&gpio1->y6, i, GPIO_FUNC(2));
-		s5p_gpio_set_pull(&gpio1->y6, i, GPIO_PULL_UP);
-	}
+	exynos_pinmux_config(EXYNOS_SMC911X);
 
 	/* Ethernet needs data bus width of 16 bits */
 	smc_bw_conf = SROMC_DATA16_WIDTH(CONFIG_ENV_SROM_BANK)
@@ -118,8 +54,6 @@ static void smc9115_pre_init(void)
 
 int board_init(void)
 {
-	gpio1 = (struct exynos5_gpio_part1 *) samsung_get_base_gpio_part1();
-
 	gd->bd->bi_boot_params = (PHYS_SDRAM_1 + 0x100UL);
 	return 0;
 }
@@ -186,95 +120,15 @@ int checkboard(void)
 #ifdef CONFIG_GENERIC_MMC
 int board_mmc_init(bd_t *bis)
 {
-	int i, err;
-
-	/*
-	 * MMC2 SD card GPIO:
-	 *
-	 * GPC2[0]	SD_2_CLK(2)
-	 * GPC2[1]	SD_2_CMD(2)
-	 * GPC2[2]	SD_2_CDn
-	 * GPC2[3:6]	SD_2_DATA[0:3](2)
-	 */
-	for (i = 0; i < 7; i++) {
-		/* GPC2[0:6] special function 2 */
-		s5p_gpio_cfg_pin(&gpio1->c2, i, GPIO_FUNC(0x2));
-
-		/* GPK2[0:6] drv 4x */
-		s5p_gpio_set_drv(&gpio1->c2, i, GPIO_DRV_4X);
-
-		/* GPK2[0:1] pull disable */
-		if (i == 0 || i == 1) {
-			s5p_gpio_set_pull(&gpio1->c2, i, GPIO_PULL_NONE);
-			continue;
-		}
-
-		/* GPK2[2:6] pull up */
-		s5p_gpio_set_pull(&gpio1->c2, i, GPIO_PULL_UP);
-	}
-
-	err = s5p_mmc_init(2, 4);
-	return err;
+	exynos_pinmux_config(EXYNOS_SDMMC2);
+	return s5p_mmc_init(2, 4);
 }
 #endif
-
-static void board_uart_init(void)
-{
-	struct exynos5_gpio_part1 *gpio1 =
-		(struct exynos5_gpio_part1 *) samsung_get_base_gpio_part1();
-	int i;
-
-	/*
-	 * UART0 GPIOs : GPA0CON[3:0] 0x2222
-	 * Must set CFG17 switches to select UART0 to use.
-	 */
-	for (i = 0; i <= 3; i++) {
-		s5p_gpio_set_pull(&gpio1->a0, i, GPIO_PULL_NONE);
-		s5p_gpio_cfg_pin(&gpio1->a0, i, GPIO_FUNC(0x2));
-	}
-
-	/*
-	 * UART1 GPIOs : GPA0CON[5:4] 0x22
-	 * Must set CFG17 switches to select UART1 to use.
-	 *
-	 * This only sets RXD/TXD, as RTS/CTS need a resistor soldered down
-	 * in order to use them (so that those pins can be used for I2C).
-	 */
-	for (i = 4; i <= 5; i++) {
-		s5p_gpio_set_pull(&gpio1->a0, i, GPIO_PULL_NONE);
-		s5p_gpio_cfg_pin(&gpio1->a0, i, GPIO_FUNC(0x2));
-	}
-
-	/*
-	 * UART2 GPIOs : GPA1CON[1:0] 0x22
-	 * Must set CFG17 switches to select UART2 to use.
-	 *
-	 * This only sets RXD/TXD, as RTS/CTS need a resistor soldered down
-	 * in order to use them (so that those pins can be used for I2C).
-	 */
-	for (i = 0; i <= 1; i++) {
-		s5p_gpio_set_pull(&gpio1->a1, i, GPIO_PULL_NONE);
-		s5p_gpio_cfg_pin(&gpio1->a1, i, GPIO_FUNC(0x2));
-	}
-
-	/*
-	 * UART3 GPIOs : GPA1CON[5:4] 0x22
-	 * Must set CFG16 switches to select UART3 to use.
-	 */
-	for (i = 4; i <= 5; i++) {
-		s5p_gpio_set_pull(&gpio1->a1, i, GPIO_PULL_NONE);
-		s5p_gpio_cfg_pin(&gpio1->a1, i, GPIO_FUNC(0x2));
-	}
-
-	/*
-	 * There's no mux for UART4--it's internal only
-	 */
-}
 
 #ifdef CONFIG_BOARD_EARLY_INIT_F
 int board_early_init_f(void)
 {
-	board_uart_init();
+	exynos_pinmux_config(EXYNOS_UART1);
 	return 0;
 }
 #endif
