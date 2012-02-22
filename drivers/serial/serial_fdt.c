@@ -159,7 +159,7 @@ static void fserial_setbrg(void)
 
 static struct serial_device *get_console(void)
 {
-	if (fdt_decode_uart_console(gd->blob, &console_uart,
+	if (fdt_decode_uart_console(gd->fdt_blob, &console_uart,
 			gd->baudrate))
 		return NULL;
 	strcpy(console.name, "serial");
