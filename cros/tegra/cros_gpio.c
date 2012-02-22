@@ -11,8 +11,8 @@
 /* Implementation of per-board GPIO accessor functions */
 
 #include <common.h>
-#include <fdt_decode.h>
-#include <asm/arch/gpio.h>
+#include <fdtdec.h>
+#include <asm-generic/gpio.h>
 #include <asm/arch/tegra2.h>
 #include <asm/global_data.h>
 #include <cros/common.h>
@@ -38,14 +38,17 @@ int misc_init_r(void)
 	struct fdt_gpio_state gs;
 	int i, config_node;
 
-	config_node = fdt_path_offset(gd->blob, "/config");
+	config_node = fdt_path_offset(gd->fdt_blob, "/config");
 	if (config_node < 0)
 		return -1;
 
 	for (i = 0; i < CROS_GPIO_MAX_GPIO; i++) {
-		if (fdt_decode_gpio(gd->blob, config_node, gpio_name[i], &gs))
+		if (fdtdec_decode_gpio(gd->fdt_blob, config_node, gpio_name[i],
+				&gs))
 			return -1;
-		fdt_setup_gpio(&gs);
+		fdtdec_setup_gpio(&gs);
+		if (fdt_gpio_isvalid(&gs))
+			gpio_direction_input(gs.gpio);
 	}
 
 	/*
@@ -75,7 +78,8 @@ int cros_gpio_fetch(enum cros_gpio_index index, cros_gpio_t *gpio)
 	assert(g_config_node >= 0);
 	assert(index >= 0 && index < CROS_GPIO_MAX_GPIO);
 
-	if (fdt_decode_gpio(gd->blob, g_config_node, gpio_name[index], &gs)) {
+	if (fdtdec_decode_gpio(gd->fdt_blob, g_config_node, gpio_name[index],
+			&gs)) {
 		VBDEBUG(PREFIX "fail to decode gpio: %d\n", index);
 		return -1;
 	}
