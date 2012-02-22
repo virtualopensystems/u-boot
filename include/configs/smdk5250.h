@@ -57,9 +57,11 @@
 #define CONFIG_INITRD_TAG
 #define CONFIG_CMDLINE_EDITING
 
+#ifndef CONFIG_OF_CONTROL
 /* MACH_TYPE_SMDK5250 macro will be removed once added to mach-types */
 #define MACH_TYPE_SMDK5250		3774
 #define CONFIG_MACH_TYPE		MACH_TYPE_SMDK5250
+#endif
 
 /* Power Down Modes */
 #define S5P_CHECK_SLEEP			0x00000BAD
