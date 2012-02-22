@@ -18,6 +18,7 @@ board=""
 vendor=""
 soc=""
 options=""
+soc_family=""
 
 if [ \( $# -eq 2 \) -a \( "$1" = "-A" \) ] ; then
 	# Automatic mode
@@ -127,6 +128,8 @@ if [ "${arch}" = "arm" ] ; then
 	ln -s ${LNPREFIX}proc-armv asm/proc
 fi
 
+soc_family=$(echo ${soc} | tr -d "[:digit:]")
+
 #
 # Create include file for Make
 #
@@ -137,6 +140,7 @@ echo "BOARD  = ${board}" >> config.mk
 [ "${vendor}" ] && echo "VENDOR = ${vendor}" >> config.mk
 
 [ "${soc}"    ] && echo "SOC    = ${soc}"    >> config.mk
+[ "${soc_family}" ] && echo "SOC_FAMILY = ${soc_family}" >> config.mk
 
 # Assign board directory to BOARDIR variable
 if [ -z "${vendor}" ] ; then
