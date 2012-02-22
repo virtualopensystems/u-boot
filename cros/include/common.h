@@ -48,4 +48,7 @@ int display_clear(void);
 /* set up the vbexport library */
 int vbexport_init(void);
 
+/* put this prototype here for now */
+unsigned timer_get_us(void);
+
 #endif /* CHROMEOS_COMMON_H_ */
