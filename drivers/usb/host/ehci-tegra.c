@@ -24,7 +24,6 @@
 #include <usb.h>
 
 #include "ehci.h"
-#include "ehci-core.h"
 
 #include <asm/errno.h>
 #include <asm/arch/usb.h>
@@ -34,28 +33,16 @@
  * Create the appropriate control structures to manage
  * a new EHCI host controller.
  */
-int ehci_hcd_init(void)
+int ehci_hcd_init(int index, struct ehci_hccr **hccr, struct ehci_hcor **hcor)
 {
-	u32 our_hccr, our_hcor;
-
-	/*
-	 * Select the first port, as we don't have a way of selecting others
-	 * yet
-	 */
-	if (tegrausb_start_port(0, &our_hccr, &our_hcor))
-		return -1;
-
-	hccr = (struct ehci_hccr *)our_hccr;
-	hcor = (struct ehci_hcor *)our_hcor;
-
-	return 0;
+	return tegrausb_start_port(index, (u32 *)hccr, (u32 *)hcor);
 }
 
 /*
  * Destroy the appropriate control structures corresponding
  * the the EHCI host controller.
  */
-int ehci_hcd_stop(void)
+int ehci_hcd_stop(int index)
 {
 	usb_set_host_mode();
 	tegrausb_stop_port();
