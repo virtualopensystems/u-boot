@@ -26,14 +26,27 @@
 #include <asm/io.h>
 #include <asm/arch/uart.h>
 #include <asm/arch/clk.h>
+#include <fdtdec.h>
 #include <serial.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
+/* Information about a serial port */
+struct fdt_serial {
+	u32 base_addr;   /* address of registers in physical memory */
+	u8 port_id;	 /* uart port number */
+} config = {
+	-1U
+};
+
 static inline struct s5p_uart *s5p_get_base_uart(int dev_index)
 {
+#ifdef CONFIG_OF_CONTROL
+	return (struct s5p_uart *)(config.base_addr);
+#else
 	u32 offset = dev_index * sizeof(struct s5p_uart);
 	return (struct s5p_uart *)(samsung_get_base_uart() + offset);
+#endif
 }
 
 /*
@@ -206,8 +219,50 @@ DECLARE_S5P_SERIAL_FUNCTIONS(3);
 struct serial_device s5p_serial3_device =
 	INIT_S5P_SERIAL_STRUCTURE(3, "s5pser3");
 
+#ifdef CONFIG_OF_CONTROL
+int fdtdec_decode_console(int *index, struct fdt_serial *uart)
+{
+	const void *blob = gd->fdt_blob;
+	int node;
+
+	node = fdtdec_next_alias(blob, "serial", COMPAT_SAMSUNG_EXYNOS5_SERIAL,
+			index);
+	if (node < 0)
+		return node;
+
+	uart->base_addr = fdtdec_get_addr(blob, node, "reg");
+	if (uart->base_addr == FDT_ADDR_T_NONE)
+		return -FDT_ERR_NOTFOUND;
+
+	uart->port_id = fdtdec_get_int(blob, node, "id", -1);
+
+	return 0;
+}
+#endif
+
 __weak struct serial_device *default_serial_console(void)
 {
+#ifdef CONFIG_OF_CONTROL
+	int index = 0;
+	if (fdtdec_decode_console(&index, &config)) {
+		debug("Cannot decode default console node\n");
+		return NULL;
+	}
+
+	if (config.port_id == 0)
+		return &s5p_serial0_device;
+	else if (config.port_id == 1)
+		return &s5p_serial1_device;
+	else if (config.port_id == 2)
+		return &s5p_serial2_device;
+	else if (config.port_id == 3)
+		return &s5p_serial3_device;
+	else
+		debug("Unknown config.port_id: %d", config.port_id);
+
+	return NULL;
+#else
+
 #if defined(CONFIG_SERIAL0)
 	return &s5p_serial0_device;
 #elif defined(CONFIG_SERIAL1)
@@ -218,5 +273,6 @@ __weak struct serial_device *default_serial_console(void)
 	return &s5p_serial3_device;
 #else
 #error "CONFIG_SERIAL? missing."
+#endif
 #endif
 }

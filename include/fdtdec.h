@@ -63,6 +63,7 @@ struct fdt_memory {
 enum fdt_compat_id {
 	COMPAT_UNKNOWN,
 	COMPAT_NVIDIA_TEGRA20_USB,	/* Tegra2 USB port */
+	COMPAT_SAMSUNG_EXYNOS5_SERIAL,	/* Exynos5 UART */
 
 	COMPAT_COUNT,
 };

@@ -38,6 +38,7 @@ DECLARE_GLOBAL_DATA_PTR;
 static const char * const compat_names[COMPAT_COUNT] = {
 	COMPAT(UNKNOWN, "<none>"),
 	COMPAT(NVIDIA_TEGRA20_USB, "nvidia,tegra20-ehci"),
+	COMPAT(SAMSUNG_EXYNOS5_SERIAL, "samsung,exynos4210-uart"),
 };
 
 const char *fdtdec_get_compatible(enum fdt_compat_id id)
