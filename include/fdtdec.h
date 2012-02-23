@@ -65,6 +65,7 @@ enum fdt_compat_id {
 	COMPAT_NVIDIA_TEGRA20_USB,	/* Tegra2 USB port */
 	COMPAT_SAMSUNG_EXYNOS5_SERIAL,	/* Exynos5 UART */
 	COMPAT_SAMSUNG_EXYNOS5_SDHCI,	/* Exynos5 SDMMC */
+	COMPAT_SAMSUNG_EXYNOS5_SROM,	/* Exynos5 Ethernet */
 
 	COMPAT_COUNT,
 };
