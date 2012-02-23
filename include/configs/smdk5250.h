@@ -37,6 +37,10 @@
 #define CONFIG_DISPLAY_CPUINFO
 #define CONFIG_DISPLAY_BOARDINFO
 
+/* Choose DDR Type below: Uncomment the type of DDR present on your board */
+#define CONFIG_DDR3
+/* #define CONFIG_LPDDR2 */
+
 /* Keep L2 Cache Disabled */
 #define CONFIG_SYS_DCACHE_OFF
 
