@@ -1,5 +1,5 @@
 /*
- * Machine Specific Values for SMDK5250 board based on S5PC520
+ * Machine Specific Values for SMDK5250 board based on Exynos5
  *
  * Copyright (C) 2012 Samsung Electronics
  *
@@ -29,6 +29,9 @@
 #include <version.h>
 #include <asm/arch/cpu.h>
 #include <asm/arch/dmc.h>
+
+#include "setup_lpddr2.h"
+#include "setup_ddr3.h"
 
 /* GPIO Offsets for UART: GPIO Contol Register */
 #define EXYNOS5_GPIO_A0_CON_OFFSET	0x0
@@ -114,8 +117,6 @@
 #define VPLL_CON1_VAL	0x00000000
 #define VPLL_CON2_VAL	0x00000080
 
-#define BPLL_MDIV	0x215
-#define BPLL_PDIV	0xC
 #define BPLL_SDIV	0x1
 
 #define BPLL_CON1_VAL	0x00203800
@@ -155,20 +156,21 @@
 #define MCLK_CDREX_RATIO	0x0
 #define ACLK_C2C_200_RATIO	0x1
 #define C2C_CLK_400_RATIO	0x1
-#define PCLK_CDREX_RATIO	0x3
 #define ACLK_CDREX_RATIO	0x1
-#define CLK_DIV_CDREX_VAL	((MCLK_DPHY_RATIO << 20) \
-				| (MCLK_CDREX_RATIO << 16) \
+#define CLK_DIV_CDREX_VAL	((MCLK_CDREX2_RATIO << 28)   \
+				| (ACLK_EFCON_RATIO << 24)   \
+				| (MCLK_DPHY_RATIO << 20)    \
+				| (MCLK_CDREX_RATIO << 16)   \
 				| (ACLK_C2C_200_RATIO << 12) \
-				| (C2C_CLK_400_RATIO << 8) \
-				| (PCLK_CDREX_RATIO << 4) \
+				| (C2C_CLK_400_RATIO << 8)   \
+				| (PCLK_CDREX_RATIO << 4)    \
 				| (ACLK_CDREX_RATIO))
 
 #define MCLK_EFPHY_RATIO	0x4
 #define CLK_DIV_CDREX2_VAL	MCLK_EFPHY_RATIO
 
 /* CLK_DIV_ACP */
-#define CLK_DIV_ACP_VAL	0x12
+#define CLK_DIV_ACP_VAL		0x12
 
 /* CLK_SRC_TOP0 */
 #define MUX_ACLK_300_GSCL_SEL		0x1
@@ -360,8 +362,6 @@
 /*ZQ Configurations */
 #define PHY_CON16_RESET_VAL	0x08000304
 
-#define ZQ_MODE_DDS_VAL		(0x5 << 24)
-#define ZQ_MODE_TERM_VAL	(0x5 << 21)
 #define SET_ZQ_MODE_DDS_VAL(x)	(x = (x & ~(0x7 << 24)) | ZQ_MODE_DDS_VAL)
 #define SET_ZQ_MODE_TERM_VAL(x)	(x = (x & ~(0x7 << 21)) | ZQ_MODE_TERM_VAL)
 
@@ -377,74 +377,135 @@
 #define SET_CMD_CHIP(x, y)	(x = (x & ~(1 << 20)) | y << 20)
 
 /* Diret Command */
-#define	DIRECT_CMD_NOP		0x07000000
-#define DIRECT_CMD_MRS1		0x00071C00
-#define DIRECT_CMD_MRS2		0x00010BFC
-#define DIRECT_CMD_MRS3		0x00000708
-#define DIRECT_CMD_MRS4		0x00000818
-#define	DIRECT_CMD_PALL		0x01000000
+#define DIRECT_CMD_NOP		0x07000000
+#define DIRECT_CMD_PALL		0x01000000
+#define DIRECT_CMD_ZQINIT	0x0A000000
 
-/* DLL Resync */
-#define FP_RSYNC		(1 << 3)
+/* DMC PHY Control0 register */
+#define PHY_CONTROL0_RESET_VAL	0x0
+#define MEM_TERM_EN	(1 << 31)	/* Termination enable for memory */
+#define PHY_TERM_EN	(1 << 30)	/* Termination enable for PHY */
+#define CTRL_SHGATE	(1 << 29)	/* Duration of DQS gating signal */
+#define FP_RSYNC	(1 << 3)	/* Force DLL resyncronization */
 
+/* MDLL control */
+#define PHY_CON12_RESET_VAL		0x10100070
 #define CONFIG_CTRL_DLL_ON(x, y)	(x = (x & ~(1 << 5)) | y << 5)
 #define CONFIG_CTRL_START(x, y)		(x = (x & ~(1 << 6)) | y << 6)
 #define SET_CTRL_FORCE_VAL(x, y)	(x = (x & ~(0x7F << 8)) | y << 8)
 
-/* RDLVL */
-#define PHY_CON0_RESET_VAL	0x17023240
+#define NR_DELAY_CELL_COARSE_LOCK_OFFSET	10
+#define NR_DELAY_CELL_COARSE_LOCK_MASK		0x7F
+#define CTRL_CLOCK_OFFSET			2
+
+/* PHY Control */
+#define PHY_CON0_RESET_VAL	0x17020A40
+#define DDR_MODE_DDR3		0x1
 #define DDR_MODE_LPDDR2		0x2
+#define DDR_MODE_LPDDR3		0x3
 #define BYTE_RDLVL_EN		(1 << 13)
 #define CTRL_ATGATE		(1 << 6)
-#define SET_CTRL_DDR_MODE(x, y)	(x = (x & ~(0x3 << 11)) | y << 11)
+/*
+ * TODO(clchiou): Remove these SET_ functions and put the actual code in
+ * the C file.
+ */
+#define SET_CTRL_DDR_MODE(x, y)		(x = (x & ~(0x3 << 11)) | y << 11)
+#define SET_T_RDDATA_MARGIN(x, y)	(x = (x & ~(0x7 << 17))	| y << 17)
 
 #define PHY_CON1_RESET_VAL	0x9210100
-#define RDLVL_RDDATA_ADJ	0x1
 #define SET_RDLVL_RDDATA_ADJ	((PHY_CON1_RESET_VAL & ~(0xFFFF << 0)) \
 					| RDLVL_RDDATA_ADJ << 0)
+
+#define DDR3_ADDR		0x0208
 
 #define PHY_CON2_RESET_VAL	0x00010004
 #define RDLVL_EN		(1 << 25)
 #define RDDSKEW_CLEAR		(1 << 13)
 
+#define RDLVL_CONFIG_RESET_VAL	0x0
 #define CTRL_RDLVL_DATA_EN	(1 << 1)
 #define LPDDR2_ADDR		0x00000208
 
-#define DMC_MEMCONFIG0_VAL	0x00001323
-#define DMC_MEMCONFIG1_VAL	0x00001323
-#define DMC_MEMBASECONFIG0_VAL	0x00400780
-#define DMC_MEMBASECONFIG1_VAL	0x00800780
-#define DMC_MEMCONTROL_VAL	0x00212500
+/* MEMCONTROL register bit fields */
+#define DMC_MEMCONTROL_CLK_STOP_DISABLE	(0 << 0)
+#define DMC_MEMCONTROL_DPWRDN_DISABLE	(0 << 1)
+#define DMC_MEMCONTROL_DPWRDN_ACTIVE_PRECHARGE	(0 << 2)
+#define DMC_MEMCONTROL_TP_DISABLE	(0 << 4)
+#define DMC_MEMCONTROL_DSREF_DISABLE	(0 << 5)
+#define DMC_MEMCONTROL_ADD_LAT_PALL_CYCLE(x)	(x << 6)
+
+#define DMC_MEMCONTROL_MEM_TYPE_LPDDR3	(7 << 8)
+#define DMC_MEMCONTROL_MEM_TYPE_DDR3	(6 << 8)
+#define DMC_MEMCONTROL_MEM_TYPE_LPDDR2	(5 << 8)
+
+#define DMC_MEMCONTROL_MEM_WIDTH_32BIT	(2 << 12)
+
+#define DMC_MEMCONTROL_NUM_CHIP_1	(0 << 16)
+#define DMC_MEMCONTROL_NUM_CHIP_2	(1 << 16)
+
+#define DMC_MEMCONTROL_BL_8		(3 << 20)
+#define DMC_MEMCONTROL_BL_4		(2 << 20)
+
+#define DMC_MEMCONTROL_PZQ_DISABLE	(0 << 24)
+
+#define DMC_MEMCONTROL_MRR_BYTE_7_0	(0 << 25)
+#define DMC_MEMCONTROL_MRR_BYTE_15_8	(1 << 25)
+#define DMC_MEMCONTROL_MRR_BYTE_23_16	(2 << 25)
+#define DMC_MEMCONTROL_MRR_BYTE_31_24	(3 << 25)
+
+/* MEMCONFIG0 register bit fields */
+#define DMC_MEMCONFIGx_CHIP_MAP_INTERLEAVED	(1 << 12)
+#define DMC_MEMCONFIGx_CHIP_COL_10		(3 << 8)
+#define DMC_MEMCONFIGx_CHIP_ROW_14		(2 << 4)
+#define DMC_MEMCONFIGx_CHIP_ROW_15		(3 << 4)
+#define DMC_MEMCONFIGx_CHIP_BANK_8		(3 << 0)
+
+
+#define DMC_MEMBASECONFIGx_CHIP_BASE(x)		(x << 16)
+#define DMC_MEMBASECONFIGx_CHIP_MASK(x)		(x << 0)
+#define DMC_MEMBASECONFIG_VAL(x)	(	\
+	DMC_MEMBASECONFIGx_CHIP_BASE(x) |	\
+	DMC_MEMBASECONFIGx_CHIP_MASK(0x780)	\
+)
+
+#define DMC_MEMBASECONFIG0_VAL	DMC_MEMBASECONFIG_VAL(0x40)
+#define DMC_MEMBASECONFIG1_VAL	DMC_MEMBASECONFIG_VAL(0x80)
+
+#define DMC_MEMCONFIG1_VAL	DMC_MEMCONFIG_VAL
+#define DMC_MEMCONFIG0_VAL	DMC_MEMCONFIG_VAL
+
 #define DMC_PRECHCONFIG_VAL		0xFF000000
 #define DMC_PWRDNCONFIG_VAL		0xFFFF00FF
-#define DMC_TIMINGREF_VAL		0x0000005D
-#define DMC_TIMINGROW_VAL		0x2336544C
-#define DMC_TIMINGDATA_VAL		0x24202408
-#define DMC_TIMINGPOWER_VAL		0x38260235
 
-#define CTRL_BSTLEN		0x04
-#define CTRL_RDLAT		0x08
 #define PHY_CON42_VAL		(CTRL_BSTLEN << 8 | CTRL_RDLAT << 0)
 
-/* DQS, DQ, DEBUG offsets */
-#define	SET_DQS_OFFSET_VAL	0x7F7F7F7F
-#define	SET_DQ_OFFSET_VAL	0x7F7F7F7F
-#define	SET_DEBUG_OFFSET_VAL	0x7F
+#define SET_DQS_OFFSET_VAL	0x7F7F7F7F
+#define SET_DQ_OFFSET_VAL	0x7F7F7F7F
+#define SET_DEBUG_OFFSET_VAL	0x7F
 
-#define	RESET_DQS_OFFSET_VAL	0x08080808
-#define	RESET_DQ_OFFSET_VAL	0x08080808
-#define	RESET_DEBUG_OFFSET_VAL	0x8
+#define RESET_DQS_OFFSET_VAL	0x08080808
+#define RESET_DQ_OFFSET_VAL	0x08080808
+#define RESET_DEBUG_OFFSET_VAL	0x8
 
 #define CTRL_PULLD_DQ		(0x0F << 8)
 #define CTRL_PULLD_DQS		(0x0F << 0)
 
+#define DMC_CONCONTROL_RESET_VAL	0x0FFF1100
+#define SET_RD_FETCH(x)		(x = (x & ~(0x7 << 12)) | RD_FETCH << 12)
 #define DFI_INIT_START		(1 << 28)
+#define EMPTY			(1 << 8)
+#define AREF_EN			(1 << 5)
+
+#define DFI_INIT_COMPLETE_CHO	(1 << 2)
+#define DFI_INIT_COMPLETE_CH1	(1 << 3)
+
+#define RDLVL_COMPLETE_CHO	(1 << 14)
+#define RDLVL_COMPLETE_CH1	(1 << 15)
 
 #define CLK_STOP_EN	(1 << 0)
 #define DPWRDN_EN	(1 << 1)
 #define DSREF_EN	(1 << 5)
 
-#define AREF_EN			(1 << 5)
 void sdelay(unsigned long);
 void mem_ctrl_init(void);
 void system_clock_init(void);
@@ -454,5 +515,5 @@ void update_reset_dll(struct exynos5_dmc *);
 void config_mrs(struct exynos5_dmc *);
 void config_prech(struct exynos5_dmc *);
 void config_memory(struct exynos5_dmc *);
-
+void mem_clk_setup(void);
 #endif

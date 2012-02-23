@@ -30,6 +30,17 @@
 #include <asm/arch/gpio.h>
 #include "setup.h"
 
+/* TODO(clchiou): Move to device tree */
+#ifdef CONFIG_LPDDR2
+#define BPLL_MDIV		LPDDR2_BPLL_MDIV
+#define BPLL_PDIV		LPDDR2_BPLL_PDIV
+#define PCLK_CDREX_RATIO	LPDDR2_PCLK_CDREX_RATIO
+#elif defined CONFIG_DDR3
+#define BPLL_MDIV		DDR3_BPLL_MDIV
+#define BPLL_PDIV		DDR3_BPLL_PDIV
+#define PCLK_CDREX_RATIO	DDR3_PCLK_CDREX_RATIO
+#endif
+
 void system_clock_init()
 {
 	struct exynos5_clock *clk = (struct exynos5_clock *)EXYNOS5_CLOCK_BASE;
@@ -199,4 +210,19 @@ void system_clock_init()
 	 * MUX_{MPLL[20]}|{BPLL[24]}_USER_SEL: FOUT{MPLL|BPLL} = 1
 	 */
 	writel(CLK_SRC_TOP2_VAL, &clk->src_top2);
+}
+
+void mem_clk_setup(void)
+{
+	struct exynos5_clock *clk = (struct exynos5_clock *)EXYNOS5_CLOCK_BASE;
+
+	writel(0x0, &clk->src_cdrex);
+	writel(CLK_DIV_CDREX_VAL, &clk->div_cdrex);
+
+	writel(MPLL_CON1_VAL, &clk->mpll_con1);
+	writel(MPLL_CON0_VAL, &clk->mpll_con0);
+	writel(BPLL_CON1_VAL, &clk->bpll_con1);
+	writel(BPLL_CON0_VAL, &clk->bpll_con0);
+
+	writel(CLK_SRC_CDREX_VAL, &clk->src_cdrex);
 }

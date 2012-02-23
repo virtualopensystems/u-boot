@@ -28,7 +28,13 @@ SOBJS	:= lowlevel_init.o
 
 COBJS	:= clock_init.o
 COBJS	+= dmc_common.o
+ifdef CONFIG_DDR3
+COBJS	+= dmc_init_ddr3.o
+else
+ifdef CONFIG_LPDDR2
 COBJS	+= dmc_init_lpddr2.o
+endif
+endif
 COBJS	+= tzpc_init.o
 
 ifndef CONFIG_SPL_BUILD
