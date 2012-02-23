@@ -353,7 +353,8 @@
 /* (Memory Interleaving Size = 1 << IV_SIZE) */
 #define CONFIG_IV_SIZE		0x07
 
-#define PHY_RESET_VAL	(0 << 0)
+#define LPDDR3PHY_CTRL_PHY_RESET	(1 << 0)
+#define LPDDR3PHY_CTRL_PHY_RESET_OFF	(0 << 0)
 
 /*ZQ Configurations */
 #define PHY_CON16_RESET_VAL	0x08000304
@@ -397,9 +398,9 @@
 #define SET_CTRL_DDR_MODE(x, y)	(x = (x & ~(0x3 << 11)) | y << 11)
 
 #define PHY_CON1_RESET_VAL	0x9210100
-#define RDLVL_RDDATAPADJ	0x1
-#define SET_RDLVL_RDDATAPADJ	((PHY_CON1_RESET_VAL & ~(0xFFFF << 0))\
-					| RDLVL_RDDATAPADJ << 0)
+#define RDLVL_RDDATA_ADJ	0x1
+#define SET_RDLVL_RDDATA_ADJ	((PHY_CON1_RESET_VAL & ~(0xFFFF << 0)) \
+					| RDLVL_RDDATA_ADJ << 0)
 
 #define PHY_CON2_RESET_VAL	0x00010004
 #define RDLVL_EN		(1 << 25)

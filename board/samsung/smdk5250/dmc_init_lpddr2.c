@@ -53,7 +53,7 @@ static void reset_phy_ctrl(void)
 {
 	struct exynos5_clock *clk = (struct exynos5_clock *)EXYNOS5_CLOCK_BASE;
 
-	writel(PHY_RESET_VAL, &clk->lpddr3phy_ctrl);
+	writel(LPDDR3PHY_CTRL_PHY_RESET_OFF, &clk->lpddr3phy_ctrl);
 	sdelay(0x10000);
 }
 
@@ -246,9 +246,9 @@ static void config_rdlvl(struct exynos5_dmc *dmc,
 	/*
 	 * Set ctrl_gateadj, ctrl_readadj
 	 * ctrl_gateduradj, rdlvl_pass_adj
-	 * rdlvl_rddataPadj
+	 * rdlvl_rddata_adj
 	 */
-	val = SET_RDLVL_RDDATAPADJ;
+	val = SET_RDLVL_RDDATA_ADJ;
 	writel(val, &phy0_ctrl->phy_con1);
 	writel(val, &phy1_ctrl->phy_con1);
 
