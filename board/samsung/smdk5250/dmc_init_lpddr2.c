@@ -1,5 +1,5 @@
 /*
- * Memory setup for SMDK5250 board based on EXYNOS5
+ * LPDDR2 mem setup file for SMDK5250 board based on EXYNOS5
  *
  * Copyright (C) 2012 Samsung Electronics
  *
@@ -30,24 +30,8 @@
 #include "setup.h"
 
 /* APLL : 1GHz */
-/* MCLK_CDREX: MCLK_CDREX_533*/
-/* LPDDR support: LPDDR2 */
-static void reset_phy_ctrl(void);
-static void config_zq(struct exynos5_phy_control *,
-			struct exynos5_phy_control *);
-static void update_reset_dll(struct exynos5_dmc *);
-static void config_cdrex(void);
-static void config_mrs(struct exynos5_dmc *);
-static void sec_sdram_phy_init(struct exynos5_dmc *);
-static void config_prech(struct exynos5_dmc *);
-static void config_rdlvl(struct exynos5_dmc *,
-			struct exynos5_phy_control *,
-			struct exynos5_phy_control *);
-static void config_memory(struct exynos5_dmc *);
-
-static void config_offsets(unsigned int,
-				struct exynos5_phy_control *,
-				struct exynos5_phy_control *);
+/* MCLK_CDREX: 533Mhz */
+/* Memory Type: LPDDR2 */
 
 static void reset_phy_ctrl(void)
 {
@@ -55,109 +39,6 @@ static void reset_phy_ctrl(void)
 
 	writel(LPDDR3PHY_CTRL_PHY_RESET_OFF, &clk->lpddr3phy_ctrl);
 	sdelay(0x10000);
-}
-
-static void config_zq(struct exynos5_phy_control *phy0_ctrl,
-			struct exynos5_phy_control *phy1_ctrl)
-{
-	unsigned long val = 0;
-	/*
-	 * ZQ Calibration:
-	 * Select Driver Strength,
-	 * long calibration for manual calibration
-	 */
-	val = PHY_CON16_RESET_VAL;
-	SET_ZQ_MODE_DDS_VAL(val);
-	SET_ZQ_MODE_TERM_VAL(val);
-	val |= ZQ_CLK_DIV_EN;
-	writel(val, &phy0_ctrl->phy_con16);
-	writel(val, &phy1_ctrl->phy_con16);
-
-	/* Disable termination */
-	val |= ZQ_MODE_NOTERM;
-	writel(val, &phy0_ctrl->phy_con16);
-	writel(val, &phy1_ctrl->phy_con16);
-
-	/* ZQ_MANUAL_START: Enable */
-	val |= ZQ_MANUAL_STR;
-	writel(val, &phy0_ctrl->phy_con16);
-	writel(val, &phy1_ctrl->phy_con16);
-	sdelay(0x10000);
-
-	/* ZQ_MANUAL_START: Disable */
-	val &= ~ZQ_MANUAL_STR;
-	writel(val, &phy0_ctrl->phy_con16);
-	writel(val, &phy1_ctrl->phy_con16);
-}
-
-static void update_reset_dll(struct exynos5_dmc *dmc)
-{
-	unsigned long val;
-	/*
-	 * Update DLL Information:
-	 * Force DLL Resyncronization
-	 */
-	val = readl(&dmc->phycontrol0);
-	val |= FP_RSYNC;
-	writel(val, &dmc->phycontrol0);
-
-	/* Reset Force DLL Resyncronization */
-	val = readl(&dmc->phycontrol0);
-	val &= ~FP_RSYNC;
-	writel(val, &dmc->phycontrol0);
-}
-
-static void config_mrs(struct exynos5_dmc *dmc)
-{
-	unsigned long channel, chip, mask = 0, val;
-
-	for (channel = 0; channel < CONFIG_DMC_CHANNELS; channel++) {
-		SET_CMD_CHANNEL(mask, channel);
-		for (chip = 0; chip < CONFIG_CHIPS_PER_CHANNEL; chip++) {
-			/*
-			 * NOP CMD:
-			 * Assert and hold CKE to logic high level
-			 */
-			SET_CMD_CHIP(mask, chip);
-			val = DIRECT_CMD_NOP | mask;
-			writel(val, &dmc->directcmd);
-			sdelay(0x10000);
-
-			/* EMRS, MRS Cmds(Mode Reg Settings) Using Direct Cmd */
-			val = DIRECT_CMD_MRS1 | mask;
-			writel(val, &dmc->directcmd);
-			sdelay(0x10000);
-
-			val = DIRECT_CMD_MRS2 | mask;
-			writel(val, &dmc->directcmd);
-			sdelay(0x10000);
-
-			/* MCLK_CDREX_533 */
-			val = DIRECT_CMD_MRS3 | mask;
-			writel(val, &dmc->directcmd);
-			sdelay(0x10000);
-
-			val = DIRECT_CMD_MRS4 | mask;
-			writel(val, &dmc->directcmd);
-			sdelay(0x10000);
-		}
-	}
-}
-
-static void config_prech(struct exynos5_dmc *dmc)
-{
-	unsigned long channel, chip, mask = 0, val;
-
-	for (channel = 0; channel < CONFIG_DMC_CHANNELS; channel++) {
-		SET_CMD_CHANNEL(mask, channel);
-		for (chip = 0; chip < CONFIG_CHIPS_PER_CHANNEL; chip++) {
-			SET_CMD_CHIP(mask, chip);
-			/* PALL (all banks precharge) CMD */
-			val = DIRECT_CMD_PALL | mask;
-			writel(val, &dmc->directcmd);
-			sdelay(0x10000);
-		}
-	}
 }
 
 static void sec_sdram_phy_init(struct exynos5_dmc *dmc)
@@ -304,41 +185,6 @@ static void config_rdlvl(struct exynos5_dmc *dmc,
 	writel(val, &phy1_ctrl->phy_con0);
 }
 #endif
-
-static void config_memory(struct exynos5_dmc *dmc)
-{
-	/*
-	 * Memory Configuration Chip 0
-	 * Address Mapping: Interleaved
-	 * Number of Column address Bits: 10 bits
-	 * Number of Rows Address Bits: 14
-	 * Number of Banks: 8
-	 */
-	writel(DMC_MEMCONFIG0_VAL, &dmc->memconfig0);
-
-	/*
-	 * Memory Configuration Chip 1
-	 * Address Mapping: Interleaved
-	 * Number of Column address Bits: 10 bits
-	 * Number of Rows Address Bits: 14
-	 * Number of Banks: 8
-	 */
-	writel(DMC_MEMCONFIG1_VAL, &dmc->memconfig1);
-
-	/*
-	 * Chip0: AXI
-	 * AXI Base Address: 0x40000000
-	 * AXI Base Address Mask: 0x780
-	 */
-	writel(DMC_MEMBASECONFIG0_VAL, &dmc->membaseconfig0);
-
-	/*
-	 * Chip1: AXI
-	 * AXI Base Address: 0x80000000
-	 * AXI Base Address Mask: 0x780
-	 */
-	writel(DMC_MEMBASECONFIG1_VAL, &dmc->membaseconfig1);
-}
 
 void mem_ctrl_init()
 {

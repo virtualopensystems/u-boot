@@ -28,6 +28,7 @@
 #include <config.h>
 #include <version.h>
 #include <asm/arch/cpu.h>
+#include <asm/arch/dmc.h>
 
 /* GPIO Offsets for UART: GPIO Contol Register */
 #define EXYNOS5_GPIO_A0_CON_OFFSET	0x0
@@ -448,5 +449,10 @@ void sdelay(unsigned long);
 void mem_ctrl_init(void);
 void system_clock_init(void);
 void tzpc_init(void);
+void config_zq(struct exynos5_phy_control *, struct exynos5_phy_control *);
+void update_reset_dll(struct exynos5_dmc *);
+void config_mrs(struct exynos5_dmc *);
+void config_prech(struct exynos5_dmc *);
+void config_memory(struct exynos5_dmc *);
 
 #endif
