@@ -28,6 +28,9 @@
  * changes to support FDT are minimized.
  */
 
+#ifndef _FDTDEC_H
+#define _FDTDEC_H
+
 #include <libfdt.h>
 
 /*
@@ -423,3 +426,5 @@ const u8 *fdtdec_locate_byte_array(const void *blob, int node,
  */
 int fdtdec_decode_region(const void *blob, int node,
 		const char *prop_name, void **ptrp, size_t *size);
+
+#endif /* _FDTDEC_H */
