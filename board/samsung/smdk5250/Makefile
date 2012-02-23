@@ -27,7 +27,7 @@ LIB	= $(obj)lib$(BOARD).o
 SOBJS	:= lowlevel_init.o
 
 COBJS	:= clock_init.o
-COBJS	+= dmc_init.o
+COBJS	+= dmc_init_lpddr2.o
 COBJS	+= tzpc_init.o
 
 ifndef CONFIG_SPL_BUILD
