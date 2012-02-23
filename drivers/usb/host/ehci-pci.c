@@ -40,7 +40,7 @@ static pci_dev_t ehci_find_class(int index)
 	pci_dev_t bdf;
 	uint32_t class;
 
-	for (bus = 0; bus < pci_last_busno(); bus++)
+	for (bus = 0; bus <= pci_last_busno(); bus++)
 	{
 		for (devnum = 0; devnum < PCI_MAX_PCI_DEVICES-1; devnum++)
 		{
