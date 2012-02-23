@@ -67,7 +67,11 @@ struct mmc_host {
 	int dev_index;
 };
 
+#ifdef CONFIG_OF_CONTROL
+int s5p_mmc_init(const void *blob);
+#else
 int s5p_mmc_init(int dev_index, int bus_width);
+#endif
 
 #endif	/* __ASSEMBLY__ */
 #endif

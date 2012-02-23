@@ -139,7 +139,11 @@ int checkboard(void)
 int board_mmc_init(bd_t *bis)
 {
 	exynos_pinmux_config(EXYNOS_SDMMC2);
+#ifdef CONFIG_OF_CONTROL
+	return s5p_mmc_init(gd->fdt_blob);
+#else
 	return s5p_mmc_init(2, 4);
+#endif
 }
 #endif
 

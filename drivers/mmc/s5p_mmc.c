@@ -19,6 +19,7 @@
  */
 
 #include <common.h>
+#include <fdtdec.h>
 #include <mmc.h>
 #include <asm/io.h>
 #include <asm/arch/mmc.h>
@@ -27,6 +28,16 @@
 /* support 4 mmc hosts */
 struct mmc mmc_dev[4];
 struct mmc_host mmc_host[4];
+
+#ifdef CONFIG_OF_CONTROL
+#define MAX_MMC_GPIOS	10 /* Maximum 8 data, 1 clk and 1 cmd line */
+
+struct fdt_sdhci {
+	struct s5p_mmc *reg;   /* address of registers in physical memory */
+	int id; /* host controller index */
+	int width; /* bus width  */
+};
+#endif
 
 static inline struct s5p_mmc *s5p_get_base_mmc(int dev_index)
 {
@@ -452,7 +463,7 @@ static int mmc_core_init(struct mmc *mmc)
 	return 0;
 }
 
-static int s5p_mmc_initialize(int dev_index, int bus_width)
+static int s5p_mmc_initialize(int dev_index, int bus_width, struct s5p_mmc *reg)
 {
 	struct mmc *mmc;
 
@@ -484,7 +495,43 @@ static int s5p_mmc_initialize(int dev_index, int bus_width)
 	return 0;
 }
 
+#ifdef CONFIG_OF_CONTROL
+int fdtdec_decode_sdmmc(const void *blob, int node, struct fdt_sdhci *config)
+{
+	config->id = fdtdec_get_int(blob, node, "id", -1);
+	if (config->id == -1)
+		return -FDT_ERR_NOTFOUND;
+
+	config->width = fdtdec_get_int(blob, node,
+				"samsung,sdhci-bus-width", 4);
+
+	config->reg = (struct s5p_mmc *)fdtdec_get_addr(blob, node, "reg");
+	if ((fdt_addr_t)config->reg == FDT_ADDR_T_NONE)
+		return -FDT_ERR_NOTFOUND;
+
+	return 0;
+}
+
+int s5p_mmc_init(const void *blob)
+{
+	struct fdt_sdhci config;
+	int node;
+	int upto = 0;
+	do {
+		node = fdtdec_next_alias(blob, "sdmmc",
+				COMPAT_SAMSUNG_EXYNOS5_SDHCI, &upto);
+		if (node < 0)
+			break;
+		if (fdtdec_decode_sdmmc(blob, node, &config))
+			return -1;
+	} while (node);
+
+	return s5p_mmc_initialize(config.id, config.width, config.reg);
+}
+#else
 int s5p_mmc_init(int dev_index, int bus_width)
 {
-	return s5p_mmc_initialize(dev_index, bus_width);
+	return s5p_mmc_initialize(dev_index, bus_width,
+				s5p_get_base_mmc(dev_index));
 }
+#endif
