@@ -73,17 +73,6 @@ struct sysinfo_t {
 	char *linker;
 	char *assembler;
 
-	char *version;
-	char *extra_version;
-	char *build;
-	char *compile_time;
-	char *compile_by;
-	char *compile_host;
-	char *compile_domain;
-	char *compiler;
-	char *linker;
-	char *assembler;
-
 	struct cb_framebuffer *framebuffer;
 
 	int num_gpios;
