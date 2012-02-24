@@ -9,7 +9,7 @@
  */
 
 #include <common.h>
-#include <asm/ic/coreboot/sysinfo.h>
+#include <asm/arch-coreboot/sysinfo.h>
 #include <asm/io.h>
 
 /* Import the header files from vboot_reference. */
