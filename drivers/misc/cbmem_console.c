@@ -16,7 +16,12 @@
  */
 
 #include <common.h>
-#include <asm/ic/coreboot/sysinfo.h>
+
+#ifndef CONFIG_SYS_COREBOOT
+#error This driver requires coreboot
+#endif
+
+#include <asm/arch/sysinfo.h>
 
 struct cbmem_console {
 	u32 buffer_size;
