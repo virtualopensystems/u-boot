@@ -18,7 +18,7 @@
  */
 
 #include <common.h>
-#include <coreboot/timestamp.h>
+#include <coreboot_timestamp.h>
 #include <asm/arch-coreboot/sysinfo.h>
 
 struct timestamp_entry {
