@@ -23,8 +23,8 @@
  */
 
 #include <common.h>
-#include <asm/ic/coreboot/tables.h>
-#include <asm/ic/coreboot/sysinfo.h>
+#include <asm/arch-coreboot/tables.h>
+#include <asm/arch-coreboot/sysinfo.h>
 #include <video_fb.h>
 #include "videomodes.h"
 
