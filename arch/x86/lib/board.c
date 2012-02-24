@@ -46,7 +46,7 @@
 #include <asm-generic/sections.h>
 #include <spi.h>
 #include <elf.h>
-#include <fdt_decode.h>
+#include <fdtdec.h>
 
 #ifdef CONFIG_BITBANGMII
 #include <miiphy.h>
@@ -309,7 +309,7 @@ void board_init_f(ulong boot_flags)
 static int should_load_env(void)
 {
 #ifdef CONFIG_OF_LOAD_ENVIRONMENT
-	return fdt_decode_get_config_int(gd->fdt_blob, "load_env", 0);
+	return fdtdec_get_config_int(gd->fdt_blob, "load_env", 0);
 #else
 	return 1;
 #endif
