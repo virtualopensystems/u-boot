@@ -11,9 +11,9 @@
 /* Implementation of per-board GPIO accessor functions */
 
 #include <common.h>
-#include <asm/ic/coreboot/ipchecksum.h>
-#include <asm/ic/coreboot/sysinfo.h>
-#include <asm/ic/coreboot/tables.h>
+#include <asm/arch-coreboot/ipchecksum.h>
+#include <asm/arch-coreboot/sysinfo.h>
+#include <asm/arch-coreboot/tables.h>
 #include <cros/common.h>
 #include <cros/cros_gpio.h>
 #define PREFIX "cros_gpio: "

@@ -32,7 +32,7 @@
 
 #include <common.h>
 #include <compiler.h>
-#include <asm/ic/coreboot/tables.h>
+#include <asm/arch-coreboot/tables.h>
 #ifdef CONFIG_OF_CONTROL
 #include <fdt.h>
 #endif
