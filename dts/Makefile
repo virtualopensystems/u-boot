@@ -27,6 +27,12 @@ include $(TOPDIR)/config.mk
 
 LIB	= $(obj)libdts.o
 
+ifdef DEV_TREE_SRC
+ifndef CONFIG_DEFAULT_DEVICE_TREE
+CONFIG_DEFAULT_DEVICE_TREE = $(DEV_TREE_SRC)
+endif
+endif
+
 $(if $(CONFIG_DEFAULT_DEVICE_TREE),,\
 $(error Please define CONFIG_DEFAULT_DEVICE_TREE in your board header file))
 DEVICE_TREE = $(subst ",,$(CONFIG_DEFAULT_DEVICE_TREE))
