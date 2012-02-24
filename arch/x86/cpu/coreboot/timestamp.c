@@ -19,7 +19,7 @@
 
 #include <common.h>
 #include <coreboot/timestamp.h>
-#include <asm/ic/coreboot/sysinfo.h>
+#include <asm/arch-coreboot/sysinfo.h>
 
 struct timestamp_entry {
 	uint32_t	entry_id;
