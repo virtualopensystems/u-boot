@@ -35,7 +35,7 @@
 #include <vboot_api.h>
 
 #ifdef CONFIG_SYS_COREBOOT
-#include <asm/ic/coreboot/sysinfo.h>
+#include <asm/arch/sysinfo.h>
 #endif
 #ifndef CACHE_LINE_SIZE
 #define CACHE_LINE_SIZE __BIGGEST_ALIGNMENT__
