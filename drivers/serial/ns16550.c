@@ -16,7 +16,14 @@
 #define UART_FCRVAL (UART_FCR_FIFO_EN |	\
 		     UART_FCR_RXSR |	\
 		     UART_FCR_TXSR)		/* Clear & enable FIFOs */
-#ifdef CONFIG_SYS_NS16550_PORT_MAPPED
+
+#if defined(CONFIG_SYS_NS16550_RUNTIME_MAPPED)
+#define serial_out(x,y)	if (NS16550_io_mapped)		\
+				outb(x,(ulong)y);	\
+			else				\
+				writeb(x,y)
+#define serial_in(y) 	(NS16550_io_mapped ? inb((ulong)y) : readb(y))
+#elif defined(CONFIG_SYS_NS16550_PORT_MAPPED)
 #define serial_out(x, y)	outb(x, (ulong)y)
 #define serial_in(y)		inb((ulong)y)
 #elif defined(CONFIG_SYS_NS16550_MEM32) && (CONFIG_SYS_NS16550_REG_SIZE > 0)
@@ -33,6 +40,20 @@
 #ifndef CONFIG_SYS_NS16550_IER
 #define CONFIG_SYS_NS16550_IER  0x00
 #endif /* CONFIG_SYS_NS16550_IER */
+
+#if defined(CONFIG_SYS_NS16550_RUNTIME_MAPPED)
+/* This state variable has to be set by a wrapper driver
+ * that knows whether we're operating on an IO mapped or
+ * memory mapped 16550 compatible chip.
+ * See serial_fdt.c for an example.
+ */
+static int NS16550_io_mapped;
+
+void NS16550_is_io_mapped(int io_mapped)
+{
+	NS16550_io_mapped = io_mapped;
+}
+#endif
 
 void NS16550_init(NS16550_t com_port, int baud_divisor)
 {
