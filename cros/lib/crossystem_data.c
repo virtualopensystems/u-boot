@@ -21,7 +21,7 @@
 #endif
 
 #ifdef CONFIG_X86
-#include <asm/ic/coreboot/sysinfo.h>
+#include <asm/arch-coreboot/sysinfo.h>
 #endif
 
 #ifdef CONFIG_OF_LIBFDT
