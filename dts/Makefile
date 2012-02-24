@@ -50,10 +50,13 @@ all:	$(obj).depend $(LIB)
 # objcopy doesn't seem to allow us to set the symbol name independently of
 # the filename.
 DT_BIN	:= $(obj)dt.dtb
+DTS_DIR = $(TOPDIR)/board/$(VENDOR)/dts
 
-$(DT_BIN): $(TOPDIR)/board/$(VENDOR)/dts/$(DEVICE_TREE).dts
-	cat $< | $(CPP) -P $(DTS_CPPFLAGS) - >$@.tmp
-	$(DTC) -R 4 -p 0x1000 -O dtb -o ${DT_BIN} $@.tmp
+$(DT_BIN): $(DTS_DIR)/$(DEVICE_TREE).dts
+	cd $(DTS_DIR) && \
+            cat $< | $(CPP) -P $(DTS_CPPFLAGS) - | tee $@.tmp | \
+            $(DTC) -R 4 -p 0x1000 -O dtb -o ${DT_BIN} - || \
+	    echo "${DTC} failed on input copied into $@.tmp"
 	rm $@.tmp
 
 process_lds = \
