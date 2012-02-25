@@ -24,29 +24,14 @@ include $(TOPDIR)/config.mk
 
 LIB	= $(obj)lib$(BOARD).o
 
-SOBJS	:= lowlevel_init.o
-
-COBJS	:= clock_init.o
-COBJS	+= dmc_common.o
-ifdef CONFIG_DDR3
-COBJS	+= dmc_init_ddr3.o
-else
-ifdef CONFIG_LPDDR2
-COBJS	+= dmc_init_lpddr2.o
-endif
-endif
-COBJS	+= tzpc_init.o
-
-ifndef CONFIG_SPL_BUILD
-COBJS	+= smdk5250.o
-endif
-
 ifdef CONFIG_SPL_BUILD
-COBJS	+= copy_uboot.o
+COBJS-y += copy_uboot.o
+else
+COBJS-y += smdk5250.o
 endif
 
-SRCS	:= $(SOBJS:.o=.S) $(COBJS:.o=.c)
-OBJS	:= $(addprefix $(obj),$(COBJS) $(SOBJS))
+SRCS	:= $(SOBJS:.o=.S) $(COBJS-y:.o=.c)
+OBJS	:= $(addprefix $(obj),$(COBJS-y) $(SOBJS))
 
 ALL	:=	 $(obj).depend $(LIB)
 

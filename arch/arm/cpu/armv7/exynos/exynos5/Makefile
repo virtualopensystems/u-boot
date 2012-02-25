@@ -22,11 +22,14 @@ include $(TOPDIR)/config.mk
 
 LIB	= $(obj)libexynos5.o
 
-SOBJS	+= lowlevel_init.o
-COBJS	+= clock_init.o dmc_init.o tzpc_init.o
+SOBJS-y	+= lowlevel_init.o
+COBJS-y	+= clock_init.o dmc_common.o tzpc_init.o
+COBJS-$(CONFIG_DDR3)	+= dmc_init_ddr3.o
+COBJS-$(CONFIG_LPDDR2)	+= dmc_init_lpddr2.o
 
-SRCS	:= $(SOBJS:.o=.S) $(COBJS:.o=.c)
-OBJS	:= $(addprefix $(obj),$(COBJS) $(SOBJS))
+
+SRCS	:= $(SOBJS-y:.o=.S) $(COBJS-y:.o=.c)
+OBJS	:= $(addprefix $(obj),$(COBJS-y) $(SOBJS-y))
 
 all:	 $(obj).depend $(LIB)
 
