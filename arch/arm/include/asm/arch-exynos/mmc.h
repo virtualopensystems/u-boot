@@ -18,8 +18,8 @@
  *
  */
 
-#ifndef __ASM_ARCH_MMC_H_
-#define __ASM_ARCH_MMC_H_
+#ifndef __ASM_ARCH_COMMON_MMC_H_
+#define __ASM_ARCH_COMMON_MMC_H_
 
 #ifndef __ASSEMBLY__
 struct s5p_mmc {

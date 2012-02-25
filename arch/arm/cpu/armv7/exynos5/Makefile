@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2009 Samsung Electronics
+# Copyright (C) 2012 Samsung Electronics
 # Minkyu Kang <mk7.kang@samsung.com>
 #
 # This program is free software; you can redistribute it and/or
@@ -20,16 +20,16 @@
 
 include $(TOPDIR)/config.mk
 
-LIB	= $(obj)libexynos5.o
+LIB	= $(obj)lib$(SOC).o
 
-SOBJS-y	+= lowlevel_init.o
-COBJS-y	+= clock_init.o dmc_common.o tzpc_init.o
+SOBJS	:= lowlevel_init.o
+COBJS-y	:= clock.o clock_init.o dmc_common.o pinmux.o tzpc_init.o
 COBJS-$(CONFIG_DDR3)	+= dmc_init_ddr3.o
 COBJS-$(CONFIG_LPDDR2)	+= dmc_init_lpddr2.o
 
-
-SRCS	:= $(SOBJS-y:.o=.S) $(COBJS-y:.o=.c)
-OBJS	:= $(addprefix $(obj),$(COBJS-y) $(SOBJS-y))
+COBJS	:= $(COBJS-y)
+SRCS	:= $(SOBJS:.o=.S) $(COBJS:.o=.c)
+OBJS	:= $(addprefix $(obj),$(COBJS) $(SOBJS))
 
 all:	 $(obj).depend $(LIB)
 

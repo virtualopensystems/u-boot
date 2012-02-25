@@ -33,13 +33,6 @@ int exynos_pinmux_config(int peripheral)
 	struct exynos5_gpio_part1 *gpio1 =
 		(struct exynos5_gpio_part1 *) samsung_get_base_gpio_part1();
 
-
-	/* Only for EXYNOS5 now, bail out if EXYNOS4 */
-	if (cpu_is_exynos4()) {
-		debug("Pinmux not supported for Exynos4\n");
-		return 0;
-	}
-
 	switch (peripheral) {
 	case EXYNOS_UART0:
 		for (i = 0; i < 4; i++) {

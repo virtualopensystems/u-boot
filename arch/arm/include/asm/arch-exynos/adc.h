@@ -22,8 +22,8 @@
  * MA 02111-1307 USA
  */
 
-#ifndef __ASM_ARM_ARCH_ADC_H_
-#define __ASM_ARM_ARCH_ADC_H_
+#ifndef __ASM_ARM_ARCH_COMMON_ADC_H_
+#define __ASM_ARM_ARCH_COMMON_ADC_H_
 
 #ifndef __ASSEMBLY__
 struct s5p_adc {
@@ -39,4 +39,4 @@ struct s5p_adc {
 };
 #endif
 
-#endif /* __ASM_ARM_ARCH_ADC_H_ */
+#endif /* __ASM_ARM_ARCH_COMMON_ADC_H_ */

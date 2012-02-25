@@ -20,13 +20,14 @@
 
 include $(TOPDIR)/config.mk
 
-LIB	= $(obj)lib$(SOC).o
+LIB	= $(obj)libexynos-common.o
 
-COBJS-y	+= clock.o soc.o pinmux.o
+COBJS-y	:= soc.o
 COBJS-$(CONFIG_SPL_BUILD) += spl_boot.o
 
-SRCS	:= $(SOBJS:.o=.S) $(COBJS-y:.o=.c)
-OBJS	:= $(addprefix $(obj),$(COBJS-y) $(SOBJS))
+COBJS	:= $(COBJS-y)
+SRCS	:= $(SOBJS:.o=.S) $(COBJS:.o=.c)
+OBJS	:= $(addprefix $(obj),$(COBJS) $(SOBJS))
 
 all:	 $(obj).depend $(LIB)
 

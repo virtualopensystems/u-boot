@@ -21,8 +21,8 @@
  *
  */
 
-#ifndef __ASM_ARCH_SROMC_H_
-#define __ASM_ARCH_SROMC_H_
+#ifndef __ASM_ARCH_COMMON_SROMC_H_
+#define __ASM_ARCH_COMMON_SROMC_H_
 
 #define SROMC_DATA16_WIDTH(x)    (1<<((x*4)+0))
 #define SROMC_BYTE_ADDR_MODE(x)  (1<<((x*4)+1))  /* 0-> Half-word base address*/
@@ -65,4 +65,4 @@ struct fdt_smc911x {
 	unsigned int timing[FDT_SROM_TIMING_COUNT]; /* timing parameters */
 };
 
-#endif /* __ASM_ARCH_SROMC_H_ */
+#endif /* __ASM_ARCH_COMMON_SROMC_H_ */

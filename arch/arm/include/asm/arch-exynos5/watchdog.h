@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2010 Samsung Electronics
+ * (C) Copyright 2012 Samsung Electronics
  * Minkyu Kang <mk7.kang@samsung.com>
  *
  * This program is free software; you can redistribute it and/or
@@ -19,20 +19,9 @@
  *
  */
 
-#ifndef __ASM_ARM_ARCH_COMMON_CLK_H_
-#define __ASM_ARM_ARCH_COMMON_CLK_H_
+#ifndef __ASM_ARM_ARCH_EXYNOS5_WATCHDOG_H__
+#define __ASM_ARM_ARCH_EXYNOS5_WATCHDOG_H__
 
-#define APLL	0
-#define MPLL	1
-#define EPLL	2
-#define HPLL	3
-#define VPLL	4
+#include <asm/arch-exynos/watchdog.h>
 
-unsigned long get_pll_clk(int pllreg);
-unsigned long get_arm_clk(void);
-unsigned long get_pwm_clk(void);
-unsigned long get_uart_clk(int dev_index);
-unsigned long get_i2c_clk(void);
-void set_mmc_clk(int dev_index, unsigned int div);
-
-#endif
+#endif  /* __ASM_ARM_ARCH_EXYNOS5_WATCHDOG_H__ */

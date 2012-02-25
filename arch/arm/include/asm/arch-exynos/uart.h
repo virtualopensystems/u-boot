@@ -20,8 +20,8 @@
  *
  */
 
-#ifndef __ASM_ARCH_UART_H_
-#define __ASM_ARCH_UART_H_
+#ifndef __ASM_ARCH_COMMON_UART_H_
+#define __ASM_ARCH_COMMON_UART_H_
 
 #ifndef __ASSEMBLY__
 /* baudrate rest value */
