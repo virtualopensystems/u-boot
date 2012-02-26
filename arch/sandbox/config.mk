@@ -17,7 +17,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307 USA
 
-PLATFORM_CPPFLAGS += -DCONFIG_SANDBOX -D__SANDBOX__
+PLATFORM_CPPFLAGS += -DCONFIG_SANDBOX -D__SANDBOX__ -U_FORTIFY_SOURCE
 PLATFORM_LIBS += -lrt
 
 # Move to unified board system later
