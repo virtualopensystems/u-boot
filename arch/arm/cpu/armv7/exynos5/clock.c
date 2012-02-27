@@ -50,7 +50,7 @@ unsigned long get_pll_clk(int pllreg)
 		k = readl(&clk->vpll_con1);
 		break;
 	default:
-		printf("Unsupported PLL (%d)\n", pllreg);
+		debug("Unsupported PLL (%d)\n", pllreg);
 		return 0;
 	}
 
