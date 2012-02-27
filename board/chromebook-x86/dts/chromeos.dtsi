@@ -23,6 +23,9 @@
 
 		firmware-storage = <&firmware_storage_spi>;
 		nvstorage-media = "nvram";
+
+		/* Only wait 2s in developer mode screen */
+		fast-developer-mode;
 	};
 
 	config {
