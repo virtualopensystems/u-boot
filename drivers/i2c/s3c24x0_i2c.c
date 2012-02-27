@@ -58,6 +58,14 @@
 
 #define I2C_TIMEOUT	1	/* 1 second */
 
+/*
+ * This is needed here, as i2c is build as a part of SPL,
+ * and during the i2c clock calculation its actually looks for the s5p_cpu_id
+ */
+#ifdef CONFIG_SPL_BUILD
+unsigned int s5p_cpu_id = 0xc520;
+#endif
+
 static unsigned int g_current_bus;
 
 static struct s3c24x0_i2c *get_base_i2c(int bus_idx)
