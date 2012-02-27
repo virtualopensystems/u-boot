@@ -79,6 +79,17 @@
 #define CONFIG_SYS_I2C_SPEED	100000		/* 100 Kbps */
 #define CONFIG_DRIVER_S3C24X0_I2C
 #define CONFIG_I2C_MULTI_BUS
+#define CONFIG_SYS_I2C_SLAVE	0x0
+
+#define CONFIG_MAX77686_POWER
+
+#define CONFIG_VDD_ARM		1150 /* 1.15v */
+#define CONFIG_VDD_INT		1100 /* 1.1v */
+#define CONFIG_VDD_MIF		1200 /* 1.2v */
+#define CONFIG_VDD_LDO2		1500 /* 1.5v */
+#define CONFIG_VDD_LDO3		1800 /* 1.8v */
+#define CONFIG_VDD_LDO5		1800 /* 1.8v */
+#define CONFIG_VDD_LDO10	1800 /* 1.8v */
 
 /* Miscellaneous configurable options */
 #define CONFIG_SYS_PROMPT		"SMDK5250 # "
