@@ -25,6 +25,7 @@
 #include <config.h>
 #include <version.h>
 #include <asm/io.h>
+#include <asm/arch/clk.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/cpu.h>
 #include <asm/arch/gpio.h>
@@ -226,3 +227,19 @@ void mem_clk_setup(void)
 
 	writel(CLK_SRC_CDREX_VAL, &clk->src_cdrex);
 }
+
+#ifdef CONFIG_SPL_BUILD
+/*
+ * This is a custom implementation for the udelay(), as we do not the timer
+ * initialise during the SPL boot. We are assuming the cpu takes 3 instruction
+ * pre cycle. This is based on the implementation of sdelay() function.
+ */
+void udelay(unsigned long usec)
+{
+	unsigned long count;
+
+	/* TODO(alim.akhtar@samsung.com): Comment on why divided by 30000000 */
+	count = usec * (get_pll_clk(APLL) / (3 * 10000000));
+	sdelay(count);
+}
+#endif
