@@ -53,10 +53,10 @@
 #undef CONFIG_WATCHDOG
 #undef CONFIG_HW_WATCHDOG
 
-/*-----------------------------------------------------------------------
- * Real Time Clock Configuration
- */
-#define CONFIG_DUMMY_TPM
+/* Generic TPM interfaced through LPC bus */
+#define CONFIG_GENERIC_LPC_TPM
+#define CONFIG_TPM_TIS_BASE_ADDRESS        0xfed40000
+
 
 /*-----------------------------------------------------------------------
  * Real Time Clock Configuration
@@ -174,6 +174,7 @@
 #define CONFIG_CMD_USB
 #define CONFIG_CMD_VBOOT_BOOTSTUB
 #define CONFIG_CMD_VBOOT_MAIN
+#define CONFIG_CMD_TPM
 
 #define CONFIG_BOOTDELAY	-1
 #undef  CONFIG_BOOTARGS
