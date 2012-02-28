@@ -74,6 +74,7 @@
 #define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + (1 << 20))
 
 /* select serial console configuration */
+#define EXYNOS_UART			EXYNOS_UART3
 #define CONFIG_SERIAL_MULTI
 #define CONFIG_SERIAL3
 #define CONFIG_BAUDRATE			115200

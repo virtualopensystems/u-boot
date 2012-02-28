@@ -193,7 +193,7 @@ int board_mmc_init(bd_t *bis)
 #ifdef CONFIG_BOARD_EARLY_INIT_F
 int board_early_init_f(void)
 {
-	exynos_pinmux_config(EXYNOS_UART1);
+	exynos_pinmux_config(EXYNOS_UART);
 	return 0;
 }
 #endif
