@@ -62,7 +62,8 @@ static unsigned int g_current_bus;
 
 static struct s3c24x0_i2c *get_base_i2c(int bus_idx)
 {
-	return (struct s3c24x0_i2c *)(samsung_get_base_i2c());
+	struct s3c24x0_i2c *i2c = (struct s3c24x0_i2c *)samsung_get_base_i2c();
+	return &i2c[bus_idx];
 }
 
 static inline struct exynos5_gpio_part1 *exynos_get_base_gpio1()
