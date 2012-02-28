@@ -298,6 +298,9 @@
 #define CONFIG_CMD_TPM
 #undef CONFIG_CMD_XIMG
 
+/* Board specific late time init */
+#define CONFIG_MISC_INIT_R
+
 /* Boot options */
 
 #define CONFIG_BOOTDELAY	0	/* -1 to disable auto boot */
