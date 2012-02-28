@@ -312,7 +312,7 @@
 #define CONFIG_LENGTH_FMAP	0x00000400
 #define CONFIG_LCD_vl_col	1366
 #define CONFIG_LCD_vl_row	768
-
-#define CONFIG_LZMA
+#define CONFIG_LZMA		1
+#define CONFIG_SPLASH_SCREEN	1
 
 #endif	/* __CONFIG_H */
