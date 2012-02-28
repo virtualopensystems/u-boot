@@ -128,11 +128,6 @@
 #define CONFIG_CFB_CONSOLE
 
 /*-----------------------------------------------------------------------
- * Device tree configuration.
- */
-#define CONFIG_OF_LIBFDT
-
-/*-----------------------------------------------------------------------
  * VBoot Configuration.
  */
 #define CONFIG_CHROMEOS
