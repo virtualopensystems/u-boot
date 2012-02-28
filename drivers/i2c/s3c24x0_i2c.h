@@ -40,11 +40,11 @@
 #endif
 
 struct s3c24x0_i2c {
-	u32     iiccon;
-	u32     iicstat;
-	u32     iicadd;
-	u32     iicds;
-	u32     iiclc;
-	uchar	res1[0xffeb];
+	u32	iiccon;
+	u32	iicstat;
+	u32	iicadd;
+	u32	iicds;
+	u32	iiclc;
+	uchar	res1[0xffec];
 };
 #endif /* _S3C24X0_I2C_H */
