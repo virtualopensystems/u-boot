@@ -59,6 +59,9 @@ void cold_reboot(void)
 	printf("Rebooting...\n");
 	outb(SYS_RST, RST_CNT);
 	outb(SYS_RST | RST_CPU, RST_CNT);
+
+	for (;;)
+		asm("hlt");
 }
 
 /* Power down the machine by using the power management sleep control
