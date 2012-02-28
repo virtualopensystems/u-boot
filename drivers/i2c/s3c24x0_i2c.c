@@ -65,7 +65,7 @@ static struct s3c24x0_i2c *get_base_i2c(int bus_idx)
 	return (struct s3c24x0_i2c *)(samsung_get_base_i2c());
 }
 
-static inline struct exynos5_gpio_part1 *exynos_get_base_gpio1(int nr)
+static inline struct exynos5_gpio_part1 *exynos_get_base_gpio1()
 {
 	return (struct exynos5_gpio_part1 *)(EXYNOS5_GPIO_PART1_BASE);
 }
@@ -217,7 +217,7 @@ void i2c_init(int speed, int slaveadd)
 		i--;
 	}
 
-	gpio = exynos_get_base_gpio1(4);
+	gpio = exynos_get_base_gpio1();
 	writel((readl(&gpio->b3.con) & ~0x00FF) | 0x0022, &gpio->b3.con);
 
 	i2c_ch_init(speed, slaveadd, i2c);
