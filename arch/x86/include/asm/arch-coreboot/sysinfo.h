@@ -33,6 +33,9 @@
 #include <common.h>
 #include <compiler.h>
 #include <asm/ic/coreboot/tables.h>
+#ifdef CONFIG_OF_CONTROL
+#include <fdt.h>
+#endif
 
 /* Allow a maximum of 16 memory range definitions. */
 #define SYSINFO_MAX_MEM_RANGES 16
@@ -87,6 +90,7 @@ struct sysinfo_t {
 	struct cb_gpio gpios[SYSINFO_MAX_GPIOS];
 
 	unsigned long *mbtable; /** Pointer to the multiboot table */
+
 	void	*vdat_addr;
 	u32	vdat_size;
 	void	*sys_fdt;

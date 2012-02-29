@@ -28,6 +28,7 @@
  * SUCH DAMAGE.
  */
 
+#include <common.h>
 #include <asm/arch-coreboot/ipchecksum.h>
 #include <asm/arch-coreboot/sysinfo.h>
 #include <asm/arch-coreboot/tables.h>
@@ -114,6 +115,11 @@ static void cb_parse_gpios(unsigned char *ptr, struct sysinfo_t *info)
 
 	for (i = 0; i < info->num_gpios; i++)
 		info->gpios[i] = gpios->gpios[i];
+}
+
+static void cb_parse_fdt(unsigned char *ptr, struct sysinfo_t *info)
+{
+	info->sys_fdt = (struct fdt_header *)(((struct cb_fdt *)ptr) + 1);
 }
 
 static void cb_parse_framebuffer(unsigned char *ptr, struct sysinfo_t *info)
@@ -221,6 +227,10 @@ static int cb_parse_header(void *addr, int len, struct sysinfo_t *info)
 			break;
 		case CB_TAG_GPIO:
 			cb_parse_gpios(ptr, info);
+			break;
+		case CB_TAG_FDT:
+			cb_parse_fdt(ptr, info);
+			break;
 		}
 
 		ptr += rec->size;

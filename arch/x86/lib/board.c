@@ -59,7 +59,17 @@
  */
 #undef	XTRN_DECLARE_GLOBAL_DATA_PTR
 #define XTRN_DECLARE_GLOBAL_DATA_PTR	/* empty = allocate here */
-DECLARE_GLOBAL_DATA_PTR;
+#ifdef CONFIG_OF_CONTROL
+/*
+ * Place it in the initialized data segment, we were started by a bootstrap
+ * which already intialized memory.
+ */
+static gd_t gd_before_relocation = { .env_buf = { 0x20 } };
+DECLARE_GLOBAL_DATA_PTR = &gd_before_relocation;
+#else
+/* place it at a fixed location */
+DECLARE_GLOBAL_DATA_PTR = (gd_t *) (CONFIG_SYS_INIT_GD_ADDR);
+#endif
 
 /************************************************************************
  * Init Utilities							*
@@ -161,8 +171,6 @@ init_fnc_t *init_sequence_r[] = {
 
 	NULL,
 };
-
-gd_t *gd;
 
 int calculate_relocation_address(void)
 	__attribute__((weak, alias("__calculate_relocation_address")));
@@ -270,8 +278,6 @@ void board_init_f(ulong boot_flags)
 	memset(gd, 0, sizeof(*gd));
 	gd->flags = boot_flags;
 
-	gd->flags = boot_flags;
-
 	for (init_fnc_ptr = init_sequence_f; *init_fnc_ptr; ++init_fnc_ptr) {
 		if ((*init_fnc_ptr)() != 0)
 			hang();
@@ -280,6 +286,8 @@ void board_init_f(ulong boot_flags)
 	printf("Relocating to %p\n", (void *)gd->relocaddr);
 
 	gd->flags |= GD_FLG_RELOC;
+
+	printf("Relocating to %p\n", (void *)gd->relocaddr);
 
 	/* Enter the relocated U-Boot! */
 	relocate_code(gd->start_addr_sp, gd, gd->relocaddr);
