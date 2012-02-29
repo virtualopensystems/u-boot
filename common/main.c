@@ -286,8 +286,8 @@ int abortboot(int bootdelay)
  * printing the error message to console.
  */
 
-#ifdef CONFIG_OF_CONTROL
-
+#if defined(CONFIG_BOOTDELAY) && (CONFIG_BOOTDELAY >= 0) && \
+	defined(CONFIG_OF_CONTROL)
 static void secure_boot_cmd(char *cmd)
 {
 	cmd_tbl_t *cmdtp;
