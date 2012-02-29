@@ -17,12 +17,12 @@
 	compatible = "samsung,smdk5250", "samsung,exynos5250";
 
 	aliases {
-		serial0 = "/serial@12C10000";
+		serial0 = "/serial@12C30000";
 		sdmmc0 = "/sdhci@12220000";
 	};
 
-	serial@12C10000 {
-		id = <1>;
+	serial@12C30000 {
+		id = <3>;
 	};
 
 	config {
