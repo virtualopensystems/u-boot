@@ -317,4 +317,8 @@
 #define CONFIG_LZMA		1
 #define CONFIG_SPLASH_SCREEN	1
 
+	/* FDT stuff */
+#define CONFIG_OF_LIBFDT
+#define CONFIG_OF_CONTROL
+
 #endif	/* __CONFIG_H */
