@@ -164,4 +164,8 @@
 	"boot_kernelname=vmlinuz.a\0" \
 	""
 
+/* Enable SPI H/W Controller Driver support */
+#define CONFIG_EXYNOS_SPI
+#define CONFIG_CMD_SPI
+
 #endif	/* __CONFIG_H */
