@@ -120,9 +120,13 @@
 #define PHYS_SDRAM_8		(CONFIG_SYS_SDRAM_BASE + (7 * SDRAM_BANK_SIZE))
 #define PHYS_SDRAM_8_SIZE	SDRAM_BANK_SIZE
 
+/* Enable Serial Flash Support */
+#define CONFIG_SPI_FLASH
+#define CONFIG_ENV_IS_IN_SPI_FLASH
+
 #define CONFIG_IDENT_STRING		" for SMDK5250"
 
-#define CONFIG_ENV_IS_IN_MMC
+/* #define CONFIG_ENV_IS_IN_MMC */
 #define CONFIG_SYS_MMC_ENV_DEV		0
 
 /* Ethernet Controllor Driver */
