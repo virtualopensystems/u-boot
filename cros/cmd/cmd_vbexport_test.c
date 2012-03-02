@@ -405,14 +405,14 @@ static uint8_t *read_gbb_from_firmware(void)
 	void *gbb;
 	size_t gbb_size;
 
-	gbb = fdt_decode_chromeos_alloc_region(gd->fdt_blob,
+	gbb = cros_fdtdec_alloc_region(gd->fdt_blob,
 			"google-binary-block", &gbb_size);
 	if (!gbb) {
 		VbExDebug("Failed to find gbb region!\n");
 		return NULL;
 	}
 
-	if (fdt_decode_twostop_fmap(fdt_ptr, &fmap)) {
+	if (cros_fdtdec_flashmap(fdt_ptr, &fmap)) {
 		VbExDebug("Failed to load fmap config from fdt!\n");
 		return NULL;
 	}

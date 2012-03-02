@@ -11,7 +11,7 @@
 #include <common.h>
 #include <libfdt.h>
 #include <cros/common.h>
-#include <cros/fdt_decode.h>
+#include <cros/cros_fdtdec.h>
 #include <cros/fmap.h>
 #include <fdtdec.h>
 #include <linux/string.h>
@@ -103,7 +103,7 @@ int decode_firmware_entry(const char *blob, int fmap_offset, const char *name,
 	return err;
 }
 
-int fdt_get_mrc_cache_base(const char *blob, struct fmap_entry *fme)
+int cros_fdtdec_mrc_cache_base(const char *blob, struct fmap_entry *fme)
 {
 	int fmap_offset;
 
@@ -117,7 +117,7 @@ int fdt_get_mrc_cache_base(const char *blob, struct fmap_entry *fme)
 	return decode_fmap_entry(blob, fmap_offset, "rw", "mrc-cache", fme);
 }
 
-int fdt_decode_twostop_fmap(const void *blob, struct twostop_fmap *config)
+int cros_fdtdec_flashmap(const void *blob, struct twostop_fmap *config)
 {
 	int fmap_offset;
 	int err;
@@ -154,7 +154,7 @@ int fdt_decode_twostop_fmap(const void *blob, struct twostop_fmap *config)
 	return 0;
 }
 
-int fdt_decode_chromeos_config_has_prop(const void *blob, const char *name)
+int cros_fdtdec_config_has_prop(const void *blob, const char *name)
 {
 	int nodeoffset = fdt_path_offset(blob, "/chromeos-config");
 	int len;
@@ -165,7 +165,7 @@ int fdt_decode_chromeos_config_has_prop(const void *blob, const char *name)
 	return fdt_get_property(blob, nodeoffset, name, &len) != NULL;
 }
 
-void *fdt_decode_chromeos_alloc_region(const void *blob,
+void *cros_fdtdec_alloc_region(const void *blob,
 		const char *prop_name, size_t *size)
 {
 	int node = fdt_path_offset(blob, "/chromeos-config");

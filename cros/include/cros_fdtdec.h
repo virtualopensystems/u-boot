@@ -8,14 +8,14 @@
  * Software Foundation.
  */
 
-#ifndef CHROMEOS_FDT_DECODE_H_
-#define CHROMEOS_FDT_DECODE_H_
+#ifndef CROS_FDTDEC_H_
+#define CROS_FDTDEC_H_
 
 #include <cros/fmap.h>
 
 /* Decode Chrome OS specific configuration from fdt */
 
-int fdt_decode_twostop_fmap(const void *fdt, struct twostop_fmap *config);
+int cros_fdtdec_flashmap(const void *fdt, struct twostop_fmap *config);
 
 /**
  * This checks whether a property exists.
@@ -24,7 +24,7 @@ int fdt_decode_twostop_fmap(const void *fdt, struct twostop_fmap *config);
  * @param name	The path and name to the property in question
  * @return non-zero if the property exists, zero if it does not exist.
  */
-int fdt_decode_chromeos_config_has_prop(const void *fdt, const char *name);
+int cros_fdtdec_config_has_prop(const void *fdt, const char *name);
 
 /**
  * Look up a property in chromeos-config which contains a memory region
@@ -40,7 +40,7 @@ int fdt_decode_chromeos_config_has_prop(const void *fdt, const char *name);
  * @param size		returns size of region
  * @return pointer to region, or NULL if property not found/malloc failed
  */
-void *fdt_decode_chromeos_alloc_region(const void *blob,
+void *cros_fdtdec_alloc_region(const void *blob,
 		const char *prop_name, size_t *size);
 
 /**
@@ -51,6 +51,6 @@ void *fdt_decode_chromeos_alloc_region(const void *blob,
  * @param fme		pointer to the return value (offset and length are
  *			saved in the structure)
  */
-int fdt_get_mrc_cache_base(const char *blob, struct fmap_entry *fme);
+int cros_fdtdec_mrc_cache_base(const char *blob, struct fmap_entry *fme);
 
-#endif /* CHROMEOS_FDT_DECODE_H_ */
+#endif /* CROS_FDTDEC_H_ */

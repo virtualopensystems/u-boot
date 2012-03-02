@@ -10,14 +10,14 @@
 
 #include <common.h>
 #include <command.h>
-#include <fdt_decode.h>
+#include <fdtdec.h>
 #include <lcd.h>
 #include <malloc.h>
 #include <cros/boot_kernel.h>
 #include <cros/common.h>
 #include <cros/crossystem_data.h>
+#include <cros/cros_fdtdec.h>
 #include <cros/cros_gpio.h>
-#include <cros/fdt_decode.h>
 #include <cros/firmware_storage.h>
 #include <cros/gbb.h>
 #include <cros/hasher_state.h>
@@ -153,7 +153,7 @@ static int check_ro_normal_support(void)
 {
 	int rc = 0;
 #ifdef CONFIG_OF_CONTROL
-	if (fdt_decode_chromeos_config_has_prop(gd->fdt_blob,
+	if (cros_fdtdec_config_has_prop(gd->fdt_blob,
 						"twostop-optional"))
 		rc = VB_INIT_FLAG_RO_NORMAL_SUPPORT;
 #endif
@@ -198,13 +198,13 @@ static void setup_arch_unused_memory(memory_wipe_t *wipe,
 {
 	struct fdt_memory config, ramoops;
 
-	if (fdt_decode_memory(gd->fdt_blob, "/memory", &config))
+	if (fdtdec_memory(gd->fdt_blob, "/memory", &config))
 		VbExError("FDT decode memory section error\n");
 
 	memory_wipe_add(wipe, config.start, config.end);
 
 	/* Excludes kcrashmem if in FDT */
-	if (fdt_decode_memory(gd->fdt_blob, "/ramoops", &ramoops))
+	if (fdtdec_memory(gd->fdt_blob, "/ramoops", &ramoops))
 		VBDEBUG("RAMOOPS not contained within FDT\n");
 	else
 		memory_wipe_sub(wipe, ramoops.start, ramoops.end);
@@ -577,7 +577,7 @@ twostop_init(struct twostop_fmap *fmap, firmware_storage_t *file,
 	cros_gpio_dump(&recsw);
 	cros_gpio_dump(&devsw);
 
-	if (fdt_decode_twostop_fmap(gd->fdt_blob, fmap)) {
+	if (cros_fdtdec_flashmap(gd->fdt_blob, fmap)) {
 		VBDEBUG("failed to decode fmap\n");
 		return -1;
 	}
@@ -663,7 +663,7 @@ twostop_main_firmware(struct twostop_fmap *fmap, void *gbb,
 		return TWOSTOP_SELECT_ERROR;
 	}
 
-	kparams.kernel_buffer = fdt_decode_chromeos_alloc_region(gd->fdt_blob,
+	kparams.kernel_buffer = cros_fdtdec_alloc_region(gd->fdt_blob,
 		"kernel", &size);
 	kparams.kernel_buffer_size = size;
 
@@ -723,7 +723,7 @@ static int setup_gbb_and_cdata(void **gbb, size_t *gbb_size,
 	size_t size;
 
 #ifndef CONFIG_HARDWARE_MAPPED_SPI
-	*gbb = fdt_decode_chromeos_alloc_region(gd->fdt_blob,
+	*gbb = cros_fdtdec_alloc_region(gd->fdt_blob,
 			"google-binary-block", gbb_size);
 
 	if (!*gbb) {
@@ -733,7 +733,7 @@ static int setup_gbb_and_cdata(void **gbb, size_t *gbb_size,
 	}
 
 #endif
-	*cdata = fdt_decode_chromeos_alloc_region(gd->fdt_blob,
+	*cdata = cros_fdtdec_alloc_region(gd->fdt_blob,
 						  "cros-system-data", &size);
 	if (!*cdata) {
 		VBDEBUG("cros-system-data missing "
@@ -837,7 +837,7 @@ twostop_readwrite_main_firmware(void)
 	void *gbb;
 	size_t gbb_size;
 
-	if (fdt_decode_twostop_fmap(gd->fdt_blob, &fmap)) {
+	if (cros_fdtdec_flashmap(gd->fdt_blob, &fmap)) {
 		VBDEBUG("failed to decode fmap\n");
 		return TWOSTOP_SELECT_ERROR;
 	}

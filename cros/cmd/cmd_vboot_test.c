@@ -14,8 +14,8 @@
 
 #include <common.h>
 #include <command.h>
+#include <cros/cros_fdtdec.h>
 #include <cros/cros_gpio.h>
-#include <cros/fdt_decode.h>
 #include <cros/firmware_storage.h>
 #include <cros/memory_wipe.h>
 #include <vboot_api.h>

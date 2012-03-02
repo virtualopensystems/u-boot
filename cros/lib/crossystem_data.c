@@ -15,19 +15,13 @@
 #include <linux/string.h>
 
 #ifdef CONFIG_OF_LIBFDT
-#include <fdt_decode.h>
+#include <fdtdec.h>
 #include <fdt_support.h>
 #include <libfdt.h>
 #endif
 
 #ifdef CONFIG_X86
 #include <asm/arch-coreboot/sysinfo.h>
-#endif
-
-#ifdef CONFIG_OF_LIBFDT
-#include <fdt_decode.h>
-#include <fdt_support.h>
-#include <libfdt.h>
 #endif
 
 #define CROSSYSTEM_DATA_SIGNATURE "CHROMEOS"
