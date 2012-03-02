@@ -36,7 +36,7 @@ typedef u32 (*mmc_copy_fnptr)(u32 offset, u32 nblock, u32 dst);
 /* Copy U-Boot image to RAM */
 static void copy_uboot_to_ram(void)
 {
-	mmc_copy_fnptr mmc_copy = (void *) *(u32 *)COPY_BL2_FNPTR_ADDR;
+	mmc_copy_fnptr mmc_copy = (void *) *(u32 *)EXYNOS_COPY_MMC_FNPTR_ADDR;
 
 	mmc_copy(BL2_START_OFFSET, BL2_SIZE_BLOC_COUNT, CONFIG_SYS_TEXT_BASE);
 }
