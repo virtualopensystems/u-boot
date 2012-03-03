@@ -34,6 +34,7 @@
 #include <common.h>
 #include <watchdog.h>
 #include <command.h>
+#include <environment.h>
 #include <stdio_dev.h>
 #include <version.h>
 #include <malloc.h>

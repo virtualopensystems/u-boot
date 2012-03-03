@@ -188,6 +188,7 @@ unsigned char env_get_char_memory(int index);
 void env_crc_update(void);
 
 /* [re]set to the default environment */
+void env_set_default(void);
 void set_default_env(const char *s);
 
 /* Import from binary representation into hash table */
