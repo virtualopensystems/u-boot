@@ -35,7 +35,7 @@
  * @param dst		Destination address
  * @return 1 = True or 0 = False
  */
-typedef u32 (*mmc_copy_fnptr)(u32 offset, u32 nblock, u32 dst);
+typedef u32 (*mmc_copy_func_t)(u32 offset, u32 nblock, u32 dst);
 
 /**
  * Copy data from SPI flash to RAM.
@@ -45,7 +45,7 @@ typedef u32 (*mmc_copy_fnptr)(u32 offset, u32 nblock, u32 dst);
  * @param dst		Destination address
  * @return 1 = True or 0 = False
  */
-typedef u32 (*spi_copy_fnptr)(u32 offset, u32 nblock, u32 dst);
+typedef u32 (*spi_copy_func_t)(u32 offset, u32 nblock, u32 dst);
 
 
 /**
@@ -53,7 +53,7 @@ typedef u32 (*spi_copy_fnptr)(u32 offset, u32 nblock, u32 dst);
  *
  * @return 1 = True or 0 = False
  */
-typedef u32 (*usb_copy_fnptr)(void);
+typedef u32 (*usb_copy_func_t)(void);
 
 /*
  * Set/clear program flow prediction and return the previous state.
@@ -74,9 +74,9 @@ static void copy_uboot_to_ram(void)
 {
 	unsigned int sec_boot_check;
 	int is_cr_z_set, boot_source;
-	mmc_copy_fnptr mmc_copy = (void *) *(u32 *)EXYNOS_COPY_MMC_FNPTR_ADDR;
-	spi_copy_fnptr spi_copy = (void *) *(u32 *)EXYNOS_COPY_SPI_FNPTR_ADDR;
-	usb_copy_fnptr usb_copy = (void *) *(u32 *)EXYNOS_COPY_USB_FNPTR_ADDR;
+	mmc_copy_func_t mmc_copy;
+	spi_copy_func_t spi_copy;
+	usb_copy_func_t usb_copy;
 
 	/* Read iRAM location to check for secondary USB boot mode */
 	sec_boot_check = readl(EXYNOS_IRAM_SECONDARY_BASE);
@@ -86,6 +86,7 @@ static void copy_uboot_to_ram(void)
 		 * before copy from USB device to RAM
 		 */
 		is_cr_z_set = config_branch_prediction(0);
+		usb_copy = *(usb_copy_func_t *)EXYNOS_COPY_USB_FNPTR_ADDR;
 		usb_copy();
 		config_branch_prediction(is_cr_z_set);
 		return;
@@ -94,10 +95,12 @@ static void copy_uboot_to_ram(void)
 	boot_source = readl(EXYNOS5_POWER_BASE) & OM_STAT;
 	switch (boot_source) {
 	case SERIAL_BOOT:
+		spi_copy = *(spi_copy_func_t *)EXYNOS_COPY_SPI_FNPTR_ADDR;
 		spi_copy(SPI_FLASH_UBOOT_POS, CONFIG_BL2_SIZE,
 				CONFIG_SYS_TEXT_BASE);
 		break;
 	case MMC_BOOT:
+		mmc_copy = *(mmc_copy_func_t *)EXYNOS_COPY_MMC_FNPTR_ADDR;
 		mmc_copy(BL2_START_OFFSET, BL2_SIZE_BLOC_COUNT,
 				CONFIG_SYS_TEXT_BASE);
 		break;
