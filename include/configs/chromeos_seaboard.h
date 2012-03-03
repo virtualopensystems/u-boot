@@ -20,6 +20,9 @@
 
 #include "chromeos.h"
 
+/* Use the default arch_phys_memset implementation */
+#define CONFIG_PHYSMEM
+
 /* We initialize Chrome OS -specific GPIOs here */
 #define CONFIG_MISC_INIT_R
 

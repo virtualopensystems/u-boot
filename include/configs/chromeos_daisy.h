@@ -13,6 +13,9 @@
 
 #include <configs/chromeos.h>
 
+/* Use the default arch_phys_memset implementation */
+#define CONFIG_PHYSMEM
+
 /*
  * Extra bootargs used for direct booting, but not for vboot.
  * - console of the board
