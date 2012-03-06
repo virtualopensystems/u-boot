@@ -26,6 +26,7 @@ include $(TOPDIR)/config.mk
 LIB 	:= $(obj)libpower.o
 
 COBJS-$(CONFIG_FTPMU010_POWER)	+= ftpmu010.o
+COBJS-$(CONFIG_MAX77686_POWER)	+= max77686.o
 COBJS-$(CONFIG_TWL4030_POWER)	+= twl4030.o
 COBJS-$(CONFIG_TWL6030_POWER)	+= twl6030.o
 
