@@ -83,6 +83,9 @@ void system_clock_init()
 	/* UART [0-5]: SCLKMPLL = 6 */
 	writel(CLK_SRC_PERIC0_VAL, &clk->src_peric0);
 
+	/* SPI [0-2]: SCLKMPLL = 6 */
+	writel(CLK_SRC_PERIC1_VAL, &clk->src_peric1);
+
 	/* Set Clock Ratios */
 	writel(CLK_DIV_CPU0_VAL, &clk->div_cpu0);
 
@@ -121,6 +124,12 @@ void system_clock_init()
 
 	/* UART[0-4] */
 	writel(CLK_DIV_PERIC0_VAL, &clk->div_peric0);
+
+	/* SPI[0-1] */
+	writel(CLK_DIV_PERIC1_VAL, &clk->div_peric1);
+
+	/* SPI[2] */
+	writel(CLK_DIV_PERIC2_VAL, &clk->div_peric2);
 
 	/* PWM_RATIO[3:0] */
 	writel(CLK_DIV_PERIC3_VAL, &clk->div_peric3);

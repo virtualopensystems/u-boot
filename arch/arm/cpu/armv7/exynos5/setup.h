@@ -290,6 +290,15 @@
 				| (UART1_SEL << 4) \
 				| (UART0_SEL << 0))
 
+/* CLK_SRC_PERIC1 */
+/* SRC_CLOCK = SCLK_MPLL */
+#define SPI0_SEL		6
+#define SPI1_SEL		6
+#define SPI2_SEL		6
+#define CLK_SRC_PERIC1_VAL	((SPI2_SEL << 24) \
+				| (SPI1_SEL << 20) \
+				| (SPI0_SEL << 16))
+
 #define CLK_SRC_FSYS_VAL	0x66666
 #define CLK_DIV_FSYS0_VAL	0x0BB00000
 #define CLK_DIV_FSYS1_VAL	0x000f000f
@@ -308,6 +317,22 @@
 				| (UART2_RATIO << 8) \
 				| (UART1_RATIO << 4) \
 				| (UART0_RATIO << 0))
+
+/* CLK_DIV_PERIC1 */
+#define SPI1_RATIO		0xf
+#define SPI0_RATIO		0xf
+#define SPI1_SUB_RATIO		0x0
+#define SPI0_SUB_RATIO		0x0
+#define CLK_DIV_PERIC1_VAL	((SPI1_SUB_RATIO << 24) \
+				| ((SPI1_RATIO << 16) \
+				| (SPI0_SUB_RATIO << 8) \
+				| (SPI0_RATIO << 0)))
+
+/* CLK_DIV_PERIC2 */
+#define SPI2_RATIO		0xf
+#define SPI2_SUB_RATIO		0x0
+#define CLK_DIV_PERIC2_VAL	((SPI2_SUB_RATIO << 8) \
+				| (SPI2_RATIO << 0))
 
 /* CLK_DIV_PERIC3 */
 #define PWM_RATIO		8
