@@ -37,10 +37,14 @@ enum {
 	EXYNOS_SDMMC2,
 	EXYNOS_SDMMC3,
 	EXYNOS_SMC911X,
+	EXYNOS_SPI0,
+	EXYNOS_SPI1,
+	EXYNOS_SPI2,
 };
 
 #define PINMUX_FLAG_NONE	0x00000000
-#define PINMUX_FLAG_8BIT_MODE	0x00000001
+#define PINMUX_FLAG_8BIT_MODE	0x00000001	/* SDMMC 8-bit mode */
+#define PINMUX_FLAG_SLAVE_MODE	0x00000002	/* SPI slave mode */
 
 /**
  * Configures the pinmux for a particular peripheral.

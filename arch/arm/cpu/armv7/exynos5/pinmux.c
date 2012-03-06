@@ -32,7 +32,7 @@ int exynos_pinmux_config(int peripheral, int flags)
 	struct exynos5_gpio_part1 *gpio1 =
 		(struct exynos5_gpio_part1 *) samsung_get_base_gpio_part1();
 	struct s5p_gpio_bank *bank, *bank_ext;
-	int i, start, count;
+	int i, start, count, cfg, mode;
 
 	switch (peripheral) {
 	case EXYNOS_UART0:
@@ -168,6 +168,34 @@ int exynos_pinmux_config(int peripheral, int flags)
 
 			s5p_gpio_cfg_pin(&gpio1->y6, i, GPIO_FUNC(2));
 			s5p_gpio_set_pull(&gpio1->y6, i, GPIO_PULL_UP);
+		}
+		break;
+	case EXYNOS_SPI0:
+	case EXYNOS_SPI1:
+	case EXYNOS_SPI2:
+		switch (peripheral) {
+		case EXYNOS_SPI0:
+			bank = &gpio1->a2;
+			start = 0; count = 4; cfg = 0x2;
+			break;
+		case EXYNOS_SPI1:
+			bank = &gpio1->a2;
+			start = 4; count = 4; cfg = 0x2;
+			break;
+		case EXYNOS_SPI2:
+			bank = &gpio1->b1;
+			start = 1; count = 4; cfg = 0x5;
+			break;
+		}
+		for (i = start; i < start + count; i++) {
+			s5p_gpio_cfg_pin(bank, i, GPIO_FUNC(cfg));
+			if (i != start + 1) {
+				mode = (flags & PINMUX_FLAG_SLAVE_MODE) ?
+					GPIO_PULL_DOWN : GPIO_PULL_UP;
+				s5p_gpio_set_pull(bank, i, mode);
+			} else if (flags & PINMUX_FLAG_SLAVE_MODE) {
+				s5p_gpio_set_pull(bank, i, GPIO_PULL_NONE);
+			}
 		}
 		break;
 	default:
