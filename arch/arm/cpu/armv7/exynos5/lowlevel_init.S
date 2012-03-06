@@ -89,6 +89,9 @@ lowlevel_init:
 	/* init system clock */
 	bl	system_clock_init
 
+	/* init power */
+	bl	power_init
+
 	/* Memory initialize */
 	bl	mem_ctrl_init
 
