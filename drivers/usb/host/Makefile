@@ -35,6 +35,7 @@ COBJS-$(CONFIG_USB_SL811HS) += sl811-hcd.o
 
 # echi
 COBJS-$(CONFIG_USB_EHCI) += ehci-hcd.o
+COBJS-$(CONFIG_USB_EHCI_EXYNOS) += ehci-s5p.o
 ifdef CONFIG_MPC512X
 COBJS-$(CONFIG_USB_EHCI_FSL) += ehci-mpc512x.o
 else
