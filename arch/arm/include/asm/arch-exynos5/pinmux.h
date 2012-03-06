@@ -32,14 +32,15 @@ enum {
 	EXYNOS_UART1,
 	EXYNOS_UART2,
 	EXYNOS_UART3,
-	EXYNOS_SDMMC0_8BIT,
 	EXYNOS_SDMMC0,
 	EXYNOS_SDMMC1,
-	EXYNOS_SDMMC2_8BIT,
 	EXYNOS_SDMMC2,
 	EXYNOS_SDMMC3,
 	EXYNOS_SMC911X,
 };
+
+#define PINMUX_FLAG_NONE	0x00000000
+#define PINMUX_FLAG_8BIT_MODE	0x00000001
 
 /**
  * Configures the pinmux for a particular peripheral.
@@ -49,9 +50,10 @@ enum {
  * etc. This function will configure the peripheral pinmux along with
  * pull-up/down and drive strength.
  *
- * @param config	peripheral to be configured
+ * @param peripheral	peripheral to be configured
+ * @param flags		configure flags
  * @return 0 if ok, -1 on error (e.g. unsupported peripheral)
  */
-int exynos_pinmux_config(int peripheral);
+int exynos_pinmux_config(int peripheral, int flags);
 
 #endif

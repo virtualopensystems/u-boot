@@ -59,7 +59,7 @@ static void smc9115_pre_init(void)
 	u32 smc_bw_conf, smc_bc_conf;
 	struct fdt_smc911x smc911x_config;
 
-	exynos_pinmux_config(EXYNOS_SMC911X);
+	exynos_pinmux_config(EXYNOS_SMC911X, PINMUX_FLAG_NONE);
 
 #ifdef CONFIG_OF_CONTROL
 	if (fdtdec_decode_smc911x(gd->fdt_blob, &smc911x_config) < 0) {
@@ -189,7 +189,7 @@ int checkboard(void)
 #ifdef CONFIG_GENERIC_MMC
 int board_mmc_init(bd_t *bis)
 {
-	exynos_pinmux_config(EXYNOS_SDMMC2);
+	exynos_pinmux_config(EXYNOS_SDMMC2, PINMUX_FLAG_NONE);
 #ifdef CONFIG_OF_CONTROL
 	return s5p_mmc_init(gd->fdt_blob);
 #else
@@ -201,7 +201,7 @@ int board_mmc_init(bd_t *bis)
 #ifdef CONFIG_BOARD_EARLY_INIT_F
 int board_early_init_f(void)
 {
-	exynos_pinmux_config(EXYNOS_UART);
+	exynos_pinmux_config(EXYNOS_UART, PINMUX_FLAG_NONE);
 	return 0;
 }
 #endif

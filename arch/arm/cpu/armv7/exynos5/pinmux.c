@@ -27,97 +27,80 @@
 #include <asm/arch/pinmux.h>
 #include <asm/arch/sromc.h>
 
-int exynos_pinmux_config(int peripheral)
+int exynos_pinmux_config(int peripheral, int flags)
 {
-	int i;
 	struct exynos5_gpio_part1 *gpio1 =
 		(struct exynos5_gpio_part1 *) samsung_get_base_gpio_part1();
+	struct s5p_gpio_bank *bank, *bank_ext;
+	int i, start, count;
 
 	switch (peripheral) {
 	case EXYNOS_UART0:
-		for (i = 0; i < 4; i++) {
-			s5p_gpio_set_pull(&gpio1->a0, i, GPIO_PULL_NONE);
-			s5p_gpio_cfg_pin(&gpio1->a0, i, GPIO_FUNC(0x2));
-		}
-		break;
 	case EXYNOS_UART1:
-		for (i = 4; i < 8; i++) {
-			s5p_gpio_set_pull(&gpio1->a0, i, GPIO_PULL_NONE);
-			s5p_gpio_cfg_pin(&gpio1->a0, i, GPIO_FUNC(0x2));
-		}
-		break;
 	case EXYNOS_UART2:
-		for (i = 0; i < 4; i++) {
-			s5p_gpio_set_pull(&gpio1->a1, i, GPIO_PULL_NONE);
-			s5p_gpio_cfg_pin(&gpio1->a1, i, GPIO_FUNC(0x2));
-		}
-		break;
 	case EXYNOS_UART3:
-		for (i = 4; i < 6; i++) {
-			s5p_gpio_set_pull(&gpio1->a1, i, GPIO_PULL_NONE);
-			s5p_gpio_cfg_pin(&gpio1->a1, i, GPIO_FUNC(0x2));
+		switch (peripheral) {
+		case EXYNOS_UART0:
+			bank = &gpio1->a0;
+			start = 0; count = 4;
+			break;
+		case EXYNOS_UART1:
+			bank = &gpio1->a0;
+			start = 4; count = 4;
+			break;
+		case EXYNOS_UART2:
+			bank = &gpio1->a1;
+			start = 0; count = 4;
+			break;
+		case EXYNOS_UART3:
+			bank = &gpio1->a1;
+			start = 4; count = 2;
+			break;
+		}
+		for (i = start; i < start + count; i++) {
+			s5p_gpio_set_pull(bank, i, GPIO_PULL_NONE);
+			s5p_gpio_cfg_pin(bank, i, GPIO_FUNC(0x2));
 		}
 		break;
-	case EXYNOS_SDMMC0_8BIT:
-		for (i = 3; i <= 6; i++) {
-			s5p_gpio_cfg_pin(&gpio1->c1, i, GPIO_FUNC(0x3));
-			s5p_gpio_set_pull(&gpio1->c1, i, GPIO_PULL_UP);
-			s5p_gpio_set_drv(&gpio1->c1, i, GPIO_DRV_4X);
-		}
-		/* Fall-through */
 	case EXYNOS_SDMMC0:
-		for (i = 0; i < 2; i++) {
-			s5p_gpio_cfg_pin(&gpio1->c0, i, GPIO_FUNC(0x2));
-			s5p_gpio_set_pull(&gpio1->c0, i, GPIO_PULL_NONE);
-			s5p_gpio_set_drv(&gpio1->c0, i, GPIO_DRV_4X);
-		}
-		for (i = 3; i <= 6; i++) {
-			s5p_gpio_cfg_pin(&gpio1->c0, i, GPIO_FUNC(0x2));
-			s5p_gpio_set_pull(&gpio1->c0, i, GPIO_PULL_UP);
-			s5p_gpio_set_drv(&gpio1->c0, i, GPIO_DRV_4X);
-		}
-		break;
 	case EXYNOS_SDMMC1:
-		for (i = 0; i < 2; i++) {
-			s5p_gpio_cfg_pin(&gpio1->c1, i, GPIO_FUNC(0x2));
-			s5p_gpio_set_pull(&gpio1->c1, i, GPIO_PULL_NONE);
-			s5p_gpio_set_drv(&gpio1->c1, i, GPIO_DRV_4X);
-		}
-		for (i = 3; i <= 6; i++) {
-			s5p_gpio_cfg_pin(&gpio1->c1, i, GPIO_FUNC(0x2));
-			s5p_gpio_set_pull(&gpio1->c1, i, GPIO_PULL_UP);
-			s5p_gpio_set_drv(&gpio1->c1, i, GPIO_DRV_4X);
-		}
-		break;
-	case EXYNOS_SDMMC2_8BIT:
-		for (i = 3; i <= 6; i++) {
-			s5p_gpio_cfg_pin(&gpio1->c3, i, GPIO_FUNC(0x3));
-			s5p_gpio_set_pull(&gpio1->c3, i, GPIO_PULL_UP);
-			s5p_gpio_set_drv(&gpio1->c3, i, GPIO_DRV_4X);
-		}
-		/* Fall-through */
 	case EXYNOS_SDMMC2:
-		for (i = 0; i < 2; i++) {
-			s5p_gpio_cfg_pin(&gpio1->c2, i, GPIO_FUNC(0x2));
-			s5p_gpio_set_pull(&gpio1->c2, i, GPIO_PULL_NONE);
-			s5p_gpio_set_drv(&gpio1->c2, i, GPIO_DRV_4X);
-		}
-		for (i = 3; i <= 6; i++) {
-			s5p_gpio_cfg_pin(&gpio1->c2, i, GPIO_FUNC(0x2));
-			s5p_gpio_set_pull(&gpio1->c2, i, GPIO_PULL_UP);
-			s5p_gpio_set_drv(&gpio1->c2, i, GPIO_DRV_4X);
-		}
-		break;
 	case EXYNOS_SDMMC3:
+		switch (peripheral) {
+		case EXYNOS_SDMMC0:
+			bank = &gpio1->c0; bank_ext = &gpio1->c1;
+			break;
+		case EXYNOS_SDMMC1:
+			bank = &gpio1->c1; bank_ext = NULL;
+			break;
+		case EXYNOS_SDMMC2:
+			bank = &gpio1->c2; bank_ext = &gpio1->c3;
+			break;
+		case EXYNOS_SDMMC3:
+			bank = &gpio1->c3; bank_ext = NULL;
+			break;
+		}
+		if ((flags & PINMUX_FLAG_8BIT_MODE) && !bank_ext) {
+			debug("SDMMC device %d does not support 8bit mode",
+					peripheral);
+			return -1;
+		}
+		if (flags & PINMUX_FLAG_8BIT_MODE) {
+			for (i = 3; i <= 6; i++) {
+				s5p_gpio_cfg_pin(bank_ext, i, GPIO_FUNC(0x3));
+				s5p_gpio_set_pull(bank_ext, i, GPIO_PULL_UP);
+				s5p_gpio_set_drv(bank_ext, i, GPIO_DRV_4X);
+			}
+		}
 		for (i = 0; i < 2; i++) {
-			s5p_gpio_cfg_pin(&gpio1->c3, i, GPIO_FUNC(0x2));
-			s5p_gpio_set_pull(&gpio1->c3, i, GPIO_PULL_NONE);
-			s5p_gpio_set_drv(&gpio1->c3, i, GPIO_DRV_4X);
+			s5p_gpio_cfg_pin(bank, i, GPIO_FUNC(0x2));
+			s5p_gpio_set_pull(bank, i, GPIO_PULL_NONE);
+			s5p_gpio_set_drv(bank, i, GPIO_DRV_4X);
 		}
 		for (i = 3; i <= 6; i++) {
-			s5p_gpio_cfg_pin(&gpio1->c3, i, GPIO_FUNC(0x2));
-			s5p_gpio_set_pull(&gpio1->c3, i, GPIO_PULL_UP);
-			s5p_gpio_set_drv(&gpio1->c3, i, GPIO_DRV_4X);
+			s5p_gpio_cfg_pin(bank, i, GPIO_FUNC(0x2));
+			s5p_gpio_set_pull(bank, i, GPIO_PULL_UP);
+			s5p_gpio_set_drv(bank, i, GPIO_DRV_4X);
 		}
 		break;
 	case EXYNOS_SMC911X:
@@ -187,7 +170,6 @@ int exynos_pinmux_config(int peripheral)
 			s5p_gpio_set_pull(&gpio1->y6, i, GPIO_PULL_UP);
 		}
 		break;
-
 	default:
 		debug("%s: invalid peripheral %d", __func__, peripheral);
 		return -1;
