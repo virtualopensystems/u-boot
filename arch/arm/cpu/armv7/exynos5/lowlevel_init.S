@@ -73,6 +73,9 @@ lowlevel_init:
 	cmp	r1, r2
 	beq	wakeup_reset
 
+	/* Set the PS-Hold in SPL */
+	bl	ps_hold_setup
+
 	/*
 	 * If U-boot is already running in RAM, no need to relocate U-Boot.
 	 * Memory controller must be configured before relocating U-Boot
