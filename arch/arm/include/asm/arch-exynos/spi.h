@@ -63,6 +63,7 @@ struct exynos_spi {
 #define SPI_ST_TX_DONE		(1 << 25)
 #define SPI_FIFO_LVL_MASK_CH_0	0x1ff
 #define SPI_FIFO_LVL_MASK_CH_1_2 0x7f
+#define SPI_TX_LVL_OFFSET	6
 #define SPI_RX_LVL_OFFSET	15
 
 /* Feedback Delay */

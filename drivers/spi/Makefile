@@ -33,6 +33,7 @@ COBJS-$(CONFIG_ATMEL_SPI) += atmel_spi.o
 COBJS-$(CONFIG_BFIN_SPI) += bfin_spi.o
 COBJS-$(CONFIG_CF_SPI) += cf_spi.o
 COBJS-$(CONFIG_DAVINCI_SPI) += davinci_spi.o
+COBJS-$(CONFIG_EXYNOS_SPI) += exynos_spi.o
 COBJS-$(CONFIG_ICH_SPI) += ich.o
 COBJS-$(CONFIG_KIRKWOOD_SPI) += kirkwood_spi.o
 COBJS-$(CONFIG_MPC52XX_SPI) += mpc52xx_spi.o
