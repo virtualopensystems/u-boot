@@ -1,0 +1,57 @@
+/*
+ * DAISY/ADV board device tree source
+ *
+ * Copyright (c) 2012 Samsung Electronics Co., Ltd.
+ *		http://www.samsung.com
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+*/
+
+/dts-v1/;
+/include/ ARCH_CPU_DTS
+
+/ {
+	model = "Daisy/ADV Board based on Exynos5250";
+	compatible = "samsung,daisy-adv", "samsung,exynos5250";
+
+	aliases {
+		serial0 = "/serial@12C30000";
+		sdmmc0 = "/sdhci@12220000";
+	};
+
+	serial@12C30000 {
+		id = <3>;
+	};
+
+	config {
+		machine-arch-id = <3774>;
+	};
+
+	memory {
+		reg = <0x40000000 0x80000000>;
+	};
+
+	sdhci@12220000 {
+		id = <2>;
+		samsung,sdhci-bus-width = <4>;
+	};
+
+	sdhci@12200000 {
+		status = "disabled";
+	};
+
+	sdhci@12210000 {
+		status = "disabled";
+	};
+
+	sdhci@12230000 {
+		status = "disabled";
+	};
+
+	sromc@12250000 {
+		bank = <3>;
+		srom-timing = <1 9 12 1 6 1 1>;
+	};
+};
