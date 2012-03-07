@@ -29,6 +29,9 @@
 /* Address of address of function that copys data from SD or MMC */
 #define EXYNOS_COPY_MMC_FNPTR_ADDR	0x02020030
 
+/* Address of address of function that copys data from SPI */
+#define EXYNOS_COPY_SPI_FNPTR_ADDR	0x02020058
+
 /* Address of address of function that copys data through USB */
 #define EXYNOS_COPY_USB_FNPTR_ADDR	0x02020070
 

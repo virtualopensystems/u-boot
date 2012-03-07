@@ -23,6 +23,10 @@
 #include <common.h>
 #include <config.h>
 
+#define MMC_BOOT	0x04
+#define SERIAL_BOOT	0x14
+#define OM_STAT		(0x1f << 1)
+
 /**
  * Copy data from SD or MMC device to RAM.
  *
@@ -32,6 +36,17 @@
  * @return 1 = True or 0 = False
  */
 typedef u32 (*mmc_copy_fnptr)(u32 offset, u32 nblock, u32 dst);
+
+/**
+ * Copy data from SPI flash to RAM.
+ *
+ * @param offset	Block offset of the data
+ * @param nblock	Number of blocks
+ * @param dst		Destination address
+ * @return 1 = True or 0 = False
+ */
+typedef u32 (*spi_copy_fnptr)(u32 offset, u32 nblock, u32 dst);
+
 
 /**
  * Copy data through USB.
@@ -58,8 +73,9 @@ static int config_branch_prediction(int set_cr_z)
 static void copy_uboot_to_ram(void)
 {
 	unsigned int sec_boot_check;
-	int is_cr_z_set;
+	int is_cr_z_set, boot_source;
 	mmc_copy_fnptr mmc_copy = (void *) *(u32 *)EXYNOS_COPY_MMC_FNPTR_ADDR;
+	spi_copy_fnptr spi_copy = (void *) *(u32 *)EXYNOS_COPY_SPI_FNPTR_ADDR;
 	usb_copy_fnptr usb_copy = (void *) *(u32 *)EXYNOS_COPY_USB_FNPTR_ADDR;
 
 	/* Read iRAM location to check for secondary USB boot mode */
@@ -75,7 +91,17 @@ static void copy_uboot_to_ram(void)
 		return;
 	}
 
-	mmc_copy(BL2_START_OFFSET, BL2_SIZE_BLOC_COUNT, CONFIG_SYS_TEXT_BASE);
+	boot_source = readl(EXYNOS5_POWER_BASE) & OM_STAT;
+	switch (boot_source) {
+	case SERIAL_BOOT:
+		spi_copy(SPI_FLASH_UBOOT_POS, CONFIG_BL2_SIZE,
+				CONFIG_SYS_TEXT_BASE);
+		break;
+	case MMC_BOOT:
+		mmc_copy(BL2_START_OFFSET, BL2_SIZE_BLOC_COUNT,
+				CONFIG_SYS_TEXT_BASE);
+		break;
+	}
 }
 
 void board_init_f(unsigned long bootflag)
