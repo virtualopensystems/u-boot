@@ -541,4 +541,7 @@ void config_mrs(struct exynos5_dmc *);
 void config_prech(struct exynos5_dmc *);
 void config_memory(struct exynos5_dmc *);
 void mem_clk_setup(void);
+/* Set the PS-Hold drive value */
+void ps_hold_setup(void);
+
 #endif
