@@ -33,4 +33,7 @@ struct exynos5_power {
 	unsigned int	ps_hold_ctrl;		/* 0x330c */
 };
 
+void power_enable_usb_phy(void);
+void power_disable_usb_phy(void);
+
 #endif

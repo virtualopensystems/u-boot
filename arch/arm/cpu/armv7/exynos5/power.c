@@ -22,13 +22,46 @@
  * MA 02111-1307 USA
  */
 
+#include <common.h>
 #include <asm/arch/cpu.h>
 #include <asm/arch/power.h>
+#include <asm/arch/sysreg.h>
 
 void ps_hold_setup(void)
 {
-	struct exynos5_power *power = (struct exynos5_power *)EXYNOS5_POWER_BASE;
+	struct exynos5_power *power =
+		(struct exynos5_power *)samsung_get_base_power();
 
 	/* Set PS-Hold high */
-	setbits_le32(&power->ps_hold_ctrl, PS_HOLD_CONTROL_DATA_HIGH);
+	setbits_le32(&power->ps_hold_ctrl, POWER_PS_HOLD_CONTROL_DATA_HIGH);
+}
+
+void power_enable_usb_phy(void)
+{
+	struct exynos5_sysreg *sysreg =
+		(struct exynos5_sysreg *)samsung_get_base_sysreg();
+	struct exynos5_power *power =
+		(struct exynos5_power *)samsung_get_base_power();
+	unsigned int phy_cfg;
+
+	/* Setting USB20PHY_CONFIG register to USB 2.0 HOST link */
+	phy_cfg = readl(&sysreg->usb20_phy_cfg);
+	if (phy_cfg & USB20_PHY_CFG_EN) {
+		debug("USB 2.0 HOST link already selected\n");
+	} else {
+		phy_cfg |= USB20_PHY_CFG_EN;
+		writel(phy_cfg, &sysreg->usb20_phy_cfg);
+	}
+
+	/* Enabling USBHOST_PHY */
+	setbits_le32(&power->usb_host_phy_ctrl, POWER_USB_HOST_PHY_CTRL_EN);
+}
+
+void power_disable_usb_phy(void)
+{
+	struct exynos5_power *power =
+		(struct exynos5_power *)samsung_get_base_power();
+
+	/* Disabling USBHost_PHY */
+	clrbits_le32(&power->usb_host_phy_ctrl, POWER_USB_HOST_PHY_CTRL_EN);
 }
