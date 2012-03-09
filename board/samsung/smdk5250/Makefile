@@ -26,6 +26,8 @@ LIB	= $(obj)lib$(BOARD).o
 
 ifndef CONFIG_SPL_BUILD
 COBJS	:= smdk5250.o
+else
+COBJS	:= smdk5250_spl.o
 endif
 
 SRCS	:= $(SOBJS:.o=.S) $(COBJS:.o=.c)
