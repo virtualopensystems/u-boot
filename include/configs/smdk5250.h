@@ -71,8 +71,6 @@
 #define CONFIG_BOOTDELAY		3
 #define CONFIG_ZERO_BOOTDELAY_CHECK
 
-#define CONFIG_BOOTCOMMAND	"mmc read 40007000 451 2000; bootm 40007000"
-
 /* USB */
 #define CONFIG_CMD_USB
 #define CONFIG_USB_EHCI
@@ -134,5 +132,36 @@
 #define CONFIG_SMC911X_16_BIT
 #define CONFIG_ENV_SROM_BANK		1
 #endif /*CONFIG_CMD_NET*/
+
+#define SCRIPT_GENERATE_BOOTARGS "script_generate_bootargs=" \
+	"setenv bootargs " \
+		"root=/dev/mmcblk${boot_kdevnum}p3 " \
+		"rootwait " \
+		"ro " \
+		"console=ttySAC3,${baudrate} " \
+		"cros_legacy " \
+		"debug " \
+		"earlyprintk " \
+		"" \
+	"\0"
+
+/* Default boot commands for ChromeOS booting. */
+#define CONFIG_BOOTCOMMAND \
+	"run script_generate_bootargs; " \
+	"mmc rescan ${boot_udevnum}; " \
+	"fatload mmc ${boot_udevnum}:c 0x42000000 ${boot_kernelname}; " \
+	"bootm 0x42000000; " \
+	""
+
+/* Will get defined by the script script_generate_bootargs */
+#define CONFIG_BOOTARGS	"*** please edit script_generate_bootargs ***"
+
+#define CONFIG_EXTRA_ENV_SETTINGS \
+	SCRIPT_GENERATE_BOOTARGS \
+	\
+	"boot_udevnum=0\0" \
+	"boot_kdevnum=1\0" \
+	"boot_kernelname=vmlinuz.a\0" \
+	""
 
 #endif	/* __CONFIG_H */
