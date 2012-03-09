@@ -21,13 +21,16 @@
 #ifndef __EXYNOS5_POWER_H__
 #define __EXYNOS5_POWER_H__
 
+#define POWER_USB_HOST_PHY_CTRL_EN		(1 << 0)
+#define POWER_PS_HOLD_CONTROL_DATA_HIGH		(1 << 8)
+
 /* Power Management Unit register map */
 struct exynos5_power {
 	/* Add registers as and when required */
-	unsigned char reserved[0x330C];
-	unsigned int ps_hold_ctrl;
+	unsigned char	reserved1[0x0708];
+	unsigned int	usb_host_phy_ctrl;	/* 0x0708 */
+	unsigned char	reserved2[0x2c00];
+	unsigned int	ps_hold_ctrl;		/* 0x330c */
 };
-
-#define PS_HOLD_CONTROL_DATA_HIGH	(0x1 << 8)
 
 #endif
