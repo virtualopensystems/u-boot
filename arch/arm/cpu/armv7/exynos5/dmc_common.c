@@ -28,6 +28,7 @@
 #ifdef CONFIG_LPDDR2
 #define ZQ_MODE_DDS_VAL		LPDDR2_ZQ_MODE_DDS_VAL
 #define ZQ_MODE_TERM_VAL	LPDDR2_ZQ_MODE_TERM_VAL
+#define ZQ_MODE_NOTERM		LPDDR2_ZQ_MODE_NOTERM
 #define DIRECT_CMD_MRS1		LPDDR2_DIRECT_CMD_MRS1
 #define DIRECT_CMD_MRS2		LPDDR2_DIRECT_CMD_MRS2
 #define DIRECT_CMD_MRS3		LPDDR2_DIRECT_CMD_MRS3
@@ -37,6 +38,7 @@
 #elif defined CONFIG_DDR3
 #define ZQ_MODE_DDS_VAL		DDR3_ZQ_MODE_DDS_VAL
 #define ZQ_MODE_TERM_VAL	DDR3_ZQ_MODE_TERM_VAL
+#define ZQ_MODE_NOTERM		DDR3_ZQ_MODE_NOTERM
 #define DIRECT_CMD_MRS1		DDR3_DIRECT_CMD_MRS1
 #define DIRECT_CMD_MRS2		DDR3_DIRECT_CMD_MRS2
 #define DIRECT_CMD_MRS3		DDR3_DIRECT_CMD_MRS3
@@ -71,7 +73,7 @@ void config_zq(struct exynos5_phy_control *phy0_ctrl,
 	val |= ZQ_MANUAL_STR;
 	writel(val, &phy0_ctrl->phy_con16);
 	writel(val, &phy1_ctrl->phy_con16);
-	sdelay(0x10000);
+	sdelay(0x20000);
 
 	/* ZQ_MANUAL_START: Disable */
 	val &= ~ZQ_MANUAL_STR;
@@ -79,9 +81,14 @@ void config_zq(struct exynos5_phy_control *phy0_ctrl,
 	writel(val, &phy1_ctrl->phy_con16);
 }
 
-void update_reset_dll(struct exynos5_dmc *dmc)
+void update_reset_dll(struct exynos5_dmc *dmc, enum ddr_mode mode)
 {
 	unsigned long val;
+
+	if (mode == DDR_MODE_DDR3) {
+		val = MEM_TERM_EN | PHY_TERM_EN | CTRL_SHGATE;
+		writel(val, &dmc->phycontrol0);
+	}
 
 	/* Update DLL Information: Force DLL Resyncronization */
 	val = readl(&dmc->phycontrol0);

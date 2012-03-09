@@ -145,7 +145,7 @@
 
 /* CLK_SRC_CDREX */
 #define CLK_SRC_CDREX_INIT_VAL	0x1
-#define CLK_SRC_CDREX_VAL	0x111
+#define CLK_SRC_CDREX_VAL	0x11111
 
 /* CLK_DIV_CDREX */
 #define CLK_DIV_CDREX_INIT_VAL	0x71771111
@@ -390,7 +390,6 @@
 #define SET_ZQ_MODE_DDS_VAL(x)	(x = (x & ~(0x7 << 24)) | ZQ_MODE_DDS_VAL)
 #define SET_ZQ_MODE_TERM_VAL(x)	(x = (x & ~(0x7 << 21)) | ZQ_MODE_TERM_VAL)
 
-#define ZQ_MODE_NOTERM		(1 << 19)
 #define ZQ_CLK_DIV_EN		(1 << 18)
 #define ZQ_MANUAL_STR		(1 << 1)
 
@@ -425,9 +424,6 @@
 
 /* PHY Control */
 #define PHY_CON0_RESET_VAL	0x17020A40
-#define DDR_MODE_DDR3		0x1
-#define DDR_MODE_LPDDR2		0x2
-#define DDR_MODE_LPDDR3		0x3
 #define BYTE_RDLVL_EN		(1 << 13)
 #define CTRL_ATGATE		(1 << 6)
 /*
@@ -531,17 +527,52 @@
 #define DPWRDN_EN	(1 << 1)
 #define DSREF_EN	(1 << 5)
 
+enum ddr_mode {
+	DDR_MODE_DDR3	= 1,
+	DDR_MODE_LPDDR2,
+	DDR_MODE_LPDDR3,
+};
+
+/* Functions common between LPDDR2 and DDR3 */
 void sdelay(unsigned long);
 void mem_ctrl_init(void);
 void system_clock_init(void);
-void tzpc_init(void);
-void config_zq(struct exynos5_phy_control *, struct exynos5_phy_control *);
-void update_reset_dll(struct exynos5_dmc *);
-void config_mrs(struct exynos5_dmc *);
-void config_prech(struct exynos5_dmc *);
-void config_memory(struct exynos5_dmc *);
 void mem_clk_setup(void);
+void tzpc_init(void);
+/*
+ * Configure ZQ I/O interface
+ *
+ * @param exynos5_phy_control	Pointer to struct containing PHY0 control reg
+ * @param exynos5_phy_control	Pointer to struct containing PHY1 control reg
+ */
+void config_zq(struct exynos5_phy_control *, struct exynos5_phy_control *);
+/*
+ * Sending NOP and MRS/EMRS Direct commands
+ *
+ * @param exynos5_dmc	Pointer to struct of DMC registers
+ */
+void config_mrs(struct exynos5_dmc *);
+/*
+ * Sending PALL Direct commands
+ *
+ * @param exynos5_dmc	Pointer to struct of DMC registers
+ */
+void config_prech(struct exynos5_dmc *);
+/*
+ * Configure memory
+ *
+ * @param exynos5_dmc	Pointer to struct of DMC registers
+ */
+void config_memory(struct exynos5_dmc *);
 /* Set the PS-Hold drive value */
 void ps_hold_setup(void);
-
+/*
+ * Reset the DLL. This function is common between DDR3 and LPDDR2.
+ * However, the reset value is different. So we are passing a flag
+ * ddr_mode to distinguish between LPDDR2 and DDR3.
+ *
+ * @param exynos5_dmc	Pointer to struct of DMC registers
+ * @param ddr_mode	Type of DDR memory
+ */
+void update_reset_dll(struct exynos5_dmc *, enum ddr_mode);
 #endif

@@ -67,5 +67,6 @@
 #define LPDDR2_CTRL_RDLAT		0x08
 
 #define LPDDR2_RD_FETCH			0x3
+#define LPDDR2_ZQ_MODE_NOTERM		(1 << 19)
 
 #endif

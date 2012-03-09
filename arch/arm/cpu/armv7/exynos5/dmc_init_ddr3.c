@@ -57,22 +57,33 @@ static void reset_phy_ctrl(void)
 	struct exynos5_clock *clk = (struct exynos5_clock *)EXYNOS5_CLOCK_BASE;
 
 	writel(LPDDR3PHY_CTRL_PHY_RESET_OFF, &clk->lpddr3phy_ctrl);
-	sdelay(10000);	/* approx 200us */
 	writel(LPDDR3PHY_CTRL_PHY_RESET, &clk->lpddr3phy_ctrl);
 }
 
-/* Sending ZQINIT command */
-static void config_zqinit(struct exynos5_dmc *dmc)
+/* Sending direct commands */
+static void direct_cmd(struct exynos5_dmc *dmc)
 {
-	unsigned long channel, chip, mask = 0, val;
+	unsigned long channel, mask = 0;
 
 	for (channel = 0; channel < CONFIG_DMC_CHANNELS; channel++) {
 		SET_CMD_CHANNEL(mask, channel);
-		for (chip = 0; chip < CONFIG_CHIPS_PER_CHANNEL; chip++) {
-			SET_CMD_CHIP(mask, chip);
-			val = DIRECT_CMD_ZQINIT | mask;
-			writel(val, &dmc->directcmd);
-		}
+
+		/* we are configuring only chip-0 for both the channels */
+		SET_CMD_CHIP(mask, 0);
+
+		/* Sending NOP command */
+		writel(DIRECT_CMD_NOP | mask, &dmc->directcmd);
+
+		/* Sending EMRS/MRS commands */
+		writel(DDR3_DIRECT_CMD_MRS1 | mask, &dmc->directcmd);
+		writel(DDR3_DIRECT_CMD_MRS2 | mask, &dmc->directcmd);
+		writel(DDR3_DIRECT_CMD_MRS3 | mask, &dmc->directcmd);
+		writel(DDR3_DIRECT_CMD_MRS4 | mask, &dmc->directcmd);
+
+		/* Sending ZQINIT command */
+		writel(DIRECT_CMD_ZQINIT | mask, &dmc->directcmd);
+
+		sdelay(10000);
 	}
 }
 
@@ -127,9 +138,15 @@ void mem_ctrl_init()
 	phy1_ctrl = (struct exynos5_phy_control *)EXYNOS5_DMC_PHY1_BASE;
 	dmc = (struct exynos5_dmc *)EXYNOS5_DMC_CTRL_BASE;
 
+	mem_clk_setup();
+
+	sdelay(40000);
+
 	reset_phy_ctrl();
 
-	mem_clk_setup();
+	/* Set Read Latency and Burst Length for PHY0 and PHY1 */
+	writel(PHY_CON42_VAL, &phy0_ctrl->phy_con42);
+	writel(PHY_CON42_VAL, &phy1_ctrl->phy_con42);
 
 	/* Setting Operation Mode as DDR3 and enabling byte_rdlvl */
 	val = PHY_CON0_RESET_VAL;
@@ -138,26 +155,23 @@ void mem_ctrl_init()
 	writel(val, &phy0_ctrl->phy_con0);
 	writel(val, &phy1_ctrl->phy_con0);
 
-	/* Enable Read Leveling */
-	writel(SET_RDLVL_RDDATA_ADJ, &phy0_ctrl->phy_con1);
-	writel(SET_RDLVL_RDDATA_ADJ, &phy1_ctrl->phy_con1);
+	/* ZQ Calibration */
+	config_zq(phy0_ctrl, phy1_ctrl);
 
 	/* DQS, DQ: Signal */
 	val = CTRL_PULLD_DQ | CTRL_PULLD_DQS;
 	writel(val, &phy0_ctrl->phy_con14);
 	writel(val, &phy1_ctrl->phy_con14);
 
-	/* Set Read Latency and Burst Length for PHY0 and PHY1 */
-	writel(PHY_CON42_VAL, &phy0_ctrl->phy_con42);
-	writel(PHY_CON42_VAL, &phy1_ctrl->phy_con42);
-
-	/* ZQ Calibration */
-	config_zq(phy0_ctrl, phy1_ctrl);
+	val = PHY_CON12_RESET_VAL;
+	val |= (DDR3_CTRL_FORCE << 8);
+	writel(val, &phy0_ctrl->phy_con12);
+	writel(val, &phy1_ctrl->phy_con12);
 
 	/*
 	 * Set DMC Concontrol
 	 * dfi_init_start = 1
-	 * rd_fetch = 0x3
+	 * rd_fetch = 0x2
 	 * empty = 0
 	 */
 	val = DMC_CONCONTROL_RESET_VAL;
@@ -165,6 +179,16 @@ void mem_ctrl_init()
 	val |= DFI_INIT_START;
 	val &= ~EMPTY;
 	writel(val, &dmc->concontrol);
+
+	update_reset_dll(dmc, DDR_MODE_DDR3);
+
+	/* Set DQS offsets */
+	writel(DDR3_PHY0_DQS, &phy0_ctrl->phy_con4);
+	writel(DDR3_PHY1_DQS, &phy1_ctrl->phy_con4);
+
+	/* Set DQS offsets */
+	writel(DDR3_PHY0_DQ, &phy0_ctrl->phy_con6);
+	writel(DDR3_PHY1_DQ, &phy1_ctrl->phy_con6);
 
 	/*
 	 * Dynamic Clock: Always Running
@@ -177,6 +201,9 @@ void mem_ctrl_init()
 	writel(DMC_MEMCONTROL_VAL, &dmc->memcontrol);
 
 	config_memory(dmc);
+
+	/* Memory Channel Inteleaving Size: 128 Bytes */
+	writel(CONFIG_IV_SIZE, &dmc->ivcontrol);
 
 	/* Precharge Configuration */
 	writel(DMC_PRECHCONFIG_VAL, &dmc->prechconfig);
@@ -197,70 +224,27 @@ void mem_ctrl_init()
 
 	writel(DMC_TIMINGPOWER_VAL, &dmc->timingpower);
 
-	/* Memory Channel Inteleaving Size: 128 Bytes */
-	writel(CONFIG_IV_SIZE, &dmc->ivcontrol);
-
-	/* Set DQS offsets */
-	writel(DDR3_PHY0_DQS, &phy0_ctrl->phy_con4);
-	writel(DDR3_PHY1_DQS, &phy1_ctrl->phy_con4);
-
-	/* Set DQS offsets */
-	writel(DDR3_PHY0_DQ, &phy0_ctrl->phy_con6);
-	writel(DDR3_PHY1_DQ, &phy1_ctrl->phy_con6);
-
-	/* Set Debug offsets */
-	writel(RESET_DEBUG_OFFSET_VAL, &phy0_ctrl->phy_con10);
-	writel(RESET_DEBUG_OFFSET_VAL, &phy1_ctrl->phy_con10);
+	direct_cmd(dmc);
 
 	config_ctrl_dll_on(RESET, phy0_ctrl, phy1_ctrl);
 
-	sdelay(50);	/* approx 10 PCLK cycle */
+	update_reset_dll(dmc, DDR_MODE_DDR3);
 
-	update_reset_dll(dmc);
-
-	config_mrs(dmc);
-	config_zqinit(dmc);
-
-	sdelay(50);	/* approx 10 PCLK cycle */
-
-	/* Reset DLL Locking */
-	val = PHY_CON12_RESET_VAL;
-	CONFIG_CTRL_START(val, RESET);
-	writel(val, &phy0_ctrl->phy_con12);
-	writel(val, &phy1_ctrl->phy_con12);
-
-	/* Reset DLL Locking */
-	val = PHY_CON12_RESET_VAL;
-	CONFIG_CTRL_START(val, SET);
-	writel(val, &phy0_ctrl->phy_con12);
-	writel(val, &phy1_ctrl->phy_con12);
-
-	sdelay(50);	/* approx 10 PCLK cycle */
-
-	/*
-	 * Looping till SEC SDRAM PHY initialization completes
-	 * for both channel-0 and channel-1
-	 */
-	do {
-		val = readl(&dmc->phystatus);
-		val &= (DFI_INIT_COMPLETE_CHO | DFI_INIT_COMPLETE_CH1);
-	} while (val == 0);
-
-	/*
-	 * Set DMC Concontrol
-	 * rd_fetch = 0x3
-	 * empty = 0
-	 * Basically here we are stopping dfi_init_start done above.
-	 */
-	val = DMC_CONCONTROL_RESET_VAL;
-	SET_RD_FETCH(val);
-	val &= ~EMPTY;
-	writel(val, &dmc->concontrol);
-
-	update_reset_dll(dmc);
-
+	/* Enable Read Leveling */
 	writel(SET_RDLVL_RDDATA_ADJ, &phy0_ctrl->phy_con1);
 	writel(SET_RDLVL_RDDATA_ADJ, &phy1_ctrl->phy_con1);
+
+	/* Write DDR3 address */
+	writel(DDR3_ADDR, &phy0_ctrl->phy_con24);
+	writel(DDR3_ADDR, &phy1_ctrl->phy_con24);
+
+	/* Setting Operation Mode as DDR3 and enabling byte_rdlvl */
+	val = PHY_CON0_RESET_VAL;
+	SET_CTRL_DDR_MODE(val, DDR_MODE_DDR3);
+	SET_T_RDDATA_MARGIN(val, DDR3_T_RDDATA_MARGIN);
+	val |= BYTE_RDLVL_EN;
+	writel(val, &phy0_ctrl->phy_con0);
+	writel(val, &phy1_ctrl->phy_con0);
 
 	/* Enable Read Leveling */
 	val = PHY_CON2_RESET_VAL | RDLVL_EN;
@@ -271,14 +255,7 @@ void mem_ctrl_init()
 	val = RDLVL_CONFIG_RESET_VAL | CTRL_RDLVL_DATA_EN;
 	writel(val, &dmc->rdlvl_config);
 
-	/*
-	 * Looping till Read level completion happens
-	 * for both channel-0 and channel-1
-	 */
-	do {
-		val = readl(&dmc->phystatus);
-		val &= (RDLVL_COMPLETE_CHO | RDLVL_COMPLETE_CH1);
-	} while (val == 0);
+	sdelay(10000);
 
 	/* Disable data eye training */
 	val = RDLVL_CONFIG_RESET_VAL & ~CTRL_RDLVL_DATA_EN;
@@ -286,9 +263,26 @@ void mem_ctrl_init()
 
 	config_ctrl_dll_on(SET, phy0_ctrl, phy1_ctrl);
 
-	update_reset_dll(dmc);
+	update_reset_dll(dmc, DDR_MODE_DDR3);
 
-	config_prech(dmc);
+	val = PHY_CON12_RESET_VAL;
+	val |= (DDR3_CTRL_FORCE << 8);
+	writel(val, &phy0_ctrl->phy_con12);
+	writel(val, &phy1_ctrl->phy_con12);
+
+	update_reset_dll(dmc, DDR_MODE_DDR3);
+
+	/* Setting Operation Mode as DDR3 and enabling byte_rdlvl */
+	val = PHY_CON0_RESET_VAL;
+	SET_CTRL_DDR_MODE(val, DDR_MODE_DDR3);
+	SET_T_RDDATA_MARGIN(val, DDR3_T_RDDATA_MARGIN);
+	val |= BYTE_RDLVL_EN;
+	writel(val, &phy0_ctrl->phy_con0);
+	writel(val, &phy1_ctrl->phy_con0);
+
+	/* Enable Read Leveling */
+	writel(SET_RDLVL_RDDATA_ADJ, &phy0_ctrl->phy_con1);
+	writel(SET_RDLVL_RDDATA_ADJ, &phy1_ctrl->phy_con1);
 
 	/*
 	 * Dynamic Clock: Always Running
@@ -302,13 +296,15 @@ void mem_ctrl_init()
 
 	/*
 	 * Set DMC Concontrol
-	 *  rd_fetch = 0x3
-	 *  empty = 0
-	 *  Auto refresh counter enable
+	 * dfi_init_start = 1
+	 * rd_fetch = 0x2
+	 * empty = 0
+	 * Auto refresh counter enable
 	 */
 	val = DMC_CONCONTROL_RESET_VAL;
 	SET_RD_FETCH(val);
 	val &= ~EMPTY;
+	val |= DFI_INIT_START;
 	val |= AREF_EN;
 	writel(val, &dmc->concontrol);
 }
