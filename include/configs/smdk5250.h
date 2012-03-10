@@ -25,6 +25,10 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
+/* Enable Serial Flash Support */
+#define CONFIG_SPI_FLASH
+#define CONFIG_ENV_IS_IN_SPI_FLASH
+
 #include "exynos5-common.h"	/* Common Exynos5 based board configurations */
 
 /* High Level Configuration Options */
@@ -119,13 +123,6 @@
 #define PHYS_SDRAM_7_SIZE	SDRAM_BANK_SIZE
 #define PHYS_SDRAM_8		(CONFIG_SYS_SDRAM_BASE + (7 * SDRAM_BANK_SIZE))
 #define PHYS_SDRAM_8_SIZE	SDRAM_BANK_SIZE
-
-/* Enable Serial Flash Support */
-#define CONFIG_SPI_FLASH
-#define CONFIG_ENV_IS_IN_SPI_FLASH
-
-/* Environment */
-#define CONFIG_ENV_SECT_SIZE    CONFIG_ENV_SIZE
 
 #define CONFIG_IDENT_STRING		" for SMDK5250"
 
