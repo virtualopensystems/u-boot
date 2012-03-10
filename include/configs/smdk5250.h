@@ -124,6 +124,9 @@
 #define CONFIG_SPI_FLASH
 #define CONFIG_ENV_IS_IN_SPI_FLASH
 
+/* Environment */
+#define CONFIG_ENV_SECT_SIZE    CONFIG_ENV_SIZE
+
 #define CONFIG_IDENT_STRING		" for SMDK5250"
 
 /* #define CONFIG_ENV_IS_IN_MMC */
