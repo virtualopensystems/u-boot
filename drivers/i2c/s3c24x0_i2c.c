@@ -229,7 +229,7 @@ void i2c_init(int speed, int slaveadd)
 	gpio = exynos_get_base_gpio1();
 	writel((readl(&gpio->b3.con) & ~0x00FF) | 0x0022, &gpio->b3.con);
 
-	i2c_ch_init(speed, slaveadd, i2c);
+	i2c_ch_init(i2c, speed, slaveadd);
 }
 
 /*
