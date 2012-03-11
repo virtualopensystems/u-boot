@@ -320,7 +320,6 @@ endif
 
 ifeq ($(SOC),s5pc1xx)
 LIBS += $(CPUDIR)/s5p-common/libs5p-common.o
-LIBS += $(CPUDIR)/exynos-common/libexynos-common.o
 endif
 ifeq ($(SOC),exynos4)
 LIBS += $(CPUDIR)/s5p-common/libs5p-common.o
