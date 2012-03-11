@@ -378,8 +378,6 @@
 /* DMC Init */
 #define SET			1
 #define RESET			0
-/* (Memory Interleaving Size = 1 << IV_SIZE) */
-#define CONFIG_IV_SIZE		0x07
 
 #define LPDDR3PHY_CTRL_PHY_RESET	(1 << 0)
 #define LPDDR3PHY_CTRL_PHY_RESET_OFF	(0 << 0)
@@ -530,6 +528,16 @@
 /* Functions common between LPDDR2 and DDR3 */
 void sdelay(unsigned long);
 void mem_ctrl_init(void);
+/*
+ * Memory variant specific initialization code
+ * @param mem_iv_size	memory interleaving size is a configurable parameter
+ *			which the DMC uses to decide how to split a memory
+ *			chunk into smaller chunks to support concurrent
+ *			accesses; may vary across boards.
+ */
+void ddr3_mem_ctrl_init(unsigned long mem_iv_size);
+void lpddr2_mem_ctrl_init(unsigned long mem_iv_size);
+
 void system_clock_init(void);
 void mem_clk_setup(void);
 void tzpc_init(void);

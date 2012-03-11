@@ -128,7 +128,7 @@ static void config_ctrl_dll_on(unsigned int state,
 	writel(tmp, &phy1_ctrl->phy_con12);
 }
 
-void mem_ctrl_init()
+void ddr3_mem_ctrl_init(unsigned long mem_iv_size)
 {
 	struct exynos5_phy_control *phy0_ctrl, *phy1_ctrl;
 	struct exynos5_dmc *dmc;
@@ -203,7 +203,7 @@ void mem_ctrl_init()
 	config_memory(dmc);
 
 	/* Memory Channel Inteleaving Size: 128 Bytes */
-	writel(CONFIG_IV_SIZE, &dmc->ivcontrol);
+	writel(mem_iv_size, &dmc->ivcontrol);
 
 	/* Precharge Configuration */
 	writel(DMC_PRECHCONFIG_VAL, &dmc->prechconfig);

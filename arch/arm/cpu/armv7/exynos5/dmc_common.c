@@ -23,6 +23,7 @@
  */
 
 #include "setup.h"
+#include <asm/arch-exynos/spl.h>
 
 /* TODO(clchiou): Move to device tree */
 #ifdef CONFIG_LPDDR2
@@ -151,4 +152,14 @@ void config_memory(struct exynos5_dmc *dmc)
 	writel(DMC_MEMCONFIG1_VAL, &dmc->memconfig1);
 	writel(DMC_MEMBASECONFIG0_VAL, &dmc->membaseconfig0);
 	writel(DMC_MEMBASECONFIG1_VAL, &dmc->membaseconfig1);
+}
+
+void mem_ctrl_init()
+{
+	struct spl_machine_param *param = spl_get_machine_params();
+
+	if (param->mem_type == DDR_MODE_DDR3)
+		ddr3_mem_ctrl_init(param->mem_iv_size);
+	else
+		lpddr2_mem_ctrl_init(param->mem_iv_size);
 }

@@ -95,8 +95,10 @@ lowlevel_init:
 	/* init power */
 	bl	power_init
 
+#if defined(CONFIG_SPL_BUILD)
 	/* Memory initialize */
 	bl	mem_ctrl_init
+#endif
 
 1:
 	bl	tzpc_init
@@ -104,7 +106,9 @@ lowlevel_init:
 
 wakeup_reset:
 	bl	system_clock_init
+#if defined(CONFIG_SPL_BUILD)
 	bl	mem_ctrl_init
+#endif
 	bl	tzpc_init
 
 exit_wakeup:

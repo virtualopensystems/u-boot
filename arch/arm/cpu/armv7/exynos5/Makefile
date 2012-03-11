@@ -23,9 +23,8 @@ include $(TOPDIR)/config.mk
 LIB	= $(obj)lib$(SOC).o
 
 SOBJS	:= lowlevel_init.o
-COBJS-y	:= clock.o clock_init.o dmc_common.o pinmux.o power.o tzpc_init.o
-COBJS-$(CONFIG_DDR3)	+= dmc_init_ddr3.o
-COBJS-$(CONFIG_LPDDR2)	+= dmc_init_lpddr2.o
+COBJS-y	:= clock.o clock_init.o pinmux.o power.o tzpc_init.o
+COBJS-$(CONFIG_SPL_BUILD) += dmc_common.o dmc_init_ddr3.o dmc_init_lpddr2.o
 
 COBJS	:= $(COBJS-y)
 SRCS	:= $(SOBJS:.o=.S) $(COBJS:.o=.c)

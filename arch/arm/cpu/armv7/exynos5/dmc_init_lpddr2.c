@@ -205,7 +205,7 @@ static void config_rdlvl(struct exynos5_dmc *dmc,
 }
 #endif
 
-void mem_ctrl_init()
+void lpddr2_mem_ctrl_init(unsigned long mem_iv_size)
 {
 	struct exynos5_phy_control *phy0_ctrl, *phy1_ctrl;
 	struct exynos5_dmc *dmc;
@@ -274,7 +274,7 @@ void mem_ctrl_init()
 	writel(DMC_TIMINGPOWER_VAL, &dmc->timingpower);
 
 	/* Memory Channel Inteleaving Size: 128 Bytes */
-	writel(CONFIG_IV_SIZE, &dmc->ivcontrol);
+	writel(mem_iv_size, &dmc->ivcontrol);
 
 	/* Set DQS, DQ and DEBUG offsets */
 	config_offsets(SET, phy0_ctrl, phy1_ctrl);

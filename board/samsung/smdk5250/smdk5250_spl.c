@@ -22,6 +22,7 @@
 
 #include <common.h>
 #include <asm/arch-exynos/spl.h>
+#include <asm/arch/dmc.h>
 
 #define SIGNATURE	0xdeadbeef
 
@@ -29,6 +30,8 @@
 static struct spl_machine_param machine_param
 		__attribute__ ((packed, section(".machine_param"))) = {
 	.signature	= SIGNATURE,
+	.mem_type	= DDR_MODE_DDR3,
+	.mem_iv_size	= 0x1f,
 };
 
 struct spl_machine_param *spl_get_machine_params(void)
