@@ -527,12 +527,6 @@
 #define DPWRDN_EN	(1 << 1)
 #define DSREF_EN	(1 << 5)
 
-enum ddr_mode {
-	DDR_MODE_DDR3	= 1,
-	DDR_MODE_LPDDR2,
-	DDR_MODE_LPDDR3,
-};
-
 /* Functions common between LPDDR2 and DDR3 */
 void sdelay(unsigned long);
 void mem_ctrl_init(void);

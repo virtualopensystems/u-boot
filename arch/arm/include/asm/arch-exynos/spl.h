@@ -23,11 +23,15 @@
 #ifndef __ASM_ARCH_EXYNOS_SPL_H__
 #define __ASM_ARCH_EXYNOS_SPL_H__
 
+#include <asm/arch-exynos5/dmc.h>
+
 /* Parameters of early board initialization in SPL */
 struct spl_machine_param {
 	/* Add fields as and when required */
-	u32	signature;
-	char	padding[0x03fc];	/* Pad to 1024 bytes */
+	u32		signature;
+	u32		mem_iv_size;     /* Memory channel interleaving size */
+	enum ddr_mode	mem_type;        /* Type of on-board memory */
+	char		padding[0x03f4]; /* Pad to 1024 bytes */
 };
 
 /**

@@ -142,5 +142,13 @@ struct exynos5_phy_control {
 	unsigned int phy_con41;
 	unsigned int phy_con42;
 };
+
+enum ddr_mode {
+	DDR_MODE_DDR2,
+	DDR_MODE_DDR3,
+	DDR_MODE_LPDDR2,
+	DDR_MODE_LPDDR3,
+};
+
 #endif
 #endif
