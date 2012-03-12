@@ -53,6 +53,9 @@
 
 #define EXYNOS4_GPIO_PART4_BASE		DEVICE_NOT_AVAILABLE
 
+/* Compatibility defines */
+#define EXYNOS_POWER_BASE               EXYNOS4_POWER_BASE
+
 #ifndef __ASSEMBLY__
 
 #define SAMSUNG_BASE(device, base)				\

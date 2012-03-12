@@ -53,6 +53,9 @@
 #define EXYNOS5_ADC_BASE		DEVICE_NOT_AVAILABLE
 #define EXYNOS5_MODEM_BASE		DEVICE_NOT_AVAILABLE
 
+/* Compatibility defines */
+#define EXYNOS_POWER_BASE		EXYNOS5_POWER_BASE
+
 #ifndef __ASSEMBLY__
 
 #define SAMSUNG_BASE(device, base)				\
