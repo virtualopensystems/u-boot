@@ -96,58 +96,73 @@ static void smc9115_pre_init(void)
 }
 #endif
 
+int fdtdec_decode_memory(const void *blob, struct fdt_memory *config)
+{
+	int node, len;
+	const fdt_addr_t *cell;
+
+	node = fdt_path_offset(blob, "/memory");
+	if (node < 0) {
+		debug("Could not find the path /memory\n");
+		return node;
+	}
+	cell = fdt_getprop(blob, node, "reg", &len);
+	if (cell && len == sizeof(fdt_addr_t) * 2) {
+		config->start = fdt_addr_to_cpu(cell[0]);
+		config->end = fdt_addr_to_cpu(cell[1]);
+	} else {
+		return -FDT_ERR_BADLAYOUT;
+	}
+
+	return 0;
+}
+
 int board_init(void)
 {
+	struct fdt_memory mem_config;
+
+	if (fdtdec_decode_memory(gd->fdt_blob, &mem_config)) {
+		debug("%s: Failed to decode memory\n", __func__);
+		return -1;
+	}
+
+	gd->bd->bi_boot_params = mem_config.start + 0x100UL;
+
 #ifdef CONFIG_OF_CONTROL
 	gd->bd->bi_arch_number = fdtdec_get_config_int(gd->fdt_blob,
 				"machine-arch-id", -1);
 	if (gd->bd->bi_arch_number == -1U)
 		debug("Warning: No /config/machine-arch-id defined in fdt\n");
 #endif
-
-	gd->bd->bi_boot_params = (PHYS_SDRAM_1 + 0x100UL);
 	return 0;
 }
 
 int dram_init(void)
 {
-	gd->ram_size	= get_ram_size((long *)PHYS_SDRAM_1, PHYS_SDRAM_1_SIZE)
-			+ get_ram_size((long *)PHYS_SDRAM_2, PHYS_SDRAM_2_SIZE)
-			+ get_ram_size((long *)PHYS_SDRAM_3, PHYS_SDRAM_3_SIZE)
-			+ get_ram_size((long *)PHYS_SDRAM_4, PHYS_SDRAM_4_SIZE)
-			+ get_ram_size((long *)PHYS_SDRAM_5, PHYS_SDRAM_5_SIZE)
-			+ get_ram_size((long *)PHYS_SDRAM_6, PHYS_SDRAM_6_SIZE)
-			+ get_ram_size((long *)PHYS_SDRAM_7, PHYS_SDRAM_7_SIZE)
-			+ get_ram_size((long *)PHYS_SDRAM_8, PHYS_SDRAM_8_SIZE);
+	struct fdt_memory mem_config;
+
+	if (fdtdec_decode_memory(gd->fdt_blob, &mem_config)) {
+		debug("%s: Failed to decode memory\n", __func__);
+		return -1;
+	}
+
+	gd->ram_size = get_ram_size((long *)mem_config.start,
+				mem_config.end);
 	return 0;
 }
 
 void dram_init_banksize(void)
 {
-	gd->bd->bi_dram[0].start = PHYS_SDRAM_1;
-	gd->bd->bi_dram[0].size = get_ram_size((long *)PHYS_SDRAM_1,
-							PHYS_SDRAM_1_SIZE);
-	gd->bd->bi_dram[1].start = PHYS_SDRAM_2;
-	gd->bd->bi_dram[1].size = get_ram_size((long *)PHYS_SDRAM_2,
-							PHYS_SDRAM_2_SIZE);
-	gd->bd->bi_dram[2].start = PHYS_SDRAM_3;
-	gd->bd->bi_dram[2].size = get_ram_size((long *)PHYS_SDRAM_3,
-							PHYS_SDRAM_3_SIZE);
-	gd->bd->bi_dram[3].start = PHYS_SDRAM_4;
-	gd->bd->bi_dram[3].size = get_ram_size((long *)PHYS_SDRAM_4,
-							PHYS_SDRAM_4_SIZE);
-	gd->bd->bi_dram[4].start = PHYS_SDRAM_5;
-	gd->bd->bi_dram[4].size = get_ram_size((long *)PHYS_SDRAM_5,
-							PHYS_SDRAM_5_SIZE);
-	gd->bd->bi_dram[5].start = PHYS_SDRAM_6;
-	gd->bd->bi_dram[5].size = get_ram_size((long *)PHYS_SDRAM_6,
-							PHYS_SDRAM_6_SIZE);
-	gd->bd->bi_dram[6].start = PHYS_SDRAM_7;
-	gd->bd->bi_dram[6].size = get_ram_size((long *)PHYS_SDRAM_7,
-							PHYS_SDRAM_7_SIZE);
-	gd->bd->bi_dram[7].start = PHYS_SDRAM_8;
-	gd->bd->bi_dram[7].size = get_ram_size((long *)PHYS_SDRAM_8,
-							PHYS_SDRAM_8_SIZE);
+	struct fdt_memory mem_config;
+
+	if (fdtdec_decode_memory(gd->fdt_blob, &mem_config)) {
+		debug("%s: Failed to decode memory\n", __func__);
+		return;
+	}
+
+	gd->bd->bi_dram[0].start = mem_config.start;
+	gd->bd->bi_dram[0].size = get_ram_size((long *)mem_config.start,
+				mem_config.end);
 }
 
 int board_eth_init(bd_t *bis)
