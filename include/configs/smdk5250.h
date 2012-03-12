@@ -107,6 +107,9 @@
 
 #define CONFIG_NR_DRAM_BANKS	1
 
+/* Select SPI boot mode support */
+#define CONFIG_EXYNOS_SPI_BOOT
+
 #define CONFIG_IDENT_STRING		" for SMDK5250"
 
 /* #define CONFIG_ENV_IS_IN_MMC */
