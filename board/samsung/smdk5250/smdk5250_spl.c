@@ -30,6 +30,10 @@
 static struct spl_machine_param machine_param
 		__attribute__ ((packed, section(".machine_param"))) = {
 	.signature	= SIGNATURE,
+	.version	= 1,
+	.params		= "vm",
+	.size		= sizeof(machine_param),
+
 	.mem_type	= DDR_MODE_DDR3,
 	.mem_iv_size	= 0x1f,
 };

@@ -29,9 +29,23 @@
 struct spl_machine_param {
 	/* Add fields as and when required */
 	u32		signature;
-	u32		mem_iv_size;     /* Memory channel interleaving size */
-	enum ddr_mode	mem_type;        /* Type of on-board memory */
-	char		padding[0x03f4]; /* Pad to 1024 bytes */
+	u32		version;	/* Version number */
+	u32		size;		/* Size of block */
+	/**
+	 * Parameters we expect, in order, terminated with \0. Each parameter
+	 * is a single character representing one 32-bit word in this
+	 * structure.
+	 *
+	 * Valid characters in this string are:
+	 *
+	 * Code		Name
+	 * v		mem_iv_size
+	 * m		mem_type
+	 * <space>	empty parameter, skip
+	 */
+	char		params[4];	/* Length must be word-aligned */
+	u32		mem_iv_size;	/* Memory channel interleaving size */
+	enum ddr_mode	mem_type;	/* Type of on-board memory */
 };
 
 /**
