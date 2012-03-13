@@ -479,7 +479,7 @@ static char *failed = "*** failed ***\n";
 static int should_load_env(void)
 {
 #ifdef CONFIG_OF_LOAD_ENVIRONMENT
-	return fdt_decode_get_config_int(gd->fdt_blob, "load_env", 0);
+	return fdtdec_get_config_int(gd->fdt_blob, "load_env", 0);
 #else
 	return 1;
 #endif
