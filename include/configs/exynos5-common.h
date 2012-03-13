@@ -29,6 +29,7 @@
 #define CONFIG_SAMSUNG			/* in a SAMSUNG core */
 #define CONFIG_S5P			/* S5P Family */
 #define CONFIG_EXYNOS5			/* which is in a Exynos5 Family */
+#define BUILD_PART_FS_STUFF	1	/* Disk Partition Support */
 
 #include <asm/arch/cpu.h>		/* get chip and board defs */
 
@@ -146,7 +147,11 @@
 
 /* U-boot copy size from boot Media to DRAM.*/
 #define BL2_START_OFFSET	(CONFIG_BL2_OFFSET/512)
+
+#if BUILD_PART_FS_STUFF
 #define CONFIG_DOS_PARTITION
+#define CONFIG_EFI_PARTITION
+#endif
 
 #define CONFIG_IRAM_STACK	0x02050000
 #define CONFIG_SPL_LDSCRIPT
