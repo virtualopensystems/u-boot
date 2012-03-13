@@ -119,8 +119,9 @@ static void print_partition_extended (block_dev_desc_t *dev_desc, int ext_part_s
 		return;
 	}
 	if(i==DOS_PBR) {
-		printf ("    1\t\t         0\t%10ld\t%2x\n",
-			dev_desc->lba, buffer[DOS_PBR_MEDIA_TYPE_OFFSET]);
+		printf("    1\t\t         0\t%10lld\t%2x\n",
+		       (uint64_t)dev_desc->lba,
+		       buffer[DOS_PBR_MEDIA_TYPE_OFFSET]);
 		return;
 	}
 	/* Print all primary/logical partitions */

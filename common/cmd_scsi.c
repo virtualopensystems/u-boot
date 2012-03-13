@@ -84,8 +84,9 @@ void scsi_setup_inquiry(ccb * pccb);
 void scsi_ident_cpy (unsigned char *dest, unsigned char *src, unsigned int len);
 
 
-ulong scsi_read(int device, ulong blknr, ulong blkcnt, void *buffer);
-ulong scsi_write(int device, ulong blknr, ulong blkcnt, const void *buffer);
+static ulong scsi_read(int device, ulong blknr, lbaint_t blkcnt, void *buffer);
+static ulong scsi_write(int device, ulong blknr,
+			lbaint_t blkcnt, const void *buffer);
 
 
 /*********************************************************************************
@@ -494,9 +495,10 @@ int do_scsi (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 
 #define SCSI_MAX_READ_BLK 0xFFFF /* almost the maximum amount of the scsi_ext command.. */
 
-ulong scsi_read(int device, ulong blknr, ulong blkcnt, void *buffer)
+static ulong scsi_read(int device, ulong blknr, lbaint_t blkcnt, void *buffer)
 {
-	ulong start,blks, buf_addr;
+	lbaint_t start, blks;
+	uintptr_t buf_addr;
 	unsigned short smallblks;
 	ccb* pccb=(ccb *)&tempccb;
 	device&=0xff;
@@ -507,7 +509,9 @@ ulong scsi_read(int device, ulong blknr, ulong blkcnt, void *buffer)
 	buf_addr=(unsigned long)buffer;
 	start=blknr;
 	blks=blkcnt;
-	debug ("\nscsi_read: dev %d startblk %lx, blccnt %lx buffer %lx\n",device,start,blks,(unsigned long)buffer);
+	debug("\nscsi_read: dev %d startblk " LBAF
+	      ", blccnt " LBAF " buffer %lx\n",
+	      device, start, blks, (unsigned long)buffer);
 	do {
 		pccb->pdata=(unsigned char *)buf_addr;
 		if(blks>SCSI_MAX_READ_BLK) {
@@ -524,7 +528,9 @@ ulong scsi_read(int device, ulong blknr, ulong blkcnt, void *buffer)
 			start+=blks;
 			blks=0;
 		}
-		debug ("scsi_read_ext: startblk %lx, blccnt %x buffer %lx\n",start,smallblks,buf_addr);
+		debug("scsi_read_ext: startblk " LBAF
+		      ", blccnt %x buffer %lx\n",
+		      start, smallblks, buf_addr);
 		if(scsi_exec(pccb)!=TRUE) {
 			scsi_print_error(pccb);
 			blkcnt-=blks;
@@ -532,7 +538,8 @@ ulong scsi_read(int device, ulong blknr, ulong blkcnt, void *buffer)
 		}
 		buf_addr+=pccb->datalen;
 	} while(blks!=0);
-	debug ("scsi_read_ext: end startblk %lx, blccnt %x buffer %lx\n",start,smallblks,buf_addr);
+	debug("scsi_read_ext: end startblk " LBAF
+	      ", blccnt %x buffer %lx\n", start, smallblks, buf_addr);
 	return(blkcnt);
 }
 
@@ -543,9 +550,11 @@ ulong scsi_read(int device, ulong blknr, ulong blkcnt, void *buffer)
 /* Almost the maximum amount of the scsi_ext command.. */
 #define SCSI_MAX_WRITE_BLK 0xFFFF
 
-ulong scsi_write(int device, ulong blknr, ulong blkcnt, const void *buffer)
+static ulong scsi_write(int device, ulong blknr,
+			lbaint_t blkcnt, const void *buffer)
 {
-	ulong start, blks, buf_addr;
+	lbaint_t start, blks;
+	uintptr_t buf_addr;
 	unsigned short smallblks;
 	ccb* pccb = (ccb *)&tempccb;
 	device &= 0xff;
@@ -556,7 +565,7 @@ ulong scsi_write(int device, ulong blknr, ulong blkcnt, const void *buffer)
 	buf_addr = (unsigned long)buffer;
 	start = blknr;
 	blks = blkcnt;
-	debug("\n%s: dev %d startblk %lx, blccnt %lx buffer %lx\n",
+	debug("\n%s: dev %d startblk " LBAF ", blccnt " LBAF " buffer %lx\n",
 	      __func__, device, start, blks, (unsigned long)buffer);
 	do {
 		pccb->pdata = (unsigned char *)buf_addr;
@@ -574,7 +583,7 @@ ulong scsi_write(int device, ulong blknr, ulong blkcnt, const void *buffer)
 			start += blks;
 			blks = 0;
 		}
-		debug("%s: startblk %lx, blccnt %x buffer %lx\n",
+		debug("%s: startblk " LBAF ", blccnt %x buffer %lx\n",
 		      __func__, start, smallblks, buf_addr);
 		if (scsi_exec(pccb) != TRUE) {
 			scsi_print_error(pccb);
@@ -583,7 +592,7 @@ ulong scsi_write(int device, ulong blknr, ulong blkcnt, const void *buffer)
 		}
 		buf_addr += pccb->datalen;
 	} while (blks != 0);
-	debug("%s: end startblk %lx, blccnt %x buffer %lx\n",
+	debug("%s: end startblk " LBAF ", blccnt %x buffer %lx\n",
 	      __func__, start, smallblks, buf_addr);
 	return blkcnt;
 }
