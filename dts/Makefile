@@ -41,8 +41,11 @@ $(if $(CONFIG_ARCH_DEVICE_TREE),,\
 $(error Your architecture does not have device tree support enabled. \
 Please define CONFIG_ARCH_DEVICE_TREE))
 
-# We preprocess the device tree file provide a useful define
-DTS_CPPFLAGS := -DARCH_CPU_DTS=\"$(SRCTREE)/arch/$(ARCH)/dts/$(CONFIG_ARCH_DEVICE_TREE).dtsi\"
+# Provide a list of include directories for dtc
+DTS_FLAGS := -i $(SRCTREE)/arch/$(ARCH)/dts
+
+# TODO(sjg): This should depend on CONFIG_CHROMEOS when we have it ready
+DTS_FLAGS += -i $(SRCTREE)/cros/dts
 
 all:	$(obj).depend $(LIB)
 
@@ -50,15 +53,9 @@ all:	$(obj).depend $(LIB)
 # objcopy doesn't seem to allow us to set the symbol name independently of
 # the filename.
 DT_BIN	:= $(obj)dt.dtb
-DTS_DIR = $(TOPDIR)/board/$(VENDOR)/dts
 
-$(DT_BIN): $(DTS_DIR)/$(DEVICE_TREE).dts
-	cd $(DTS_DIR) && \
-	    cat $< | $(CPP) -P $(DTS_CPPFLAGS) - | \
-	    tee "$(shell readlink -m $@.tmp)" | \
-	    $(DTC) -R 4 -p 0x1000 -O dtb -o $(shell readlink -m $@) - || \
-	    echo "${DTC} failed on input copied into $@.tmp}"
-	rm $(shell readlink -m $@.tmp)
+$(DT_BIN): $(TOPDIR)/board/$(VENDOR)/dts/$(DEVICE_TREE).dts
+	$(DTC) -R 4 -p 0x1000 -O dtb -o ${DT_BIN} $(DTS_FLAGS) $<
 
 process_lds = \
 	$(1) | sed -r -n 's/^OUTPUT_$(2)[ ("]*([^")]*).*/\1/p'
