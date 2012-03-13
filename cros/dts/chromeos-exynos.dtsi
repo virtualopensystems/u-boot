@@ -1,0 +1,30 @@
+/*
+ * Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/*
+ * This file holds Chrome OS-specific options for Exynos, kept within a
+ * chromeos-config node.
+ */
+
+/ {
+	chromeos-config {
+		twostop;                /* Two-stop boot */
+		twostop-optional;       /* One-stop optimization enabled */
+		textbase = <0x43e00000>;/* Address where U-Boot loads */
+		twostop-device = "emmc";/* Place for second stage firmware */
+		boot-device = "emmc";	/* Where SPL loads U-Boot from */
+		flash-method = "exynos";/* How to flash the board */
+	};
+
+	config {
+		silent_console = <0>;
+	};
+
+	chosen {
+		bootargs = "";
+	};
+
+};
