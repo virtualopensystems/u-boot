@@ -236,7 +236,7 @@ ifneq ($(CONFIG_CHROMEOS),)
 CPPFLAGS += -I$(TOPDIR)/cros/include
 endif
 
-ifdef VBOOT
+ifdef CONFIG_CHROMEOS
 CPPFLAGS += -I$(if $(VBOOT_SOURCE),$(VBOOT_SOURCE)/firmware/include,\
 		$(VBOOT)/include/vboot)
 endif

@@ -361,6 +361,31 @@ LDPPFLAGS += \
 __OBJS := $(subst $(obj),,$(OBJS))
 __LIBS := $(subst $(obj),,$(LIBS)) $(subst $(obj),,$(LIBBOARD))
 
+ifdef VBOOT_SOURCE
+# Go off and build vboot_reference directory with the same CFLAGS
+# This is a eng convenience, not used by ebuilds
+# set VBOOT_MAKEFLAGS to required make flags, e.g. MOCK_TPM=1 if no TPM
+CFLAGS_VBOOT = $(filter-out -I%, $(CFLAGS))
+
+# Always call the vboot Makefile, since we don't have its dependencies
+.PHONY : vboot
+vboot:
+	FIRMWARE_ARCH="$(ARCH)" CFLAGS="$(CFLAGS_VBOOT)" \
+		$(MAKE) -C $(VBOOT_SOURCE) \
+		BUILD=$(OBJTREE)/include/generated/vboot \
+		$(MAKEFLAGS_VBOOT)
+
+__LIBS += $(obj)include/generated/vboot/vboot_fw.a
+VBOOT_TARGET := vboot
+endif
+
+# Add vboot_reference lib
+ifdef CONFIG_CHROMEOS
+ifndef VBOOT_SOURCE
+__LIBS += $(VBOOT)/lib/vboot_fw.a
+endif
+endif
+
 #########################################################################
 #########################################################################
 
@@ -483,7 +508,8 @@ GEN_UBOOT = \
 endif
 
 $(obj)u-boot:	depend \
-		$(SUBDIR_TOOLS) $(OBJS) $(LIBBOARD) $(LIBS) $(LDSCRIPT) $(obj)u-boot.lds
+		$(SUBDIR_TOOLS) $(OBJS) $(LIBBOARD) $(LIBS) $(LDSCRIPT) \
+		$(VBOOT_TARGET) $(obj)u-boot.lds
 		$(GEN_UBOOT)
 ifeq ($(CONFIG_KALLSYMS),y)
 		smap=`$(call SYSTEM_MAP,u-boot) | \
