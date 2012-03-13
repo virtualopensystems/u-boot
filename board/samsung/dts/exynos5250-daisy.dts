@@ -11,10 +11,13 @@
 
 /dts-v1/;
 /include/ "exynos5250.dtsi"
+/include/ "flashmap-exynos-ro.dtsi"
+/include/ "flashmap-4mb-rw.dtsi"
+/include/ "chromeos-exynos.dtsi"
 
 / {
-	model = "Daisy/ADV Board based on Exynos5250";
-	compatible = "samsung,daisy-adv", "samsung,exynos5250";
+	model = "Daisy Board based on Exynos5250";
+	compatible = "samsung,daisy", "samsung,exynos5250";
 
 	aliases {
 		serial0 = "/serial@12C30000";
