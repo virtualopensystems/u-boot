@@ -106,7 +106,11 @@
 #define CONFIG_SYS_MONITOR_BASE	0x00000000
 
 #ifdef CONFIG_SPI_FLASH
+/* Enable SPI H/W Controller Driver support */
+#define CONFIG_EXYNOS_SPI
+
 #define CONFIG_CMD_SF
+#define CONFIG_CMD_SPI
 #define CONFIG_SPI_FLASH_WINBOND
 #define CONFIG_SF_DEFAULT_MODE SPI_MODE_0
 #endif
