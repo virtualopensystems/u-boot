@@ -146,7 +146,6 @@
 
 /* U-boot copy size from boot Media to DRAM.*/
 #define BL2_START_OFFSET	(CONFIG_BL2_OFFSET/512)
-#define BL2_SIZE_BLOC_COUNT	(CONFIG_BL2_SIZE/512)
 #define CONFIG_DOS_PARTITION
 
 #define CONFIG_IRAM_STACK	0x02050000

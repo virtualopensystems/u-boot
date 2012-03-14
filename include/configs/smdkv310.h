@@ -161,7 +161,6 @@
 /* U-boot copy size from boot Media to DRAM.*/
 #define	COPY_BL2_SIZE		0x80000
 #define BL2_START_OFFSET	((CONFIG_ENV_OFFSET + CONFIG_ENV_SIZE)/512)
-#define BL2_SIZE_BLOC_COUNT	(COPY_BL2_SIZE/512)
 
 /* Ethernet Controllor Driver */
 #ifdef CONFIG_CMD_NET
