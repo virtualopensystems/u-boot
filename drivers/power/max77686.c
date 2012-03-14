@@ -22,6 +22,7 @@
  */
 
 #include <common.h>
+#include <i2c.h>
 #include "max77686.h"
 
 /*
@@ -76,8 +77,8 @@ struct max77686_para max77686_param[] = {/*{regnum, vol_addr, vol_bitpos,
  * @param val		value to be written
  *
  */
-static inline int max77686_i2c_write(unsigned int chip_addr,
-					unsigned int reg, unsigned int val)
+static inline int max77686_i2c_write(unsigned char chip_addr,
+					unsigned int reg, unsigned char val)
 {
 	return i2c_write(chip_addr, reg, 1, &val, 1);
 }
@@ -90,8 +91,8 @@ static inline int max77686_i2c_write(unsigned int chip_addr,
  * @param val		value to be written
  *
  */
-static inline int max77686_i2c_read(unsigned int chip_addr,
-					unsigned int reg, unsigned int *val)
+static inline int max77686_i2c_read(unsigned char chip_addr,
+					unsigned int reg, unsigned char *val)
 {
 	return i2c_read(chip_addr, reg, 1, val, 1);
 }
@@ -109,7 +110,7 @@ static inline int max77686_i2c_read(unsigned int chip_addr,
 int max77686_enablereg(enum max77686_regnum reg, int enable)
 {
 	struct max77686_para *pmic;
-	unsigned int read_data;
+	unsigned char read_data;
 	int ret;
 
 	pmic = &max77686_param[reg];
@@ -121,9 +122,9 @@ int max77686_enablereg(enum max77686_regnum reg, int enable)
 	}
 
 	if (enable == REG_DISABLE) {
-		clrbits_le32(&read_data, POR_DEFAULT << pmic->reg_enbitpos);
+		clrbits_8(&read_data, POR_DEFAULT << pmic->reg_enbitpos);
 	} else {
-		clrsetbits_le32(&read_data, POR_DEFAULT << pmic->reg_enbitpos,
+		clrsetbits_8(&read_data, POR_DEFAULT << pmic->reg_enbitpos,
 				pmic->reg_enbiton << pmic->reg_enbitpos);
 	}
 
@@ -148,7 +149,7 @@ int max77686_enablereg(enum max77686_regnum reg, int enable)
 int max77686_volsetting(enum max77686_regnum reg, unsigned int volt, int enable)
 {
 	struct max77686_para *pmic;
-	unsigned int read_data;
+	unsigned char read_data;
 	unsigned int vol_level = 0;
 	int ret;
 
@@ -163,7 +164,7 @@ int max77686_volsetting(enum max77686_regnum reg, unsigned int volt, int enable)
 	if (volt - pmic->vol_min > 0)
 		vol_level = ((volt - pmic->vol_min) * 1000) / pmic->vol_div;
 
-	clrsetbits_le32(&read_data, pmic->vol_bitmask << pmic->vol_bitpos,
+	clrsetbits_8(&read_data, pmic->vol_bitmask << pmic->vol_bitpos,
 			vol_level << pmic->vol_bitpos);
 
 	ret = max77686_i2c_write(MAX77686_I2C_ADDR, pmic->vol_addr, read_data);
