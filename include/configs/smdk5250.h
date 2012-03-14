@@ -158,6 +158,5 @@
 /* Enable SPI H/W Controller Driver support */
 #define CONFIG_EXYNOS_SPI
 #define CONFIG_CMD_SPI
-#define CONFIG_SPI_FLASH_WINBOND
 
 #endif	/* __CONFIG_H */
