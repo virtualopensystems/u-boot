@@ -23,6 +23,7 @@
 #include <common.h>
 #include <usb.h>
 #include <asm/arch/cpu.h>
+#include <asm/arch/power.h>
 #include <asm/arch/ehci-s5p.h>
 #include "ehci.h"
 
