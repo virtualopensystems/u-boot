@@ -54,4 +54,10 @@
 		bank = <1>;
 		srom-timing = <1 9 12 1 6 1 1>;
 	};
+
+	dmc@10C00000 {
+		mem-interleave-size = <0x1f>;
+		mem-type = "ddr3";
+		/* DDR clock rate and timing parameters to be added here */
+	};
 };
