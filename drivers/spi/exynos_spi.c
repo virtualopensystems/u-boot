@@ -59,7 +59,7 @@ void spi_init()
 static void spi_set_clk(struct exynos_spi_slave *spi_slave,
 			struct exynos5_clock *clk)
 {
-	uint dev_index = spi_slave->slave.bus, div;
+	uint dev_index = spi_slave->slave.bus, div = 0;
 	u32 addr;
 	u32 val;
 
@@ -221,7 +221,7 @@ int spi_claim_bus(struct spi_slave *slave)
 	struct exynos_spi *regs = spi_slave->regs;
 	struct exynos5_clock *clk =
 		(struct exynos5_clock *)samsung_get_base_clock();
-	u32 reg;
+	u32 reg = 0;
 	int ret;
 
 	spi_set_clk(spi_slave, clk);
@@ -412,7 +412,7 @@ static int spi_get_cs(struct exynos_spi_slave *spi_slave,
 void spi_cs_activate(struct spi_slave *slave)
 {
 	struct exynos_spi_slave *spi_slave = to_exynos_spi(slave);
-	struct s5p_gpio_bank *reg;
+	struct s5p_gpio_bank *reg = 0;
 	int cs_line;
 
 	cs_line = spi_get_cs(spi_slave, &reg);
@@ -435,7 +435,7 @@ void spi_cs_activate(struct spi_slave *slave)
 void spi_cs_deactivate(struct spi_slave *slave)
 {
 	struct exynos_spi_slave *spi_slave = to_exynos_spi(slave);
-	struct s5p_gpio_bank *reg;
+	struct s5p_gpio_bank *reg = 0;
 	int cs_line;
 
 	cs_line = spi_get_cs(spi_slave, &reg);
