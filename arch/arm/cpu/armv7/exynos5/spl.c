@@ -1,8 +1,5 @@
 /*
- * Copyright (c) 2012 The Chromium OS Authors.
- *
- * See file CREDITS for list of people who contributed to this
- * project.
+ * Copyright (C) 2012 Samsung Electronics
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -20,32 +17,13 @@
  * MA 02111-1307 USA
  */
 
-#include <common.h>
+#include <asm/types.h>
 #include <asm/arch-exynos/spl.h>
-#include <asm/arch/dmc.h>
 
-#define SIGNATURE	0xdeadbeef
-
-/* Parameters of early board initialization in SPL */
-static struct spl_machine_param machine_param
-		__attribute__ ((packed, section(".machine_param"))) = {
-	.signature	= SIGNATURE,
-	.version	= 1,
-	.params		= "vmu",
-	.size		= sizeof(machine_param),
-
-	.mem_type	= DDR_MODE_DDR3,
-	.mem_iv_size	= 0x1f,
-	.uboot_size	= 0x40000,
-};
-
-struct spl_machine_param *spl_get_machine_params(void)
+/* Get the u-boot size from the SPL parameter table */
+unsigned int exynos_get_uboot_size(void)
 {
-	if (machine_param.signature != SIGNATURE) {
-		/* TODO: Call panic() here */
-		while (1)
-			;
-	}
+	struct spl_machine_param *param = spl_get_machine_params();
 
-	return &machine_param;
+	return param->uboot_size;
 }

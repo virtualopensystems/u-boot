@@ -41,11 +41,20 @@ struct spl_machine_param {
 	 * Code		Name
 	 * v		mem_iv_size
 	 * m		mem_type
+	 * u		uboot_size
 	 * <space>	empty parameter, skip
 	 */
 	char		params[4];	/* Length must be word-aligned */
 	u32		mem_iv_size;	/* Memory channel interleaving size */
 	enum ddr_mode	mem_type;	/* Type of on-board memory */
+	/*
+	 * U-boot size - The iROM mmc copy function used by the SPL takes a
+	 * block count paramter to describe the u-boot size unlike the spi
+	 * boot copy function which just uses the u-boot size directly. Align
+	 * the u-boot size to block size (512 bytes) when populating the SPL
+	 * table only for mmc boot.
+	 */
+	u32		uboot_size;
 };
 
 /**

@@ -42,6 +42,14 @@
 
 #ifndef __ASSEMBLY__
 #include <asm/io.h>
+
+/**
+ * Get the U-boot size for SPL copy functions
+ *
+ * @return size of U-Boot code/data that needs to be loaded by the SPL stage
+ */
+unsigned int exynos_get_uboot_size(void);
+
 /* CPU detection macros */
 extern unsigned int s5p_cpu_id;
 extern unsigned int s5p_cpu_rev;

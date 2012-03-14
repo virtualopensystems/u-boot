@@ -73,12 +73,16 @@ static int config_branch_prediction(int set_cr_z)
 static void copy_uboot_to_ram(void)
 {
 	unsigned int sec_boot_check;
+	unsigned int uboot_size;
 	int is_cr_z_set, boot_source;
 	mmc_copy_func_t mmc_copy;
+
 #if defined(CONFIG_EXYNOS_SPI_BOOT)
 	spi_copy_func_t spi_copy;
 #endif
 	usb_copy_func_t usb_copy;
+
+	uboot_size = exynos_get_uboot_size();
 
 	/* Read iRAM location to check for secondary USB boot mode */
 	sec_boot_check = readl(EXYNOS_IRAM_SECONDARY_BASE);
@@ -99,13 +103,14 @@ static void copy_uboot_to_ram(void)
 #if defined(CONFIG_EXYNOS_SPI_BOOT)
 	case SERIAL_BOOT:
 		spi_copy = *(spi_copy_func_t *)EXYNOS_COPY_SPI_FNPTR_ADDR;
-		spi_copy(SPI_FLASH_UBOOT_POS, CONFIG_BL2_SIZE,
+		spi_copy(SPI_FLASH_UBOOT_POS, uboot_size,
 				CONFIG_SYS_TEXT_BASE);
 		break;
 #endif
 	case MMC_BOOT:
 		mmc_copy = *(mmc_copy_func_t *)EXYNOS_COPY_MMC_FNPTR_ADDR;
-		mmc_copy(BL2_START_OFFSET, BL2_SIZE_BLOC_COUNT,
+		assert(!(uboot_size & 511));
+		mmc_copy(BL2_START_OFFSET, uboot_size / 512,
 				CONFIG_SYS_TEXT_BASE);
 		break;
 	}
