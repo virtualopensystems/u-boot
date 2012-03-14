@@ -74,7 +74,7 @@ static struct s3c24x0_i2c *get_base_i2c(int bus_idx)
 	return &i2c[bus_idx];
 }
 
-static inline struct exynos5_gpio_part1 *exynos_get_base_gpio1()
+static inline struct exynos5_gpio_part1 *exynos_get_base_gpio1(void)
 {
 	return (struct exynos5_gpio_part1 *)(EXYNOS5_GPIO_PART1_BASE);
 }
