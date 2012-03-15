@@ -15,6 +15,7 @@
 		/* This defines the order of our USB ports */
 		usb0 = "/usb@c5008000";
 		usb1 = "/usb@c5000000";
+		console = "/serial@70006300";
 	};
 
 	memory {
