@@ -152,7 +152,7 @@
 	\
 	"boot_udevnum=0\0" \
 	"boot_kdevnum=1\0" \
-	"boot_kernelname=vmlinuz.a\0" \
+	"boot_kernelname=vmlinuz.uimg.a\0" \
 	""
 
 #endif	/* __CONFIG_H */
