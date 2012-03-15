@@ -51,6 +51,10 @@ COBJS-y	+= interrupts.o
 COBJS-y	+= reset.o
 SOBJS-$(CONFIG_USE_ARCH_MEMSET) += memset.o
 SOBJS-$(CONFIG_USE_ARCH_MEMCPY) += memcpy.o
+else
+ifeq ($(CONFIG_SYS_GENERIC_BOARD),)
+COBJS-y += hang_spl.o
+endif
 endif
 
 SRCS	:= $(GLSOBJS:.o=.S) $(GLCOBJS:.o=.c) \
