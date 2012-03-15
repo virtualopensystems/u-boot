@@ -18,10 +18,17 @@
  */
 
 #include <asm/types.h>
+#include <asm/arch-exynos/cpu.h>
 #include <asm/arch-exynos/spl.h>
 
 unsigned int exynos_get_uboot_size(void)
 {
 	/* Limit u-boot size to 256KB  */
 	return 0x40000;
+}
+
+enum boot_mode exynos_get_boot_device(void)
+{
+	/* Only MMC boot is currently supported on Exynos4 */
+	return BOOT_MODE_MMC;
 }

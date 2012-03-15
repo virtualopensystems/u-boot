@@ -23,6 +23,7 @@
 #ifndef __ASM_ARCH_EXYNOS_SPL_H__
 #define __ASM_ARCH_EXYNOS_SPL_H__
 
+#include <asm/arch-exynos/cpu.h>
 #include <asm/arch-exynos5/dmc.h>
 
 /* Parameters of early board initialization in SPL */
@@ -42,9 +43,10 @@ struct spl_machine_param {
 	 * v		mem_iv_size
 	 * m		mem_type
 	 * u		uboot_size
+	 * b		boot_source
 	 * <space>	empty parameter, skip
 	 */
-	char		params[4];	/* Length must be word-aligned */
+	char		params[8];	/* Length must be word-aligned */
 	u32		mem_iv_size;	/* Memory channel interleaving size */
 	enum ddr_mode	mem_type;	/* Type of on-board memory */
 	/*
@@ -55,6 +57,7 @@ struct spl_machine_param {
 	 * table only for mmc boot.
 	 */
 	u32		uboot_size;
+	enum boot_mode	boot_source;	/* Boot device */
 } __attribute__((__packed__));
 
 /**

@@ -43,12 +43,31 @@
 #ifndef __ASSEMBLY__
 #include <asm/io.h>
 
+enum boot_mode {
+	/*
+	 * Assign the OM pin values for respective boot modes.
+	 * Exynos4 does not support spi boot and the mmc boot OM
+	 * pin values are the same across Exynos4 and Exynos5.
+	 */
+	BOOT_MODE_MMC = 4,
+	BOOT_MODE_SERIAL = 20,
+	/* Boot based on Operating Mode pin settings */
+	BOOT_MODE_OM = 32,
+};
+
 /**
  * Get the U-boot size for SPL copy functions
  *
  * @return size of U-Boot code/data that needs to be loaded by the SPL stage
  */
 unsigned int exynos_get_uboot_size(void);
+
+/**
+ * Get the boot device containing BL1, BL2 (SPL) and U-boot
+ *
+ * @return boot device
+ */
+enum boot_mode exynos_get_boot_device(void);
 
 /* CPU detection macros */
 extern unsigned int s5p_cpu_id;
