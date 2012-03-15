@@ -35,6 +35,7 @@
 /* Board-specific serial config */
 #define CONFIG_SERIAL_MULTI
 #define CONFIG_TEGRA2_ENABLE_UARTD
+#define CONFIG_SYS_NS16550_SERIAL
 
 /* UARTD: keyboard satellite board UART, default */
 #define CONFIG_SYS_NS16550_COM1		NV_PA_APB_UARTD_BASE

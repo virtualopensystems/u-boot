@@ -33,6 +33,7 @@
 #define CONFIG_DEFAULT_DEVICE_TREE	tegra2-seaboard
 #define CONFIG_OF_CONTROL
 #define CONFIG_OF_SEPARATE
+#define CONFIG_OF_SERIAL
 
 /* High-level configuration options */
 #define TEGRA2_SYSMEM		"mem=384M@0M nvmem=128M@384M mem=512M@512M"
