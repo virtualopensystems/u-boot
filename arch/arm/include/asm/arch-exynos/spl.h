@@ -55,7 +55,7 @@ struct spl_machine_param {
 	 * table only for mmc boot.
 	 */
 	u32		uboot_size;
-};
+} __attribute__((__packed__));
 
 /**
  * Validate signature and return a pointer to the parameter table.  If the

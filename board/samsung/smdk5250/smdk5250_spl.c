@@ -28,7 +28,7 @@
 
 /* Parameters of early board initialization in SPL */
 static struct spl_machine_param machine_param
-		__attribute__ ((packed, section(".machine_param"))) = {
+		__attribute__((section(".machine_param"))) = {
 	.signature	= SIGNATURE,
 	.version	= 1,
 	.params		= "vmu",
