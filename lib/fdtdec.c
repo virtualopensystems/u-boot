@@ -55,12 +55,12 @@ const char *fdtdec_get_compatible(enum fdt_compat_id id)
  * @param name	alias name to look up
  * @return node offset if found, or an error code < 0 otherwise
  */
-static int find_alias_node(const void *blob, const char *name)
+int fdtdec_find_alias_node(const void *blob, const char *name)
 {
 	const char *path;
 	int alias_node;
 
-	debug("find_alias_node: %s\n", name);
+	debug("%s: %s\n", __func__, name);
 	alias_node = fdt_path_offset(blob, "/aliases");
 	if (alias_node < 0)
 		return alias_node;
@@ -152,7 +152,7 @@ int fdtdec_next_alias(const void *blob, const char *name,
 	/* snprintf() is not available */
 	assert(strlen(name) < MAX_STR_LEN);
 	sprintf(str, "%.*s%d", MAX_STR_LEN, name, *upto);
-	node = find_alias_node(blob, str);
+	node = fdtdec_find_alias_node(blob, str);
 	if (node < 0)
 		return node;
 	err = fdt_node_check_compatible(blob, node, compat_names[id]);

@@ -108,6 +108,15 @@ int fdtdec_next_alias(const void *blob, const char *name,
 		enum fdt_compat_id id, int *upto);
 
 /**
+ * Look in the FDT for an alias with the given name and return its node.
+ *
+ * @param blob	FDT blob
+ * @param name	alias name to look up
+ * @return node offset if found, or an error code < 0 otherwise
+ */
+int fdtdec_find_alias_node(const void *blob, const char *name);
+
+/**
  * Find the next compatible node for a peripheral.
  *
  * Do the first call with node = 0. This function will return a pointer to
