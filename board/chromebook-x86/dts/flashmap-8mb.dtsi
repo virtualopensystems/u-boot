@@ -141,15 +141,21 @@
 		rw-a-boot@0 {
 			/* Alignment: no requirement (yet). */
 			label = "fw-main-a";
-			reg = <0x00210000 0x000effc0>;
+			reg = <0x00210000 0x0007ffc0>;
 			type = "blob boot";
 		};
 		rw-a-firmware-id@0 {
 			/* Alignment: no requirement. */
 			label = "rw-fwid-a";
-			reg = <0x002fffc0 0x00000040>;
+			reg = <0x0028ffc0 0x00000040>;
 			read-only;
 			type = "blobstring fwid";
+		};
+		rw-a-unused@0 {
+			label = "rw-unused";
+			reg = <0x00290000 0x00070000>;
+			type = "wiped";
+			wipe-value = [ff];
 		};
 
 		/* ---- Section: Rewritable slot B ---- */
@@ -175,15 +181,21 @@
 		rw-b-boot@0 {
 			label = "fw-main-b";
 			/* Alignment: no requirement (yet). */
-			reg = <0x00310000 0x000effc0>;
+			reg = <0x00310000 0x0007ffc0>;
 			type = "blob boot";
 		};
 		rw-b-firmware-id@0 {
 			label = "rw-fwid-b";
 			/* Alignment: no requirement. */
-			reg = <0x003fffc0 0x00000040>;
+			reg = <0x0038ffc0 0x00000040>;
 			read-only;
 			type = "blobstring fwid";
+		};
+		rw-b-unused@0 {
+			label = "rw-unused";
+			reg = <0x00390000 0x00070000>;
+			type = "wiped";
+			wipe-value = [ff];
 		};
 
 		/*
