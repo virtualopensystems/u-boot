@@ -124,6 +124,8 @@
 #define CONFIG_ENV_SROM_BANK		1
 #endif /*CONFIG_CMD_NET*/
 
+#define CONFIG_LOADADDR			0x42000000
+
 #define SCRIPT_GENERATE_BOOTARGS "script_generate_bootargs=" \
 	"setenv bootargs " \
 		"root=/dev/mmcblk${boot_kdevnum}p3 " \
@@ -140,8 +142,8 @@
 #define CONFIG_BOOTCOMMAND \
 	"run script_generate_bootargs; " \
 	"mmc rescan ${boot_udevnum}; " \
-	"fatload mmc ${boot_udevnum}:c 0x42000000 ${boot_kernelname}; " \
-	"bootm 0x42000000; " \
+	"fatload mmc ${boot_udevnum}:c ${loadaddr} ${boot_kernelname}; " \
+	"bootm ${loadaddr]; " \
 	""
 
 /* Will get defined by the script script_generate_bootargs */
