@@ -48,12 +48,6 @@ _x86boot_start:
 	cli
 	cld
 
-	/* Turn off cache (this might require a 486-class CPU) */
-	movl	%cr0, %eax
-	orl	$(X86_CR0_NW | X86_CR0_CD), %eax
-	movl	%eax, %cr0
-	wbinvd
-
 	/* Tell 32-bit code it is being entered from an in-RAM copy */
 	movw	$GD_FLG_WARM_BOOT, %bx
 	jmp	1f
