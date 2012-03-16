@@ -14,6 +14,7 @@
 #include <common.h>
 #include <asm/global_data.h>
 #include <asm/io.h>
+#include <asm/ibmpc.h>
 #include <pci.h>
 
 #define PM1_STS         0x00
@@ -57,9 +58,14 @@ int is_processor_reset(void)
 void cold_reboot(void)
 {
 	printf("Rebooting...\n");
+
+       /* let's use keyboard controller for this */
+	outb(0xfe, KBDCMD);
+	/*
+	TODO(vbendeb): fix CF9 reset and use it instead of KB reset
 	outb(SYS_RST, RST_CNT);
 	outb(SYS_RST | RST_CPU, RST_CNT);
-
+	*/
 	for (;;)
 		asm("hlt");
 }
