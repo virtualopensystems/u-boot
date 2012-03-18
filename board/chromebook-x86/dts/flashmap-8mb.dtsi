@@ -152,7 +152,7 @@
 			type = "blobstring fwid";
 		};
 		rw-a-unused@0 {
-			label = "rw-unused";
+			label = "rw-unused-a";
 			reg = <0x00290000 0x00070000>;
 			type = "wiped";
 			wipe-value = [ff];
@@ -192,7 +192,7 @@
 			type = "blobstring fwid";
 		};
 		rw-b-unused@0 {
-			label = "rw-unused";
+			label = "rw-unused-b";
 			reg = <0x00390000 0x00070000>;
 			type = "wiped";
 			wipe-value = [ff];
