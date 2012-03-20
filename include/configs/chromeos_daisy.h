@@ -9,6 +9,8 @@
 
 #include <configs/smdk5250.h>
 
+#define CONFIG_INITRD_ADDRESS 0x42000000
+
 #include <configs/chromeos.h>
 
 /*

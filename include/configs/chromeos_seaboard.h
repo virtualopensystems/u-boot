@@ -16,6 +16,8 @@
 /* Support USB booting */
 #define CONFIG_CHROMEOS_USB
 
+#define CONFIG_INITRD_ADDRESS 0x12008000
+
 #include "chromeos.h"
 
 /* We initialize Chrome OS -specific GPIOs here */

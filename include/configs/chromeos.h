@@ -12,6 +12,10 @@
  * firmware must have.
  */
 
+/* Stringify a token */
+#define _STRINGIFY(x)	#x
+#define STRINGIFY(x)	_STRINGIFY(x)
+
 /* Enable verified boot */
 #define CONFIG_CHROMEOS
 
@@ -155,7 +159,7 @@
 	"tftpserverip=0.0.0.0\0" \
 	"nfsserverip=0.0.0.0\0" \
 	\
-	"rootaddr=0x12008000\0" \
+	"rootaddr=" STRINGIFY(CONFIG_INITRD_ADDRESS) "\0" \
 	"initrd_high=0xffffffff\0" \
 	\
 	"regen_nfsroot_bootargs=" \
