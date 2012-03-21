@@ -50,6 +50,7 @@
 
 #define I2CSTAT_BSY	0x20	/* Busy bit */
 #define I2CSTAT_NACK	0x01	/* Nack bit */
+#define I2CCON_ACKGEN	0x80	/* Acknowledge generation */
 #define I2CCON_IRPND	0x10	/* Interrupt pending bit */
 #define I2C_MODE_MT	0xC0	/* Master Transmit Mode */
 #define I2C_MODE_MR	0x80	/* Master Receive Mode */
@@ -265,7 +266,7 @@ static int i2c_transfer(struct s3c24x0_i2c *i2c,
 	if (readl(&i2c->iicstat) & I2CSTAT_BSY)
 		return I2C_NOK_TOUT;
 
-	writel(readl(&i2c->iiccon) | 0x80, &i2c->iiccon);
+	writel(readl(&i2c->iiccon) | I2CCON_ACKGEN, &i2c->iiccon);
 	result = I2C_OK;
 
 	switch (cmd_type) {
@@ -339,7 +340,8 @@ static int i2c_transfer(struct s3c24x0_i2c *i2c,
 					/* disable ACK for final READ */
 					if (i == data_len - 1)
 						writel(readl(&i2c->iiccon)
-						       & ~0x80, &i2c->iiccon);
+							& ~I2CCON_ACKGEN,
+							&i2c->iiccon);
 					ReadWriteByte(i2c);
 					result = WaitForXfer(i2c);
 					data[i] = readl(&i2c->iicds);
@@ -363,7 +365,8 @@ static int i2c_transfer(struct s3c24x0_i2c *i2c,
 					/* disable ACK for final READ */
 					if (i == data_len - 1)
 						writel(readl(&i2c->iiccon) &
-						       ~0x80, &i2c->iiccon);
+							~I2CCON_ACKGEN,
+							&i2c->iiccon);
 					ReadWriteByte(i2c);
 					result = WaitForXfer(i2c);
 					data[i] = readl(&i2c->iicds);
