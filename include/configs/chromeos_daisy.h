@@ -35,11 +35,6 @@
 /* Standard input, output and error device of U-Boot console. */
 #define CONFIG_STD_DEVICES_SETTINGS ""
 
-/* TODO(clchiou): Disable them just for now; re-enable later */
-#undef CONFIG_CHROMEOS
-#undef CONFIG_OF_LOAD_ENVIRONMENT
-#undef CONFIG_OF_UPDATE_FDT_BEFORE_BOOT
-
 /*
  * TODO(clchiou): We override mmc_setup here because today on exynos U-Boot and
  * kernel disagree on eMMC and SD card index.  We should fix this so that the
