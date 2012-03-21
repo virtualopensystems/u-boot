@@ -12,6 +12,7 @@
 
 #include <common.h>
 #include <i2c.h>
+#include <asm/arch/clock.h>
 
 #include <cros/common.h>
 #include <cros/power_management.h>
@@ -24,14 +25,9 @@
 #define TPS6586X_SUPPLYEND	0x13
 #define TPS6586X_SUPPLYENE	0x14
 
-extern uint32_t is_tegra2_processor_reset;
-
 int is_processor_reset(void)
 {
-	if (is_tegra2_processor_reset == ~0U) {
-		VBDEBUG("error: is_tegra2_processor_reset uninitialized\n");
-	}
-	return is_tegra2_processor_reset ? 1 : 0;
+	return clock_was_running() ? 0 : 1;
 }
 
 static int pmic_set_bit(int reg, int bit, int value)
