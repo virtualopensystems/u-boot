@@ -18,8 +18,6 @@
 #include <cros/common.h>
 #include <cros/cros_gpio.h>
 
-#define PREFIX "cros_gpio: "
-
 DECLARE_GLOBAL_DATA_PTR;
 
 static char *gpio_name[CROS_GPIO_MAX_GPIO] = {
@@ -80,7 +78,7 @@ int cros_gpio_fetch(enum cros_gpio_index index, cros_gpio_t *gpio)
 
 	if (fdtdec_decode_gpio(gd->fdt_blob, g_config_node, gpio_name[index],
 			&gs)) {
-		VBDEBUG(PREFIX "fail to decode gpio: %d\n", index);
+		VBDEBUG("fail to decode gpio: %d\n", index);
 		return -1;
 	}
 
@@ -108,11 +106,11 @@ int cros_gpio_dump(cros_gpio_t *gpio)
 	int index = gpio->index;
 
 	if (index < 0 || index >= CROS_GPIO_MAX_GPIO) {
-		VBDEBUG(PREFIX "index out of range: %d\n", index);
+		VBDEBUG("index out of range: %d\n", index);
 		return -1;
 	}
 
-	VBDEBUG(PREFIX "%-6s: port=%3d, polarity=%d, value=%d\n",
+	VBDEBUG("%-6s: port=%3d, polarity=%d, value=%d\n",
 			name[gpio->index],
 			gpio->port, gpio->polarity, gpio->value);
 #endif

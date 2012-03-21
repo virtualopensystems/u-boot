@@ -16,8 +16,6 @@
 
 #include <vboot_api.h>
 
-#define PREFIX		"memory_wipe: "
-
 /*
  * This implementation tracks regions of memory that need to be wiped by
  * filling them with zeroes. It does that by keeping a linked list of the
@@ -114,22 +112,20 @@ void memory_wipe_execute(memory_wipe_t *wipe)
 {
 	memory_wipe_edge_t *cur;
 
-	VBDEBUG(PREFIX "Wipe memory regions:\n");
+	VBDEBUG("Wipe memory regions:\n");
 	for (cur = wipe->head.next; cur; cur = cur->next->next) {
 		phys_addr_t start, end;
 
 		if (!cur->next) {
-			VBDEBUG(PREFIX "Odd number of region edges!\n");
+			VBDEBUG("Odd number of region edges!\n");
 			return;
 		}
 
 		start = cur->pos;
 		end = cur->next->pos;
 
-		VBDEBUG(sizeof(phys_addr_t) == 8 ?
-			PREFIX "\t[%#016llx, %#016llx)\n" :
-			PREFIX "\t[%#08x, %#08x)\n",
-			start, end);
+		VBDEBUG("\t[%#016llx, %#016llx)\n",
+			(uint64_t)start, (uint64_t)end);
 		arch_phys_memset(start, 0, end - start);
 	}
 }

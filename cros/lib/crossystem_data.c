@@ -35,8 +35,6 @@
 /* This is used to keep bootstub and readwite main firmware in sync */
 #define CROSSYSTEM_DATA_VERSION 1
 
-#define PREFIX "crossystem_data: "
-
 enum VdatFwIndex {
 	VDAT_RW_A = 0,
 	VDAT_RW_B = 1,
@@ -60,7 +58,7 @@ int crossystem_data_init(crossystem_data_t *cdata,
 		uint8_t *hardware_id,
 		uint8_t *readonly_firmware_id)
 {
-	VBDEBUG(PREFIX "crossystem data at %p\n", cdata);
+	VBDEBUG("crossystem data at %p\n", cdata);
 
 	memset(cdata, '\0', sizeof(*cdata));
 
@@ -100,19 +98,19 @@ int crossystem_data_init(crossystem_data_t *cdata,
 int crossystem_data_check_integrity(crossystem_data_t *cdata)
 {
 	if (cdata->total_size != sizeof(*cdata)) {
-		VBDEBUG(PREFIX "blob size mismatch: %08x != %08x\n",
+		VBDEBUG("blob size mismatch: %08x != %08x\n",
 				cdata->total_size, sizeof(*cdata));
 		return 1;
 	}
 
 	if (memcmp(cdata->signature, CROSSYSTEM_DATA_SIGNATURE,
 				sizeof(CROSSYSTEM_DATA_SIGNATURE))) {
-		VBDEBUG(PREFIX "invalid signature: \"%s\"\n", cdata->signature);
+		VBDEBUG("invalid signature: \"%s\"\n", cdata->signature);
 		return 1;
 	}
 
 	if (cdata->version != CROSSYSTEM_DATA_VERSION) {
-		VBDEBUG(PREFIX "version mismatch: %08x != %08x\n",
+		VBDEBUG("version mismatch: %08x != %08x\n",
 				cdata->version, CROSSYSTEM_DATA_VERSION);
 		return 1;
 	}
@@ -142,7 +140,7 @@ int crossystem_data_embed_into_fdt(crossystem_data_t *cdata, void *fdt,
 	err = fdt_open_into(fdt, fdt,
 			fdt_totalsize(fdt) + sizeof(*cdata) + 4096);
 	if (err < 0) {
-		VBDEBUG(PREFIX "fail to resize fdt: %s\n", fdt_strerror(err));
+		VBDEBUG("fail to resize fdt: %s\n", fdt_strerror(err));
 		return 1;
 	}
 	*size_ptr = fdt_totalsize(fdt);
@@ -167,7 +165,7 @@ int crossystem_data_embed_into_fdt(crossystem_data_t *cdata, void *fdt,
 
 	nodeoffset = fdt_add_subnodes_from_path(fdt, 0, path);
 	if (nodeoffset < 0) {
-		VBDEBUG(PREFIX "fail to create subnode %s: %s\n", path,
+		VBDEBUG("fail to create subnode %s: %s\n", path,
 				fdt_strerror(nodeoffset));
 		return 1;
 	}
@@ -255,7 +253,7 @@ int crossystem_data_embed_into_fdt(crossystem_data_t *cdata, void *fdt,
 #undef set_bool_prop
 
 	if (err)
-		VBDEBUG(PREFIX "fail to store all properties into fdt\n");
+		VBDEBUG("fail to store all properties into fdt\n");
 	return err;
 }
 #endif /* ^^^^ CONFIG_OF_LIBFDT  NOT defined ^^^^ */

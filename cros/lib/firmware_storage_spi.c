@@ -16,8 +16,6 @@
 #include <cros/common.h>
 #include <cros/firmware_storage.h>
 
-#define PREFIX "firmware_storage_spi: "
-
 #ifndef CONFIG_SF_DEFAULT_SPEED
 # define CONFIG_SF_DEFAULT_SPEED	1000000
 #endif
@@ -37,13 +35,13 @@ static int border_check(struct spi_flash *flash, uint32_t offset,
 	uint32_t max_offset = offset + count;
 
 	if (offset >= flash->size) {
-		VBDEBUG(PREFIX "at EOF\n");
+		VBDEBUG("at EOF\n");
 		return -1;
 	}
 
 	/* max_offset will be less than offset iff overflow occurred. */
 	if (max_offset < offset || max_offset > flash->size) {
-		VBDEBUG(PREFIX "exceed range\n");
+		VBDEBUG("exceed range\n");
 		return -1;
 	}
 
@@ -74,12 +72,12 @@ void set_spi_flash_base(void)
 	fmap_offset = fdt_node_offset_by_compatible(blob, -1,
 			"chromeos,flashmap");
 	if (fmap_offset < 0) {
-		VBDEBUG(PREFIX "chromeos,flashmap node is missing\n");
+		VBDEBUG("chromeos,flashmap node is missing\n");
 		return;
 	}
 	property = (uint32_t *)fdt_getprop(blob, fmap_offset, "reg", &length);
 	if (!property) {
-		VBDEBUG(PREFIX "reg property missing in flashmap!'\n");
+		VBDEBUG("reg property missing in flashmap!'\n");
 		return;
 	}
 	spi_flash_base_addr = fdt32_to_cpu(property[0]);
@@ -97,7 +95,7 @@ static int read_spi(firmware_storage_t *file, uint32_t offset, uint32_t count,
 
 #ifndef CONFIG_HARDWARE_MAPPED_SPI
 	if (flash->read(flash, offset, count, buf)) {
-		VBDEBUG(PREFIX "SPI read fail\n");
+		VBDEBUG("SPI read fail\n");
 		return -1;
 	}
 #else
@@ -124,9 +122,9 @@ static int read_spi(firmware_storage_t *file, uint32_t offset, uint32_t count,
  */
 static void align_to_sector(uint32_t *offset_ptr, uint32_t *length_ptr)
 {
-	VBDEBUG(PREFIX "before adjustment\n");
-	VBDEBUG(PREFIX "offset: 0x%x\n", *offset_ptr);
-	VBDEBUG(PREFIX "length: 0x%x\n", *length_ptr);
+	VBDEBUG("before adjustment\n");
+	VBDEBUG("offset: 0x%x\n", *offset_ptr);
+	VBDEBUG("length: 0x%x\n", *length_ptr);
 
 	/* Adjust if offset is not multiple of SECTOR_SIZE */
 	if (*offset_ptr & (SECTOR_SIZE - 1ul)) {
@@ -139,9 +137,9 @@ static void align_to_sector(uint32_t *offset_ptr, uint32_t *length_ptr)
 		*length_ptr += SECTOR_SIZE;
 	}
 
-	VBDEBUG(PREFIX "after adjustment\n");
-	VBDEBUG(PREFIX "offset: 0x%x\n", *offset_ptr);
-	VBDEBUG(PREFIX "length: 0x%x\n", *length_ptr);
+	VBDEBUG("after adjustment\n");
+	VBDEBUG("offset: 0x%x\n", *offset_ptr);
+	VBDEBUG("length: 0x%x\n", *length_ptr);
 }
 
 static int write_spi(firmware_storage_t *file, uint32_t offset, uint32_t count,
@@ -158,10 +156,10 @@ static int write_spi(firmware_storage_t *file, uint32_t offset, uint32_t count,
 	n = count;
 	align_to_sector(&k, &n);
 
-	VBDEBUG(PREFIX "offset:          0x%08x\n", offset);
-	VBDEBUG(PREFIX "adjusted offset: 0x%08x\n", k);
+	VBDEBUG("offset:          0x%08x\n", offset);
+	VBDEBUG("adjusted offset: 0x%08x\n", k);
 	if (k > offset) {
-		VBDEBUG(PREFIX "align incorrect: %08x > %08x\n", k, offset);
+		VBDEBUG("align incorrect: %08x > %08x\n", k, offset);
 		return -1;
 	}
 
@@ -171,12 +169,12 @@ static int write_spi(firmware_storage_t *file, uint32_t offset, uint32_t count,
 	backup_buf = n > sizeof(static_buf) ? malloc(n) : static_buf;
 
 	if ((status = flash->read(flash, k, n, backup_buf))) {
-		VBDEBUG(PREFIX "cannot backup data: %d\n", status);
+		VBDEBUG("cannot backup data: %d\n", status);
 		goto EXIT;
 	}
 
 	if ((status = flash->erase(flash, k, n))) {
-		VBDEBUG(PREFIX "SPI erase fail: %d\n", status);
+		VBDEBUG("SPI erase fail: %d\n", status);
 		goto EXIT;
 	}
 
@@ -184,7 +182,7 @@ static int write_spi(firmware_storage_t *file, uint32_t offset, uint32_t count,
 	memcpy(backup_buf + (offset - k), buf, count);
 
 	if (flash->write(flash, k, n, backup_buf)) {
-		VBDEBUG(PREFIX "SPI write fail\n");
+		VBDEBUG("SPI write fail\n");
 		goto EXIT;
 	}
 
@@ -213,7 +211,7 @@ int firmware_storage_open_spi(firmware_storage_t *file)
 	struct spi_flash *flash;
 
 	if (!(flash = spi_flash_probe(bus, cs, max_hz, spi_mode))) {
-		VBDEBUG(PREFIX "fail to init SPI flash at %u:%u\n", bus, cs);
+		VBDEBUG("fail to init SPI flash at %u:%u\n", bus, cs);
 		return -1;
 	}
 

@@ -15,8 +15,6 @@
 #include <cros/firmware_storage.h>
 #include <cros/os_storage.h>
 
-#define PREFIX "firmware_storage_twostop: "
-
 enum {
 	SECTION_RO = 0,
 	SECTION_RW_A,
@@ -77,7 +75,7 @@ static int read_twostop(struct firmware_storage_t *file,
 	int section = get_section(cxt->fmap, offset);
 	uint32_t start_block = 0, offset_in_block = 0;
 
-	VBDEBUG(PREFIX "read(offset=%08x, count=%08x, buffer=%p)\n",
+	VBDEBUG("read(offset=%08x, count=%08x, buffer=%p)\n",
 			offset, count, buf);
 
 	if (section < 0)
@@ -99,7 +97,7 @@ static int write_twostop(struct firmware_storage_t *file,
 	int section = get_section(cxt->fmap, offset);
 	uint32_t start_block = 0, offset_in_block = 0;
 
-	VBDEBUG(PREFIX "write(offset=%08x, count=%08x, buffer=%p)\n",
+	VBDEBUG("write(offset=%08x, count=%08x, buffer=%p)\n",
 			offset, count, buf);
 
 	if (section < 0)
@@ -122,7 +120,7 @@ static int read_mmc(struct mmc *mmc,
 	size_t n_byte;
 	uint8_t *residual;
 
-	VBDEBUG(PREFIX "read_mmc(start_block=%08x, offset_in_block=%08x)\n",
+	VBDEBUG("read_mmc(start_block=%08x, offset_in_block=%08x)\n",
 			start_block, offset_in_block);
 
 	residual = memalign(CACHE_LINE_SIZE, 512);
@@ -167,7 +165,7 @@ static int write_mmc(struct mmc *mmc,
 	size_t n_byte;
 	uint8_t *residual;
 
-	VBDEBUG(PREFIX "write_mmc(start_block=%08x, offset_in_block=%08x)\n",
+	VBDEBUG("write_mmc(start_block=%08x, offset_in_block=%08x)\n",
 			start_block, offset_in_block);
 
 	residual = memalign(CACHE_LINE_SIZE, 512);

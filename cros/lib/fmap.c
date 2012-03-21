@@ -12,29 +12,26 @@
 #include <cros/common.h>
 #include <cros/fmap.h>
 
-#define PREFIX "chromeos/fmap: "
-
 static void
 dump_fmap_entry(const char *path, struct fmap_entry *entry)
 {
-	VBDEBUG(PREFIX "%-20s %08x:%08x\n", path, entry->offset,
-		entry->length);
+	VBDEBUG("%-20s %08x:%08x\n", path, entry->offset, entry->length);
 }
 
 static void
 dump_fmap_firmware_entry(const char *name, struct fmap_firmware_entry *entry)
 {
-	VBDEBUG(PREFIX "%s\n", name);
+	VBDEBUG("%s\n", name);
 	dump_fmap_entry("boot", &entry->boot);
 	dump_fmap_entry("vblock", &entry->vblock);
 	dump_fmap_entry("firmware_id", &entry->firmware_id);
-	VBDEBUG(PREFIX "%-20s %08llx\n", "LBA", entry->block_lba);
+	VBDEBUG("%-20s %08llx\n", "LBA", entry->block_lba);
 }
 
 void
 dump_fmap(struct twostop_fmap *config)
 {
-	VBDEBUG(PREFIX "rw-a:\n");
+	VBDEBUG("rw-a:\n");
 	dump_fmap_entry("fmap", &config->readonly.fmap);
 	dump_fmap_entry("gbb", &config->readonly.gbb);
 	dump_fmap_entry("firmware_id", &config->readonly.firmware_id);

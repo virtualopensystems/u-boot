@@ -18,8 +18,6 @@
 
 #include "boot_device.h"
 
-#define PREFIX			"boot_device: "
-
 /* Maximum number of devices we can support */
 enum {
 	MAX_DISK_INFO	= 10,
@@ -111,18 +109,18 @@ VbError_t VbExDiskGetInfo(VbDiskInfo **infos_ptr, uint32_t *count_ptr,
 
 		found = iface->start(disk_flags);
 		if (found < 0) {
-			VBDEBUG(PREFIX "%s: start() failed\n", iface->name);
+			VBDEBUG("%s: start() failed\n", iface->name);
 			continue;
 		}
 		if (!found) {
-			VBDEBUG(PREFIX "%s - start() returned 0\n",
+			VBDEBUG("%s - start() returned 0\n",
 				iface->name);
 			continue;
 		}
 
 		found = iface->scan(dev, max_count - count, disk_flags);
 		if (found < 0) {
-			VBDEBUG(PREFIX "%s: scan() failed\n", iface->name);
+			VBDEBUG("%s: scan() failed\n", iface->name);
 			continue;
 		}
 		assert(found <= max_count - count);
@@ -183,7 +181,7 @@ VbError_t VbExDiskWrite(VbExDiskHandle_t handle, uint64_t lba_start,
 		return VBERROR_DISK_OUT_OF_RANGE;
 
 	if (!dev->block_write) {
-		VBDEBUG(PREFIX "interface (%d) does not support writing.\n",
+		VBDEBUG("interface (%d) does not support writing.\n",
 			(int)dev->if_type);
 		return VBERROR_DISK_WRITE_ERROR;
 	}

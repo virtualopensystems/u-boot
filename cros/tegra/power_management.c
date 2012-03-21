@@ -16,8 +16,6 @@
 #include <cros/common.h>
 #include <cros/power_management.h>
 
-#define PREFIX "cold_reboot: "
-
 #define PMIC_I2C_BUS		0x00
 #define PMIC_I2C_DEVICE_ADDRESS	0x34
 #define TPS6586X_SUPPLYENA	0x10
@@ -31,8 +29,7 @@ extern uint32_t is_tegra2_processor_reset;
 int is_processor_reset(void)
 {
 	if (is_tegra2_processor_reset == ~0U) {
-		VBDEBUG(PREFIX "error: is_tegra2_processor_reset "
-				"uninitialized\n");
+		VBDEBUG("error: is_tegra2_processor_reset uninitialized\n");
 	}
 	return is_tegra2_processor_reset ? 1 : 0;
 }
@@ -42,7 +39,7 @@ static int pmic_set_bit(int reg, int bit, int value)
 	uint8_t byte;
 
 	if (i2c_read(PMIC_I2C_DEVICE_ADDRESS, reg, 1, &byte, sizeof(byte))) {
-		VBDEBUG(PREFIX "i2c_read fail: reg=%02x\n", reg);
+		VBDEBUG("i2c_read fail: reg=%02x\n", reg);
 		return 1;
 	}
 
@@ -52,7 +49,7 @@ static int pmic_set_bit(int reg, int bit, int value)
 		byte &= ~(1 << bit);
 
 	if (i2c_write(PMIC_I2C_DEVICE_ADDRESS, reg, 1, &byte, sizeof(byte))) {
-		VBDEBUG(PREFIX "i2c_write fail: reg=%02x\n", reg);
+		VBDEBUG("i2c_write fail: reg=%02x\n", reg);
 		return 1;
 	}
 
@@ -63,7 +60,7 @@ static int pmic_set_bit(int reg, int bit, int value)
 void cold_reboot(void)
 {
 	if (i2c_set_bus_num(PMIC_I2C_BUS)) {
-		VBDEBUG(PREFIX "i2c_set_bus_num fail\n");
+		VBDEBUG("i2c_set_bus_num fail\n");
 		goto FATAL;
 	}
 
@@ -81,7 +78,7 @@ FATAL:
 void power_off(void)
 {
 	if (i2c_set_bus_num(PMIC_I2C_BUS)) {
-		VBDEBUG(PREFIX "i2c_set_bus_num fail\n");
+		VBDEBUG("i2c_set_bus_num fail\n");
 		goto FATAL;
 	}
 

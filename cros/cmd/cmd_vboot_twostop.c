@@ -41,8 +41,6 @@
 #define CACHE_LINE_SIZE __BIGGEST_ALIGNMENT__
 #endif
 
-#define PREFIX "vboot_twostop: "
-
 /*
  * The current design of twostop firmware, if we use x86 firmware design as a
  * metaphor, twostop firmware has:
@@ -159,7 +157,7 @@ static int check_ro_normal_support(void)
 						"twostop-optional"))
 		rc = VB_INIT_FLAG_RO_NORMAL_SUPPORT;
 #endif
-	VBDEBUG(PREFIX "%stwostop-optional\n", rc ? "" : "not ");
+	VBDEBUG("%stwostop-optional\n", rc ? "" : "not ");
 	return rc;
 }
 
@@ -177,9 +175,9 @@ twostop_init_cparams(struct twostop_fmap *fmap, void *gbb,
 	cparams->shared_data_size = VB_SHARED_DATA_REC_SIZE;
 #endif
 #define P(format, field) \
-	VBDEBUG(PREFIX "- %-20s: " format "\n", #field, cparams->field)
+	VBDEBUG("- %-20s: " format "\n", #field, cparams->field)
 
-	VBDEBUG(PREFIX "cparams:\n");
+	VBDEBUG("cparams:\n");
 	P("%p",   gbb_data);
 	P("%08x", gbb_size);
 	P("%p",   shared_data_blob);
@@ -201,13 +199,13 @@ static void setup_arch_unused_memory(memory_wipe_t *wipe,
 	struct fdt_memory config, ramoops;
 
 	if (fdt_decode_memory(gd->fdt_blob, "/memory", &config))
-		VbExError(PREFIX "FDT decode memory section error\n");
+		VbExError("FDT decode memory section error\n");
 
 	memory_wipe_add(wipe, config.start, config.end);
 
 	/* Excludes kcrashmem if in FDT */
 	if (fdt_decode_memory(gd->fdt_blob, "/ramoops", &ramoops))
-		VBDEBUG(PREFIX "RAMOOPS not contained within FDT\n");
+		VBDEBUG("RAMOOPS not contained within FDT\n");
 	else
 		memory_wipe_sub(wipe, ramoops.start, ramoops.end);
 
@@ -265,7 +263,7 @@ static void setup_arch_unused_memory(memory_wipe_t *wipe,
 static void setup_arch_unused_memory(memory_wipe_t *wipe,
 	crossystem_data_t *cdata, VbCommonParams *cparams)
 {
-	VBDEBUG(PREFIX "No memory wipe performed!");
+	VBDEBUG("No memory wipe performed!");
 }
 
 #endif
@@ -321,17 +319,17 @@ twostop_init_vboot_library(firmware_storage_t *file, void *gbb,
 		iparams.flags |= VB_INIT_FLAG_REC_BUTTON_PRESSED;
 	if (cdata->boot_developer_switch)
 		iparams.flags |= VB_INIT_FLAG_DEV_SWITCH_ON;
-	VBDEBUG(PREFIX "iparams.flags: %08x\n", iparams.flags);
+	VBDEBUG("iparams.flags: %08x\n", iparams.flags);
 
 	if ((err = VbInit(cparams, &iparams))) {
-		VBDEBUG(PREFIX "VbInit: %u\n", err);
+		VBDEBUG("VbInit: %u\n", err);
 		return err;
 	}
 
 #ifdef CONFIG_VIDEO_TEGRA
 	tegra_lcd_check_next_stage(gd->fdt_blob, 0);
 #endif
-	VBDEBUG(PREFIX "iparams.out_flags: %08x\n", iparams.out_flags);
+	VBDEBUG("iparams.out_flags: %08x\n", iparams.out_flags);
 
 	if (iparams.out_flags & VB_INIT_OUT_CLEAR_RAM)
 		wipe_unused_memory(cdata, cparams);
@@ -370,23 +368,23 @@ twostop_make_selection(struct twostop_fmap *fmap, firmware_storage_t *file,
 #ifndef CONFIG_HARDWARE_MAPPED_SPI
 	fparams.verification_block_A = memalign(CACHE_LINE_SIZE, vlength);
 	if (!fparams.verification_block_A) {
-		VBDEBUG(PREFIX "failed to allocate vblock A\n");
+		VBDEBUG("failed to allocate vblock A\n");
 		goto out;
 	}
 	fparams.verification_block_B = memalign(CACHE_LINE_SIZE, vlength);
 	if (!fparams.verification_block_B) {
-		VBDEBUG(PREFIX "failed to allocate vblock B\n");
+		VBDEBUG("failed to allocate vblock B\n");
 		goto out;
 	}
 #endif
 	if (file->read(file, fmap->readwrite_a.vblock.offset, vlength,
 				BT_EXTRA fparams.verification_block_A)) {
-		VBDEBUG(PREFIX "fail to read vblock A\n");
+		VBDEBUG("fail to read vblock A\n");
 		goto out;
 	}
 	if (file->read(file, fmap->readwrite_b.vblock.offset, vlength,
 				BT_EXTRA fparams.verification_block_B)) {
-		VBDEBUG(PREFIX "fail to read vblock B\n");
+		VBDEBUG("fail to read vblock B\n");
 		goto out;
 	}
 
@@ -402,12 +400,12 @@ twostop_make_selection(struct twostop_fmap *fmap, firmware_storage_t *file,
 #ifndef CONFIG_HARDWARE_MAPPED_SPI
 	s.fw[0].cache = memalign(CACHE_LINE_SIZE, s.fw[0].size);
 	if (!s.fw[0].cache) {
-		VBDEBUG(PREFIX "failed to allocate cache A\n");
+		VBDEBUG("failed to allocate cache A\n");
 		goto out;
 	}
 	s.fw[1].cache = memalign(CACHE_LINE_SIZE, s.fw[1].size);
 	if (!s.fw[1].cache) {
-		VBDEBUG(PREFIX "failed to allocate cache B\n");
+		VBDEBUG("failed to allocate cache B\n");
 		goto out;
 	}
 #endif
@@ -416,11 +414,11 @@ twostop_make_selection(struct twostop_fmap *fmap, firmware_storage_t *file,
 	cparams->caller_context = &s;
 
 	if ((err = VbSelectFirmware(cparams, &fparams))) {
-		VBDEBUG(PREFIX "VbSelectFirmware: %d\n", err);
+		VBDEBUG("VbSelectFirmware: %d\n", err);
 		goto out;
 	}
 
-	VBDEBUG(PREFIX "selected_firmware: %d\n", fparams.selected_firmware);
+	VBDEBUG("selected_firmware: %d\n", fparams.selected_firmware);
 	selection = fparams.selected_firmware;
 
 out:
@@ -461,21 +459,21 @@ twostop_select_and_set_main_firmware(struct twostop_fmap *fmap,
 	bootstage_mark(BOOTSTAGE_VBOOT_SELECT_AND_SET,
 		       "twostop_select_and_set_main_firmware");
 	if (twostop_init_cparams(fmap, gbb, vb_shared_data, &cparams)) {
-		VBDEBUG(PREFIX "failed to init cparams\n");
+		VBDEBUG("failed to init cparams\n");
 		return TWOSTOP_SELECT_ERROR;
 	}
 
 	if (twostop_init_vboot_library(file, gbb, fmap->readonly.gbb.offset,
 				       gbb_size, cdata, &cparams)
 			!= VBERROR_SUCCESS) {
-		VBDEBUG(PREFIX "failed to init vboot library\n");
+		VBDEBUG("failed to init vboot library\n");
 		return TWOSTOP_SELECT_ERROR;
 	}
 
 	selection = twostop_make_selection(fmap, file, &cparams,
 			fw_blob_ptr, fw_size_ptr);
 
-	VBDEBUG(PREFIX "selection: %s\n", str_selection(selection));
+	VBDEBUG("selection: %s\n", str_selection(selection));
 
 	if (selection == TWOSTOP_SELECT_ERROR)
 		return TWOSTOP_SELECT_ERROR;
@@ -495,14 +493,14 @@ twostop_select_and_set_main_firmware(struct twostop_fmap *fmap,
 		id_length = fmap->readwrite_b.firmware_id.length;
 		break;
 	default:
-		VBDEBUG(PREFIX "impossible selection value: %d\n", selection);
+		VBDEBUG("impossible selection value: %d\n", selection);
 		assert(0);
 	}
 
 	if (file->read(file, id_offset,
 				MIN(sizeof(firmware_id), id_length),
 				BT_EXTRA firmware_id)) {
-		VBDEBUG(PREFIX "failed to read active firmware id\n");
+		VBDEBUG("failed to read active firmware id\n");
 		firmware_id[0] = '\0';
 	}
 
@@ -515,12 +513,12 @@ twostop_select_and_set_main_firmware(struct twostop_fmap *fmap,
 
 	*boot_mode = firmware_type;
 
-	VBDEBUG(PREFIX "active main firmware type : %d\n", firmware_type);
-	VBDEBUG(PREFIX "active main firmware id   : \"%s\"\n", firmware_id);
+	VBDEBUG("active main firmware type : %d\n", firmware_type);
+	VBDEBUG("active main firmware id   : \"%s\"\n", firmware_id);
 
 	if (crossystem_data_set_main_firmware(cdata,
 				firmware_type, firmware_id)) {
-		VBDEBUG(PREFIX "failed to set active main firmware\n");
+		VBDEBUG("failed to set active main firmware\n");
 		return TWOSTOP_SELECT_ERROR;
 	}
 
@@ -530,7 +528,7 @@ twostop_select_and_set_main_firmware(struct twostop_fmap *fmap,
 static uint32_t
 twostop_jump(crossystem_data_t *cdata, void *fw_blob, uint32_t fw_size)
 {
-	VBDEBUG(PREFIX "jump to readwrite main firmware at %#x, size %#x\n",
+	VBDEBUG("jump to readwrite main firmware at %#x, size %#x\n",
 			CONFIG_SYS_TEXT_BASE, fw_size);
 
 	/*
@@ -572,7 +570,7 @@ twostop_init(struct twostop_fmap *fmap, firmware_storage_t *file,
 	if (cros_gpio_fetch(CROS_GPIO_WPSW, &wpsw) ||
 			cros_gpio_fetch(CROS_GPIO_RECSW, &recsw) ||
 			cros_gpio_fetch(CROS_GPIO_DEVSW, &devsw)) {
-		VBDEBUG(PREFIX "failed to fetch gpio\n");
+		VBDEBUG("failed to fetch gpio\n");
 		return -1;
 	}
 	cros_gpio_dump(&wpsw);
@@ -580,14 +578,14 @@ twostop_init(struct twostop_fmap *fmap, firmware_storage_t *file,
 	cros_gpio_dump(&devsw);
 
 	if (fdt_decode_twostop_fmap(gd->fdt_blob, fmap)) {
-		VBDEBUG(PREFIX "failed to decode fmap\n");
+		VBDEBUG("failed to decode fmap\n");
 		return -1;
 	}
 	dump_fmap(fmap);
 
 	/* We revert the decision of using firmware_storage_open_twostop() */
 	if (firmware_storage_open_spi(file)) {
-		VBDEBUG(PREFIX "failed to open firmware storage\n");
+		VBDEBUG("failed to open firmware storage\n");
 		return -1;
 	}
 
@@ -596,22 +594,22 @@ twostop_init(struct twostop_fmap *fmap, firmware_storage_t *file,
 				MIN(sizeof(readonly_firmware_id),
 					fmap->readonly.firmware_id.length),
 				BT_EXTRA readonly_firmware_id)) {
-		VBDEBUG(PREFIX "failed to read firmware ID\n");
+		VBDEBUG("failed to read firmware ID\n");
 		readonly_firmware_id[0] = '\0';
 	}
-	VBDEBUG(PREFIX "read-only firmware id: \"%s\"\n", readonly_firmware_id);
+	VBDEBUG("read-only firmware id: \"%s\"\n", readonly_firmware_id);
 
 	/* Load basic parts of gbb blob */
 #ifdef CONFIG_HARDWARE_MAPPED_SPI
 	if (gbb_init(gbbp, file, fmap->readonly.gbb.offset, gbb_size)) {
-		VBDEBUG(PREFIX "failed to read gbb\n");
+		VBDEBUG("failed to read gbb\n");
 		goto out;
 	}
 	gbb = *gbbp;
 #else
 	gbb = *gbbp;
 	if (gbb_init(gbb, file, fmap->readonly.gbb.offset, gbb_size)) {
-		VBDEBUG(PREFIX "failed to read gbb\n");
+		VBDEBUG("failed to read gbb\n");
 		goto out;
 	}
 #endif
@@ -619,7 +617,7 @@ twostop_init(struct twostop_fmap *fmap, firmware_storage_t *file,
 	gbbh = (GoogleBinaryBlockHeader *)gbb;
 	memcpy(hardware_id, gbb + gbbh->hwid_offset,
 			MIN(sizeof(hardware_id), gbbh->hwid_size));
-	VBDEBUG(PREFIX "hardware id: \"%s\"\n", hardware_id);
+	VBDEBUG("hardware id: \"%s\"\n", hardware_id);
 
 	/* Initialize crossystem data */
 	/*
@@ -633,7 +631,7 @@ twostop_init(struct twostop_fmap *fmap, firmware_storage_t *file,
 				ACTIVE_EC_FIRMWARE_RO,
 				hardware_id,
 				readonly_firmware_id)) {
-		VBDEBUG(PREFIX "failed to init crossystem data\n");
+		VBDEBUG("failed to init crossystem data\n");
 		goto out;
 	}
 
@@ -661,7 +659,7 @@ twostop_main_firmware(struct twostop_fmap *fmap, void *gbb,
 	bootstage_mark(BOOTSTAGE_VBOOT_TWOSTOP_MAIN_FIRMWARE,
 		       "twostop_main_firmware");
 	if (twostop_init_cparams(fmap, gbb, vb_shared_data, &cparams)) {
-		VBDEBUG(PREFIX "failed to init cparams\n");
+		VBDEBUG("failed to init cparams\n");
 		return TWOSTOP_SELECT_ERROR;
 	}
 
@@ -669,13 +667,13 @@ twostop_main_firmware(struct twostop_fmap *fmap, void *gbb,
 		"kernel", &size);
 	kparams.kernel_buffer_size = size;
 
-	VBDEBUG(PREFIX "kparams:\n");
-	VBDEBUG(PREFIX "- kernel_buffer:      : %p\n", kparams.kernel_buffer);
-	VBDEBUG(PREFIX "- kernel_buffer_size: : %08x\n",
+	VBDEBUG("kparams:\n");
+	VBDEBUG("- kernel_buffer:      : %p\n", kparams.kernel_buffer);
+	VBDEBUG("- kernel_buffer_size: : %08x\n",
 			kparams.kernel_buffer_size);
 
 	if ((err = VbSelectAndLoadKernel(&cparams, &kparams))) {
-		VBDEBUG(PREFIX "VbSelectAndLoadKernel: %d\n", err);
+		VBDEBUG("VbSelectAndLoadKernel: %d\n", err);
 		switch (err) {
 		case VBERROR_SHUTDOWN_REQUESTED:
 			return TWOSTOP_SELECT_POWER_OFF;
@@ -686,15 +684,15 @@ twostop_main_firmware(struct twostop_fmap *fmap, void *gbb,
 		return TWOSTOP_SELECT_ERROR;
 	}
 
-	VBDEBUG(PREFIX "kparams:\n");
-	VBDEBUG(PREFIX "- disk_handle:        : %p\n", kparams.disk_handle);
-	VBDEBUG(PREFIX "- partition_number:   : %08x\n",
+	VBDEBUG("kparams:\n");
+	VBDEBUG("- disk_handle:        : %p\n", kparams.disk_handle);
+	VBDEBUG("- partition_number:   : %08x\n",
 			kparams.partition_number);
-	VBDEBUG(PREFIX "- bootloader_address: : %08llx\n",
+	VBDEBUG("- bootloader_address: : %08llx\n",
 			kparams.bootloader_address);
-	VBDEBUG(PREFIX "- bootloader_size:    : %08x\n",
+	VBDEBUG("- bootloader_size:    : %08x\n",
 			kparams.bootloader_size);
-	VBDEBUG(PREFIX "- partition_guid:     :");
+	VBDEBUG("- partition_guid:     :");
 #ifdef VBOOT_DEBUG
 	int i;
 	for (i = 0; i < 16; i++)
@@ -729,7 +727,7 @@ static int setup_gbb_and_cdata(void **gbb, size_t *gbb_size,
 			"google-binary-block", gbb_size);
 
 	if (!*gbb) {
-		VBDEBUG(PREFIX "google-binary-block missing "
+		VBDEBUG("google-binary-block missing "
 			"from fdt, or malloc failed\n");
 		return -1;
 	}
@@ -738,7 +736,7 @@ static int setup_gbb_and_cdata(void **gbb, size_t *gbb_size,
 	*cdata = fdt_decode_chromeos_alloc_region(gd->fdt_blob,
 						  "cros-system-data", &size);
 	if (!*cdata) {
-		VBDEBUG(PREFIX "cros-system-data missing "
+		VBDEBUG("cros-system-data missing "
 				"from fdt, or malloc failed\n");
 		return -1;
 	}
@@ -748,12 +746,12 @@ static int setup_gbb_and_cdata(void **gbb, size_t *gbb_size,
 	 * blobs
 	 */
 	if (verify && crossystem_data_check_integrity(*cdata)) {
-		VBDEBUG(PREFIX "invalid crossystem data\n");
+		VBDEBUG("invalid crossystem data\n");
 		return -1;
 	}
 
 	if (verify && gbb_check_integrity(*gbb)) {
-		VBDEBUG(PREFIX "invalid gbb at %p\n", *gbb);
+		VBDEBUG("invalid gbb at %p\n", *gbb);
 		return -1;
 	}
 	return 0;
@@ -779,14 +777,14 @@ twostop_boot(void)
 	vb_shared_data = cdata->vb_shared_data;
 	if (twostop_init(&fmap, &file, &gbb, gbb_size, cdata,
 			 vb_shared_data)) {
-		VBDEBUG(PREFIX "failed to init twostop boot\n");
+		VBDEBUG("failed to init twostop boot\n");
 		return TWOSTOP_SELECT_ERROR;
 	}
 
 	selection = twostop_select_and_set_main_firmware(&fmap, &file,
 			gbb, gbb_size, cdata, vb_shared_data,
 			&boot_mode, &fw_blob, &fw_size);
-	VBDEBUG(PREFIX "selection of bootstub: %s\n", str_selection(selection));
+	VBDEBUG("selection of bootstub: %s\n", str_selection(selection));
 
 	file.close(&file); /* We don't care even if it fails */
 
@@ -814,10 +812,10 @@ twostop_boot(void)
 	}
 #endif
 
-	VBDEBUG(PREFIX "boot_mode: %d\n", boot_mode);
+	VBDEBUG("boot_mode: %d\n", boot_mode);
 
 	selection = twostop_main_firmware(&fmap, gbb, cdata, vb_shared_data);
-	VBDEBUG(PREFIX "selection of read-only main firmware: %s\n",
+	VBDEBUG("selection of read-only main firmware: %s\n",
 			str_selection(selection));
 
 	if (selection != TWOSTOP_SELECT_COMMAND_LINE)
@@ -840,7 +838,7 @@ twostop_readwrite_main_firmware(void)
 	size_t gbb_size;
 
 	if (fdt_decode_twostop_fmap(gd->fdt_blob, &fmap)) {
-		VBDEBUG(PREFIX "failed to decode fmap\n");
+		VBDEBUG("failed to decode fmap\n");
 		return TWOSTOP_SELECT_ERROR;
 	}
 	dump_fmap(&fmap);
@@ -859,7 +857,7 @@ twostop_readwrite_main_firmware(void)
 	 * interface, not the TPM itself.
 	 */
 	if (VbExTpmInit() != TPM_SUCCESS) {
-		VBDEBUG(PREFIX "failed to init tpm interface\n");
+		VBDEBUG("failed to init tpm interface\n");
 		return TWOSTOP_SELECT_ERROR;
 	}
 
@@ -895,7 +893,7 @@ do_vboot_twostop(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	else
 		selection = twostop_readwrite_main_firmware();
 
-	VBDEBUG(PREFIX "selection of main firmware: %s\n",
+	VBDEBUG("selection of main firmware: %s\n",
 			str_selection(selection));
 
 	if (selection == TWOSTOP_SELECT_COMMAND_LINE)

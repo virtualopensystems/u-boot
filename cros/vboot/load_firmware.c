@@ -15,8 +15,6 @@
 #include <vboot_api.h>
 #include <vboot_struct.h>
 
-#define PREFIX "load_firmware: "
-
 /* This can only be called after key block has been verified */
 static uintptr_t firmware_body_size(const uintptr_t vblock_address)
 {
@@ -38,8 +36,7 @@ VbError_t VbExHashFirmwareBody(VbCommonParams* cparams, uint32_t firmware_index)
 
 	if (firmware_index != VB_SELECT_FIRMWARE_A &&
 			firmware_index != VB_SELECT_FIRMWARE_B) {
-		VBDEBUG(PREFIX "incorrect firmware index: %d\n",
-				firmware_index);
+		VBDEBUG("incorrect firmware index: %d\n", firmware_index);
 		return 1;
 	}
 
@@ -51,7 +48,7 @@ VbError_t VbExHashFirmwareBody(VbCommonParams* cparams, uint32_t firmware_index)
 
 	if (file->read(file, s->fw[i].offset,
 		       s->fw[i].size, BT_EXTRA(s->fw[i].cache))) {
-		VBDEBUG(PREFIX "fail to read firmware: %d\n", firmware_index);
+		VBDEBUG("fail to read firmware: %d\n", firmware_index);
 		return 1;
 	}
 

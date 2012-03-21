@@ -14,8 +14,6 @@
 /* Import the header files from vboot_reference. */
 #include <vboot_api.h>
 
-#define PREFIX		"nvstorage: "
-
 /*
  * We had a discussion about the non-volatile storage device for keeping
  * the cookies. Due to the lack of SPI flash driver in kernel, kernel cannot
@@ -37,7 +35,7 @@ static int get_internal_disk(VbDiskInfo **disk_ptr)
 
 		if (VbExDiskGetInfo(&disk_info, &disk_count,
 				VB_DISK_FLAG_FIXED) || disk_count == 0) {
-			VBDEBUG(PREFIX "No internal disk found!\n");
+			VBDEBUG("No internal disk found!\n");
 			return 1;
 		}
 		internal_disk = disk_info[0];
@@ -62,7 +60,7 @@ static int get_nvcxt_block_of_disk(const VbDiskInfo *disk,
 
 	if (VbExDiskRead(disk->handle,
 				CHROMEOS_VBNVCONTEXT_LBA, 1, block_buf)) {
-		VBDEBUG(PREFIX "Failed to read internal disk!\n");
+		VBDEBUG("Failed to read internal disk!\n");
 		VbExFree(block_buf);
 		return 1;
 	}
@@ -103,7 +101,7 @@ VbError_t VbExNvStorageWrite(const uint8_t* buf)
 
 	if (VbExDiskWrite(internal_disk->handle,
 				CHROMEOS_VBNVCONTEXT_LBA, 1, block_buf)) {
-		VBDEBUG(PREFIX "Failed to write internal disk!\n");
+		VBDEBUG("Failed to write internal disk!\n");
 		VbExFree(block_buf);
 		return 1;
 	}

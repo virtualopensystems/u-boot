@@ -17,8 +17,6 @@
 #include <linux/string.h>
 #include <malloc.h>
 
-#define PREFIX "chromeos/fdt_decode: "
-
 static int relpath_offset(const void *blob, int offset, const char *in_path)
 {
 	const char *path = in_path;
@@ -37,7 +35,7 @@ static int relpath_offset(const void *blob, int offset, const char *in_path)
 		offset = fdt_subnode_offset_namelen(blob, offset, path,
 				sep - path);
 		if (offset < 0) {
-			VBDEBUG(PREFIX "Node '%s' is missing\n", in_path);
+			VBDEBUG("Node '%s' is missing\n", in_path);
 			return offset;
 		}
 	}
@@ -63,8 +61,7 @@ static int decode_fmap_entry(const void *blob, int offset, const char *base,
 		return offset;
 	property = (uint32_t *)fdt_getprop(blob, offset, "reg", &length);
 	if (!property) {
-		VBDEBUG(PREFIX "Node '%s' is missing property '%s'\n",
-			path, "reg");
+		VBDEBUG("Node '%s' is missing property '%s'\n", path, "reg");
 		return -FDT_ERR_MISSING;
 	}
 	entry->offset = fdt32_to_cpu(property[0]);
@@ -85,7 +82,7 @@ static int decode_block_lba(const void *blob, int offset, const char *path,
 
 	property = (uint32_t *)fdt_getprop(blob, offset, "block-lba", &length);
 	if (!property) {
-		VBDEBUG(PREFIX "failed to load LBA '%s/block-lba'\n", path);
+		VBDEBUG("failed to load LBA '%s/block-lba'\n", path);
 		return -FDT_ERR_MISSING;
 	}
 	*out = fdt32_to_cpu(*property);
@@ -113,8 +110,7 @@ int fdt_get_mrc_cache_base(const char *blob, struct fmap_entry *fme)
 	fmap_offset = fdt_node_offset_by_compatible(blob, -1,
 			"chromeos,flashmap");
 	if (fmap_offset < 0) {
-		VBDEBUG(PREFIX "%s: chromeos,flashmap node is missing\n",
-			__func__);
+		VBDEBUG("chromeos,flashmap node is missing\n");
 		return fmap_offset;
 	}
 
@@ -131,13 +127,13 @@ int fdt_decode_twostop_fmap(const void *blob, struct twostop_fmap *config)
 	fmap_offset = fdt_node_offset_by_compatible(blob, -1,
 			"chromeos,flashmap");
 	if (fmap_offset < 0) {
-		VBDEBUG(PREFIX "chromeos,flashmap node is missing\n");
+		VBDEBUG("chromeos,flashmap node is missing\n");
 		return fmap_offset;
 	}
 
 	property = (uint32_t *)fdt_getprop(blob, fmap_offset, "reg", &length);
 	if (!property || (length != 8)) {
-		VBDEBUG(PREFIX "Flashmap node missing the `reg' property\n");
+		VBDEBUG("Flashmap node missing the `reg' property\n");
 		return -FDT_ERR_MISSING;
 	}
 
@@ -176,21 +172,19 @@ void *fdt_decode_chromeos_alloc_region(const void *blob,
 	void *ptr;
 
 	if (node < 0) {
-		VBDEBUG(PREFIX "failed to find /chromeos-config in fdt'\n");
+		VBDEBUG("failed to find /chromeos-config in fdt'\n");
 		return NULL;
 	}
 
 	if (fdtdec_decode_region(blob, node, prop_name, &ptr, size)) {
-		VBDEBUG(PREFIX "failed to find %s in /chromeos-config'\n",
-			prop_name);
+		VBDEBUG("failed to find %s in /chromeos-config'\n", prop_name);
 		return NULL;
 	}
 
 	if (!ptr)
 		ptr = malloc(*size);
 	if (!ptr) {
-		VBDEBUG(PREFIX "failed to alloc %d bytes for %s'\n",
-			*size, prop_name);
+		VBDEBUG("failed to alloc %d bytes for %s'\n", *size, prop_name);
 	}
 	return ptr;
 }

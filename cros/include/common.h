@@ -14,7 +14,8 @@
 #include <vboot_api.h>
 
 #if defined VBOOT_DEBUG
-#define VBDEBUG(fmt, args...) VbExDebug(fmt ,##args)
+#define VBDEBUG(fmt, args...) \
+	VbExDebug("%s: %s: " fmt, __FILE__, __func__, ##args)
 #elif defined DEBUG
 #define VBDEBUG debug
 #else

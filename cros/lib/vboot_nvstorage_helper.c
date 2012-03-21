@@ -46,19 +46,17 @@
  * an overkill.
  */
 
-#define PREFIX "vboot_nvstorage_helper: "
-
 int read_nvcontext(firmware_storage_t *file, VbNvContext *nvcxt)
 {
 	if (firmware_storage_read(file,
 			CONFIG_OFFSET_VBNVCONTEXT, VBNV_BLOCK_SIZE,
 			nvcxt->raw)) {
-		debug(PREFIX "read_nvcontext fail\n");
+		debug("read_nvcontext fail\n");
 		return -1;
 	}
 
 	if (VbNvSetup(nvcxt)) {
-		debug(PREFIX "setup nvcontext fail\n");
+		debug("setup nvcontext fail\n");
 		return -1;
 	}
 
@@ -70,7 +68,7 @@ int write_nvcontext(firmware_storage_t *file, VbNvContext *nvcxt)
 	if (firmware_storage_write(file,
 			CONFIG_OFFSET_VBNVCONTEXT, VBNV_BLOCK_SIZE,
 			nvcxt->raw)) {
-		debug(PREFIX "write_nvcontext fail\n");
+		debug("write_nvcontext fail\n");
 		return -1;
 	}
 
@@ -82,19 +80,19 @@ int clear_recovery_request(void)
 	VbNvContext nvcxt;
 
 	if (read_nvcontext(&nvcxt) || VbNvSetup(&nvcxt)) {
-		debug(PREFIX "cannot read nvcxt\n");
+		debug("cannot read nvcxt\n");
 		return 1;
 	}
 
 	if (VbNvSet(&nvcxt, VBNV_RECOVERY_REQUEST,
 				VBNV_RECOVERY_NOT_REQUESTED)) {
-		debug(PREFIX "cannot clear VBNV_RECOVERY_REQUEST\n");
+		debug("cannot clear VBNV_RECOVERY_REQUEST\n");
 		return 1;
 	}
 
 	if (VbNvTeardown(&nvcxt) ||
 			(nvcxt.raw_changed && write_nvcontext(&nvcxt))) {
-		debug(PREFIX "cannot write nvcxt\n");
+		debug("cannot write nvcxt\n");
 		return 1;
 	}
 
@@ -107,22 +105,22 @@ void reboot_to_recovery_mode(uint32_t reason)
 
 	nvcxt = &nvcontext;
 	if (read_nvcontext(nvcxt) || VbNvSetup(nvcxt)) {
-		debug(PREFIX "cannot read nvcxt\n");
+		debug("cannot read nvcxt\n");
 		goto FAIL;
 	}
 
-	debug(PREFIX "store recovery cookie in recovery field\n");
+	debug("store recovery cookie in recovery field\n");
 	if (VbNvSet(nvcxt, VBNV_RECOVERY_REQUEST, reason) ||
 			VbNvTeardown(nvcxt) ||
 			(nvcxt->raw_changed && write_nvcontext(nvcxt))) {
-		debug(PREFIX "cannot write back nvcxt");
+		debug("cannot write back nvcxt");
 		goto FAIL;
 	}
 
-	debug(PREFIX "reboot to recovery mode\n");
+	debug("reboot to recovery mode\n");
 	cold_reboot();
 
-	debug(PREFIX "error: cold_reboot() returned\n");
+	debug("error: cold_reboot() returned\n");
 FAIL:
 	/* FIXME: bring up a sad face? */
 	printf("Please reset and press recovery button when reboot.\n");

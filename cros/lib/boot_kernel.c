@@ -19,8 +19,6 @@
 
 #include <vboot_api.h>
 
-#define PREFIX "boot_kernel: "
-
 #ifdef CONFIG_OF_UPDATE_FDT_BEFORE_BOOT
 /*
  * We uses a static variable to communicate with fit_update_fdt_before_boot().
@@ -130,7 +128,7 @@ static int update_cmdline(char *src, int devnum, int partnum, uint8_t *guid,
 	/* sanity check on inputs */
 	if (devnum < 0 || devnum > 25 || partnum < 1 || partnum > 99 ||
 			dst_size < 0 || dst_size > 10000) {
-		VBDEBUG(PREFIX "insane input: %d, %d, %d\n", devnum, partnum,
+		VBDEBUG("insane input: %d, %d, %d\n", devnum, partnum,
 				dst_size);
 		return 1;
 	}
@@ -147,7 +145,7 @@ static int update_cmdline(char *src, int devnum, int partnum, uint8_t *guid,
 
 #define CHECK_SPACE(bytes) \
 	if (!(dst + (bytes) <= dst_end)) { \
-		VBDEBUG(PREFIX "fail: need at least %d bytes\n", (bytes)); \
+		VBDEBUG("fail: need at least %d bytes\n", (bytes)); \
 		return 1; \
 	}
 
@@ -160,7 +158,7 @@ static int update_cmdline(char *src, int devnum, int partnum, uint8_t *guid,
 
 		switch ((c = *src++)) {
 		case '\0':
-			VBDEBUG(PREFIX "mal-formed input: end in '%%'\n");
+			VBDEBUG("mal-formed input: end in '%%'\n");
 			return 1;
 		case 'D':
 			/*
@@ -233,7 +231,7 @@ int boot_kernel(VbSelectAndLoadKernelParams *kparams, crossystem_data_t *cdata)
 	 */
 	strncat(cmdline_buf, cmdline, CROS_CONFIG_SIZE);
 
-	VBDEBUG(PREFIX "cmdline before update: ");
+	VBDEBUG("cmdline before update: ");
 	VBDEBUG_PUTS(cmdline_buf);
 	VBDEBUG_PUTS("\n");
 
@@ -242,12 +240,12 @@ int boot_kernel(VbSelectAndLoadKernelParams *kparams, crossystem_data_t *cdata)
 			kparams->partition_number + 1,
 			kparams->partition_guid,
 			cmdline_out, sizeof(cmdline_out))) {
-		VBDEBUG(PREFIX "failed replace %%[DUP] in command line\n");
+		VBDEBUG("failed replace %%[DUP] in command line\n");
 		return 1;
 	}
 
 	setenv("bootargs", cmdline_out);
-	VBDEBUG(PREFIX "cmdline after update:  ");
+	VBDEBUG("cmdline after update:  ");
 	VBDEBUG_PUTS(getenv("bootargs"));
 	VBDEBUG_PUTS("\n");
 
@@ -266,7 +264,7 @@ int boot_kernel(VbSelectAndLoadKernelParams *kparams, crossystem_data_t *cdata)
 	do_bootm(NULL, 0, ARRAY_SIZE(argv), argv);
 #endif
 
-	VBDEBUG(PREFIX "failed to boot; is kernel broken?\n");
+	VBDEBUG("failed to boot; is kernel broken?\n");
 	return 1;
 }
 
@@ -281,12 +279,12 @@ int fit_update_fdt_before_boot(char *fdt, ulong *new_size)
 	uint32_t ns;
 
 	if (!g_crossystem_data) {
-		VBDEBUG(PREFIX "warning: g_crossystem_data is NULL\n");
+		VBDEBUG("warning: g_crossystem_data is NULL\n");
 		return 0;
 	}
 
 	if (crossystem_data_embed_into_fdt(g_crossystem_data, fdt, &ns)) {
-		VBDEBUG(PREFIX "crossystem_data_embed_into_fdt() failed\n");
+		VBDEBUG("crossystem_data_embed_into_fdt() failed\n");
 		return 0;
 	}
 
