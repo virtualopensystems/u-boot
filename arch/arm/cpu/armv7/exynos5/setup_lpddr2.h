@@ -27,6 +27,7 @@
 
 #define LPDDR2_BPLL_MDIV		0x215
 #define LPDDR2_BPLL_PDIV		0xC
+#define LPDDR2_BPLL_SDIV		0x1
 
 #define LPDDR2_PCLK_CDREX_RATIO		0x3
 

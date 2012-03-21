@@ -117,8 +117,6 @@
 #define VPLL_CON1_VAL	0x00000000
 #define VPLL_CON2_VAL	0x00000080
 
-#define BPLL_SDIV	0x1
-
 #define BPLL_CON1_VAL	0x00203800
 
 /* Set PLL */
