@@ -39,7 +39,7 @@
 
 		spl {
 			label = "bl2 spl";
-			size = <0x6000>;
+			size = <0x4000>;
 			read-only;
 			filename = "bl2.bin";
 			type = "blob exynos-bl2";
@@ -50,7 +50,7 @@
 			label = "u-boot";
 			size = <0x7a000>;
 			read-only;
-			type = "blob boot";
+			type = "blob boot+dtb";
 			required;
 		};
 
