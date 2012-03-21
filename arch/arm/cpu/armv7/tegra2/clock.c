@@ -31,6 +31,13 @@
 #include <fdtdec.h>
 
 /*
+ * Indicates whether the peripheral clock was already running when
+ * clock_early_init() was called. This indicates that we may have been run
+ * from another U-Boot.
+ */
+static int was_running;
+
+/*
  * This is our record of the current clock rate of each clock. We don't
  * fill all of these in since we are only really interested in clocks which
  * we use as parents.
@@ -1008,8 +1015,27 @@ int clock_verify(void)
 	return 0;
 }
 
+int clock_get_periph_clk_running(void)
+{
+	u32 base_reg;
+	struct clk_pll *pll;
+
+	pll = get_pll(CLOCK_ID_PERIPH);
+	base_reg = readl(&pll->pll_base);
+
+	return base_reg & PLL_BASE_OVRRIDE_MASK;
+}
+
+int clock_was_running(void)
+{
+	return was_running;
+}
+
 void clock_early_init(void)
 {
+	/* Remember if clocks were already running */
+	was_running = clock_get_periph_clk_running();
+
 	/*
 	 * PLLP output frequency set to 216MHz
 	 * PLLC output frequency set to 600Mhz

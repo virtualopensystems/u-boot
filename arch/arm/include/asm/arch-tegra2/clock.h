@@ -375,6 +375,16 @@ enum periph_id clock_decode_periph_id(const void *blob, int node);
  */
 int clock_verify(void);
 
+/**
+ * Check if the clocks were already running when clock_early_init()
+ * was called. If true, this indicates that U-Boot (or some other program)
+ * has already set up the peripheral clock. This can be used as an
+ * indication that a previous U-Boot already ran and jumped to this one.
+ *
+ * @return 0 if clocks were not running, non-zero if they were running
+ */
+int clock_was_running(void);
+
 /* Initialize the clocks */
 void clock_init(void);
 
