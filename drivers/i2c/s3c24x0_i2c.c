@@ -308,7 +308,7 @@ static int i2c_transfer(struct s3c24x0_i2c *i2c,
 			result = WaitForXfer(i2c);
 
 		/* send STOP */
-		writel(I2C_MODE_MR | I2C_TXRX_ENA, &i2c->iicstat);
+		writel(I2C_MODE_MT | I2C_TXRX_ENA, &i2c->iicstat);
 		ReadWriteByte(i2c);
 		break;
 
