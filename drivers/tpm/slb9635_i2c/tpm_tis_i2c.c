@@ -77,13 +77,6 @@ static struct tpm_inf_dev tpm_dev = {
 	.addr = TPM_I2C_ADDR
 };
 
-/* I2C Read/Write Functions from U-Boot
-* Unfortunately we have to use these functions directly, due to the wakeup
-* behaviour of the tpm
-*/
-extern int i2c_read_data(uchar chip, uchar *buffer, int len);
-extern int i2c_write_data(uchar chip, uchar *buffer, int len);
-
 /*
  * iic_tpm_read() - read from TPM register
  * @addr: register address to read from
@@ -106,7 +99,7 @@ int iic_tpm_read(u8 addr, u8 *buffer, size_t len)
 	/* we have to use uint here, uchar hangs the board */
 
 	for (count = 0; count < MAX_COUNT; count++) {
-		rc = i2c_write_data(tpm_dev.addr, (uchar *) &myaddr, 1);
+		rc = i2c_write(tpm_dev.addr, 0, 0, (uchar *) &myaddr, 1);
 		if (rc == 0)
 			break; /*success, break to skip sleep*/
 
@@ -121,7 +114,7 @@ int iic_tpm_read(u8 addr, u8 *buffer, size_t len)
 	 */
 	for (count = 0; count < MAX_COUNT; count++) {
 		udelay(SLEEP_DURATION);
-		rc = i2c_read_data(tpm_dev.addr, buffer, len);
+		rc = i2c_read(tpm_dev.addr, 0, 0, buffer, len);
 		if (rc == 0)
 			break; /*success, break to skip sleep*/
 
@@ -145,7 +138,7 @@ static int iic_tpm_write_generic(u8 addr, u8 *buffer, size_t len,
 	memcpy(&(tpm_dev.buf[1]), buffer, len);
 
 	for (count = 0; count < max_count; count++) {
-		rc = i2c_write_data(tpm_dev.addr, tpm_dev.buf, len + 1);
+		rc = i2c_write(tpm_dev.addr, 0, 0, tpm_dev.buf, len + 1);
 		if (rc == 0)
 			break; /*success, break to skip sleep*/
 

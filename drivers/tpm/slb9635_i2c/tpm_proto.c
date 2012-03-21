@@ -81,14 +81,6 @@ enum {
 #define TPM_TRANSPORT_CTRL_E_BIT  (1u << 5)
 #define TPM_TRANSPORT_CTRL_D_BIT  (1u << 2)
 
-/* FIXME: (should modify drivers/i2c/tegra2_i2c.c)
- *    following two functions only exist in i2c_tegra2.c driver
- *    the impl should be what defined in u-boot header file
- *    int i2c_read(chip, addr_ignore, 0, *buffer, length);
- */
-extern int i2c_read_data(uchar chip, uchar *buffer, int len);
-extern int i2c_write_data(uchar chip, uchar *buffer, int len);
-
 typedef struct s_inf_stat_reg {
 	uint8_t status;
 	uint8_t len_h;
@@ -222,7 +214,7 @@ static int tpm_i2c_unpack(uint8_t *to, const uint8_t *from, size_t * pcopy_size)
 static int tpm_i2c_reg(uint8_t *reg)
 {
 	ulong stime = get_timer(0);
-	while (i2c_write_data((uchar)INFINEON_TPM_CHIP, reg, 1)) {
+	while (i2c_write((uchar)INFINEON_TPM_CHIP, 0, 0, reg, 1)) {
 		/* i2c busy, wait 1ms */
 		udelay(I2CBUSY_WAIT_MS * 1000);
 		if (get_timer(stime) > TIMEOUT_REG_MS)
@@ -237,7 +229,7 @@ static int tpm_i2c_read_status(t_inf_stat_reg *preg)
 	uint8_t stat[4];
 	s_reg[0] = (uchar)REG_STAT;
 	TPM_CHECK(tpm_i2c_reg(s_reg));
-	TPM_CHECK(i2c_read_data((uchar)INFINEON_TPM_CHIP, (uchar*)stat, 4));
+	TPM_CHECK(i2c_read((uchar)INFINEON_TPM_CHIP, 0, 0, (uchar*)stat, 4));
 	if (stat[3] != xor_checksum(stat, 3))
 		return E_CHECKSUM;
 	if (preg) {
@@ -266,7 +258,7 @@ static int tpm_i2c_write_data(const uint8_t *data, size_t len)
 	/* write to fifo
 	 */
 	TPM_CHECK(tpm_i2c_reg(w_reg));
-	TPM_CHECK(i2c_write_data((uchar)INFINEON_TPM_CHIP,
+	TPM_CHECK(i2c_write((uchar)INFINEON_TPM_CHIP, 0, 0,
 		(uchar*)packed_buffer, len + PACKED_EXTRA_SIZE));
 	return 0;
 }
@@ -284,7 +276,7 @@ static int tpm_i2c_read_data(uint8_t *payload, size_t read_len,
 	/* read data into packed buffer
 	 */
 	TPM_CHECK(tpm_i2c_reg(r_reg));
-	TPM_CHECK(i2c_read_data((uchar)INFINEON_TPM_CHIP,
+	TPM_CHECK(i2c_read((uchar)INFINEON_TPM_CHIP, 0, 0,
 		(uchar*)packed_buffer, read_len));
 	if (payload == NULL)
 		return 0;
