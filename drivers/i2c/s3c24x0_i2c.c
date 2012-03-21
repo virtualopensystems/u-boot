@@ -314,10 +314,9 @@ static int i2c_transfer(struct s3c24x0_i2c *i2c,
 
 	case I2C_READ:
 		if (addr && addr_len) {
-			writel(I2C_MODE_MT | I2C_TXRX_ENA, &i2c->iicstat);
 			writel(chip, &i2c->iicds);
 			/* send START */
-			writel(readl(&i2c->iicstat) | I2C_START_STOP,
+			writel(I2C_MODE_MT | I2C_TXRX_ENA | I2C_START_STOP,
 			       &i2c->iicstat);
 			result = WaitForXfer(i2c);
 			if (IsACK(i2c)) {
@@ -352,10 +351,9 @@ static int i2c_transfer(struct s3c24x0_i2c *i2c,
 			}
 
 		} else {
-			writel(I2C_MODE_MR | I2C_TXRX_ENA, &i2c->iicstat);
 			writel(chip, &i2c->iicds);
 			/* send START */
-			writel(readl(&i2c->iicstat) | I2C_START_STOP,
+			writel(I2C_MODE_MR | I2C_TXRX_ENA | I2C_START_STOP,
 			       &i2c->iicstat);
 			result = WaitForXfer(i2c);
 
