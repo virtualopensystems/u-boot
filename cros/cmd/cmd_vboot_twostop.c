@@ -196,7 +196,7 @@ extern uint8_t __bss_end__;
 static void setup_arch_unused_memory(memory_wipe_t *wipe,
 	crossystem_data_t *cdata, VbCommonParams *cparams)
 {
-	struct fdt_memory config, ramoops;
+	struct fdt_memory config, ramoops, lp0;
 
 	if (cros_fdtdec_memory(gd->fdt_blob, "/memory", &config))
 		VbExError("FDT decode memory section error\n");
@@ -209,10 +209,11 @@ static void setup_arch_unused_memory(memory_wipe_t *wipe,
 	else
 		memory_wipe_sub(wipe, ramoops.start, ramoops.end);
 
-	/* Excludes the LP0 vector. */
-	memory_wipe_sub(wipe,
-			(uintptr_t)TEGRA_LP0_ADDR,
-			(uintptr_t)(TEGRA_LP0_ADDR + TEGRA_LP0_SIZE));
+	/* Excludes the LP0 vector; only applicable to tegra platforms */
+	if (cros_fdtdec_memory(gd->fdt_blob, "/lp0", &lp0))
+		VBDEBUG("LP0 not contained within FDT\n");
+	else
+		memory_wipe_sub(wipe, lp0.start, lp0.end);
 
 #ifdef CONFIG_LCD
 	{
