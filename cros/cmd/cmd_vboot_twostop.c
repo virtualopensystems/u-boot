@@ -188,7 +188,7 @@ twostop_init_cparams(struct twostop_fmap *fmap, void *gbb,
 	return 0;
 }
 
-#if defined(CONFIG_OF_CONTROL) && defined(CONFIG_TEGRA2)
+#if defined(CONFIG_OF_CONTROL) && defined(CONFIG_ARM)
 
 extern uint8_t _start;
 extern uint8_t __bss_end__;
@@ -288,7 +288,7 @@ static void wipe_unused_memory(crossystem_data_t *cdata,
 	memory_wipe_sub(&wipe, get_current_sp() - STACK_MARGIN,
 #if defined(CONFIG_SYS_COREBOOT)
 			gd->relocaddr + (&__bss_end - &__text_start)
-#elif defined(CONFIG_OF_CONTROL) && defined(CONFIG_TEGRA2)
+#elif defined(CONFIG_OF_CONTROL) && defined(CONFIG_ARM)
 			gd->relocaddr + (&__bss_end__ - &_start)
 #endif
 			);
