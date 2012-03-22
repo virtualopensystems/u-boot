@@ -101,6 +101,10 @@
 		gpio-controller;
 	};
 
+	lp0@0x1c406000 {
+		reg = <0x1c406000 0x2000>;
+	};
+
 	pinmux: pinmux@70000000 {
 		compatible = "nvidia,tegra20-pinmux";
 		reg = < 0x70000014 0x10    /* Tri-state registers */
