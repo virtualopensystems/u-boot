@@ -53,6 +53,9 @@
 
 #define CONFIG_BOARD_EARLY_INIT_F
 
+/* So our flasher can verify that all is well */
+#define CONFIG_CRC32_VERIFY
+
 /* SPI */
 #define CONFIG_TEGRA2_SPI
 #define CONFIG_SPI_FLASH
