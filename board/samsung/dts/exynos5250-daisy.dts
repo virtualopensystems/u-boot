@@ -29,6 +29,7 @@
 	};
 
 	config {
+		hwid = "DAISY TEST A-A 9382";
 		machine-arch-id = <3774>;
 	};
 
