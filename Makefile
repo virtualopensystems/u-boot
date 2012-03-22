@@ -231,6 +231,7 @@ LIBS += lib/lzo/liblzo.o
 LIBS += lib/zlib/libz.o
 
 ifdef CONFIG_CHROMEOS
+LIBS += cros/cmd/libcros_cmd.o
 LIBS += cros/lib/libcros.o
 LIBS += cros/vboot/libvboot.o
 LIBS += cros/$(SOC_FAMILY)/libcros_board.o
