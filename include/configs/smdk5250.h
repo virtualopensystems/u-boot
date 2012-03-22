@@ -143,7 +143,7 @@
 	"run script_generate_bootargs; " \
 	"mmc rescan ${boot_udevnum}; " \
 	"fatload mmc ${boot_udevnum}:c ${loadaddr} ${boot_kernelname}; " \
-	"bootm ${loadaddr]; " \
+	"bootm ${loadaddr}; " \
 	""
 
 /* Will get defined by the script script_generate_bootargs */
