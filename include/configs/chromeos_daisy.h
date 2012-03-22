@@ -29,7 +29,7 @@
  * - debug and earlyprintk: easier to debug; they could be removed later
  */
 #define CONFIG_DIRECT_BOOTARGS \
-	"console=ttySAC3,115200 debug earlyprintk"
+	"console=ttySAC3," STRINGIFY(CONFIG_BAUDRATE) " debug earlyprintk"
 
 /* TODO(clchiou): Provide actual value to it later */
 /* Standard input, output and error device of U-Boot console. */
