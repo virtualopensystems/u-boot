@@ -124,7 +124,7 @@
 #define CONFIG_ENV_SROM_BANK		1
 #endif /*CONFIG_CMD_NET*/
 
-#define CONFIG_LOADADDR			0x40008000
+#define CONFIG_LOADADDR			0x40000000
 
 #define SCRIPT_GENERATE_BOOTARGS "script_generate_bootargs=" \
 	"setenv bootargs " \
