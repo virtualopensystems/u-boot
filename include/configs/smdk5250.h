@@ -73,6 +73,9 @@
 #define CONFIG_CMD_NET
 #define CONFIG_CMD_TIME
 
+/* So our flasher can verify that all is well */
+#define CONFIG_CRC32_VERIFY
+
 #define CONFIG_BOOTDELAY		0
 #define CONFIG_ZERO_BOOTDELAY_CHECK
 
