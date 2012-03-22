@@ -198,13 +198,13 @@ static void setup_arch_unused_memory(memory_wipe_t *wipe,
 {
 	struct fdt_memory config, ramoops;
 
-	if (fdtdec_memory(gd->fdt_blob, "/memory", &config))
+	if (cros_fdtdec_memory(gd->fdt_blob, "/memory", &config))
 		VbExError("FDT decode memory section error\n");
 
 	memory_wipe_add(wipe, config.start, config.end);
 
 	/* Excludes kcrashmem if in FDT */
-	if (fdtdec_memory(gd->fdt_blob, "/ramoops", &ramoops))
+	if (cros_fdtdec_memory(gd->fdt_blob, "/ramoops", &ramoops))
 		VBDEBUG("RAMOOPS not contained within FDT\n");
 	else
 		memory_wipe_sub(wipe, ramoops.start, ramoops.end);

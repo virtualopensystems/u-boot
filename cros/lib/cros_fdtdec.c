@@ -188,3 +188,23 @@ void *cros_fdtdec_alloc_region(const void *blob,
 	}
 	return ptr;
 }
+
+int cros_fdtdec_memory(const void *blob, const char *name,
+		struct fdt_memory *config)
+{
+	int node, len;
+	const fdt_addr_t *cell;
+
+	node = fdt_path_offset(blob, name);
+	if (node < 0)
+		return node;
+
+	cell = fdt_getprop(blob, node, "reg", &len);
+	if (cell && len == sizeof(fdt_addr_t) * 2) {
+		config->start = fdt_addr_to_cpu(cell[0]);
+		config->end = fdt_addr_to_cpu(cell[1]);
+	} else
+		return -FDT_ERR_BADLAYOUT;
+
+	return 0;
+}

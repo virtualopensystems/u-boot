@@ -11,6 +11,7 @@
 #ifndef CROS_FDTDEC_H_
 #define CROS_FDTDEC_H_
 
+#include <fdtdec.h>
 #include <cros/fmap.h>
 
 /* Decode Chrome OS specific configuration from fdt */
@@ -52,5 +53,15 @@ void *cros_fdtdec_alloc_region(const void *blob,
  *			saved in the structure)
  */
 int cros_fdtdec_mrc_cache_base(const char *blob, struct fmap_entry *fme);
+
+/**
+ * Returns information from the FDT about memory for a given root
+ *
+ * @param blob          FDT blob to use
+ * @param name          Root name of alias to search for
+ * @param config        structure to use to return information
+ */
+int cros_fdtdec_memory(const void *blob, const char *name,
+		struct fdt_memory *config);
 
 #endif /* CROS_FDTDEC_H_ */
