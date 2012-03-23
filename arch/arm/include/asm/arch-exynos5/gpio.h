@@ -45,7 +45,7 @@ struct exynos5_gpio_part1 {
 	struct s5p_gpio_bank y4;
 	struct s5p_gpio_bank y5;
 	struct s5p_gpio_bank y6;
-	struct s5p_gpio_bank res1[0x980];
+	char res1[0x980];
 	struct s5p_gpio_bank x0;
 	struct s5p_gpio_bank x1;
 	struct s5p_gpio_bank x2;
