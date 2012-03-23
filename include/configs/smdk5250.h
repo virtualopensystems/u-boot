@@ -96,6 +96,9 @@
 
 #define CONFIG_MAX77686_POWER
 
+#define CONFIG_TPS65090_POWER
+#define CONFIG_TPS65090_I2C_BUS	0x4
+
 #define CONFIG_VDD_ARM		1150 /* 1.15v */
 #define CONFIG_VDD_INT		1100 /* 1.1v */
 #define CONFIG_VDD_MIF		1200 /* 1.2v */
