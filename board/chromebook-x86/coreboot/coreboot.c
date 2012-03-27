@@ -154,7 +154,7 @@ static void handle_mrc_cache(void)
 
 	firmware_storage_t file;
 
-	if (cros_fdtget_mrc_cache_base(gd->fdt_blob, &fme)) {
+	if (cros_fdtdec_mrc_cache_base(gd->fdt_blob, &fme)) {
 		printf("%s: MRC cache not found\n", __func__);
 		return;
 	}
