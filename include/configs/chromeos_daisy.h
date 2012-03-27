@@ -35,6 +35,14 @@
 /* Standard input, output and error device of U-Boot console. */
 #define CONFIG_STD_DEVICES_SETTINGS ""
 
+#define CONFIG_CHROMEOS_SD_TO_SPI \
+	"sd_to_spi=echo Flashing U-Boot from SD card to SPI flash; " \
+	"mmc rescan; " \
+	"mmc read 40008000 1 1000; " \
+	"sf probe 1:0; " \
+	"sf update 40008000 0 80000; " \
+	"echo Flash completed\0"
+
 /*
  * TODO(clchiou): We override mmc_setup here because today on exynos U-Boot and
  * kernel disagree on eMMC and SD card index.  We should fix this so that the
@@ -48,6 +56,7 @@
 #endif
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	CONFIG_CHROMEOS_EXTRA_ENV_SETTINGS \
+	CONFIG_CHROMEOS_SD_TO_SPI \
 	\
 	"mmc_setup=" \
 		"mmc rescan ${devnum}; " \
