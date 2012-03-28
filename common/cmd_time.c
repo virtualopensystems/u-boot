@@ -32,6 +32,7 @@ static int run_command_and_time_it(int flag, int argc, char * const argv[],
 {
 	cmd_tbl_t *cmdtp = find_cmd(argv[0]);
 	int retval = 0;
+	ulong start;
 
 	if (!cmdtp) {
 		printf("%s: command not found\n", argv[0]);
@@ -45,9 +46,9 @@ static int run_command_and_time_it(int flag, int argc, char * const argv[],
 	 * boards.  We could use the new timer API that Graeme is proposing
 	 * so that this piece of code would be arch-independent.
 	 */
-	*cycles = get_timer_masked();
+	start = get_timer(0);
 	retval = cmdtp->cmd(cmdtp, flag, argc, argv);
-	*cycles = get_timer_masked() - *cycles;
+	*cycles = get_timer(start);
 
 	return retval;
 }
