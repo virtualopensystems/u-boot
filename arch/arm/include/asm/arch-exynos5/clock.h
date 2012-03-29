@@ -22,6 +22,8 @@
 #ifndef __ASM_ARM_ARCH_CLOCK_H_
 #define __ASM_ARM_ARCH_CLOCK_H_
 
+#include <asm/arch/periph.h>
+
 #ifndef __ASSEMBLY__
 struct exynos5_clock {
 	unsigned int	apll_lock;		/* base + 0 */
@@ -360,6 +362,8 @@ struct exynos5_clock {
 	unsigned int	lpddr3phy_ctrl;
 	unsigned char	res109[0xf5f8];
 };
+
+void clock_ll_set_pre_ratio(enum periph_id periph_id, unsigned divisor);
 #endif
 
 #endif

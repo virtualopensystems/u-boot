@@ -227,3 +227,39 @@ unsigned long get_i2c_clk(void)
 	aclk_66 = aclk_66_pre/(ratio+1);
 	return aclk_66;
 }
+
+void clock_ll_set_pre_ratio(enum periph_id periph_id, unsigned divisor)
+{
+	struct exynos5_clock *clk =
+		(struct exynos5_clock *)samsung_get_base_clock();
+	unsigned shift;
+	u32 *reg;
+
+	/*
+	 * For now we only handle a very small subset of peipherals here.
+	 * Others will need to (and do) mangle the clock registers
+	 * themselves, At some point it is hoped that this function can work
+	 * from a table or calculated register offset / mask. For now this
+	 * is at least better than spreading clock control code around
+	 * U-Boot.
+	 */
+	switch (periph_id) {
+	case PERIPH_ID_SPI0:
+		reg = &clk->div_peric1;
+		shift = 8;
+		break;
+	case PERIPH_ID_SPI1:
+		reg = &clk->div_peric1;
+		shift = 24;
+		break;
+	case PERIPH_ID_SPI2:
+		reg = &clk->div_peric2;
+		shift = 8;
+		break;
+	default:
+		debug("%s: Unsupported peripheral ID %d\n", __func__,
+		      periph_id);
+		return;
+	}
+	clrsetbits_le32(reg, 0xff << shift, divisor << shift);
+}
