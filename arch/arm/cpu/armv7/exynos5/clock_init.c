@@ -86,6 +86,9 @@ void system_clock_init()
 	/* SPI [0-2]: SCLKMPLL = 6 */
 	writel(CLK_SRC_PERIC1_VAL, &clk->src_peric1);
 
+	/* ISP SPI [0-1]: SCLKMPLL = 6 */
+	writel(SCLK_SRC_ISP_VAL, &clk->sclk_src_isp);
+
 	/* Set Clock Ratios */
 	writel(CLK_DIV_CPU0_VAL, &clk->div_cpu0);
 
@@ -130,6 +133,9 @@ void system_clock_init()
 
 	/* SPI[2] */
 	writel(CLK_DIV_PERIC2_VAL, &clk->div_peric2);
+
+	/* ISP SPI[0-1] */
+	writel(SCLK_DIV_ISP_VAL, &clk->sclk_div_isp);
 
 	/* PWM_RATIO[3:0] */
 	writel(CLK_DIV_PERIC3_VAL, &clk->div_peric3);

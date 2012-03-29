@@ -299,6 +299,18 @@
 				| (SPI1_SEL << 20) \
 				| (SPI0_SEL << 16))
 
+/* SCLK_SRC_ISP - set SPI0/1 to 6 = SCLK_MPLL_USER */
+#define SPI0_ISP_SEL		6
+#define SPI1_ISP_SEL		6
+#define SCLK_SRC_ISP_VAL	(SPI1_ISP_SEL << 4) \
+				| (SPI0_ISP_SEL << 0)
+
+/* SCLK_DIV_ISP - set SPI0/1 to 0xf = divide by 16 */
+#define SPI0_ISP_RATIO		0xf
+#define SPI1_ISP_RATIO		0xf
+#define SCLK_DIV_ISP_VAL	(SPI1_ISP_RATIO << 12) \
+				| (SPI0_ISP_RATIO << 0)
+
 #define CLK_SRC_FSYS_VAL	0x66666
 #define CLK_DIV_FSYS0_VAL	0x0BB00000
 #define CLK_DIV_FSYS1_VAL	0x000f000f
@@ -350,8 +362,6 @@
 /* CLK_DIV_L0X */
 #define CLK_DIV_R1X_VAL		0x10
 
-/* SCLK_SRC_ISP */
-#define SCLK_SRC_ISP_VAL	0x600
 /* CLK_DIV_ISP0 */
 #define CLK_DIV_ISP0_VAL	0x31
 
