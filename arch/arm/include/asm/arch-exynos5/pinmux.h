@@ -25,9 +25,21 @@
 
 #include <asm/arch/periph.h>
 
-#define PINMUX_FLAG_NONE	0x00000000
-#define PINMUX_FLAG_8BIT_MODE	0x00000001	/* SDMMC 8-bit mode */
-#define PINMUX_FLAG_SLAVE_MODE	0x00000002	/* SPI slave mode */
+enum {
+	PINMUX_FLAG_NONE	= 0x00000000,
+
+	/* Flags for eMMC */
+	PINMUX_FLAG_8BIT_MODE	= 1 << 0,	/* SDMMC 8-bit mode */
+
+	/*
+	 * Flags for SPI. We can set up general pinmux, or if _CS is set,
+	 * we either activate or de-activate the CS line, based on the
+	 * _ACTIVATE flag.
+	 */
+	PINMUX_FLAG_SLAVE_MODE	= 1 << 0,	/* Slave mode */
+	PINMUX_FLAG_CS		= 1 << 1,	/* Adjust chip select */
+	PINMUX_FLAG_ACTIVATE	= 1 << 2,	/* Activate chip select */
+};
 
 /**
  * Configures the pinmux for a particular peripheral.

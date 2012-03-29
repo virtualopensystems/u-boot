@@ -32,7 +32,7 @@ int exynos_pinmux_config(enum periph_id peripheral, int flags)
 	struct exynos5_gpio_part1 *gpio1 =
 		(struct exynos5_gpio_part1 *) samsung_get_base_gpio_part1();
 	struct s5p_gpio_bank *bank, *bank_ext;
-	int i, start, count, cfg, mode;
+	int i, start, count;
 
 	switch (peripheral) {
 	case PERIPH_ID_UART0:
@@ -174,7 +174,9 @@ int exynos_pinmux_config(enum periph_id peripheral, int flags)
 		break;
 	case PERIPH_ID_SPI0:
 	case PERIPH_ID_SPI1:
-	case PERIPH_ID_SPI2:
+	case PERIPH_ID_SPI2: {
+		int cs_line, cfg;
+
 		switch (peripheral) {
 		default:
 		case PERIPH_ID_SPI0:
@@ -190,17 +192,30 @@ int exynos_pinmux_config(enum periph_id peripheral, int flags)
 			start = 1; count = 4; cfg = 0x5;
 			break;
 		}
-		for (i = start; i < start + count; i++) {
-			s5p_gpio_cfg_pin(bank, i, GPIO_FUNC(cfg));
-			if (i != start + 1) {
-				mode = (flags & PINMUX_FLAG_SLAVE_MODE) ?
+		cs_line = start + 1;
+
+		if (flags & PINMUX_FLAG_CS) {
+			s5p_gpio_direction_output(bank, cs_line, 1);
+			s5p_gpio_cfg_pin(bank, cs_line, GPIO_FUNC(0x1));
+			s5p_gpio_set_pull(bank, cs_line, GPIO_PULL_UP);
+			s5p_gpio_set_value(bank, cs_line,
+					flags & PINMUX_FLAG_ACTIVATE ? 0 : 1);
+		} else {
+			int mode = (flags & PINMUX_FLAG_SLAVE_MODE) ?
 					GPIO_PULL_DOWN : GPIO_PULL_UP;
-				s5p_gpio_set_pull(bank, i, mode);
-			} else if (flags & PINMUX_FLAG_SLAVE_MODE) {
-				s5p_gpio_set_pull(bank, i, GPIO_PULL_NONE);
+
+			for (i = start; i < start + count; i++) {
+				s5p_gpio_cfg_pin(bank, i, GPIO_FUNC(cfg));
+				if (i != cs_line)
+					s5p_gpio_set_pull(bank, i, mode);
+				else if (flags & PINMUX_FLAG_SLAVE_MODE) {
+					s5p_gpio_set_pull(bank, i,
+							  GPIO_PULL_NONE);
+				}
 			}
 		}
 		break;
+	}
 	default:
 		debug("%s: invalid peripheral %d", __func__, peripheral);
 		return -1;
