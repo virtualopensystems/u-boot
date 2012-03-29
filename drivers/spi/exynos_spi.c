@@ -35,6 +35,13 @@ struct exynos_spi_slave {
 	unsigned int mode;
 };
 
+/* We should not rely on any particular ordering of these IDs */
+static enum periph_id periph_for_dev[] = {
+	PERIPH_ID_SPI0,
+	PERIPH_ID_SPI1,
+	PERIPH_ID_SPI2,
+};
+
 static inline struct exynos_spi_slave *to_exynos_spi(struct spi_slave *slave)
 {
 	return container_of(slave, struct exynos_spi_slave, slave);
@@ -43,6 +50,14 @@ static inline struct exynos_spi_slave *to_exynos_spi(struct spi_slave *slave)
 static inline struct exynos_spi *exynos_get_base_spi(int dev_index)
 {
 	return (struct exynos_spi *)samsung_get_base_spi() + dev_index;
+}
+
+static enum periph_id spi_get_periph_id(unsigned dev_index)
+{
+	if (dev_index < ARRAY_SIZE(periph_for_dev))
+		return periph_for_dev[dev_index];
+	debug("%s: invalid bus %d", __func__, dev_index);
+	return PERIPH_ID_NONE;
 }
 
 void spi_init()
@@ -90,26 +105,14 @@ static void spi_set_clk(struct exynos_spi_slave *spi_slave,
  */
 static void spi_pinmux_init(struct exynos_spi_slave *spi)
 {
-	int peripheral, flags = PINMUX_FLAG_NONE;
+	enum periph_id periph_id;
+	int flags = PINMUX_FLAG_NONE;
 
-	switch (spi->slave.bus) {
-	case 0:
-		peripheral = PERIPH_ID_SPI0;
-		break;
-	case 1:
-		peripheral = PERIPH_ID_SPI1;
-		break;
-	case 2:
-		peripheral = PERIPH_ID_SPI2;
-		break;
-	default:
-		debug("%s: invalid bus %d", __func__, spi->slave.bus);
-		return;
-	}
+	periph_id = spi_get_periph_id(spi->slave.bus);
 	if (spi->mode & SPI_SLAVE)
 		flags |= PINMUX_FLAG_SLAVE_MODE;
 
-	exynos_pinmux_config(peripheral, flags);
+	exynos_pinmux_config(periph_id, flags);
 }
 
 /**
