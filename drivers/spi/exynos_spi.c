@@ -70,21 +70,10 @@ void spi_init()
  * Set the required clock frequency to SPI controller
  *
  * @param spi_slave	SPI controller
- * @param clk		Base address of clock register map
  */
-static void spi_set_clk(struct exynos_spi_slave *spi_slave,
-			struct exynos5_clock *clk)
+static void spi_set_clk(struct exynos_spi_slave *spi_slave)
 {
-	uint dev_index = spi_slave->slave.bus, div = 0;
-	u32 addr;
-	u32 val;
-
-	if (dev_index == 0 || dev_index == 1)
-		addr = (u32)&clk->div_peric1;
-	else {
-		addr = (u32)&clk->div_peric2;
-		dev_index -= 2;
-	}
+	uint div = 0;
 
 	if (!(spi_slave->mode & SPI_SLAVE)) {
 		if (spi_slave->freq > EXYNOS_SPI_MAX_FREQ)
@@ -93,10 +82,7 @@ static void spi_set_clk(struct exynos_spi_slave *spi_slave,
 		div = EXYNOS_SPI_MAX_FREQ / spi_slave->freq - 1;
 	}
 
-	val = readl(addr);
-	val &= ~(0xff << ((dev_index << 4) + 8));
-	val |= (div & 0xff) << ((dev_index << 4) + 8);
-	writel(val, addr);
+	clock_ll_set_pre_ratio(spi_slave->periph_id, div);
 }
 
 /**
@@ -222,12 +208,10 @@ int spi_claim_bus(struct spi_slave *slave)
 {
 	struct exynos_spi_slave *spi_slave = to_exynos_spi(slave);
 	struct exynos_spi *regs = spi_slave->regs;
-	struct exynos5_clock *clk =
-		(struct exynos5_clock *)samsung_get_base_clock();
 	u32 reg = 0;
 	int ret;
 
-	spi_set_clk(spi_slave, clk);
+	spi_set_clk(spi_slave);
 	spi_pinmux_init(spi_slave);
 
 	ret = spi_flush_fifo(slave);
