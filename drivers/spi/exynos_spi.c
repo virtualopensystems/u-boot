@@ -41,6 +41,8 @@ static enum periph_id periph_for_dev[] = {
 	PERIPH_ID_SPI0,
 	PERIPH_ID_SPI1,
 	PERIPH_ID_SPI2,
+	PERIPH_ID_SPI3,
+	PERIPH_ID_SPI4,
 };
 
 static inline struct exynos_spi_slave *to_exynos_spi(struct spi_slave *slave)
@@ -50,7 +52,11 @@ static inline struct exynos_spi_slave *to_exynos_spi(struct spi_slave *slave)
 
 static inline struct exynos_spi *exynos_get_base_spi(int dev_index)
 {
-	return (struct exynos_spi *)samsung_get_base_spi() + dev_index;
+	if (dev_index < 3)
+		return (struct exynos_spi *)samsung_get_base_spi() + dev_index;
+	else
+		return (struct exynos_spi *)samsung_get_base_spi_isp() +
+				(dev_index - 3);
 }
 
 static enum periph_id spi_get_periph_id(unsigned dev_index)
