@@ -31,6 +31,8 @@ int exynos_pinmux_config(enum periph_id peripheral, int flags)
 {
 	struct exynos5_gpio_part1 *gpio1 =
 		(struct exynos5_gpio_part1 *) samsung_get_base_gpio_part1();
+	struct exynos5_gpio_part2 *gpio2 =
+		(struct exynos5_gpio_part2 *) samsung_get_base_gpio_part2();
 	struct s5p_gpio_bank *bank, *bank_ext;
 	int i, start, count;
 
@@ -174,7 +176,9 @@ int exynos_pinmux_config(enum periph_id peripheral, int flags)
 		break;
 	case PERIPH_ID_SPI0:
 	case PERIPH_ID_SPI1:
-	case PERIPH_ID_SPI2: {
+	case PERIPH_ID_SPI2:
+	case PERIPH_ID_SPI3:
+	case PERIPH_ID_SPI4: {
 		int cs_line, cfg;
 
 		switch (peripheral) {
@@ -190,6 +194,14 @@ int exynos_pinmux_config(enum periph_id peripheral, int flags)
 		case PERIPH_ID_SPI2:
 			bank = &gpio1->b1;
 			start = 1; count = 4; cfg = 0x5;
+			break;
+		case PERIPH_ID_SPI3:
+			bank = &gpio2->e0;
+			start = 0; count = 4; cfg = 0x2;
+			break;
+		case PERIPH_ID_SPI4:
+			bank = &gpio2->f0;
+			start = 2; count = 2; cfg = 0x4;
 			break;
 		}
 		cs_line = start + 1;
@@ -211,6 +223,15 @@ int exynos_pinmux_config(enum periph_id peripheral, int flags)
 				else if (flags & PINMUX_FLAG_SLAVE_MODE) {
 					s5p_gpio_set_pull(bank, i,
 							  GPIO_PULL_NONE);
+				}
+			}
+			if (peripheral == PERIPH_ID_SPI4) {
+				/* Some irregularity here */
+				bank = &gpio2->e0;
+				for (i = 4; i < 6; i++) {
+					s5p_gpio_cfg_pin(bank, i,
+							 GPIO_FUNC(4));
+					s5p_gpio_set_pull(bank, i, mode);
 				}
 			}
 		}
