@@ -125,10 +125,13 @@
 /* Ethernet Controllor Driver */
 #ifdef CONFIG_CMD_NET
 #define CONFIG_SMC911X
-#define CONFIG_SMC911X_BASE		0x5000000
 #define CONFIG_SMC911X_16_BIT
-#define CONFIG_ENV_SROM_BANK		1
 #endif /*CONFIG_CMD_NET*/
+
+#ifndef CONFIG_OF_CONTROL
+#define CONFIG_SMC911X_BASE		0x5000000
+#define CONFIG_ENV_SROM_BANK		1
+#endif
 
 #define CONFIG_LOADADDR			0x40000000
 
