@@ -33,6 +33,7 @@ struct exynos_spi_slave {
 	struct exynos_spi *regs;
 	unsigned int freq;
 	unsigned int mode;
+	enum periph_id periph_id;	/* Peripheral ID for this device */
 };
 
 /* We should not rely on any particular ordering of these IDs */
@@ -105,14 +106,12 @@ static void spi_set_clk(struct exynos_spi_slave *spi_slave,
  */
 static void spi_pinmux_init(struct exynos_spi_slave *spi)
 {
-	enum periph_id periph_id;
 	int flags = PINMUX_FLAG_NONE;
 
-	periph_id = spi_get_periph_id(spi->slave.bus);
 	if (spi->mode & SPI_SLAVE)
 		flags |= PINMUX_FLAG_SLAVE_MODE;
 
-	exynos_pinmux_config(periph_id, flags);
+	exynos_pinmux_config(spi->periph_id, flags);
 }
 
 /**
@@ -141,6 +140,7 @@ struct spi_slave *spi_setup_slave(unsigned int bus, unsigned int cs,
 	spi_slave->slave.cs = cs;
 	spi_slave->regs = exynos_get_base_spi(bus);
 	spi_slave->mode = mode;
+	spi_slave->periph_id = spi_get_periph_id(bus);
 
 	if (max_hz > EXYNOS_SPI_MAX_FREQ)
 		spi_slave->freq = EXYNOS_SPI_MAX_FREQ;
