@@ -233,6 +233,7 @@ void clock_ll_set_pre_ratio(enum periph_id periph_id, unsigned divisor)
 	struct exynos5_clock *clk =
 		(struct exynos5_clock *)samsung_get_base_clock();
 	unsigned shift;
+	unsigned mask = 0xff;
 	u32 *reg;
 
 	/*
@@ -256,10 +257,19 @@ void clock_ll_set_pre_ratio(enum periph_id periph_id, unsigned divisor)
 		reg = &clk->div_peric2;
 		shift = 8;
 		break;
+	case PERIPH_ID_SPI3:
+		reg = &clk->sclk_div_isp;
+		mask = 0xfff;
+		shift = 4;
+		break;
+	case PERIPH_ID_SPI4:
+		reg = &clk->div_peric2;
+		shift = 16;
+		break;
 	default:
 		debug("%s: Unsupported peripheral ID %d\n", __func__,
 		      periph_id);
 		return;
 	}
-	clrsetbits_le32(reg, 0xff << shift, divisor << shift);
+	clrsetbits_le32(reg, mask << shift, (divisor & mask) << shift);
 }
