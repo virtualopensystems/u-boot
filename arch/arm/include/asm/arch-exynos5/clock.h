@@ -24,7 +24,7 @@
 
 #ifndef __ASSEMBLY__
 struct exynos5_clock {
-	unsigned int	apll_lock;
+	unsigned int	apll_lock;		/* base + 0 */
 	unsigned char	res1[0xfc];
 	unsigned int	apll_con0;
 	unsigned int	apll_con1;
@@ -44,7 +44,8 @@ struct exynos5_clock {
 	unsigned int	clkout_cmu_cpu;
 	unsigned int	clkout_cmu_cpu_div_stat;
 	unsigned char	res8[0x5f8];
-	unsigned int	armclk_stopctrl;
+
+	unsigned int	armclk_stopctrl;	/* base + 0x1000 */
 	unsigned int	atclk_stopctrl;
 	unsigned char	res9[0x8];
 	unsigned int	parityfail_status;
@@ -81,7 +82,8 @@ struct exynos5_clock {
 	unsigned int	div_iem_l2;
 	unsigned int	div_iem_l1;
 	unsigned char	res14[0x2ce0];
-	unsigned int	mpll_lock;
+
+	unsigned int	mpll_lock;		/* base + 0x4000 */
 	unsigned char	res15[0xfc];
 	unsigned int	mpll_con0;
 	unsigned int	mpll_con1;
@@ -104,7 +106,8 @@ struct exynos5_clock {
 	unsigned int	clkout_cmu_core;
 	unsigned int	clkout_cmu_core_div_stat;
 	unsigned char	res23[0x5f8];
-	unsigned int	dcgidx_map0;
+
+	unsigned int	dcgidx_map0;		/* base + 0x5000 */
 	unsigned int	dcgidx_map1;
 	unsigned int	dcgidx_map2;
 	unsigned char	res24[0x14];
@@ -119,7 +122,8 @@ struct exynos5_clock {
 	unsigned int	dvsemclk_en;
 	unsigned int	maxperf;
 	unsigned char	res28[0x3478];
-	unsigned int	div_acp;
+
+	unsigned int	div_acp;		/* base + 0x8500 */
 	unsigned char	res29[0xfc];
 	unsigned int	div_stat_acp;
 	unsigned char	res30[0x1fc];
@@ -128,15 +132,18 @@ struct exynos5_clock {
 	unsigned int	clkout_cmu_acp;
 	unsigned int	clkout_cmu_acp_div_stat;
 	unsigned char	res32[0x38f8];
-	unsigned int	div_isp0;
+
+	unsigned int	div_isp0;		/* base + 0xc300 */
 	unsigned int	div_isp1;
 	unsigned int	div_isp2;
 	unsigned char	res33[0xf4];
-	unsigned int	div_stat_isp0;
+
+	unsigned int	div_stat_isp0;		/* base + 0xc400 */
 	unsigned int	div_stat_isp1;
 	unsigned int	div_stat_isp2;
 	unsigned char	res34[0x3f4];
-	unsigned int	gate_ip_isp0;
+
+	unsigned int	gate_ip_isp0;		/* base + 0xc800 */
 	unsigned int	gate_ip_isp1;
 	unsigned char	res35[0xf8];
 	unsigned int	gate_sclk_isp;
@@ -146,7 +153,8 @@ struct exynos5_clock {
 	unsigned int	clkout_cmu_isp;
 	unsigned int	clkout_cmu_isp_div_stat;
 	unsigned char	res38[0x3618];
-	unsigned int	cpll_lock;
+
+	unsigned int	cpll_lock;		/* base + 0x10020 */
 	unsigned char	res39[0xc];
 	unsigned int	epll_lock;
 	unsigned char	res40[0xc];
@@ -292,7 +300,8 @@ struct exynos5_clock {
 	unsigned int	clkout_cmu_top;
 	unsigned int	clkout_cmu_top_div_stat;
 	unsigned char	res84[0x37f8];
-	unsigned int	src_lex;
+
+	unsigned int	src_lex;		/* base + 0x14200 */
 	unsigned char	res85[0x2fc];
 	unsigned int	div_lex;
 	unsigned char	res86[0xfc];
@@ -303,7 +312,8 @@ struct exynos5_clock {
 	unsigned int	clkout_cmu_lex;
 	unsigned int	clkout_cmu_lex_div_stat;
 	unsigned char	res89[0x3af8];
-	unsigned int	div_r0x;
+
+	unsigned int	div_r0x;		/* base + 0x18500 */
 	unsigned char	res90[0xfc];
 	unsigned int	div_stat_r0x;
 	unsigned char	res91[0x1fc];
@@ -312,7 +322,8 @@ struct exynos5_clock {
 	unsigned int	clkout_cmu_r0x;
 	unsigned int	clkout_cmu_r0x_div_stat;
 	unsigned char	res94[0x3af8];
-	unsigned int	div_r1x;
+
+	unsigned int	div_r1x;		/* base + 0x1c500 */
 	unsigned char	res95[0xfc];
 	unsigned int	div_stat_r1x;
 	unsigned char	res96[0x1fc];
@@ -321,7 +332,8 @@ struct exynos5_clock {
 	unsigned int	clkout_cmu_r1x;
 	unsigned int	clkout_cmu_r1x_div_stat;
 	unsigned char	res98[0x3608];
-	unsigned int	bpll_lock;
+
+	unsigned int	bpll_lock;		/* base + 0x2000c */
 	unsigned char	res99[0xfc];
 	unsigned int	bpll_con0;
 	unsigned int	bpll_con1;
