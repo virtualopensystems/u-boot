@@ -94,13 +94,13 @@ static void spi_pinmux_init(struct exynos_spi_slave *spi)
 
 	switch (spi->slave.bus) {
 	case 0:
-		peripheral = EXYNOS_SPI0;
+		peripheral = PERIPH_ID_SPI0;
 		break;
 	case 1:
-		peripheral = EXYNOS_SPI1;
+		peripheral = PERIPH_ID_SPI1;
 		break;
 	case 2:
-		peripheral = EXYNOS_SPI2;
+		peripheral = PERIPH_ID_SPI2;
 		break;
 	default:
 		debug("%s: invalid bus %d", __func__, spi->slave.bus);

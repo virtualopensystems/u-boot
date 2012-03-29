@@ -23,24 +23,7 @@
 #ifndef __EXYNOS_PINMUX_H
 #define __EXYNOS_PINMUX_H
 
-/*
- * Peripherals requiring pinmux configuration. List will
- * grow with support for more devices getting added.
- */
-enum {
-	EXYNOS_UART0,
-	EXYNOS_UART1,
-	EXYNOS_UART2,
-	EXYNOS_UART3,
-	EXYNOS_SDMMC0,
-	EXYNOS_SDMMC1,
-	EXYNOS_SDMMC2,
-	EXYNOS_SDMMC3,
-	EXYNOS_SMC911X,
-	EXYNOS_SPI0,
-	EXYNOS_SPI1,
-	EXYNOS_SPI2,
-};
+#include <asm/arch/periph.h>
 
 #define PINMUX_FLAG_NONE	0x00000000
 #define PINMUX_FLAG_8BIT_MODE	0x00000001	/* SDMMC 8-bit mode */
@@ -58,6 +41,6 @@ enum {
  * @param flags		configure flags
  * @return 0 if ok, -1 on error (e.g. unsupported peripheral)
  */
-int exynos_pinmux_config(int peripheral, int flags);
+int exynos_pinmux_config(enum periph_id peripheral, int flags);
 
 #endif

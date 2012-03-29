@@ -54,7 +54,7 @@
 #endif
 
 /* select serial console configuration */
-#define EXYNOS_UART			EXYNOS_UART3
+#define EXYNOS_UART			PERIPH_ID_UART3
 #define CONFIG_SERIAL3
 
 /* SD/MMC configuration */

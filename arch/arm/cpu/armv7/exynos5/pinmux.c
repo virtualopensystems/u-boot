@@ -27,7 +27,7 @@
 #include <asm/arch/pinmux.h>
 #include <asm/arch/sromc.h>
 
-int exynos_pinmux_config(int peripheral, int flags)
+int exynos_pinmux_config(enum periph_id peripheral, int flags)
 {
 	struct exynos5_gpio_part1 *gpio1 =
 		(struct exynos5_gpio_part1 *) samsung_get_base_gpio_part1();
@@ -35,24 +35,25 @@ int exynos_pinmux_config(int peripheral, int flags)
 	int i, start, count, cfg, mode;
 
 	switch (peripheral) {
-	case EXYNOS_UART0:
-	case EXYNOS_UART1:
-	case EXYNOS_UART2:
-	case EXYNOS_UART3:
+	case PERIPH_ID_UART0:
+	case PERIPH_ID_UART1:
+	case PERIPH_ID_UART2:
+	case PERIPH_ID_UART3:
 		switch (peripheral) {
-		case EXYNOS_UART0:
+		default:
+		case PERIPH_ID_UART0:
 			bank = &gpio1->a0;
 			start = 0; count = 4;
 			break;
-		case EXYNOS_UART1:
+		case PERIPH_ID_UART1:
 			bank = &gpio1->a0;
 			start = 4; count = 4;
 			break;
-		case EXYNOS_UART2:
+		case PERIPH_ID_UART2:
 			bank = &gpio1->a1;
 			start = 0; count = 4;
 			break;
-		case EXYNOS_UART3:
+		case PERIPH_ID_UART3:
 			bank = &gpio1->a1;
 			start = 4; count = 2;
 			break;
@@ -62,21 +63,22 @@ int exynos_pinmux_config(int peripheral, int flags)
 			s5p_gpio_cfg_pin(bank, i, GPIO_FUNC(0x2));
 		}
 		break;
-	case EXYNOS_SDMMC0:
-	case EXYNOS_SDMMC1:
-	case EXYNOS_SDMMC2:
-	case EXYNOS_SDMMC3:
+	case PERIPH_ID_SDMMC0:
+	case PERIPH_ID_SDMMC1:
+	case PERIPH_ID_SDMMC2:
+	case PERIPH_ID_SDMMC3:
 		switch (peripheral) {
-		case EXYNOS_SDMMC0:
+		default:
+		case PERIPH_ID_SDMMC0:
 			bank = &gpio1->c0; bank_ext = &gpio1->c1;
 			break;
-		case EXYNOS_SDMMC1:
+		case PERIPH_ID_SDMMC1:
 			bank = &gpio1->c1; bank_ext = NULL;
 			break;
-		case EXYNOS_SDMMC2:
+		case PERIPH_ID_SDMMC2:
 			bank = &gpio1->c2; bank_ext = &gpio1->c3;
 			break;
-		case EXYNOS_SDMMC3:
+		case PERIPH_ID_SDMMC3:
 			bank = &gpio1->c3; bank_ext = NULL;
 			break;
 		}
@@ -103,7 +105,7 @@ int exynos_pinmux_config(int peripheral, int flags)
 			s5p_gpio_set_drv(bank, i, GPIO_DRV_4X);
 		}
 		break;
-	case EXYNOS_SMC911X:
+	case PERIPH_ID_SMC911X:
 		/*
 		 * SROM:CS1 and EBI
 		 *
@@ -170,19 +172,20 @@ int exynos_pinmux_config(int peripheral, int flags)
 			s5p_gpio_set_pull(&gpio1->y6, i, GPIO_PULL_UP);
 		}
 		break;
-	case EXYNOS_SPI0:
-	case EXYNOS_SPI1:
-	case EXYNOS_SPI2:
+	case PERIPH_ID_SPI0:
+	case PERIPH_ID_SPI1:
+	case PERIPH_ID_SPI2:
 		switch (peripheral) {
-		case EXYNOS_SPI0:
+		default:
+		case PERIPH_ID_SPI0:
 			bank = &gpio1->a2;
 			start = 0; count = 4; cfg = 0x2;
 			break;
-		case EXYNOS_SPI1:
+		case PERIPH_ID_SPI1:
 			bank = &gpio1->a2;
 			start = 4; count = 4; cfg = 0x2;
 			break;
-		case EXYNOS_SPI2:
+		case PERIPH_ID_SPI2:
 			bank = &gpio1->b1;
 			start = 1; count = 4; cfg = 0x5;
 			break;
