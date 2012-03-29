@@ -359,35 +359,9 @@ int spi_xfer(struct spi_slave *slave, unsigned int bitlen, const void *dout,
  */
 int spi_cs_is_valid(unsigned int bus, unsigned int cs)
 {
-	return bus < 3 && cs == 0;
-}
+	enum periph_id periph_id = spi_get_periph_id(bus);
 
-/**
- * Get the chip select gpio number and base address of gpio bank
- *
- * @param spi_slave	SPI controller
- * @param reg		Pointer to hold the required gpio bank address
- * @return the cs gpio based on spi bus number
- */
-static int spi_get_cs(struct exynos_spi_slave *spi_slave,
-		      struct s5p_gpio_bank **reg)
-{
-	struct exynos5_gpio_part1 *gpio1 =
-		(struct exynos5_gpio_part1 *) samsung_get_base_gpio_part1();
-
-	if (spi_slave->slave.bus == 0) {
-		*reg = &gpio1->a2;
-		return 1;
-	} else if (spi_slave->slave.bus == 1) {
-		*reg = &gpio1->a2;
-		return 5;
-	} else if (spi_slave->slave.bus == 2) {
-		*reg = &gpio1->b1;
-		return 2;
-	} else {
-		debug("%s invalid bus:%d\n", __func__, spi_slave->slave.bus);
-		return 0;
-	}
+	return periph_id != PERIPH_ID_NONE && cs == 0;
 }
 
 /**
@@ -399,18 +373,10 @@ static int spi_get_cs(struct exynos_spi_slave *spi_slave,
 void spi_cs_activate(struct spi_slave *slave)
 {
 	struct exynos_spi_slave *spi_slave = to_exynos_spi(slave);
-	struct s5p_gpio_bank *reg = 0;
-	int cs_line;
 
-	cs_line = spi_get_cs(spi_slave, &reg);
-	if (reg) {
-		s5p_gpio_direction_output(reg, cs_line, 1);
-		s5p_gpio_cfg_pin(reg, cs_line, GPIO_FUNC(0x1));
-		s5p_gpio_set_pull(reg, cs_line, GPIO_PULL_UP);
-		s5p_gpio_set_value(reg, cs_line, 0);
-		debug("Activate CS:%d\n", s5p_gpio_get_value(reg, cs_line));
-	} else
-		debug("Invalid CS Reg\n");
+	exynos_pinmux_config(spi_slave->periph_id,
+			     PINMUX_FLAG_CS | PINMUX_FLAG_ACTIVATE);
+	debug("Activate CS, bus %d\n", spi_slave->slave.bus);
 }
 
 /**
@@ -422,14 +388,7 @@ void spi_cs_activate(struct spi_slave *slave)
 void spi_cs_deactivate(struct spi_slave *slave)
 {
 	struct exynos_spi_slave *spi_slave = to_exynos_spi(slave);
-	struct s5p_gpio_bank *reg = 0;
-	int cs_line;
 
-	cs_line = spi_get_cs(spi_slave, &reg);
-	if (reg) {
-		s5p_gpio_set_value(reg, cs_line, 1);
-		debug("Deactivate CS:%d\n",
-		       s5p_gpio_get_value(reg, cs_line));
-	} else
-		debug("Invalid CS Reg\n");
+	exynos_pinmux_config(spi_slave->periph_id, PINMUX_FLAG_CS);
+	debug("Deactivate CS, bus %d\n", spi_slave->slave.bus);
 }
