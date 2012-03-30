@@ -24,10 +24,13 @@
 /* sysreg map */
 struct exynos5_sysreg {
 	/* Add registers as and when required */
-	unsigned char	reserved[0x230];
+	unsigned char	res1[0x214];
+	unsigned int	disp1blk_cfg;
+	unsigned char	res2[0x18];
 	unsigned int	usb20_phy_cfg;
 };
 
+#define FIMDBYPASS_DISP1	(1 << 15)
 #define USB20_PHY_CFG_EN	(1 << 0)
 
 #endif
