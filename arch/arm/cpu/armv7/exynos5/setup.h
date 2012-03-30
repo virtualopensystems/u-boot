@@ -201,7 +201,7 @@
 /* CLK_SRC_TOP2 */
 #define MUX_BPLL_USER_SEL	0x1
 #define MUX_MPLL_USER_SEL	0x1
-#define MUX_VPLL_SEL		0x0
+#define MUX_VPLL_SEL		0x1
 #define MUX_EPLL_SEL		0x0
 #define MUX_CPLL_SEL		0x0
 #define VPLLSRC_SEL		0x0
@@ -360,6 +360,9 @@
 
 /* CLK_DIV_ISP2 */
 #define CLK_DIV_ISP2_VAL	0x1
+
+/* CLK_SRC_DISP1_0 */
+#define CLK_SRC_DISP1_0_VAL	0x6
 
 #define MPLL_DEC	(MPLL_MDIV * MPLL_MDIV / (MPLL_PDIV * 2^(MPLL_SDIV-1)))
 

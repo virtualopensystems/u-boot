@@ -158,6 +158,9 @@ void system_clock_init()
 	/* MPWMDIV_RATIO */
 	writel(CLK_DIV_ISP2_VAL, &clk->div_isp2);
 
+	/* FIMD1 SRC CLK SELECTION */
+	writel(CLK_SRC_DISP1_0_VAL, &clk->src_disp1_0);
+
 	/* PLL locktime */
 	writel(APLL_LOCK_VAL, &clk->apll_lock);
 
