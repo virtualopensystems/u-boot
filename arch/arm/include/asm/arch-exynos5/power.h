@@ -21,6 +21,9 @@
 #ifndef __EXYNOS5_POWER_H__
 #define __EXYNOS5_POWER_H__
 
+#define MIPI_PHY1_CONTROL_ENABLE		(1 << 0)
+#define MIPI_PHY1_CONTROL_M_RESETN		(1 << 2)
+
 #define POWER_USB_HOST_PHY_CTRL_EN		(1 << 0)
 #define POWER_PS_HOLD_CONTROL_DATA_HIGH		(1 << 8)
 
@@ -29,7 +32,9 @@ struct exynos5_power {
 	/* Add registers as and when required */
 	unsigned char	reserved1[0x0708];
 	unsigned int	usb_host_phy_ctrl;	/* 0x0708 */
-	unsigned char	reserved2[0x2c00];
+	unsigned char	reserved2[0x8];
+	unsigned int	mipi_phy1_control;	/* 0x0714 */
+	unsigned char	reserved3[0x2bf4];
 	unsigned int	ps_hold_ctrl;		/* 0x330c */
 };
 
