@@ -60,8 +60,9 @@ enum {
 	FDT_SROM_TIMING_COUNT,
 };
 
-struct fdt_smc911x {
-	u8 bank; /* srom bank number */
+struct fdt_sromc {
+	u8 bank;	/* srom bank number */
+	u8 width;	/* bus width in bytes */
 	unsigned int timing[FDT_SROM_TIMING_COUNT]; /* timing parameters */
 };
 
