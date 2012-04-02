@@ -107,7 +107,7 @@ int exynos_pinmux_config(enum periph_id peripheral, int flags)
 			s5p_gpio_set_drv(bank, i, GPIO_DRV_4X);
 		}
 		break;
-	case PERIPH_ID_SMC911X:
+	case PERIPH_ID_SROMC:
 		/*
 		 * SROM:CS1 and EBI
 		 *
