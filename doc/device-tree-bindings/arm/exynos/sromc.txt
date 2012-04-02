@@ -1,0 +1,20 @@
+Exynos SROM controller
+
+The device node for an SROMC controller that is part of an Exynos
+SOC is as described in the document "Open Firmware Recommended
+Practice : Universal Serial Bus" with the following modifications
+and additions :
+
+Required properties :
+ - compatible : Should be "samsung,exynos-sromc" for SROMC controllers
+ - bank: Should be the bank number to use (0-3)
+      TBD: Could we get this from the peripheral address?
+ - srom-timings: List of memory timings in this order:
+      PMC
+      TACP
+      TAH
+      TCOH
+      TACC
+      TCOS
+      TACS
+ - width: Byte width of bus: 1 for 8-bit, 2 for 16-bit (default)
