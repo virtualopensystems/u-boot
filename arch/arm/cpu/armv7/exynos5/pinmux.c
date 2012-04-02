@@ -123,7 +123,7 @@ int exynos_pinmux_config(enum periph_id peripheral, int flags)
 		 * GPY1[2]	SROM_WAIT(2)
 		 * GPY1[3]	EBI_DATA_RDn(2)
 		 */
-		s5p_gpio_cfg_pin(&gpio1->y0, CONFIG_ENV_SROM_BANK,
+		s5p_gpio_cfg_pin(&gpio1->y0, flags & PINMUX_FLAG_BANK,
 					GPIO_FUNC(2));
 		s5p_gpio_cfg_pin(&gpio1->y0, 4, GPIO_FUNC(2));
 		s5p_gpio_cfg_pin(&gpio1->y0, 5, GPIO_FUNC(2));
@@ -170,8 +170,10 @@ int exynos_pinmux_config(enum periph_id peripheral, int flags)
 			s5p_gpio_cfg_pin(&gpio1->y5, i, GPIO_FUNC(2));
 			s5p_gpio_set_pull(&gpio1->y5, i, GPIO_PULL_UP);
 
-			s5p_gpio_cfg_pin(&gpio1->y6, i, GPIO_FUNC(2));
-			s5p_gpio_set_pull(&gpio1->y6, i, GPIO_PULL_UP);
+			if (flags & PINMUX_FLAG_16BIT) {
+				s5p_gpio_cfg_pin(&gpio1->y6, i, GPIO_FUNC(2));
+				s5p_gpio_set_pull(&gpio1->y6, i, GPIO_PULL_UP);
+			}
 		}
 		break;
 	case PERIPH_ID_SPI0:
