@@ -29,7 +29,11 @@ ELF-$(CPU)   :=
 ELF-y        := hello_world
 
 ELF-$(CONFIG_SMC91111)           += smc91111_eeprom
+
+ifneq ($(CONFIG_SMC911X_BASE),)
 ELF-$(CONFIG_SMC911X)            += smc911x_eeprom
+endif
+
 ELF-$(CONFIG_SPI_FLASH_ATMEL)    += atmel_df_pow2
 ELF-i386                         += 82559_eeprom
 ELF-mpc5xxx                      += interrupt
