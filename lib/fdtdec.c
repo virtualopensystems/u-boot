@@ -45,6 +45,7 @@ static const char * const compat_names[COMPAT_COUNT] = {
 	COMPAT(SERIAL_NS16550, "ns16550"),
 	COMPAT(NVIDIA_TEGRA20_I2C, "nvidia,tegra20-i2c"),
 	COMPAT(NVIDIA_TEGRA20_DVC, "nvidia,tegra20-i2c-dvc"),
+	COMPAT(SMSC_LAN9215, "smsc,lan9215"),
 };
 
 const char *fdtdec_get_compatible(enum fdt_compat_id id)
