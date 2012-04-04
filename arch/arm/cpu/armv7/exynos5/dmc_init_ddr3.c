@@ -189,12 +189,12 @@ void ddr3_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size)
 	update_reset_dll(dmc, DDR_MODE_DDR3);
 
 	/* Set DQS offsets */
-	writel(DDR3_PHY0_DQS, &phy0_ctrl->phy_con4);
-	writel(DDR3_PHY1_DQS, &phy1_ctrl->phy_con4);
+	writel(mem->phy0_dqs, &phy0_ctrl->phy_con4);
+	writel(mem->phy1_dqs, &phy1_ctrl->phy_con4);
 
 	/* Set DQS offsets */
-	writel(DDR3_PHY0_DQ, &phy0_ctrl->phy_con6);
-	writel(DDR3_PHY1_DQ, &phy1_ctrl->phy_con6);
+	writel(mem->phy0_dq, &phy0_ctrl->phy_con6);
+	writel(mem->phy1_dq, &phy1_ctrl->phy_con6);
 
 	/*
 	 * Dynamic Clock: Always Running

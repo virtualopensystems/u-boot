@@ -30,25 +30,14 @@
 
 #define DDR3_CTRL_RDLAT			0x0b
 
-/* DQS, DQ, DEBUG offsets */
-#define DDR3_PHY0_DQS			0x0f0f0f0f
-#define DDR3_PHY1_DQS			0x1d1f1f19
-#define DDR3_PHY1_DQ			0x88888888
-
 #define DDR3_RD_FETCH			0x3
 #else
 #define DDR3_CTRL_FORCE			0x33
 
 #define DDR3_CTRL_RDLAT			0x09
 
-/* DQS, DQ, DEBUG offsets */
-#define DDR3_PHY0_DQS			0x08080808
-#define DDR3_PHY1_DQS			0x08080808
-#define DDR3_PHY1_DQ			0x00080808
 #define DDR3_RD_FETCH			0x2
 #endif
-
-#define DDR3_PHY0_DQ			0x08080808
 
 #define DDR3_DMC_TIMINGREF_VAL		0x000000BB
 

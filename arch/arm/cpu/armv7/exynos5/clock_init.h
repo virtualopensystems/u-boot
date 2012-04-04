@@ -43,6 +43,12 @@ struct mem_timings {
 	unsigned timing_row;
 	unsigned timing_data;
 	unsigned timing_power;
+
+	/* DQS, DQ, DEBUG offsets */
+	unsigned phy0_dqs;
+	unsigned phy1_dqs;
+	unsigned phy0_dq;
+	unsigned phy1_dq;
 };
 
 /**
