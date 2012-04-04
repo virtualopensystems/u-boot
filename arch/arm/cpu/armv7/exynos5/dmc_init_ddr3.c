@@ -27,6 +27,8 @@
 #include <asm/arch/dmc.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/cpu.h>
+
+#include "clock_init.h"
 #include "setup.h"
 
 /* TODO(clchiou): Sort out setup.h to use DDR3_* macros directly */
@@ -64,8 +66,12 @@ static void reset_phy_ctrl(void)
 static void direct_cmd(struct exynos5_dmc *dmc)
 {
 	unsigned long channel, mask = 0;
+	struct mem_timings *mem;
 
+	mem = clock_get_mem_timings();
 	for (channel = 0; channel < CONFIG_DMC_CHANNELS; channel++) {
+		int i;
+
 		SET_CMD_CHANNEL(mask, channel);
 
 		/* we are configuring only chip-0 for both the channels */
@@ -75,10 +81,10 @@ static void direct_cmd(struct exynos5_dmc *dmc)
 		writel(DIRECT_CMD_NOP | mask, &dmc->directcmd);
 
 		/* Sending EMRS/MRS commands */
-		writel(DDR3_DIRECT_CMD_MRS1 | mask, &dmc->directcmd);
-		writel(DDR3_DIRECT_CMD_MRS2 | mask, &dmc->directcmd);
-		writel(DDR3_DIRECT_CMD_MRS3 | mask, &dmc->directcmd);
-		writel(DDR3_DIRECT_CMD_MRS4 | mask, &dmc->directcmd);
+		for (i = 0; i < MEM_TIMINGS_MSR_COUNT; i++) {
+			writel(mem->direct_cmd_msr[i] | mask,
+				&dmc->directcmd);
+		}
 
 		/* Sending ZQINIT command */
 		writel(DIRECT_CMD_ZQINIT | mask, &dmc->directcmd);

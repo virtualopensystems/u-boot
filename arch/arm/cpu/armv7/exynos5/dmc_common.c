@@ -22,8 +22,10 @@
  * MA 02111-1307 USA
  */
 
-#include "setup.h"
 #include <asm/arch-exynos/spl.h>
+
+#include "clock_init.h"
+#include "setup.h"
 
 /* TODO(clchiou): Move to device tree */
 #ifdef CONFIG_LPDDR2
@@ -105,10 +107,14 @@ void update_reset_dll(struct exynos5_dmc *dmc, enum ddr_mode mode)
 void config_mrs(struct exynos5_dmc *dmc)
 {
 	unsigned long channel, chip, mask = 0;
+	struct mem_timings *mem;
 
+	mem = clock_get_mem_timings();
 	for (channel = 0; channel < CONFIG_DMC_CHANNELS; channel++) {
 		SET_CMD_CHANNEL(mask, channel);
 		for (chip = 0; chip < CONFIG_CHIPS_PER_CHANNEL; chip++) {
+			int i;
+
 			SET_CMD_CHIP(mask, chip);
 
 			/* Sending NOP command */
@@ -116,17 +122,11 @@ void config_mrs(struct exynos5_dmc *dmc)
 			sdelay(0x10000);
 
 			/* Sending EMRS/MRS commands */
-			writel(DIRECT_CMD_MRS1 | mask, &dmc->directcmd);
-			sdelay(0x10000);
-
-			writel(DIRECT_CMD_MRS2 | mask, &dmc->directcmd);
-			sdelay(0x10000);
-
-			writel(DIRECT_CMD_MRS3 | mask, &dmc->directcmd);
-			sdelay(0x10000);
-
-			writel(DIRECT_CMD_MRS4 | mask, &dmc->directcmd);
-			sdelay(0x10000);
+			for (i = 0; i < MEM_TIMINGS_MSR_COUNT; i++) {
+				writel(mem->direct_cmd_msr[i] | mask,
+				       &dmc->directcmd);
+				sdelay(0x10000);
+			}
 		}
 	}
 }

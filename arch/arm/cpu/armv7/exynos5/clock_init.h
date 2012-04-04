@@ -25,6 +25,10 @@
 #ifndef __EXYNOS_CLOCK_INIT_H
 #define __EXYNOS_CLOCK_INIT_H
 
+enum {
+	MEM_TIMINGS_MSR_COUNT	= 4,
+};
+
 /* These are the memory timings for a particular memory type and speed */
 struct mem_timings {
 	enum ddr_mode mem_type;		/* Memory type */
@@ -35,6 +39,7 @@ struct mem_timings {
 	unsigned bpll_pdiv;
 	unsigned bpll_sdiv;
 	unsigned pclk_cdrex_ratio;
+	unsigned direct_cmd_msr[MEM_TIMINGS_MSR_COUNT];
 };
 
 /**

@@ -44,6 +44,9 @@ struct mem_timings mem_timings[] = {
 		.bpll_pdiv = 0x7,
 		.bpll_sdiv = 0x1,
 		.pclk_cdrex_ratio = 0x4,
+		.direct_cmd_msr = {
+			0x00020010, 0x00030000, 0x00010042, 0x00000b50
+		},
 	}, {
 		.mem_type = DDR_MODE_DDR3,
 		.frequency_mhz = 800,
@@ -51,6 +54,9 @@ struct mem_timings mem_timings[] = {
 		.bpll_pdiv = 0x3,
 		.bpll_sdiv = 0x0,
 		.pclk_cdrex_ratio = 0x5,
+		.direct_cmd_msr = {
+			0x00020018, 0x00030000, 0x00010042, 0x00000d70
+		},
 	}, {
 		.mem_type = DDR_MODE_LPDDR2,
 		.frequency_mhz = 667,
@@ -58,6 +64,9 @@ struct mem_timings mem_timings[] = {
 		.bpll_pdiv = 0xc,
 		.bpll_sdiv = 0x1,
 		.pclk_cdrex_ratio = 0x3,
+		.direct_cmd_msr = {
+			0x00071c00, 0x00010bfc, 0x00000708, 0x00000818
+		},
 	}
 };
 
