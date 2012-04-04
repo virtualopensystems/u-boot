@@ -62,6 +62,48 @@ struct mkbp_dev {
 
 static struct mkbp_dev *last_dev;
 
+static int mkbp_i2c_message(struct mkbp_dev *dev, uint8_t din[], int din_len,
+			     uint8_t dout[])
+{
+	int old_bus = 0;
+
+	old_bus = i2c_get_bus_num();
+	/* Set to the proper i2c bus */
+	if (i2c_set_bus_num(dev->bus_num)) {
+		debug("%s: Cannot change to I2C bus %d\n", __func__,
+			dev->bus_num);
+		return -1;
+	}
+	/* Send read key state command */
+	if (i2c_write(dev->addr, 0, 0, dout, 1)) {
+		debug("%s: Cannot complete I2C write to 0x%x\n",
+			__func__, dev->addr);
+		return -1;
+	}
+	/* Receive the key state */
+	if (i2c_read(dev->addr, 0, 0, din, din_len)) {
+		debug("%s: Cannot complete I2C read from 0x%x\n",
+			__func__, dev->addr);
+		return -1;
+	}
+	/* Return to original bus number */
+	if (i2c_set_bus_num(old_bus)) {
+		debug("%s: Cannot change to I2C bus %d\n", __func__,
+			old_bus);
+		return -1;
+	}
+	/*
+	 * I2C currently uses a simpler protocol, so we don't
+	 * deal with the full header, the checksum byte on the end
+	 * is ignored.
+	 * TODO(bhthompson): Migrate to new protocol.
+	 */
+	if (din[0] != 0x00) /* EC_RES_SUCCESS */
+		return -1;
+
+	return 0;
+}
+
 /**
  * Send a MKBP message and receive a reply.
  *
@@ -77,7 +119,6 @@ static int mkbp_send_message(struct mkbp_dev *dev, uint8_t din[], int din_len,
 {
 	const uint8_t *p, *end;
 	int len = 0;
-	int old_bus = 0;
 
 	memset(din, '\0', din_len);
 
@@ -100,38 +141,7 @@ static int mkbp_send_message(struct mkbp_dev *dev, uint8_t din[], int din_len,
 		break;
 	case MKBPIF_I2C:
 		din_len += 2; /* Add space for checksum and return code */
-		old_bus = i2c_get_bus_num();
-		/* Set to the proper i2c bus */
-		if (i2c_set_bus_num(dev->bus_num)) {
-			debug("%s: Cannot change to I2C bus %d\n", __func__,
-			       dev->bus_num);
-			return -1;
-		}
-		/* Send read key state command */
-		if (i2c_write(dev->addr, 0, 0, dout, 1)) {
-			debug("%s: Cannot complete I2C write to 0x%x\n",
-			       __func__, dev->addr);
-			return -1;
-		}
-		/* Receive the key state */
-		if (i2c_read(dev->addr, 0, 0, din, din_len)) {
-			debug("%s: Cannot complete I2C read from 0x%x\n",
-			       __func__, dev->addr);
-			return -1;
-		}
-		/* Return to original bus number */
-		if (i2c_set_bus_num(old_bus)) {
-			debug("%s: Cannot change to I2C bus %d\n", __func__,
-			       old_bus);
-			return -1;
-		}
-		/*
-		 * I2C currently uses a simpler protocol, so we don't
-		 * deal with the full header, the checksum byte on the end
-		 * is ignored.
-		 * TODO(bhthompson): Migrate to new protocol.
-		 */
-		if (din[0] != 0x00) /* EC_RES_SUCCESS */
+		if (mkbp_i2c_message(dev, din, din_len, dout))
 			return -1;
 		*replyp = &din[1]; /* skip return code */
 		return din_len - 2; /* ignore checksum/return code */
