@@ -44,7 +44,6 @@
 #define DMC_TIMINGPOWER_VAL	DDR3_DMC_TIMINGPOWER_VAL
 
 #define CTRL_BSTLEN		DDR3_CTRL_BSTLEN
-#define CTRL_RDLAT		DDR3_CTRL_RDLAT
 
 #define RD_FETCH		DDR3_RD_FETCH
 
@@ -151,8 +150,9 @@ void ddr3_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size)
 	reset_phy_ctrl();
 
 	/* Set Read Latency and Burst Length for PHY0 and PHY1 */
-	writel(PHY_CON42_VAL, &phy0_ctrl->phy_con42);
-	writel(PHY_CON42_VAL, &phy1_ctrl->phy_con42);
+	val = (CTRL_BSTLEN << 8) | (mem->ctrl_rdlat << 0);
+	writel(val, &phy0_ctrl->phy_con42);
+	writel(val, &phy1_ctrl->phy_con42);
 
 	/* Setting Operation Mode as DDR3 and enabling byte_rdlvl */
 	val = PHY_CON0_RESET_VAL;
@@ -170,7 +170,7 @@ void ddr3_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size)
 	writel(val, &phy1_ctrl->phy_con14);
 
 	val = PHY_CON12_RESET_VAL;
-	val |= (DDR3_CTRL_FORCE << 8);
+	val |= mem->ctrl_force << 8;
 	writel(val, &phy0_ctrl->phy_con12);
 	writel(val, &phy1_ctrl->phy_con12);
 
@@ -270,7 +270,7 @@ void ddr3_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size)
 	update_reset_dll(dmc, DDR_MODE_DDR3);
 
 	val = PHY_CON12_RESET_VAL;
-	val |= (DDR3_CTRL_FORCE << 8);
+	val |= mem->ctrl_force << 8;
 	writel(val, &phy0_ctrl->phy_con12);
 	writel(val, &phy1_ctrl->phy_con12);
 

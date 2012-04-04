@@ -26,15 +26,9 @@
 #define _SMDK5250_SETUP_DDR3_H
 
 #ifdef CDREX_800
-#define DDR3_CTRL_FORCE			0x2a
-
-#define DDR3_CTRL_RDLAT			0x0b
 
 #define DDR3_RD_FETCH			0x3
 #else
-#define DDR3_CTRL_FORCE			0x33
-
-#define DDR3_CTRL_RDLAT			0x09
 
 #define DDR3_RD_FETCH			0x2
 #endif

@@ -49,6 +49,9 @@ struct mem_timings {
 	unsigned phy1_dqs;
 	unsigned phy0_dq;
 	unsigned phy1_dq;
+
+	unsigned ctrl_force;
+	unsigned ctrl_rdlat;
 };
 
 /**

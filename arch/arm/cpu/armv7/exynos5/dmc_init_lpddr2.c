@@ -43,11 +43,13 @@
 #define DMC_TIMINGPOWER_VAL	LPDDR2_DMC_TIMINGPOWER_VAL
 
 #define CTRL_BSTLEN		LPDDR2_CTRL_BSTLEN
-#define CTRL_RDLAT		LPDDR2_CTRL_RDLAT
 
 #define RD_FETCH		LPDDR2_RD_FETCH
 
 #define PCLK_CDREX_RATIO	LPDDR2_PCLK_CDREX_RATIO
+
+#define SET_CTRL_FORCE_VAL(x, y)	(x = (x & ~(0x7F << 8)) | y << 8)
+
 
 /* APLL : 1GHz */
 /* MCLK_CDREX: 533Mhz */
@@ -232,8 +234,9 @@ void lpddr2_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size)
 	reset_phy_ctrl();
 
 	/*set Read Latancy and Burst Length for PHY0 and PHY1 */
-	writel(PHY_CON42_VAL, &phy0_ctrl->phy_con42);
-	writel(PHY_CON42_VAL, &phy1_ctrl->phy_con42);
+	val = (CTRL_BSTLEN << 8) | (mem->ctrl_rdlat << 0);
+	writel(val, &phy0_ctrl->phy_con42);
+	writel(val, &phy1_ctrl->phy_con42);
 
 	/* ZQ Cofiguration */
 	config_zq(phy0_ctrl, phy1_ctrl);

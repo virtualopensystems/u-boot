@@ -54,6 +54,8 @@ struct mem_timings mem_timings[] = {
 		.phy1_dqs = 0x08080808,
 		.phy0_dq = 0x08080808,
 		.phy1_dq = 0x00080808,
+		.ctrl_force = 0x33,
+		.ctrl_rdlat = 0x09,
 	}, {
 		.mem_type = DDR_MODE_DDR3,
 		.frequency_mhz = 800,
@@ -71,6 +73,8 @@ struct mem_timings mem_timings[] = {
 		.phy1_dqs = 0x1d1f1f19,
 		.phy0_dq = 0x08080808,
 		.phy1_dq = 0x88888888,
+		.ctrl_force = 0x2a,
+		.ctrl_rdlat = 0x0b,
 	}, {
 		.mem_type = DDR_MODE_LPDDR2,
 		.frequency_mhz = 667,
@@ -84,6 +88,8 @@ struct mem_timings mem_timings[] = {
 		.timing_row = 0x2336544C,
 		.timing_data = 0x24202408,
 		.timing_power = 0x38260235,
+		.ctrl_rdlat = 0x08,
+		/* ctrl_force seems to be hard-coded in dmc_init_lpddr2.c */
 	}
 };
 
