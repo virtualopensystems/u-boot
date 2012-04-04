@@ -259,11 +259,10 @@ void clock_ll_set_pre_ratio(enum periph_id periph_id, unsigned divisor)
 		break;
 	case PERIPH_ID_SPI3:
 		reg = &clk->sclk_div_isp;
-		mask = 0xfff;
 		shift = 4;
 		break;
 	case PERIPH_ID_SPI4:
-		reg = &clk->div_peric2;
+		reg = &clk->sclk_div_isp;
 		shift = 16;
 		break;
 	default:
