@@ -218,7 +218,7 @@ static void config_rdlvl(struct exynos5_dmc *dmc,
 }
 #endif
 
-void lpddr2_mem_ctrl_init(unsigned long mem_iv_size)
+void lpddr2_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size)
 {
 	struct exynos5_phy_control *phy0_ctrl, *phy1_ctrl;
 	struct exynos5_dmc *dmc;
@@ -280,11 +280,9 @@ void lpddr2_mem_ctrl_init(unsigned long mem_iv_size)
 	 * TimingRow, TimingData, TimingPower Setting:
 	 * Values as per Memory AC Parameters
 	 */
-	writel(DMC_TIMINGROW_VAL, &dmc->timingrow);
-
-	writel(DMC_TIMINGDATA_VAL, &dmc->timingdata);
-
-	writel(DMC_TIMINGPOWER_VAL, &dmc->timingpower);
+	writel(mem->timing_row, &dmc->timingrow);
+	writel(mem->timing_data, &dmc->timingdata);
+	writel(mem->timing_power, &dmc->timingpower);
 
 	/* Memory Channel Inteleaving Size: 128 Bytes */
 	writel(mem_iv_size, &dmc->ivcontrol);

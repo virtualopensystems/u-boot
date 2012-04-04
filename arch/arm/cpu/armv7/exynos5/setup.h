@@ -527,18 +527,22 @@
 #define DPWRDN_EN	(1 << 1)
 #define DSREF_EN	(1 << 5)
 
+struct mem_timings;
+
 /* Functions common between LPDDR2 and DDR3 */
 void sdelay(unsigned long);
 void mem_ctrl_init(void);
 /*
  * Memory variant specific initialization code
- * @param mem_iv_size	memory interleaving size is a configurable parameter
+ *
+ * @param mem		Memory timings for this memory type.
+ * @param mem_iv_size	Memory interleaving size is a configurable parameter
  *			which the DMC uses to decide how to split a memory
  *			chunk into smaller chunks to support concurrent
  *			accesses; may vary across boards.
  */
-void ddr3_mem_ctrl_init(unsigned long mem_iv_size);
-void lpddr2_mem_ctrl_init(unsigned long mem_iv_size);
+void ddr3_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size);
+void lpddr2_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size);
 
 void system_clock_init(void);
 void mem_clk_setup(void);

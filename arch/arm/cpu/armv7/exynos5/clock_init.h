@@ -40,6 +40,9 @@ struct mem_timings {
 	unsigned bpll_sdiv;
 	unsigned pclk_cdrex_ratio;
 	unsigned direct_cmd_msr[MEM_TIMINGS_MSR_COUNT];
+	unsigned timing_row;
+	unsigned timing_data;
+	unsigned timing_power;
 };
 
 /**

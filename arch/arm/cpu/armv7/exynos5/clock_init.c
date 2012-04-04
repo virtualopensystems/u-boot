@@ -47,6 +47,9 @@ struct mem_timings mem_timings[] = {
 		.direct_cmd_msr = {
 			0x00020010, 0x00030000, 0x00010042, 0x00000b50
 		},
+		.timing_row = 0x7645644d,
+		.timing_data = 0x45414709,
+		.timing_power = 0x3a000a3c,
 	}, {
 		.mem_type = DDR_MODE_DDR3,
 		.frequency_mhz = 800,
@@ -57,6 +60,9 @@ struct mem_timings mem_timings[] = {
 		.direct_cmd_msr = {
 			0x00020018, 0x00030000, 0x00010042, 0x00000d70
 		},
+		.timing_row = 0x8D46650F,
+		.timing_data = 0x4740180B,
+		.timing_power = 0x41000A44,
 	}, {
 		.mem_type = DDR_MODE_LPDDR2,
 		.frequency_mhz = 667,
@@ -67,6 +73,9 @@ struct mem_timings mem_timings[] = {
 		.direct_cmd_msr = {
 			0x00071c00, 0x00010bfc, 0x00000708, 0x00000818
 		},
+		.timing_row = 0x2336544C,
+		.timing_data = 0x24202408,
+		.timing_power = 0x38260235,
 	}
 };
 

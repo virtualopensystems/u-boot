@@ -157,9 +157,11 @@ void config_memory(struct exynos5_dmc *dmc)
 void mem_ctrl_init()
 {
 	struct spl_machine_param *param = spl_get_machine_params();
+	struct mem_timings *mem;
 
+	mem = clock_get_mem_timings();
 	if (param->mem_type == DDR_MODE_DDR3)
-		ddr3_mem_ctrl_init(param->mem_iv_size);
+		ddr3_mem_ctrl_init(mem, param->mem_iv_size);
 	else
-		lpddr2_mem_ctrl_init(param->mem_iv_size);
+		lpddr2_mem_ctrl_init(mem, param->mem_iv_size);
 }
