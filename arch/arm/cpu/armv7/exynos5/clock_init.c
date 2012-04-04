@@ -22,6 +22,7 @@
  * MA 02111-1307 USA
  */
 
+#include <common.h>
 #include <config.h>
 #include <version.h>
 #include <asm/io.h>
@@ -29,6 +30,9 @@
 #include <asm/arch/clock.h>
 #include <asm/arch/cpu.h>
 #include <asm/arch/gpio.h>
+#include <asm/arch-exynos/spl.h>
+
+#include "clock_init.h"
 #include "setup.h"
 
 /* TODO(clchiou): Move to device tree */
@@ -43,6 +47,113 @@
 #define BPLL_SDIV		DDR3_BPLL_SDIV
 #define PCLK_CDREX_RATIO	DDR3_PCLK_CDREX_RATIO
 #endif
+
+struct mem_timings mem_timings[] = {
+	{
+		.mem_type = DDR_MODE_DDR3,
+#ifdef CDREX_800
+		.frequency_mhz = 800,
+#else
+		.frequency_mhz = 667,
+#endif
+		.bpll_mdiv = DDR3_BPLL_MDIV,
+		.bpll_pdiv = DDR3_BPLL_PDIV,
+		.bpll_sdiv = DDR3_BPLL_SDIV,
+		.pclk_cdrex_ratio = DDR3_PCLK_CDREX_RATIO,
+	}, {
+		.mem_type = DDR_MODE_LPDDR2,
+		.frequency_mhz = 667,
+		.bpll_mdiv = LPDDR2_BPLL_MDIV,
+		.bpll_pdiv = LPDDR2_BPLL_PDIV,
+		.bpll_sdiv = LPDDR2_BPLL_SDIV,
+		.pclk_cdrex_ratio = LPDDR2_PCLK_CDREX_RATIO,
+	}
+};
+
+#ifdef CONFIG_SPL_BUILD
+
+/**
+ * Get the required memory type and speed (SPL version).
+ *
+ * In SPL we have no device tree, so we use the machine parameters
+ *
+ * @param mem_type	Returns memory type
+ * @param frequency_mhz	Returns memory speed in MHz
+ * @return 0 if all ok (if not, this function currently does not return)
+ */
+static int clock_get_mem_selection(enum ddr_mode *mem_type,
+				   unsigned *frequency_mhz)
+{
+	struct spl_machine_param *params;
+
+	params = spl_get_machine_params();
+	*mem_type = params->mem_type;
+#ifdef CONFIG_LPDDR2
+	*frequency_mhz = 667;
+#else
+# ifdef CDREX_800
+	*frequency_mhz = 800;
+# else
+	*frequency_mhz = 667;
+# endif
+#endif
+	return 0;
+}
+
+#else
+
+/**
+ * Get the required memory type and speed (Main U-Boot version).
+ *
+ * This should use the device tree. For now we cannot since this function is
+ * called before the FDT is available.
+ *
+ * TODO(sjg): Make this function look up the FDT for these parameters.
+ *
+ * @param mem_type	Returns memory type
+ * @param frequency_mhz	Returns memory speed in MHz
+ * @return 0 if all ok (if not, this function currently does not return)
+ */
+static int clock_get_mem_selection(enum ddr_mode *mem_type,
+				   unsigned *frequency_mhz)
+{
+	/* TODO(sjg): Use the device tree values for these */
+#ifdef CONFIG_LPDDR2
+	*mem_type = DDR_MODE_LPDDR2;
+	*frequency_mhz = 667;
+#else
+	*mem_type = DDR_MODE_DDR3;
+# ifdef CDREX_800
+	*frequency_mhz = 800;
+# else
+	*frequency_mhz = 667;
+# endif
+#endif
+	return 0;
+}
+
+#endif
+
+struct mem_timings *clock_get_mem_timings(void)
+{
+	struct mem_timings *mem;
+	enum ddr_mode mem_type;
+	unsigned frequency_mhz;
+	int i;
+
+	if (!clock_get_mem_selection(&mem_type, &frequency_mhz)) {
+		for (i = 0, mem = mem_timings; i < ARRAY_SIZE(mem_timings);
+				i++, mem++) {
+			if (mem->mem_type == mem_type &&
+					mem->frequency_mhz == frequency_mhz)
+				return mem;
+		}
+	}
+	/* TODO: Call panic() here */
+	while (1)
+		;
+	return NULL;
+}
 
 void system_clock_init()
 {
