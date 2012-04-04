@@ -239,6 +239,10 @@ int exynos_pinmux_config(enum periph_id peripheral, int flags)
 		}
 		break;
 	}
+	case PERIPH_ID_BACKLIGHT:
+		s5p_gpio_cfg_pin(&gpio1->b2, 0, GPIO_OUTPUT);
+		s5p_gpio_set_value(&gpio1->b2, 0, 1);
+		break;
 	default:
 		debug("%s: invalid peripheral %d", __func__, peripheral);
 		return -1;
