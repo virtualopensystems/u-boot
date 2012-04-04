@@ -26,11 +26,6 @@
 #define _SMDK5250_SETUP_DDR3_H
 
 #ifdef CDREX_800
-#define DDR3_BPLL_MDIV			0x64
-#define DDR3_BPLL_PDIV			0x3
-#define DDR3_BPLL_SDIV			0x0
-
-#define DDR3_PCLK_CDREX_RATIO		0x5
 #define DDR3_CTRL_FORCE			0x2a
 
 #define DDR3_DIRECT_CMD_MRS1		0x00020018
@@ -51,11 +46,6 @@
 
 #define DDR3_RD_FETCH			0x3
 #else
-#define DDR3_BPLL_MDIV			0x185
-#define DDR3_BPLL_PDIV			0x7
-#define DDR3_BPLL_SDIV			0x1
-
-#define DDR3_PCLK_CDREX_RATIO		0x4
 #define DDR3_CTRL_FORCE			0x33
 
 #define DDR3_DIRECT_CMD_MRS1		0x00020010

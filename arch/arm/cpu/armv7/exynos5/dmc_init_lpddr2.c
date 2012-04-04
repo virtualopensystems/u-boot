@@ -27,6 +27,7 @@
 #include <asm/arch/dmc.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/cpu.h>
+#include "clock_init.h"
 #include "setup.h"
 
 /* TODO(clchiou): Sort out setup.h to use LPDDR2_* macros directly */
@@ -97,7 +98,19 @@ static void config_offsets(unsigned int state,
 static void config_cdrex(void)
 {
 	struct exynos5_clock *clk = (struct exynos5_clock *)EXYNOS5_CLOCK_BASE;
-	writel(CLK_DIV_CDREX_VAL, &clk->div_cdrex);
+	struct mem_timings *mem;
+	u32 val;
+
+	mem = clock_get_mem_timings();
+	val = (MCLK_CDREX2_RATIO << 28)
+		| (ACLK_EFCON_RATIO << 24)
+		| (MCLK_DPHY_RATIO << 20)
+		| (MCLK_CDREX_RATIO << 16)
+		| (ACLK_C2C_200_RATIO << 12)
+		| (C2C_CLK_400_RATIO << 8)
+		| (mem->pclk_cdrex_ratio << 4)
+		| (ACLK_CDREX_RATIO);
+	writel(val, &clk->div_cdrex);
 	writel(CLK_SRC_CDREX_VAL, &clk->src_cdrex);
 	sdelay(0x30000);
 }

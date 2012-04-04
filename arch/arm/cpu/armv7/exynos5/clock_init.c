@@ -35,38 +35,29 @@
 #include "clock_init.h"
 #include "setup.h"
 
-/* TODO(clchiou): Move to device tree */
-#ifdef CONFIG_LPDDR2
-#define BPLL_MDIV		LPDDR2_BPLL_MDIV
-#define BPLL_PDIV		LPDDR2_BPLL_PDIV
-#define BPLL_SDIV		LPDDR2_BPLL_SDIV
-#define PCLK_CDREX_RATIO	LPDDR2_PCLK_CDREX_RATIO
-#elif defined CONFIG_DDR3
-#define BPLL_MDIV		DDR3_BPLL_MDIV
-#define BPLL_PDIV		DDR3_BPLL_PDIV
-#define BPLL_SDIV		DDR3_BPLL_SDIV
-#define PCLK_CDREX_RATIO	DDR3_PCLK_CDREX_RATIO
-#endif
 
 struct mem_timings mem_timings[] = {
 	{
 		.mem_type = DDR_MODE_DDR3,
-#ifdef CDREX_800
-		.frequency_mhz = 800,
-#else
 		.frequency_mhz = 667,
-#endif
-		.bpll_mdiv = DDR3_BPLL_MDIV,
-		.bpll_pdiv = DDR3_BPLL_PDIV,
-		.bpll_sdiv = DDR3_BPLL_SDIV,
-		.pclk_cdrex_ratio = DDR3_PCLK_CDREX_RATIO,
+		.bpll_mdiv = 0x185,
+		.bpll_pdiv = 0x7,
+		.bpll_sdiv = 0x1,
+		.pclk_cdrex_ratio = 0x4,
+	}, {
+		.mem_type = DDR_MODE_DDR3,
+		.frequency_mhz = 800,
+		.bpll_mdiv = 0x64,
+		.bpll_pdiv = 0x3,
+		.bpll_sdiv = 0x0,
+		.pclk_cdrex_ratio = 0x5,
 	}, {
 		.mem_type = DDR_MODE_LPDDR2,
 		.frequency_mhz = 667,
-		.bpll_mdiv = LPDDR2_BPLL_MDIV,
-		.bpll_pdiv = LPDDR2_BPLL_PDIV,
-		.bpll_sdiv = LPDDR2_BPLL_SDIV,
-		.pclk_cdrex_ratio = LPDDR2_PCLK_CDREX_RATIO,
+		.bpll_mdiv = 0x215,
+		.bpll_pdiv = 0xc,
+		.bpll_sdiv = 0x1,
+		.pclk_cdrex_ratio = 0x3,
 	}
 };
 
@@ -158,6 +149,10 @@ struct mem_timings *clock_get_mem_timings(void)
 void system_clock_init()
 {
 	struct exynos5_clock *clk = (struct exynos5_clock *)EXYNOS5_CLOCK_BASE;
+	struct mem_timings *mem;
+	u32 val;
+
+	mem = clock_get_mem_timings();
 
 	/*
 	 * MUX_APLL_SEL[0]: FINPLL = 0
@@ -305,7 +300,8 @@ void system_clock_init()
 	writel(MPLL_CON0_VAL, &clk->mpll_con0);
 	sdelay(0x30000);
 	writel(BPLL_CON1_VAL, &clk->bpll_con1);
-	writel(BPLL_CON0_VAL, &clk->bpll_con0);
+	val = set_pll(mem->bpll_mdiv, mem->bpll_pdiv, mem->bpll_sdiv);
+	writel(val, &clk->bpll_con0);
 	sdelay(0x30000);
 
 	/* Set CPLL */
@@ -347,14 +343,27 @@ void system_clock_init()
 void mem_clk_setup(void)
 {
 	struct exynos5_clock *clk = (struct exynos5_clock *)EXYNOS5_CLOCK_BASE;
+	struct mem_timings *mem;
+	u32 val;
+
+	mem = clock_get_mem_timings();
 
 	writel(0x0, &clk->src_cdrex);
-	writel(CLK_DIV_CDREX_VAL, &clk->div_cdrex);
+	val = (MCLK_CDREX2_RATIO << 28)
+		| (ACLK_EFCON_RATIO << 24)
+		| (MCLK_DPHY_RATIO << 20)
+		| (MCLK_CDREX_RATIO << 16)
+		| (ACLK_C2C_200_RATIO << 12)
+		| (C2C_CLK_400_RATIO << 8)
+		| (mem->pclk_cdrex_ratio << 4)
+		| (ACLK_CDREX_RATIO);
+	writel(val, &clk->div_cdrex);
 
 	writel(MPLL_CON1_VAL, &clk->mpll_con1);
 	writel(MPLL_CON0_VAL, &clk->mpll_con0);
 	writel(BPLL_CON1_VAL, &clk->bpll_con1);
-	writel(BPLL_CON0_VAL, &clk->bpll_con0);
+	val = set_pll(mem->bpll_mdiv, mem->bpll_pdiv, mem->bpll_sdiv);
+	writel(val, &clk->bpll_con0);
 
 	writel(CLK_SRC_CDREX_VAL, &clk->src_cdrex);
 }
