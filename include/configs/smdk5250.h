@@ -85,6 +85,8 @@
 /* So our flasher can verify that all is well */
 #define CONFIG_CRC32_VERIFY
 
+#define CONFIG_CMD_SPI
+
 #define CONFIG_BOOTDELAY		0
 #define CONFIG_ZERO_BOOTDELAY_CHECK
 
