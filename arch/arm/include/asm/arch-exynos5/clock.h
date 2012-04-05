@@ -363,7 +363,25 @@ struct exynos5_clock {
 	unsigned char	res109[0xf5f8];
 };
 
+/**
+ * Low-level function to set the clock pre-ratio for a peripheral
+ *
+ * @param periph_id	Peripheral ID of peripheral to change
+ * @param divisor	New divisor for this peripheral's clock
+ */
 void clock_ll_set_pre_ratio(enum periph_id periph_id, unsigned divisor);
+
+/**
+ * Decode a peripheral ID from a device node.
+ *
+ * Drivers should always use this function since the actual means of
+ * encoding this information may change in the future as fdt support for
+ * exynos evolves.
+ *
+ * @param blob	FDT blob to read from
+ * @param node	Node containing the information
+ */
+int clock_decode_periph_id(const void *blob, int node);
 #endif
 
 #endif

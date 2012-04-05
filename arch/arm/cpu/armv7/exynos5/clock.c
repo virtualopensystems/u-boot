@@ -22,6 +22,7 @@
  */
 
 #include <common.h>
+#include <fdtdec.h>
 #include <asm/io.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/clk.h>
@@ -272,3 +273,21 @@ void clock_ll_set_pre_ratio(enum periph_id periph_id, unsigned divisor)
 	}
 	clrsetbits_le32(reg, mask << shift, (divisor & mask) << shift);
 }
+
+#ifdef CONFIG_OF_CONTROL
+int clock_decode_periph_id(const void *blob, int node)
+{
+	enum periph_id id;
+
+	/*
+	 * For now the peripheral ID is directly encoded. Once we have clock
+	 * support in the fdt and properly in exynos U-Boot we may have
+	 * another way of changing the clock.
+	 */
+	id = fdtdec_get_int(blob, node, "samsung,periph-id", -1);
+	assert(id != PERIPH_ID_NONE);
+	assert(id >= 0 && id < PERIPH_ID_COUNT);
+
+	return id;
+}
+#endif
