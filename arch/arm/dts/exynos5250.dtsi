@@ -18,6 +18,7 @@
 */
 
 /include/ "skeleton.dtsi"
+/include/ "exynos-periph-id.dtsi"
 
 / {
 	compatible = "samsung,exynos5250";
@@ -424,5 +425,42 @@
 
 	dmc@10C00000 {
 		compatible = "samsung,exynos-dmc";
+	};
+
+	spi@12d20000 {
+		compatible = "samsung,exynos-spi";
+		reg = <0x12d20000 0x30>;
+		samsung,periph-id = <PERIPH_ID_SPI0>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+	};
+	spi@12d30000 {
+		compatible = "samsung,exynos-spi";
+		reg = <0x12d30000 0x30>;
+		samsung,periph-id = <PERIPH_ID_SPI1>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+	};
+	spi@12d40000 {
+		compatible = "samsung,exynos-spi";
+		reg = <0x12d40000 0x30>;
+		samsung,periph-id = <PERIPH_ID_SPI2>;
+		clock-frequency = <50000000>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+	};
+	spi@131a0000 {
+		compatible = "samsung,exynos-spi";
+		reg = <0x131a0000 0x30>;
+		samsung,periph-id = <PERIPH_ID_SPI3>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+	};
+	spi@131b0000 {
+		compatible = "samsung,exynos-spi";
+		reg = <0x131b0000 0x30>;
+		samsung,periph-id = <PERIPH_ID_SPI4>;
+		#address-cells = <1>;
+		#size-cells = <0>;
 	};
 };

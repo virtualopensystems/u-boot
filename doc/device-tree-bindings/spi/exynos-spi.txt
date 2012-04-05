@@ -1,0 +1,55 @@
+Exynos SPI controllers
+======================
+
+The device node for an SPI controller that is part of an Exynos
+SOC is as described in the ePAPR document with the following
+modifications and additions :
+
+Required properties :
+ - compatible : Should be "samsung,exynos-spi" for SPI controllers
+
+Also #address-cells should be 1 and #size-cells should be 0.
+
+Optional properties:
+ - samsung,periph-id : Peripheral ID number used by U-Boot. This property
+                is needed at least in the interim until an Exynos clock
+                binding is available and full clock infrastruture for
+                Exynos is available in U-Boot.
+
+ - clock-frequency : bus frequency in Hz
+
+Available peripheral IDs, numbered from 0, are:
+
+0	PERIPH_ID_UART0
+1	PERIPH_ID_UART1
+2	PERIPH_ID_UART2
+3	PERIPH_ID_UART3
+4	PERIPH_ID_SDMMC0
+5	PERIPH_ID_SDMMC1
+6	PERIPH_ID_SDMMC2
+7	PERIPH_ID_SDMMC3
+8	PERIPH_ID_SROMC
+9	PERIPH_ID_SPI0
+10	PERIPH_ID_SPI1
+11	PERIPH_ID_SPI2
+12	PERIPH_ID_SPI3
+13	PERIPH_ID_SPI4
+
+
+Example
+=======
+
+spi@131a0000 {
+	compatible = "samsung,exynos-spi";
+	reg = <0x131a0000 0x30>;
+	samsung,periph-id = <PERIPH_ID_SPI3>;
+	#address-cells = <1>;
+	#size-cells = <0>;
+	clock-frequency = <10000000>;
+
+	/* A device on chip select 0 of this SPI bus */
+	mkbp@0 {
+		compatible = "google,matrix-keyboard";
+		reg = <0>;
+	};
+};
