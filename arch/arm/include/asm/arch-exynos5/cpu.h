@@ -93,4 +93,6 @@ SAMSUNG_BASE(spi, SPI_BASE)
 SAMSUNG_BASE(spi_isp, SPI_ISP_BASE)
 #endif
 
+#define EXYNOS5_SPI_NUM_CONTROLLERS	5
+
 #endif	/* _EXYNOS5_CPU_H */
