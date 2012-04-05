@@ -30,6 +30,8 @@
 #include <asm/arch/pinmux.h>
 #include <asm/arch/sromc.h>
 
+#include "board.h"
+
 DECLARE_GLOBAL_DATA_PTR;
 
 #ifdef CONFIG_OF_CONTROL
@@ -157,6 +159,9 @@ int board_init(void)
 				"machine-arch-id", -1);
 	if (gd->bd->bi_arch_number == -1U)
 		debug("Warning: No /config/machine-arch-id defined in fdt\n");
+#endif
+#ifdef CONFIG_EXYNOS_SPI
+	spi_init();
 #endif
 	return 0;
 }
