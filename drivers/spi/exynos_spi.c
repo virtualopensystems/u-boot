@@ -18,6 +18,8 @@
  */
 
 #include <common.h>
+#include <fdtdec.h>
+#include <libfdt.h>
 #include <malloc.h>
 #include <spi.h>
 #include <asm/arch/clk.h>
@@ -27,6 +29,18 @@
 #include <asm/arch/pinmux.h>
 #include <asm/arch-exynos/spi.h>
 #include <asm/io.h>
+
+DECLARE_GLOBAL_DATA_PTR;
+
+/* Information about each SPI controller */
+struct spi_bus {
+	enum periph_id periph_id;
+	struct exynos_spi *regs;
+	int inited;			/* 1 if this bus is ready for use */
+};
+
+/* A list of spi buses that we know about */
+static struct spi_bus spi_bus[EXYNOS5_SPI_NUM_CONTROLLERS];
 
 struct exynos_spi_slave {
 	struct spi_slave slave;
@@ -65,11 +79,6 @@ static enum periph_id spi_get_periph_id(unsigned dev_index)
 		return periph_for_dev[dev_index];
 	debug("%s: invalid bus %d", __func__, dev_index);
 	return PERIPH_ID_NONE;
-}
-
-void spi_init()
-{
-	/* do nothing */
 }
 
 /**
@@ -397,4 +406,75 @@ void spi_cs_deactivate(struct spi_slave *slave)
 
 	exynos_pinmux_config(spi_slave->periph_id, PINMUX_FLAG_CS);
 	debug("Deactivate CS, bus %d\n", spi_slave->slave.bus);
+}
+
+/**
+ * Read the SPI config from the device tree node.
+ *
+ * @param blob	FDT blob to read from
+ * @param node	Node offset to read from
+ * @param bus	SPI bus structure to fill with information
+ * @return 0 if ok, or -FDT_ERR_NOTFOUND if something was missing
+ */
+static int spi_get_config(const void *blob, int node, struct spi_bus *bus)
+{
+	bus->regs = (struct exynos_spi *)fdtdec_get_addr(blob, node, "reg");
+	bus->periph_id = clock_decode_periph_id(blob, node);
+	if (bus->periph_id == PERIPH_ID_NONE) {
+		debug("%s: Invalid peripheral ID %d\n", __func__,
+		      bus->periph_id);
+		return -FDT_ERR_NOTFOUND;
+	}
+
+	return 0;
+}
+
+/**
+ * Process a list of nodes, adding them to our list of SPI ports.
+ *
+ * @param blob		fdt blob
+ * @param node_list	list of nodes to process (any <=0 are ignored)
+ * @param count		number of nodes to process
+ * @param is_dvc	1 if these are DVC ports, 0 if standard I2C
+ * @return 0 if ok, -1 on error
+ */
+static int process_nodes(const void *blob, int node_list[], int count)
+{
+	int i;
+
+	/* build the i2c_controllers[] for each controller */
+	for (i = 0; i < count; i++) {
+		int node = node_list[i];
+		struct spi_bus *bus;
+
+		if (node <= 0)
+			continue;
+
+		bus = &spi_bus[i];
+		if (spi_get_config(blob, node, bus)) {
+			printf("exynos spi_init: failed to decode bus %d\n",
+			       i);
+			return -1;
+		}
+
+		debug("spi: controller bus %d at %p, periph_id %d",
+		      i, bus->regs, bus->periph_id);
+		bus->inited = 1;
+	}
+
+	return 0;
+}
+
+/* Sadly there is no error return from this function */
+void spi_init(void)
+{
+	int node_list[EXYNOS5_SPI_NUM_CONTROLLERS];
+	const void *blob = gd->fdt_blob;
+	int count;
+
+	count = fdtdec_find_aliases_for_id(blob, "spi",
+			COMPAT_SAMSUNG_EXYNOS_SPI, node_list,
+			EXYNOS5_SPI_NUM_CONTROLLERS);
+	if (process_nodes(blob, node_list, count))
+		return;
 }
