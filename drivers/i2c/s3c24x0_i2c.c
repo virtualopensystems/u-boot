@@ -30,6 +30,7 @@
 #include <asm/arch/clk.h>
 #include <asm/arch/cpu.h>
 #include <asm/arch/gpio.h>
+#include <asm/arch/pinmux.h>
 
 #include <asm/io.h>
 #include <i2c.h>
@@ -67,7 +68,27 @@
 unsigned int s5p_cpu_id = 0xc520;
 #endif
 
+/* We should not rely on any particular ordering of these IDs */
+static enum periph_id periph_for_dev[] = {
+	PERIPH_ID_I2C0,
+	PERIPH_ID_I2C1,
+	PERIPH_ID_I2C2,
+	PERIPH_ID_I2C3,
+	PERIPH_ID_I2C4,
+	PERIPH_ID_I2C5,
+	PERIPH_ID_I2C6,
+	PERIPH_ID_I2C7,
+};
+
 static unsigned int g_current_bus;
+
+static enum periph_id i2c_get_periph_id(unsigned dev_index)
+{
+	if (dev_index < ARRAY_SIZE(periph_for_dev))
+		return periph_for_dev[dev_index];
+	debug("%s: invalid bus %d", __func__, dev_index);
+	return PERIPH_ID_NONE;
+}
 
 static struct s3c24x0_i2c *get_base_i2c(int bus_idx)
 {
@@ -136,47 +157,9 @@ static void i2c_bus_init(struct s3c24x0_i2c *i2c, unsigned int bus)
 	struct exynos5_gpio_part1 *gpio;
 	gpio = exynos_get_base_gpio1();
 
-	switch (bus) {
-	case I2C0:
-		s5p_gpio_cfg_pin(&gpio->b3, 0, GPIO_FUNC(0x2));
-		s5p_gpio_cfg_pin(&gpio->b3, 1, GPIO_FUNC(0x2));
-		break;
+	int periph_id = i2c_get_periph_id(bus);
 
-	case I2C1:
-		s5p_gpio_cfg_pin(&gpio->b3, 2, GPIO_FUNC(0x2));
-		s5p_gpio_cfg_pin(&gpio->b3, 3, GPIO_FUNC(0x2));
-		break;
-
-	case I2C2:
-		s5p_gpio_cfg_pin(&gpio->a0, 6, GPIO_FUNC(0x3));
-		s5p_gpio_cfg_pin(&gpio->a0, 7, GPIO_FUNC(0x3));
-		break;
-
-	case I2C3:
-		s5p_gpio_cfg_pin(&gpio->a1, 2, GPIO_FUNC(0x3));
-		s5p_gpio_cfg_pin(&gpio->a1, 3, GPIO_FUNC(0x3));
-		break;
-
-	case I2C4:
-		s5p_gpio_cfg_pin(&gpio->a2, 0, GPIO_FUNC(0x3));
-		s5p_gpio_cfg_pin(&gpio->a2, 1, GPIO_FUNC(0x3));
-		break;
-
-	case I2C5:
-		s5p_gpio_cfg_pin(&gpio->a2, 2, GPIO_FUNC(0x3));
-		s5p_gpio_cfg_pin(&gpio->a2, 3, GPIO_FUNC(0x3));
-		break;
-
-	case I2C6:
-		s5p_gpio_cfg_pin(&gpio->b1, 3, GPIO_FUNC(0x4));
-		s5p_gpio_cfg_pin(&gpio->b1, 4, GPIO_FUNC(0x4));
-		break;
-
-	case I2C7:
-		s5p_gpio_cfg_pin(&gpio->b2, 2, GPIO_FUNC(0x3));
-		s5p_gpio_cfg_pin(&gpio->b2, 3, GPIO_FUNC(0x3));
-		break;
-	}
+	exynos_pinmux_config(periph_id, 0);
 
 	i2c_ch_init(i2c, CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
 }
