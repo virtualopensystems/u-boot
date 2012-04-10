@@ -18,9 +18,3 @@ int cros_gpio_fetch(enum cros_gpio_index index, cros_gpio_t *gpio)
 	/* TODO(chromium-os:28077) Implement cros_gpio_fetch */
 	return -1;
 }
-
-int cros_gpio_dump(cros_gpio_t *gpio)
-{
-	/* TODO(chromium-os:28077) Implement cros_gpio_dump */
-	return 0;
-}

@@ -14,6 +14,7 @@
 
 #include <common.h>
 #include <command.h>
+#include <cros/common.h>
 #include <cros/cros_fdtdec.h>
 #include <cros/cros_gpio.h>
 #include <cros/firmware_storage.h>

@@ -96,23 +96,3 @@ int cros_gpio_fetch(enum cros_gpio_index index, cros_gpio_t *gpio)
 
 	return 0;
 }
-
-int cros_gpio_dump(cros_gpio_t *gpio)
-{
-#ifdef VBOOT_DEBUG
-	const char const *name[CROS_GPIO_MAX_GPIO] = {
-		"wpsw", "recsw", "devsw", "lidsw", "pwrsw"
-	};
-	int index = gpio->index;
-
-	if (index < 0 || index >= CROS_GPIO_MAX_GPIO) {
-		VBDEBUG("index out of range: %d\n", index);
-		return -1;
-	}
-
-	VBDEBUG("%-6s: port=%3d, polarity=%d, value=%d\n",
-			name[gpio->index],
-			gpio->port, gpio->polarity, gpio->value);
-#endif
-	return 0;
-}
