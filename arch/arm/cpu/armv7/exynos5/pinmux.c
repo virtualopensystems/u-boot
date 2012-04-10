@@ -249,6 +249,38 @@ int exynos_pinmux_config(enum periph_id peripheral, int flags)
 		s5p_gpio_cfg_pin(&gpio1->x3, 0, GPIO_OUTPUT);
 		s5p_gpio_set_value(&gpio1->x3, 0, 1);
 		break;
+	case PERIPH_ID_I2C0:
+		s5p_gpio_cfg_pin(&gpio1->b3, 0, GPIO_FUNC(0x2));
+		s5p_gpio_cfg_pin(&gpio1->b3, 1, GPIO_FUNC(0x2));
+		break;
+	case PERIPH_ID_I2C1:
+		s5p_gpio_cfg_pin(&gpio1->b3, 2, GPIO_FUNC(0x2));
+		s5p_gpio_cfg_pin(&gpio1->b3, 3, GPIO_FUNC(0x2));
+		break;
+	case PERIPH_ID_I2C2:
+		s5p_gpio_cfg_pin(&gpio1->a0, 6, GPIO_FUNC(0x3));
+		s5p_gpio_cfg_pin(&gpio1->a0, 7, GPIO_FUNC(0x3));
+		break;
+	case PERIPH_ID_I2C3:
+		s5p_gpio_cfg_pin(&gpio1->a1, 2, GPIO_FUNC(0x3));
+		s5p_gpio_cfg_pin(&gpio1->a1, 3, GPIO_FUNC(0x3));
+		break;
+	case PERIPH_ID_I2C4:
+		s5p_gpio_cfg_pin(&gpio1->a2, 0, GPIO_FUNC(0x3));
+		s5p_gpio_cfg_pin(&gpio1->a2, 1, GPIO_FUNC(0x3));
+		break;
+	case PERIPH_ID_I2C5:
+		s5p_gpio_cfg_pin(&gpio1->a2, 2, GPIO_FUNC(0x3));
+		s5p_gpio_cfg_pin(&gpio1->a2, 3, GPIO_FUNC(0x3));
+		break;
+	case PERIPH_ID_I2C6:
+		s5p_gpio_cfg_pin(&gpio1->b1, 3, GPIO_FUNC(0x4));
+		s5p_gpio_cfg_pin(&gpio1->b1, 4, GPIO_FUNC(0x4));
+		break;
+	case PERIPH_ID_I2C7:
+		s5p_gpio_cfg_pin(&gpio1->b2, 2, GPIO_FUNC(0x3));
+		s5p_gpio_cfg_pin(&gpio1->b2, 3, GPIO_FUNC(0x3));
+		break;
 	default:
 		debug("%s: invalid peripheral %d", __func__, peripheral);
 		return -1;
