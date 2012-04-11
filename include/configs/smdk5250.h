@@ -146,6 +146,9 @@
 
 #define CONFIG_LOADADDR			0x40000000
 
+/* Keep kernel-passed data below 512MB (i.e. in lowmem with some margin) */
+#define CONFIG_SYS_BOOTMAPSZ		(512 << 20)
+
 #define SCRIPT_GENERATE_BOOTARGS "script_generate_bootargs=" \
 	"setenv bootargs " \
 		"root=/dev/mmcblk${boot_kdevnum}p3 " \
