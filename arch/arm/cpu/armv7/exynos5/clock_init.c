@@ -64,6 +64,26 @@ struct mem_timings mem_timings[] = {
 		.zq_mode_noterm = 0,	/* do nothing for ddr3 */
 		.rdlvl_rddata_adj = 0xff00,
 		.t_wrrdcmd = 2,
+		/*
+		* Dynamic Clock: Always Running
+		* Memory Burst length: 8
+		* Number of chips: 1
+		* Memory Bus width: 32 bit
+		* Memory Type: DDR3
+		* Additional Latancy for PLL: 0 Cycle
+		*/
+		.memcontrol = DMC_MEMCONTROL_CLK_STOP_DISABLE |
+			DMC_MEMCONTROL_DPWRDN_DISABLE |
+			DMC_MEMCONTROL_DPWRDN_ACTIVE_PRECHARGE |
+			DMC_MEMCONTROL_TP_DISABLE |
+			DMC_MEMCONTROL_DSREF_DISABLE |
+			DMC_MEMCONTROL_ADD_LAT_PALL_CYCLE(0) |
+			DMC_MEMCONTROL_MEM_TYPE_DDR3 |
+			DMC_MEMCONTROL_MEM_WIDTH_32BIT |
+			DMC_MEMCONTROL_NUM_CHIP_1 |
+			DMC_MEMCONTROL_BL_8 |
+			DMC_MEMCONTROL_PZQ_DISABLE |
+			DMC_MEMCONTROL_MRR_BYTE_7_0,
 	}, {
 		.mem_type = DDR_MODE_DDR3,
 		.frequency_mhz = 800,
@@ -91,6 +111,26 @@ struct mem_timings mem_timings[] = {
 		.zq_mode_noterm = 0,	/* do nothing for ddr3 */
 		.rdlvl_rddata_adj = 0xff00,
 		.t_wrrdcmd = 2,
+		/*
+		* Dynamic Clock: Always Running
+		* Memory Burst length: 8
+		* Number of chips: 1
+		* Memory Bus width: 32 bit
+		* Memory Type: DDR3
+		* Additional Latancy for PLL: 0 Cycle
+		*/
+		.memcontrol = DMC_MEMCONTROL_CLK_STOP_DISABLE |
+			DMC_MEMCONTROL_DPWRDN_DISABLE |
+			DMC_MEMCONTROL_DPWRDN_ACTIVE_PRECHARGE |
+			DMC_MEMCONTROL_TP_DISABLE |
+			DMC_MEMCONTROL_DSREF_DISABLE |
+			DMC_MEMCONTROL_ADD_LAT_PALL_CYCLE(0) |
+			DMC_MEMCONTROL_MEM_TYPE_DDR3 |
+			DMC_MEMCONTROL_MEM_WIDTH_32BIT |
+			DMC_MEMCONTROL_NUM_CHIP_1 |
+			DMC_MEMCONTROL_BL_8 |
+			DMC_MEMCONTROL_PZQ_DISABLE |
+			DMC_MEMCONTROL_MRR_BYTE_7_0,
 	}, {
 		.mem_type = DDR_MODE_LPDDR2,
 		.frequency_mhz = 667,
@@ -113,6 +153,26 @@ struct mem_timings mem_timings[] = {
 		.zq_mode_term = 5,
 		.zq_mode_noterm = 1,
 		.rdlvl_rddata_adj = 0x0001,
+		/*
+		* Dynamic Clock: Always Running
+		* Memory Burst length: 4
+		* Number of chips: 2
+		* Memory Bus width: 32 bit
+		* Memory Type: LPDDR2-S4
+		* Additional Latancy for PLL: 1 Cycle
+		*/
+		.memcontrol = DMC_MEMCONTROL_CLK_STOP_DISABLE |
+			DMC_MEMCONTROL_DPWRDN_DISABLE |
+			DMC_MEMCONTROL_DPWRDN_ACTIVE_PRECHARGE |
+			DMC_MEMCONTROL_TP_DISABLE |
+			DMC_MEMCONTROL_DSREF_DISABLE |
+			DMC_MEMCONTROL_ADD_LAT_PALL_CYCLE(0) |
+			DMC_MEMCONTROL_MEM_TYPE_LPDDR2 |
+			DMC_MEMCONTROL_MEM_WIDTH_32BIT |
+			DMC_MEMCONTROL_NUM_CHIP_2 |
+			DMC_MEMCONTROL_BL_4 |
+			DMC_MEMCONTROL_PZQ_DISABLE |
+			DMC_MEMCONTROL_MRR_BYTE_7_0,
 	}
 };
 

@@ -30,16 +30,8 @@
 #include "clock_init.h"
 #include "setup.h"
 
-/* TODO(clchiou): Sort out setup.h to use LPDDR2_* macros directly */
-
-#define DMC_MEMCONTROL_VAL	LPDDR2_DMC_MEMCONTROL_VAL
-
 #define SET_CTRL_FORCE_VAL(x, y)	(x = (x & ~(0x7F << 8)) | y << 8)
 
-
-/* APLL : 1GHz */
-/* MCLK_CDREX: 533Mhz */
-/* Memory Type: LPDDR2 */
 
 static void reset_phy_ctrl(void)
 {
@@ -246,15 +238,7 @@ void lpddr2_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size)
 
 	update_reset_dll(dmc, DDR_MODE_LPDDR2);
 
-	/*
-	 * Dynamic Clock: Always Running
-	 * Memory Burst length: 4
-	 * Number of chips: 2
-	 * Memory Bus width: 32 bit
-	 * Memory Type: LPDDR2-S4
-	 * Additional Latancy for PLL: 1 Cycle
-	 */
-	writel(DMC_MEMCONTROL_VAL, &dmc->memcontrol);
+	writel(mem->memcontrol, &dmc->memcontrol);
 
 	config_memory(dmc);
 

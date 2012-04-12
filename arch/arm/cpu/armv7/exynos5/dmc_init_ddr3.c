@@ -31,16 +31,6 @@
 #include "clock_init.h"
 #include "setup.h"
 
-/* TODO(clchiou): Sort out setup.h to use DDR3_* macros directly */
-
-#define DMC_MEMCONTROL_VAL	DDR3_DMC_MEMCONTROL_VAL
-
-/*
- * APLL		: 1GHz
- * MCLK_CDREX	: 667Mhz
- * Memory Type	: DDR3
- */
-
 static void reset_phy_ctrl(void)
 {
 	struct exynos5_clock *clk = (struct exynos5_clock *)EXYNOS5_CLOCK_BASE;
@@ -180,15 +170,7 @@ void ddr3_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size)
 	writel(mem->phy0_dq, &phy0_ctrl->phy_con6);
 	writel(mem->phy1_dq, &phy1_ctrl->phy_con6);
 
-	/*
-	 * Dynamic Clock: Always Running
-	 * Memory Burst length: 8
-	 * Number of chips: 1
-	 * Memory Bus width: 32 bit
-	 * Memory Type: DDR3
-	 * Additional Latancy for PLL: 0 Cycle
-	 */
-	writel(DMC_MEMCONTROL_VAL, &dmc->memcontrol);
+	writel(mem->memcontrol, &dmc->memcontrol);
 
 	config_memory(dmc);
 
@@ -276,15 +258,7 @@ void ddr3_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size)
 	writel(phy_con1, &phy0_ctrl->phy_con1);
 	writel(phy_con1, &phy1_ctrl->phy_con1);
 
-	/*
-	 * Dynamic Clock: Always Running
-	 * Memory Burst length: 8
-	 * Number of chips: 1
-	 * Memory Bus width: 32 bit
-	 * Memory Type: DDR3
-	 * Additional Latancy for PLL: 0 Cycle
-	 */
-	writel(DMC_MEMCONTROL_VAL, &dmc->memcontrol);
+	writel(mem->memcontrol, &dmc->memcontrol);
 
 	/*
 	 * Set DMC Concontrol
