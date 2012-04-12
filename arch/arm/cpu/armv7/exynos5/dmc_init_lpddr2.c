@@ -241,7 +241,7 @@ void lpddr2_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size)
 
 	/* Operation Mode : LPDDR2 */
 	val = PHY_CON0_RESET_VAL;
-	SET_CTRL_DDR_MODE(val, DDR_MODE_LPDDR2);
+	val |= mem->mem_type << PHY_CON0_CTRL_DDR_MODE_SHIFT;
 	writel(val, &phy0_ctrl->phy_con0);
 	writel(val, &phy1_ctrl->phy_con0);
 

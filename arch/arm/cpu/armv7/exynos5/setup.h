@@ -404,15 +404,10 @@
 #define NR_DELAY_CELL_COARSE_LOCK_MASK		0x7F
 #define CTRL_CLOCK_OFFSET			2
 
-/* PHY Control */
-#define PHY_CON0_RESET_VAL	0x17020A40
+/* PHY Control - this value omits DDR mode field so we can OR it in later */
+#define PHY_CON0_RESET_VAL	0x17020240
 #define BYTE_RDLVL_EN		(1 << 13)
 #define CTRL_ATGATE		(1 << 6)
-/*
- * TODO(clchiou): Remove these SET_ functions and put the actual code in
- * the C file.
- */
-#define SET_CTRL_DDR_MODE(x, y)		(x = (x & ~(0x3 << 11)) | y << 11)
 
 #define PHY_CON1_RESET_VAL	0x9210000
 
