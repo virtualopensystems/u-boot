@@ -148,6 +148,8 @@ enum ddr_mode {
 	DDR_MODE_DDR3,
 	DDR_MODE_LPDDR2,
 	DDR_MODE_LPDDR3,
+
+	DDR_MODE_COUNT,
 };
 
 /* CONCONTROL register fields */

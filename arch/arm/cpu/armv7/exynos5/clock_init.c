@@ -24,6 +24,7 @@
 
 #include <common.h>
 #include <config.h>
+#include <fdtdec.h>
 #include <version.h>
 #include <asm/io.h>
 #include <asm/arch/clk.h>
@@ -35,6 +36,7 @@
 #include "clock_init.h"
 #include "setup.h"
 
+DECLARE_GLOBAL_DATA_PTR;
 
 struct mem_timings mem_timings[] = {
 	{
@@ -227,8 +229,6 @@ static int clock_get_mem_selection(enum ddr_mode *mem_type,
  * This should use the device tree. For now we cannot since this function is
  * called before the FDT is available.
  *
- * TODO(sjg): Make this function look up the FDT for these parameters.
- *
  * @param mem_type	Returns memory type
  * @param frequency_mhz	Returns memory speed in MHz
  * @return 0 if all ok (if not, this function currently does not return)
@@ -236,18 +236,29 @@ static int clock_get_mem_selection(enum ddr_mode *mem_type,
 static int clock_get_mem_selection(enum ddr_mode *mem_type,
 				   unsigned *frequency_mhz)
 {
-	/* TODO(sjg): Use the device tree values for these */
-#ifdef CONFIG_LPDDR2
-	*mem_type = DDR_MODE_LPDDR2;
-	*frequency_mhz = 667;
-#else
-	*mem_type = DDR_MODE_DDR3;
-# ifdef CDREX_800
-	*frequency_mhz = 800;
-# else
-	*frequency_mhz = 667;
-# endif
-#endif
+	static const char *mem_types[DDR_MODE_COUNT] = {
+		"ddr2", "ddr3", "lpddr2", "lpddr3"
+	};
+	const char *typestr;
+	int node, i;
+
+	node = fdtdec_next_compatible(gd->fdt_blob, 0,
+				      COMPAT_SAMSUNG_EXYNOS_DMC);
+	if (node < 0)
+		panic("No memory information available in device tree");
+	typestr = fdt_getprop(gd->fdt_blob, node, "mem-type", NULL);
+	for (i = 0; i < DDR_MODE_COUNT; i++) {
+		if (!strcmp(typestr, mem_types[i]))
+			break;
+	}
+	if (i == DDR_MODE_COUNT)
+		panic("Invalid memory type in device tree");
+	*frequency_mhz = fdtdec_get_int(gd->fdt_blob, node, "clock-frequency",
+					0);
+	if (!*frequency_mhz)
+		panic("Invalid memory frequency in device tree");
+	*mem_type = i;
+
 	return 0;
 }
 
