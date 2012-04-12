@@ -84,6 +84,10 @@ struct mem_timings mem_timings[] = {
 			DMC_MEMCONTROL_BL_8 |
 			DMC_MEMCONTROL_PZQ_DISABLE |
 			DMC_MEMCONTROL_MRR_BYTE_7_0,
+		.memconfig = DMC_MEMCONFIGx_CHIP_MAP_INTERLEAVED |
+			DMC_MEMCONFIGx_CHIP_COL_10 |
+			DMC_MEMCONFIGx_CHIP_ROW_15 |
+			DMC_MEMCONFIGx_CHIP_BANK_8,
 	}, {
 		.mem_type = DDR_MODE_DDR3,
 		.frequency_mhz = 800,
@@ -131,6 +135,10 @@ struct mem_timings mem_timings[] = {
 			DMC_MEMCONTROL_BL_8 |
 			DMC_MEMCONTROL_PZQ_DISABLE |
 			DMC_MEMCONTROL_MRR_BYTE_7_0,
+		.memconfig = DMC_MEMCONFIGx_CHIP_MAP_INTERLEAVED |
+			DMC_MEMCONFIGx_CHIP_COL_10 |
+			DMC_MEMCONFIGx_CHIP_ROW_15 |
+			DMC_MEMCONFIGx_CHIP_BANK_8,
 	}, {
 		.mem_type = DDR_MODE_LPDDR2,
 		.frequency_mhz = 667,
@@ -173,6 +181,10 @@ struct mem_timings mem_timings[] = {
 			DMC_MEMCONTROL_BL_4 |
 			DMC_MEMCONTROL_PZQ_DISABLE |
 			DMC_MEMCONTROL_MRR_BYTE_7_0,
+		.memconfig = DMC_MEMCONFIGx_CHIP_MAP_INTERLEAVED |
+			DMC_MEMCONFIGx_CHIP_COL_10 |
+			DMC_MEMCONFIGx_CHIP_ROW_14 |
+			DMC_MEMCONFIGx_CHIP_BANK_8,
 	}
 };
 

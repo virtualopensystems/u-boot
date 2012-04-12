@@ -485,9 +485,6 @@
 #define DMC_MEMBASECONFIG0_VAL	DMC_MEMBASECONFIG_VAL(0x40)
 #define DMC_MEMBASECONFIG1_VAL	DMC_MEMBASECONFIG_VAL(0x80)
 
-#define DMC_MEMCONFIG1_VAL	DMC_MEMCONFIG_VAL
-#define DMC_MEMCONFIG0_VAL	DMC_MEMCONFIG_VAL
-
 #define DMC_PRECHCONFIG_VAL		0xFF000000
 #define DMC_PWRDNCONFIG_VAL		0xFFFF00FF
 
@@ -559,12 +556,15 @@ void config_mrs(struct exynos5_dmc *);
  * @param exynos5_dmc	Pointer to struct of DMC registers
  */
 void config_prech(struct exynos5_dmc *);
+
 /*
- * Configure memory
+ * Configure the memconfig and membaseconfig registers
  *
+ * @param mem		Memory timings for this memory type.
  * @param exynos5_dmc	Pointer to struct of DMC registers
  */
-void config_memory(struct exynos5_dmc *);
+void dmc_config_memory(struct mem_timings *mem, struct exynos5_dmc *dmc);
+
 /* Set the PS-Hold drive value */
 void ps_hold_setup(void);
 /*

@@ -65,6 +65,7 @@ struct mem_timings {
 	unsigned rdlvl_rddata_adj;
 	unsigned t_wrrdcmd;
 	unsigned memcontrol;
+	unsigned memconfig;
 };
 
 /**

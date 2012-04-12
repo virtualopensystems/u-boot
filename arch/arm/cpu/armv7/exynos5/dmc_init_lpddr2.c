@@ -240,7 +240,7 @@ void lpddr2_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size)
 
 	writel(mem->memcontrol, &dmc->memcontrol);
 
-	config_memory(dmc);
+	dmc_config_memory(mem, dmc);
 
 	/* Precharge Configuration */
 	writel(DMC_PRECHCONFIG_VAL, &dmc->prechconfig);

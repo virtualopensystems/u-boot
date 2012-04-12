@@ -172,7 +172,7 @@ void ddr3_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size)
 
 	writel(mem->memcontrol, &dmc->memcontrol);
 
-	config_memory(dmc);
+	dmc_config_memory(mem, dmc);
 
 	/* Memory Channel Inteleaving Size: 128 Bytes */
 	writel(mem_iv_size, &dmc->ivcontrol);

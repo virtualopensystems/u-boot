@@ -27,13 +27,6 @@
 #include "clock_init.h"
 #include "setup.h"
 
-/* TODO(clchiou): Move to device tree */
-#ifdef CONFIG_LPDDR2
-#define DMC_MEMCONFIG_VAL	LPDDR2_DMC_MEMCONFIG_VAL
-#elif defined CONFIG_DDR3
-#define DMC_MEMCONFIG_VAL	DDR3_DMC_MEMCONFIG_VAL
-#endif
-
 void dmc_config_zq(struct mem_timings *mem,
 		   struct exynos5_phy_control *phy0_ctrl,
 		   struct exynos5_phy_control *phy1_ctrl)
@@ -132,10 +125,10 @@ void config_prech(struct exynos5_dmc *dmc)
 	}
 }
 
-void config_memory(struct exynos5_dmc *dmc)
+void dmc_config_memory(struct mem_timings *mem, struct exynos5_dmc *dmc)
 {
-	writel(DMC_MEMCONFIG0_VAL, &dmc->memconfig0);
-	writel(DMC_MEMCONFIG1_VAL, &dmc->memconfig1);
+	writel(mem->memconfig, &dmc->memconfig0);
+	writel(mem->memconfig, &dmc->memconfig1);
 	writel(DMC_MEMBASECONFIG0_VAL, &dmc->membaseconfig0);
 	writel(DMC_MEMBASECONFIG1_VAL, &dmc->membaseconfig1);
 }
