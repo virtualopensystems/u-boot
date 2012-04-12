@@ -34,19 +34,6 @@
 /* High Level Configuration Options */
 #define CONFIG_SMDK5250
 
-/* Choose DDR Type below: Uncomment the type of DDR present on your board */
-#define CONFIG_DDR3
-/* #define CONFIG_LPDDR2 */
-
-/**
- * Enabling this will clock DDR3 at 800MHz.
- * Disbleing this will clock DDR3 at 667MHz.
- * Only supported when CONFIG_DDR3 is enabled.
- */
-#ifdef CONFIG_DDR3
-#define CDREX_800
-#endif
-
 /* Enable fdt support for SMDK5250 */
 #define CONFIG_DEFAULT_DEVICE_TREE      exynos5250-smdk5250
 #define CONFIG_OF_CONTROL
