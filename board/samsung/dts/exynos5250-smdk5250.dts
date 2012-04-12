@@ -62,6 +62,6 @@
 	dmc@10C00000 {
 		mem-interleave-size = <0x1f>;
 		mem-type = "ddr3";
-		/* DDR clock rate and timing parameters to be added here */
+		clock-frequency = <800000000>;
 	};
 };
