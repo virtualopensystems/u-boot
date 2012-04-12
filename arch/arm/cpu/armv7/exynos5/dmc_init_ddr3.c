@@ -154,7 +154,7 @@ void ddr3_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size)
 	writel(val, &phy1_ctrl->phy_con0);
 
 	/* ZQ Calibration */
-	config_zq(phy0_ctrl, phy1_ctrl);
+	dmc_config_zq(mem, phy0_ctrl, phy1_ctrl);
 
 	/* DQS, DQ: Signal */
 	val = CTRL_PULLD_DQ | CTRL_PULLD_DQS;

@@ -29,21 +29,16 @@
 
 /* TODO(clchiou): Move to device tree */
 #ifdef CONFIG_LPDDR2
-#define ZQ_MODE_DDS_VAL		LPDDR2_ZQ_MODE_DDS_VAL
-#define ZQ_MODE_TERM_VAL	LPDDR2_ZQ_MODE_TERM_VAL
-#define ZQ_MODE_NOTERM		LPDDR2_ZQ_MODE_NOTERM
 #define DMC_MEMCONTROL_VAL	LPDDR2_DMC_MEMCONTROL_VAL
 #define DMC_MEMCONFIG_VAL	LPDDR2_DMC_MEMCONFIG_VAL
 #elif defined CONFIG_DDR3
-#define ZQ_MODE_DDS_VAL		DDR3_ZQ_MODE_DDS_VAL
-#define ZQ_MODE_TERM_VAL	DDR3_ZQ_MODE_TERM_VAL
-#define ZQ_MODE_NOTERM		DDR3_ZQ_MODE_NOTERM
 #define DMC_MEMCONTROL_VAL	DDR3_DMC_MEMCONTROL_VAL
 #define DMC_MEMCONFIG_VAL	DDR3_DMC_MEMCONFIG_VAL
 #endif
 
-void config_zq(struct exynos5_phy_control *phy0_ctrl,
-			struct exynos5_phy_control *phy1_ctrl)
+void dmc_config_zq(struct mem_timings *mem,
+		   struct exynos5_phy_control *phy0_ctrl,
+		   struct exynos5_phy_control *phy1_ctrl)
 {
 	unsigned long val = 0;
 
@@ -53,14 +48,15 @@ void config_zq(struct exynos5_phy_control *phy0_ctrl,
 	 * long calibration for manual calibration
 	 */
 	val = PHY_CON16_RESET_VAL;
-	SET_ZQ_MODE_DDS_VAL(val);
-	SET_ZQ_MODE_TERM_VAL(val);
+	val |= mem->zq_mode_dds << PHY_CON16_ZQ_MODE_DDS_SHIFT;
+	val |= mem->zq_mode_term << PHY_CON16_ZQ_MODE_TERM_SHIFT;
 	val |= ZQ_CLK_DIV_EN;
 	writel(val, &phy0_ctrl->phy_con16);
 	writel(val, &phy1_ctrl->phy_con16);
 
 	/* Disable termination */
-	val |= ZQ_MODE_NOTERM;
+	if (mem->zq_mode_noterm)
+		val |= PHY_CON16_ZQ_MODE_NOTERM_MASK;
 	writel(val, &phy0_ctrl->phy_con16);
 	writel(val, &phy1_ctrl->phy_con16);
 

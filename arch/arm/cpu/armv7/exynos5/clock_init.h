@@ -56,6 +56,10 @@ struct mem_timings {
 	unsigned ctrl_rdlat;
 
 	unsigned rd_fetch;
+
+	unsigned zq_mode_dds;
+	unsigned zq_mode_term;
+	unsigned zq_mode_noterm;	/* 1 to allow termination disable */
 };
 
 /**

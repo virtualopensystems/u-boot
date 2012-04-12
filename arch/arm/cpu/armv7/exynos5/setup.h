@@ -387,9 +387,6 @@
 /*ZQ Configurations */
 #define PHY_CON16_RESET_VAL	0x08000304
 
-#define SET_ZQ_MODE_DDS_VAL(x)	(x = (x & ~(0x7 << 24)) | ZQ_MODE_DDS_VAL)
-#define SET_ZQ_MODE_TERM_VAL(x)	(x = (x & ~(0x7 << 21)) | ZQ_MODE_TERM_VAL)
-
 #define ZQ_CLK_DIV_EN		(1 << 18)
 #define ZQ_MANUAL_STR		(1 << 1)
 
@@ -546,10 +543,13 @@ void tzpc_init(void);
 /*
  * Configure ZQ I/O interface
  *
- * @param exynos5_phy_control	Pointer to struct containing PHY0 control reg
- * @param exynos5_phy_control	Pointer to struct containing PHY1 control reg
+ * @param mem		Memory timings for this memory type.
+ * @param phy0_ctrl	Pointer to struct containing PHY0 control reg
+ * @param phy1_ctrl	Pointer to struct containing PHY1 control reg
  */
-void config_zq(struct exynos5_phy_control *, struct exynos5_phy_control *);
+void dmc_config_zq(struct mem_timings *mem,
+		   struct exynos5_phy_control *phy0_ctrl,
+		   struct exynos5_phy_control *phy1_ctrl);
 /*
  * Sending NOP and MRS/EMRS Direct commands
  *
