@@ -47,6 +47,7 @@ struct mem_timings mem_timings[] = {
 		.direct_cmd_msr = {
 			0x00020010, 0x00030000, 0x00010042, 0x00000b50
 		},
+		.timing_ref = 0x000000bb,
 		.timing_row = 0x7645644d,
 		.timing_data = 0x45414709,
 		.timing_power = 0x3a000a3c,
@@ -67,6 +68,7 @@ struct mem_timings mem_timings[] = {
 		.direct_cmd_msr = {
 			0x00020018, 0x00030000, 0x00010042, 0x00000d70
 		},
+		.timing_ref = 0x000000bb,
 		.timing_row = 0x8d46650f,
 		.timing_data = 0x4740180b,
 		.timing_power = 0x41000a44,
@@ -87,6 +89,7 @@ struct mem_timings mem_timings[] = {
 		.direct_cmd_msr = {
 			0x00071c00, 0x00010bfc, 0x00000708, 0x00000818
 		},
+		.timing_ref = 0x0000005d,
 		.timing_row = 0x2336544C,
 		.timing_data = 0x24202408,
 		.timing_power = 0x38260235,

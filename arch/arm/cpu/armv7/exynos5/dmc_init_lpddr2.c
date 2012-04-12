@@ -36,8 +36,6 @@
 
 #define DMC_MEMCONTROL_VAL	LPDDR2_DMC_MEMCONTROL_VAL
 
-#define DMC_TIMINGREF_VAL	LPDDR2_DMC_TIMINGREF_VAL
-
 #define CTRL_BSTLEN		LPDDR2_CTRL_BSTLEN
 
 #define SET_CTRL_FORCE_VAL(x, y)	(x = (x & ~(0x7F << 8)) | y << 8)
@@ -269,7 +267,7 @@ void lpddr2_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size)
 	writel(DMC_PWRDNCONFIG_VAL, &dmc->pwrdnconfig);
 
 	/* Periodic Refrese Interval */
-	writel(DMC_TIMINGREF_VAL, &dmc->timingref);
+	writel(mem->timing_ref, &dmc->timingref);
 
 	/*
 	 * TimingRow, TimingData, TimingPower Setting:

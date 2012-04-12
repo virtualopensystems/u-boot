@@ -37,8 +37,6 @@
 
 #define DMC_MEMCONTROL_VAL	DDR3_DMC_MEMCONTROL_VAL
 
-#define DMC_TIMINGREF_VAL	DDR3_DMC_TIMINGREF_VAL
-
 #define CTRL_BSTLEN		DDR3_CTRL_BSTLEN
 
 /*
@@ -206,7 +204,7 @@ void ddr3_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size)
 	writel(DMC_PWRDNCONFIG_VAL, &dmc->pwrdnconfig);
 
 	/* Periodic Refresh Interval */
-	writel(DMC_TIMINGREF_VAL, &dmc->timingref);
+	writel(mem->timing_ref, &dmc->timingref);
 
 	/*
 	 * TimingRow, TimingData, TimingPower Setting:
