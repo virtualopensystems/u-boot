@@ -101,28 +101,20 @@ static void config_cdrex(void)
  *
  * @param state			0 to turn off, 1 to turn on
  * @param ctrl_force_val	Value for the ctrl_force field
- * @param phy0_ctrl		Pointer to PHY0 control registers
- * @param phy1_ctrl		Pointer to PHY1 control registers
+ * @param phy_ctrl		Pointer to PHY control registers
  */
 static void config_ctrl_dll_on(unsigned int state,
 			unsigned int ctrl_force_val,
-			struct exynos5_phy_control *phy0_ctrl,
-			struct exynos5_phy_control *phy1_ctrl)
+			struct exynos5_phy_control *phy_ctrl)
 {
 	u32 val;
 
 	assert(state == 0 || state == 1);
-	val = readl(&phy0_ctrl->phy_con12);
+	val = readl(&phy_ctrl->phy_con12);
 	clrsetbits_le32(&val, PHY_CON12_CTRL_DLL_ON_MASK,
 			state << PHY_CON12_CTRL_DLL_ON_SHIFT);
 	SET_CTRL_FORCE_VAL(val, ctrl_force_val);
-	writel(val, &phy0_ctrl->phy_con12);
-
-	val = readl(&phy1_ctrl->phy_con12);
-	clrsetbits_le32(&val, PHY_CON12_CTRL_DLL_ON_MASK,
-			state << PHY_CON12_CTRL_DLL_ON_SHIFT);
-	SET_CTRL_FORCE_VAL(val, ctrl_force_val);
-	writel(val, &phy1_ctrl->phy_con12);
+	writel(val, &phy_ctrl->phy_con12);
 }
 
 /**
@@ -158,7 +150,8 @@ static void config_rdlvl(struct mem_timings *mem, struct exynos5_dmc *dmc,
 	unsigned long val;
 
 	/* Disable CTRL_DLL_ON and set ctrl_force */
-	config_ctrl_dll_on(0, 0x2D, phy0_ctrl, phy1_ctrl);
+	config_ctrl_dll_on(0, 0x2D, phy0_ctrl);
+	config_ctrl_dll_on(0, 0x2D, phy1_ctrl);
 
 	/*
 	 * Set ctrl_gateadj, ctrl_readadj
@@ -208,7 +201,8 @@ static void config_rdlvl(struct mem_timings *mem, struct exynos5_dmc *dmc,
 	writel(val, &phy1_ctrl->phy_con2);
 
 	/* Enable CTRL_DLL_ON */
-	config_ctrl_dll_on(1, 0x0, phy0_ctrl, phy1_ctrl);
+	config_ctrl_dll_on(1, 0x0, phy0_ctrl);
+	config_ctrl_dll_on(1, 0x0, phy1_ctrl);
 
 	update_reset_dll(dmc, DDR_MODE_LPDDR2);
 	sdelay(0x10000);
@@ -290,7 +284,8 @@ void lpddr2_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size)
 	config_offsets(1, phy0_ctrl, phy1_ctrl);
 
 	/* Disable CTRL_DLL_ON and set ctrl_force */
-	config_ctrl_dll_on(0, 0x7F, phy0_ctrl, phy1_ctrl);
+	config_ctrl_dll_on(0, 0x7f, phy0_ctrl);
+	config_ctrl_dll_on(0, 0x7f, phy1_ctrl);
 	sdelay(0x10000);
 
 	update_reset_dll(dmc, DDR_MODE_LPDDR2);
@@ -304,7 +299,8 @@ void lpddr2_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size)
 	config_offsets(0, phy0_ctrl, phy1_ctrl);
 
 	/* Enable CTRL_DLL_ON */
-	config_ctrl_dll_on(1, 0x0, phy0_ctrl, phy1_ctrl);
+	config_ctrl_dll_on(1, 0x0, phy0_ctrl);
+	config_ctrl_dll_on(1, 0x0, phy1_ctrl);
 
 	/* Stop DLL Locking */
 	config_ctrl_start(0, phy0_ctrl, phy1_ctrl);

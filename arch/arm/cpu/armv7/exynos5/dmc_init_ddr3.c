@@ -41,12 +41,11 @@ static void reset_phy_ctrl(void)
 }
 
 static void config_ctrl_dll_on(unsigned int state,
-			struct exynos5_phy_control *phy0_ctrl,
-			struct exynos5_phy_control *phy1_ctrl)
+			struct exynos5_phy_control *phy_ctrl)
 {
 	unsigned int val, tmp;
 
-	val = readl(&phy0_ctrl->phy_con13);
+	val = readl(&phy_ctrl->phy_con13);
 
 	/* Reading ctrl_lock_value[8:2] */
 	val &= (NR_DELAY_CELL_COARSE_LOCK_MASK <<
@@ -63,25 +62,7 @@ static void config_ctrl_dll_on(unsigned int state,
 
 	/* Writing 'val' in the 'ctrl_force' offset of PHY_CON12 */
 	tmp |= val;
-	writel(tmp, &phy0_ctrl->phy_con12);
-
-	val = readl(&phy1_ctrl->phy_con13);
-
-	/* Reading ctrl_lock_value[8:2] */
-	val &= (NR_DELAY_CELL_COARSE_LOCK_MASK <<
-		NR_DELAY_CELL_COARSE_LOCK_OFFSET);
-
-	/* Aligning 'val' to match 'ctrl_force' offset of PHY_CON12 */
-	val >>= CTRL_CLOCK_OFFSET;
-
-	/* Setting the PHY_CON12 register */
-	tmp = PHY_CON12_RESET_VAL;
-	clrsetbits_le32(&tmp, PHY_CON12_CTRL_DLL_ON_MASK,
-			state << PHY_CON12_CTRL_DLL_ON_SHIFT);
-
-	/* Writing 'val' in the 'ctrl_force' offset of PHY_CON12 */
-	tmp |= val;
-	writel(tmp, &phy1_ctrl->phy_con12);
+	writel(tmp, &phy_ctrl->phy_con12);
 }
 
 void ddr3_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size)
@@ -169,7 +150,8 @@ void ddr3_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size)
 
 	dmc_config_mrs(mem, dmc);
 
-	config_ctrl_dll_on(0, phy0_ctrl, phy1_ctrl);
+	config_ctrl_dll_on(0, phy0_ctrl);
+	config_ctrl_dll_on(0, phy1_ctrl);
 
 	update_reset_dll(dmc, DDR_MODE_DDR3);
 
@@ -207,7 +189,8 @@ void ddr3_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size)
 	val = RDLVL_CONFIG_RESET_VAL & ~CTRL_RDLVL_DATA_EN;
 	writel(val, &dmc->rdlvl_config);
 
-	config_ctrl_dll_on(1, phy0_ctrl, phy1_ctrl);
+	config_ctrl_dll_on(1, phy0_ctrl);
+	config_ctrl_dll_on(1, phy1_ctrl);
 
 	update_reset_dll(dmc, DDR_MODE_DDR3);
 
