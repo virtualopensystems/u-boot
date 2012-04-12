@@ -85,14 +85,16 @@ void update_reset_dll(struct exynos5_dmc *dmc, enum ddr_mode mode)
 
 void dmc_config_mrs(struct mem_timings *mem, struct exynos5_dmc *dmc)
 {
-	unsigned long channel, chip, mask = 0;
+	int channel, chip;
 
 	for (channel = 0; channel < mem->dmc_channels; channel++) {
-		SET_CMD_CHANNEL(mask, channel);
+		unsigned long mask;
+
+		mask = channel << DIRECT_CMD_CHANNEL_SHIFT;
 		for (chip = 0; chip < mem->chips_per_channel; chip++) {
 			int i;
 
-			SET_CMD_CHIP(mask, chip);
+			mask |= chip << DIRECT_CMD_CHIP_SHIFT;
 
 			/* Sending NOP command */
 			writel(DIRECT_CMD_NOP | mask, &dmc->directcmd);
@@ -124,12 +126,15 @@ void dmc_config_mrs(struct mem_timings *mem, struct exynos5_dmc *dmc)
 
 void dmc_config_prech(struct mem_timings *mem, struct exynos5_dmc *dmc)
 {
-	unsigned long channel, chip, mask = 0;
+	int channel, chip;
 
 	for (channel = 0; channel < mem->dmc_channels; channel++) {
-		SET_CMD_CHANNEL(mask, channel);
+		unsigned long mask;
+
+		mask = channel << DIRECT_CMD_CHANNEL_SHIFT;
 		for (chip = 0; chip < mem->chips_per_channel; chip++) {
-			SET_CMD_CHIP(mask, chip);
+			mask |= chip << DIRECT_CMD_CHIP_SHIFT;
+
 			/* PALL (all banks precharge) CMD */
 			writel(DIRECT_CMD_PALL | mask, &dmc->directcmd);
 			sdelay(0x10000);

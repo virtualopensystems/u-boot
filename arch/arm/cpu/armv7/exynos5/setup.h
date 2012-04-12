@@ -383,13 +383,12 @@
 #define ZQ_CLK_DIV_EN		(1 << 18)
 #define ZQ_MANUAL_STR		(1 << 1)
 
-#define SET_CMD_CHANNEL(x, y)	(x = (x & ~(1 << 28)) | y << 28)
-#define SET_CMD_CHIP(x, y)	(x = (x & ~(1 << 20)) | y << 20)
-
-/* Diret Command */
-#define DIRECT_CMD_NOP		0x07000000
-#define DIRECT_CMD_PALL		0x01000000
-#define DIRECT_CMD_ZQINIT	0x0A000000
+/* Direct Command */
+#define DIRECT_CMD_NOP			0x07000000
+#define DIRECT_CMD_PALL			0x01000000
+#define DIRECT_CMD_ZQINIT		0x0a000000
+#define DIRECT_CMD_CHANNEL_SHIFT	28
+#define DIRECT_CMD_CHIP_SHIFT		20
 
 /* DMC PHY Control0 register */
 #define PHY_CONTROL0_RESET_VAL	0x0
