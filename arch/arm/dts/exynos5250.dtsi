@@ -66,6 +66,12 @@
 		interrupts = <0 78 0>;
 	};
 
+	mshci@12240000 {
+		compatible = "samsung,exynos5250-mshci";
+		reg = <0x12240000 0x100>;
+		interrupts = <0 123 0>;
+	};
+
 	serial@12C00000 {
 		compatible = "samsung,exynos4210-uart";
 		reg = <0x12C00000 0x100>;
