@@ -30,9 +30,6 @@
 #include <asm/arch/cpu.h>
 #include <asm/arch/dmc.h>
 
-#include "setup_lpddr2.h"
-#include "setup_ddr3.h"
-
 /* GPIO Offsets for UART: GPIO Contol Register */
 #define EXYNOS5_GPIO_A0_CON_OFFSET	0x0
 #define EXYNOS5_GPIO_A1_CON_OFFSET	0x20
