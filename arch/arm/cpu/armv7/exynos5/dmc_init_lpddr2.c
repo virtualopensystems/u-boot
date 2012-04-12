@@ -22,6 +22,7 @@
  * MA 02111-1307 USA
  */
 
+#include <common.h>
 #include <config.h>
 #include <asm/io.h>
 #include <asm/arch/dmc.h>
@@ -108,14 +109,18 @@ static void config_ctrl_dll_on(unsigned int state,
 			struct exynos5_phy_control *phy0_ctrl,
 			struct exynos5_phy_control *phy1_ctrl)
 {
-	unsigned long val;
+	u32 val;
+
+	assert(state == 0 || state == 1);
 	val = readl(&phy0_ctrl->phy_con12);
-	CONFIG_CTRL_DLL_ON(val, state);
+	clrsetbits_le32(&val, PHY_CON12_CTRL_DLL_ON_MASK,
+			state << PHY_CON12_CTRL_DLL_ON_SHIFT);
 	SET_CTRL_FORCE_VAL(val, ctrl_force_val);
 	writel(val, &phy0_ctrl->phy_con12);
 
 	val = readl(&phy1_ctrl->phy_con12);
-	CONFIG_CTRL_DLL_ON(val, state);
+	clrsetbits_le32(&val, PHY_CON12_CTRL_DLL_ON_MASK,
+			state << PHY_CON12_CTRL_DLL_ON_SHIFT);
 	SET_CTRL_FORCE_VAL(val, ctrl_force_val);
 	writel(val, &phy1_ctrl->phy_con12);
 }

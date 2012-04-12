@@ -161,6 +161,10 @@ enum ddr_mode {
 /* PHY_CON1 register fields */
 #define PHY_CON1_RDLVL_RDDATA_ADJ_SHIFT	0
 
+/* PHY_CON12 register fields */
+#define PHY_CON12_CTRL_DLL_ON_SHIFT	5
+#define PHY_CON12_CTRL_DLL_ON_MASK	(1 << PHY_CON12_CTRL_DLL_ON_SHIFT)
+
 /* PHY_CON16 register fields */
 #define PHY_CON16_ZQ_MODE_DDS_SHIFT	24
 #define PHY_CON16_ZQ_MODE_DDS_MASK	(0x7 << PHY_CON16_ZQ_MODE_DDS_SHIFT)

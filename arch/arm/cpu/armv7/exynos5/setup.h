@@ -399,7 +399,6 @@
 
 /* MDLL control */
 #define PHY_CON12_RESET_VAL		0x10100070
-#define CONFIG_CTRL_DLL_ON(x, y)	(x = (x & ~(1 << 5)) | y << 5)
 #define CONFIG_CTRL_START(x, y)		(x = (x & ~(1 << 6)) | y << 6)
 
 #define NR_DELAY_CELL_COARSE_LOCK_OFFSET	10

@@ -22,6 +22,7 @@
  * MA 02111-1307 USA
  */
 
+#include <common.h>
 #include <config.h>
 #include <asm/io.h>
 #include <asm/arch/dmc.h>
@@ -56,7 +57,9 @@ static void config_ctrl_dll_on(unsigned int state,
 
 	/* Setting the PHY_CON12 register */
 	tmp = PHY_CON12_RESET_VAL;
-	CONFIG_CTRL_DLL_ON(tmp, state);
+	assert(state == 0 || state == 1);
+	clrsetbits_le32(&tmp, PHY_CON12_CTRL_DLL_ON_MASK,
+			state << PHY_CON12_CTRL_DLL_ON_SHIFT);
 
 	/* Writing 'val' in the 'ctrl_force' offset of PHY_CON12 */
 	tmp |= val;
@@ -73,7 +76,8 @@ static void config_ctrl_dll_on(unsigned int state,
 
 	/* Setting the PHY_CON12 register */
 	tmp = PHY_CON12_RESET_VAL;
-	CONFIG_CTRL_DLL_ON(tmp, state);
+	clrsetbits_le32(&tmp, PHY_CON12_CTRL_DLL_ON_MASK,
+			state << PHY_CON12_CTRL_DLL_ON_SHIFT);
 
 	/* Writing 'val' in the 'ctrl_force' offset of PHY_CON12 */
 	tmp |= val;
