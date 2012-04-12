@@ -421,4 +421,8 @@
 		compatible = "samsung,exynos5250-srom";
 		reg = <0x12250000 0x20>;
 	};
+
+	dmc@10C00000 {
+		compatible = "samsung,exynos-dmc";
+	};
 };

@@ -1,0 +1,26 @@
+Exynos Dynamic Memory Controller
+
+The device node for an DM controller that is part of an Exynos
+SOC is as described in the document "Open Firmware Recommended
+Practice : Universal Serial Bus" with the following modifications
+and additions :
+
+Required properties :
+ - compatible : Should be "samsung,exynos-dmc" for SROMC controllers
+ - mem-interleave-size: Memory interleaving size, normally 0x1f
+ - mem-type : Memory type as a string. Valid options are:
+     ddr2
+     ddr3
+     lpddr2
+     lpddr3
+ - clock-frequency : Clock frequency of the memory in Hz.
+
+
+Example:
+
+dmc@10C00000 {
+	compatible = "samsung,exynos-dmc";
+	mem-interleave-size = <0x1f>;
+	mem-type = "ddr3";
+	clock-frequency = <800000000>;
+};
