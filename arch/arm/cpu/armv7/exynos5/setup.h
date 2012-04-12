@@ -374,10 +374,6 @@
  */
 #define DECPROTXSET		0xFF
 
-/* DMC Init */
-#define SET			1
-#define RESET			0
-
 #define LPDDR3PHY_CTRL_PHY_RESET	(1 << 0)
 #define LPDDR3PHY_CTRL_PHY_RESET_OFF	(0 << 0)
 

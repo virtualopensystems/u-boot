@@ -196,7 +196,7 @@ void ddr3_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size)
 
 	direct_cmd(dmc);
 
-	config_ctrl_dll_on(RESET, phy0_ctrl, phy1_ctrl);
+	config_ctrl_dll_on(0, phy0_ctrl, phy1_ctrl);
 
 	update_reset_dll(dmc, DDR_MODE_DDR3);
 
@@ -234,7 +234,7 @@ void ddr3_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size)
 	val = RDLVL_CONFIG_RESET_VAL & ~CTRL_RDLVL_DATA_EN;
 	writel(val, &dmc->rdlvl_config);
 
-	config_ctrl_dll_on(SET, phy0_ctrl, phy1_ctrl);
+	config_ctrl_dll_on(1, phy0_ctrl, phy1_ctrl);
 
 	update_reset_dll(dmc, DDR_MODE_DDR3);
 

@@ -60,17 +60,17 @@ static void config_offsets(unsigned int state,
 {
 	unsigned long val;
 	/* Set Offsets to read DQS */
-	val = (state == SET) ? SET_DQS_OFFSET_VAL : RESET_DQS_OFFSET_VAL;
+	val = state ? SET_DQS_OFFSET_VAL : RESET_DQS_OFFSET_VAL;
 	writel(val, &phy0_ctrl->phy_con4);
 	writel(val, &phy1_ctrl->phy_con4);
 
 	/* Set Offsets to read DQ */
-	val = (state == SET) ? SET_DQ_OFFSET_VAL : RESET_DQ_OFFSET_VAL;
+	val = state ? SET_DQ_OFFSET_VAL : RESET_DQ_OFFSET_VAL;
 	writel(val, &phy0_ctrl->phy_con6);
 	writel(val, &phy1_ctrl->phy_con6);
 
 	/* Debug Offset */
-	val = (state == SET) ? SET_DEBUG_OFFSET_VAL : RESET_DEBUG_OFFSET_VAL;
+	val = state ? SET_DEBUG_OFFSET_VAL : RESET_DEBUG_OFFSET_VAL;
 	writel(val, &phy0_ctrl->phy_con10);
 	writel(val, &phy1_ctrl->phy_con10);
 }
@@ -95,6 +95,14 @@ static void config_cdrex(void)
 	sdelay(0x30000);
 }
 
+/**
+ * Turn the DLL on or off
+ *
+ * @param state			0 to turn off, 1 to turn on
+ * @param ctrl_force_val	Value for the ctrl_force field
+ * @param phy0_ctrl		Pointer to PHY0 control registers
+ * @param phy1_ctrl		Pointer to PHY1 control registers
+ */
 static void config_ctrl_dll_on(unsigned int state,
 			unsigned int ctrl_force_val,
 			struct exynos5_phy_control *phy0_ctrl,
@@ -112,6 +120,13 @@ static void config_ctrl_dll_on(unsigned int state,
 	writel(val, &phy1_ctrl->phy_con12);
 }
 
+/**
+ * Start/stop DLL locking
+ *
+ * @param state			0 to stop DLL locking, 1 to start
+ * @param phy0_ctrl		Pointer to PHY0 control registers
+ * @param phy1_ctrl		Pointer to PHY1 control registers
+ */
 static void config_ctrl_start(unsigned int state,
 			struct exynos5_phy_control *phy0_ctrl,
 			struct exynos5_phy_control *phy1_ctrl)
@@ -134,7 +149,7 @@ static void config_rdlvl(struct mem_timings *mem, struct exynos5_dmc *dmc,
 	unsigned long val;
 
 	/* Disable CTRL_DLL_ON and set ctrl_force */
-	config_ctrl_dll_on(RESET, 0x2D, phy0_ctrl, phy1_ctrl);
+	config_ctrl_dll_on(0, 0x2D, phy0_ctrl, phy1_ctrl);
 
 	/*
 	 * Set ctrl_gateadj, ctrl_readadj
@@ -184,7 +199,7 @@ static void config_rdlvl(struct mem_timings *mem, struct exynos5_dmc *dmc,
 	writel(val, &phy1_ctrl->phy_con2);
 
 	/* Enable CTRL_DLL_ON */
-	config_ctrl_dll_on(SET, 0x0, phy0_ctrl, phy1_ctrl);
+	config_ctrl_dll_on(1, 0x0, phy0_ctrl, phy1_ctrl);
 
 	update_reset_dll(dmc, DDR_MODE_LPDDR2);
 	sdelay(0x10000);
@@ -263,10 +278,10 @@ void lpddr2_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size)
 	writel(mem_iv_size, &dmc->ivcontrol);
 
 	/* Set DQS, DQ and DEBUG offsets */
-	config_offsets(SET, phy0_ctrl, phy1_ctrl);
+	config_offsets(1, phy0_ctrl, phy1_ctrl);
 
 	/* Disable CTRL_DLL_ON and set ctrl_force */
-	config_ctrl_dll_on(RESET, 0x7F, phy0_ctrl, phy1_ctrl);
+	config_ctrl_dll_on(0, 0x7F, phy0_ctrl, phy1_ctrl);
 	sdelay(0x10000);
 
 	update_reset_dll(dmc, DDR_MODE_LPDDR2);
@@ -277,17 +292,17 @@ void lpddr2_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size)
 	config_cdrex();
 
 	/* Reset DQS DQ and DEBUG offsets */
-	config_offsets(RESET, phy0_ctrl, phy1_ctrl);
+	config_offsets(0, phy0_ctrl, phy1_ctrl);
 
 	/* Enable CTRL_DLL_ON */
-	config_ctrl_dll_on(SET, 0x0, phy0_ctrl, phy1_ctrl);
+	config_ctrl_dll_on(1, 0x0, phy0_ctrl, phy1_ctrl);
 
 	/* Stop DLL Locking */
-	config_ctrl_start(RESET, phy0_ctrl, phy1_ctrl);
+	config_ctrl_start(0, phy0_ctrl, phy1_ctrl);
 	sdelay(0x10000);
 
 	/* Start DLL Locking */
-	config_ctrl_start(SET, phy0_ctrl, phy1_ctrl);
+	config_ctrl_start(1, phy0_ctrl, phy1_ctrl);
 	sdelay(0x10000);
 
 	update_reset_dll(dmc, DDR_MODE_LPDDR2);
