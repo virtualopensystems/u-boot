@@ -136,13 +136,17 @@ static void config_ctrl_start(unsigned int state,
 			struct exynos5_phy_control *phy0_ctrl,
 			struct exynos5_phy_control *phy1_ctrl)
 {
-	unsigned long val;
+	u32 val;
+
+	assert(state == 0 || state == 1);
 	val = readl(&phy0_ctrl->phy_con12);
-	CONFIG_CTRL_START(val, state);
+	clrsetbits_le32(&val, PHY_CON12_CTRL_START_MASK,
+			state << PHY_CON12_CTRL_START_SHIFT);
 	writel(val, &phy0_ctrl->phy_con12);
 
 	val = readl(&phy1_ctrl->phy_con12);
-	CONFIG_CTRL_START(val, state);
+	clrsetbits_le32(&val, PHY_CON12_CTRL_START_MASK,
+			state << PHY_CON12_CTRL_START_SHIFT);
 	writel(val, &phy1_ctrl->phy_con12);
 }
 
