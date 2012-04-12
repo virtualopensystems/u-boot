@@ -71,6 +71,7 @@ enum fdt_compat_id {
 	COMPAT_NVIDIA_TEGRA20_DVC,	/* Tegra2 dvc (really just i2c) */
 	COMPAT_SMSC_LAN9215,		/* SMSC 10/100 Ethernet LAN9215 */
 	COMPAT_SAMSUNG_EXYNOS5_SROMC,	/* Exynos5 SROMC */
+	COMPAT_SAMSUNG_EXYNOS5_MSHCI,   /* Exynos5 MSHCI */
 	COMPAT_SAMSUNG_EXYNOS_SPI,	/* Exynos SPI */
 	COMPAT_NVIDIA_TEGRA20_KBC,	/* Tegra2 Keyboard */
 
