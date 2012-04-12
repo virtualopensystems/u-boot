@@ -37,8 +37,6 @@
 
 #define DMC_MEMCONTROL_VAL	DDR3_DMC_MEMCONTROL_VAL
 
-#define CTRL_BSTLEN		DDR3_CTRL_BSTLEN
-
 /*
  * APLL		: 1GHz
  * MCLK_CDREX	: 667Mhz
@@ -142,7 +140,8 @@ void ddr3_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size)
 	reset_phy_ctrl();
 
 	/* Set Read Latency and Burst Length for PHY0 and PHY1 */
-	val = (CTRL_BSTLEN << 8) | (mem->ctrl_rdlat << 0);
+	val = (mem->ctrl_bstlen << PHY_CON42_CTRL_BSTLEN_SHIFT) |
+			(mem->ctrl_rdlat << PHY_CON42_CTRL_RDLAT_SHIFT);
 	writel(val, &phy0_ctrl->phy_con42);
 	writel(val, &phy1_ctrl->phy_con42);
 

@@ -163,5 +163,12 @@ enum ddr_mode {
 
 #define PHY_CON16_ZQ_MODE_NOTERM_MASK	(1 << 19)
 
+/* PHY_CON42 register fields */
+#define PHY_CON42_CTRL_BSTLEN_SHIFT	8
+#define PHY_CON42_CTRL_BSTLEN_MASK	(0xff << PHY_CON42_CTRL_BSTLEN_SHIFT)
+
+#define PHY_CON42_CTRL_RDLAT_SHIFT	0
+#define PHY_CON42_CTRL_RDLAT_MASK	(0x1f << PHY_CON42_CTRL_RDLAT_SHIFT)
+
 #endif
 #endif

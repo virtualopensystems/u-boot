@@ -36,8 +36,6 @@
 
 #define DMC_MEMCONTROL_VAL	LPDDR2_DMC_MEMCONTROL_VAL
 
-#define CTRL_BSTLEN		LPDDR2_CTRL_BSTLEN
-
 #define SET_CTRL_FORCE_VAL(x, y)	(x = (x & ~(0x7F << 8)) | y << 8)
 
 
@@ -224,7 +222,8 @@ void lpddr2_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size)
 	reset_phy_ctrl();
 
 	/*set Read Latancy and Burst Length for PHY0 and PHY1 */
-	val = (CTRL_BSTLEN << 8) | (mem->ctrl_rdlat << 0);
+	val = (mem->ctrl_bstlen << PHY_CON42_CTRL_BSTLEN_SHIFT) |
+			(mem->ctrl_rdlat << PHY_CON42_CTRL_RDLAT_SHIFT);
 	writel(val, &phy0_ctrl->phy_con42);
 	writel(val, &phy1_ctrl->phy_con42);
 
