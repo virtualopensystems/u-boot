@@ -52,7 +52,6 @@
 
 #define LPDDR2_CTRL_BSTLEN		0x04
 
-#define LPDDR2_RD_FETCH			0x3
 #define LPDDR2_ZQ_MODE_NOTERM		(1 << 19)
 
 #endif

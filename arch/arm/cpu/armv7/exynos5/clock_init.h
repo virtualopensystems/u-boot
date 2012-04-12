@@ -52,6 +52,8 @@ struct mem_timings {
 
 	unsigned ctrl_force;
 	unsigned ctrl_rdlat;
+
+	unsigned rd_fetch;
 };
 
 /**

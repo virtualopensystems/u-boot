@@ -44,8 +44,6 @@
 
 #define CTRL_BSTLEN		LPDDR2_CTRL_BSTLEN
 
-#define RD_FETCH		LPDDR2_RD_FETCH
-
 #define PCLK_CDREX_RATIO	LPDDR2_PCLK_CDREX_RATIO
 
 #define SET_CTRL_FORCE_VAL(x, y)	(x = (x & ~(0x7F << 8)) | y << 8)

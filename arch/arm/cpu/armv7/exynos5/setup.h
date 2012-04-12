@@ -508,8 +508,7 @@
 #define CTRL_PULLD_DQ		(0x0F << 8)
 #define CTRL_PULLD_DQS		(0x0F << 0)
 
-#define DMC_CONCONTROL_RESET_VAL	0x0FFF1100
-#define SET_RD_FETCH(x)		(x = (x & ~(0x7 << 12)) | RD_FETCH << 12)
+#define DMC_CONCONTROL_RESET_VAL	0x0FFF0000
 #define DFI_INIT_START		(1 << 28)
 #define EMPTY			(1 << 8)
 #define AREF_EN			(1 << 5)

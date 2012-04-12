@@ -45,8 +45,6 @@
 
 #define CTRL_BSTLEN		DDR3_CTRL_BSTLEN
 
-#define RD_FETCH		DDR3_RD_FETCH
-
 /*
  * APLL		: 1GHz
  * MCLK_CDREX	: 667Mhz
@@ -174,16 +172,10 @@ void ddr3_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size)
 	writel(val, &phy0_ctrl->phy_con12);
 	writel(val, &phy1_ctrl->phy_con12);
 
-	/*
-	 * Set DMC Concontrol
-	 * dfi_init_start = 1
-	 * rd_fetch = 0x2
-	 * empty = 0
-	 */
+	/* Set DMC Concontrol */
 	val = DMC_CONCONTROL_RESET_VAL;
-	SET_RD_FETCH(val);
+	val |= mem->rd_fetch << CONCONTROL_RD_FETCH_SHIFT;
 	val |= DFI_INIT_START;
-	val &= ~EMPTY;
 	writel(val, &dmc->concontrol);
 
 	update_reset_dll(dmc, DDR_MODE_DDR3);
@@ -300,14 +292,10 @@ void ddr3_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size)
 
 	/*
 	 * Set DMC Concontrol
-	 * dfi_init_start = 1
-	 * rd_fetch = 0x2
-	 * empty = 0
 	 * Auto refresh counter enable
 	 */
 	val = DMC_CONCONTROL_RESET_VAL;
-	SET_RD_FETCH(val);
-	val &= ~EMPTY;
+	val |= mem->rd_fetch << CONCONTROL_RD_FETCH_SHIFT;
 	val |= DFI_INIT_START;
 	val |= AREF_EN;
 	writel(val, &dmc->concontrol);

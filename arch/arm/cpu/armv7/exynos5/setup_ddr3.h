@@ -25,14 +25,6 @@
 #ifndef _SMDK5250_SETUP_DDR3_H
 #define _SMDK5250_SETUP_DDR3_H
 
-#ifdef CDREX_800
-
-#define DDR3_RD_FETCH			0x3
-#else
-
-#define DDR3_RD_FETCH			0x2
-#endif
-
 #define DDR3_DMC_TIMINGREF_VAL		0x000000BB
 
 #define DDR3_ZQ_MODE_DDS_VAL		(0x7 << 24)

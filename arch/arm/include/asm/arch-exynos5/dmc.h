@@ -150,5 +150,9 @@ enum ddr_mode {
 	DDR_MODE_LPDDR3,
 };
 
+/* CONCONTROL register fields */
+#define CONCONTROL_RD_FETCH_SHIFT	12
+#define CONCONTROL_RD_FETCH_MASK	(0x7 << CONCONTROL_RD_FETCH_SHIFT)
+
 #endif
 #endif
