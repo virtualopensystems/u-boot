@@ -76,13 +76,11 @@ static void config_offsets(unsigned int state,
 	writel(val, &phy1_ctrl->phy_con10);
 }
 
-static void config_cdrex(void)
+static void config_cdrex(struct mem_timings *mem)
 {
 	struct exynos5_clock *clk = (struct exynos5_clock *)EXYNOS5_CLOCK_BASE;
-	struct mem_timings *mem;
 	u32 val;
 
-	mem = clock_get_mem_timings();
 	val = (MCLK_CDREX2_RATIO << 28)
 		| (ACLK_EFCON_RATIO << 24)
 		| (MCLK_DPHY_RATIO << 20)
@@ -293,7 +291,7 @@ void lpddr2_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size)
 	/* Config MRS(Mode Register Settingg) */
 	dmc_config_mrs(mem, dmc);
 
-	config_cdrex();
+	config_cdrex(mem);
 
 	/* Reset DQS DQ and DEBUG offsets */
 	config_offsets(0, phy0_ctrl, phy1_ctrl);

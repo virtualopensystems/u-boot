@@ -479,13 +479,10 @@ void system_clock_init()
 	writel(CLK_SRC_TOP2_VAL, &clk->src_top2);
 }
 
-void mem_clk_setup(void)
+void mem_clk_setup(struct mem_timings *mem)
 {
 	struct exynos5_clock *clk = (struct exynos5_clock *)EXYNOS5_CLOCK_BASE;
-	struct mem_timings *mem;
 	u32 val;
-
-	mem = clock_get_mem_timings();
 
 	writel(0x0, &clk->src_cdrex);
 	val = (MCLK_CDREX2_RATIO << 28)
