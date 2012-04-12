@@ -70,6 +70,7 @@ struct mem_timings {
 	/* Channel and Chip Selection */
 	uint8_t dmc_channels;		/* number of memory channels */
 	uint8_t chips_per_channel;	/* number of chips per channel */
+	uint8_t send_zq_init;		/* 1 to send this command */
 };
 
 /**

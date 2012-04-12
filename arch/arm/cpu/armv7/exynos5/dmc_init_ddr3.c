@@ -39,35 +39,6 @@ static void reset_phy_ctrl(void)
 	writel(LPDDR3PHY_CTRL_PHY_RESET, &clk->lpddr3phy_ctrl);
 }
 
-/* Sending direct commands */
-static void direct_cmd(struct mem_timings *mem, struct exynos5_dmc *dmc)
-{
-	unsigned long channel, mask = 0;
-
-	for (channel = 0; channel < mem->dmc_channels; channel++) {
-		int i;
-
-		SET_CMD_CHANNEL(mask, channel);
-
-		/* we are configuring only chip-0 for both the channels */
-		SET_CMD_CHIP(mask, 0);
-
-		/* Sending NOP command */
-		writel(DIRECT_CMD_NOP | mask, &dmc->directcmd);
-
-		/* Sending EMRS/MRS commands */
-		for (i = 0; i < MEM_TIMINGS_MSR_COUNT; i++) {
-			writel(mem->direct_cmd_msr[i] | mask,
-				&dmc->directcmd);
-		}
-
-		/* Sending ZQINIT command */
-		writel(DIRECT_CMD_ZQINIT | mask, &dmc->directcmd);
-
-		sdelay(10000);
-	}
-}
-
 static void config_ctrl_dll_on(unsigned int state,
 			struct exynos5_phy_control *phy0_ctrl,
 			struct exynos5_phy_control *phy1_ctrl)
@@ -192,7 +163,7 @@ void ddr3_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size)
 	writel(mem->timing_data, &dmc->timingdata);
 	writel(mem->timing_power, &dmc->timingpower);
 
-	direct_cmd(mem, dmc);
+	dmc_config_mrs(mem, dmc);
 
 	config_ctrl_dll_on(0, phy0_ctrl, phy1_ctrl);
 

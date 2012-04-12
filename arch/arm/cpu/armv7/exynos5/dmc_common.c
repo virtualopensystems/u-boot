@@ -96,6 +96,12 @@ void dmc_config_mrs(struct mem_timings *mem, struct exynos5_dmc *dmc)
 
 			/* Sending NOP command */
 			writel(DIRECT_CMD_NOP | mask, &dmc->directcmd);
+
+			/*
+			 * TODO(alim.akhtar@samsung.com): Do we need these
+			 * delays? This one and the next were not there for
+			 * DDR3.
+			 */
 			sdelay(0x10000);
 
 			/* Sending EMRS/MRS commands */
@@ -103,6 +109,14 @@ void dmc_config_mrs(struct mem_timings *mem, struct exynos5_dmc *dmc)
 				writel(mem->direct_cmd_msr[i] | mask,
 				       &dmc->directcmd);
 				sdelay(0x10000);
+			}
+
+			if (mem->send_zq_init) {
+				/* Sending ZQINIT command */
+				writel(DIRECT_CMD_ZQINIT | mask,
+				       &dmc->directcmd);
+
+				sdelay(10000);
 			}
 		}
 	}
