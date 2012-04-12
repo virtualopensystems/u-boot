@@ -215,15 +215,7 @@ static int clock_get_mem_selection(enum ddr_mode *mem_type,
 
 	params = spl_get_machine_params();
 	*mem_type = params->mem_type;
-#ifdef CONFIG_LPDDR2
-	*frequency_mhz = 667;
-#else
-# ifdef CDREX_800
-	*frequency_mhz = 800;
-# else
-	*frequency_mhz = 667;
-# endif
-#endif
+	*frequency_mhz = params->frequency_mhz;
 	return 0;
 }
 
