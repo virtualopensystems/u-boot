@@ -62,6 +62,7 @@ struct mem_timings mem_timings[] = {
 		.zq_mode_dds = 7,
 		.zq_mode_term = 2,
 		.zq_mode_noterm = 0,	/* do nothing for ddr3 */
+		.rdlvl_rddata_adj = 0xff00,
 	}, {
 		.mem_type = DDR_MODE_DDR3,
 		.frequency_mhz = 800,
@@ -87,6 +88,7 @@ struct mem_timings mem_timings[] = {
 		.zq_mode_dds = 7,
 		.zq_mode_term = 2,
 		.zq_mode_noterm = 0,	/* do nothing for ddr3 */
+		.rdlvl_rddata_adj = 0xff00,
 	}, {
 		.mem_type = DDR_MODE_LPDDR2,
 		.frequency_mhz = 667,
@@ -108,6 +110,7 @@ struct mem_timings mem_timings[] = {
 		.zq_mode_dds = 5,
 		.zq_mode_term = 5,
 		.zq_mode_noterm = 1,
+		.rdlvl_rddata_adj = 0x0001,
 	}
 };
 

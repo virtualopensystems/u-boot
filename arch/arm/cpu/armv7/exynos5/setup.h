@@ -429,9 +429,7 @@
 #define SET_CTRL_DDR_MODE(x, y)		(x = (x & ~(0x3 << 11)) | y << 11)
 #define SET_T_RDDATA_MARGIN(x, y)	(x = (x & ~(0x7 << 17))	| y << 17)
 
-#define PHY_CON1_RESET_VAL	0x9210100
-#define SET_RDLVL_RDDATA_ADJ	((PHY_CON1_RESET_VAL & ~(0xFFFF << 0)) \
-					| RDLVL_RDDATA_ADJ << 0)
+#define PHY_CON1_RESET_VAL	0x9210000
 
 #define DDR3_ADDR		0x0208
 

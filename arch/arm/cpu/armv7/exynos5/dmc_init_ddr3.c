@@ -33,8 +33,6 @@
 
 /* TODO(clchiou): Sort out setup.h to use DDR3_* macros directly */
 
-#define RDLVL_RDDATA_ADJ	DDR3_RDLVL_RDDATA_ADJ
-
 #define DMC_MEMCONTROL_VAL	DDR3_DMC_MEMCONTROL_VAL
 
 /*
@@ -128,6 +126,7 @@ void ddr3_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size)
 	struct exynos5_phy_control *phy0_ctrl, *phy1_ctrl;
 	struct exynos5_dmc *dmc;
 	unsigned int val;
+	unsigned int phy_con1;
 
 	phy0_ctrl = (struct exynos5_phy_control *)EXYNOS5_DMC_PHY0_BASE;
 	phy1_ctrl = (struct exynos5_phy_control *)EXYNOS5_DMC_PHY1_BASE;
@@ -220,8 +219,10 @@ void ddr3_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size)
 	update_reset_dll(dmc, DDR_MODE_DDR3);
 
 	/* Enable Read Leveling */
-	writel(SET_RDLVL_RDDATA_ADJ, &phy0_ctrl->phy_con1);
-	writel(SET_RDLVL_RDDATA_ADJ, &phy1_ctrl->phy_con1);
+	phy_con1 = PHY_CON1_RESET_VAL;
+	phy_con1 |= mem->rdlvl_rddata_adj << PHY_CON1_RDLVL_RDDATA_ADJ_SHIFT;
+	writel(phy_con1, &phy0_ctrl->phy_con1);
+	writel(phy_con1, &phy1_ctrl->phy_con1);
 
 	/* Write DDR3 address */
 	writel(DDR3_ADDR, &phy0_ctrl->phy_con24);
@@ -270,8 +271,8 @@ void ddr3_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size)
 	writel(val, &phy1_ctrl->phy_con0);
 
 	/* Enable Read Leveling */
-	writel(SET_RDLVL_RDDATA_ADJ, &phy0_ctrl->phy_con1);
-	writel(SET_RDLVL_RDDATA_ADJ, &phy1_ctrl->phy_con1);
+	writel(phy_con1, &phy0_ctrl->phy_con1);
+	writel(phy_con1, &phy1_ctrl->phy_con1);
 
 	/*
 	 * Dynamic Clock: Always Running

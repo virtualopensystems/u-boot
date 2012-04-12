@@ -32,8 +32,6 @@
 
 /* TODO(clchiou): Sort out setup.h to use LPDDR2_* macros directly */
 
-#define RDLVL_RDDATA_ADJ	LPDDR2_RDLVL_RDDATA_ADJ
-
 #define DMC_MEMCONTROL_VAL	LPDDR2_DMC_MEMCONTROL_VAL
 
 #define SET_CTRL_FORCE_VAL(x, y)	(x = (x & ~(0x7F << 8)) | y << 8)
@@ -137,7 +135,7 @@ static void config_ctrl_start(unsigned int state,
 }
 
 #if defined(CONFIG_RD_LVL)
-static void config_rdlvl(struct exynos5_dmc *dmc,
+static void config_rdlvl(struct mem_timings *mem, struct exynos5_dmc *dmc,
 			struct exynos5_phy_control *phy0_ctrl,
 			struct exynos5_phy_control *phy1_ctrl)
 {
@@ -148,10 +146,11 @@ static void config_rdlvl(struct exynos5_dmc *dmc,
 
 	/*
 	 * Set ctrl_gateadj, ctrl_readadj
-	 * ctrl_gateduradj, rdlvl_pass_adj
+	 * ctrl_gateduradj, rdlvl_pass_adj (all to 0)
 	 * rdlvl_rddata_adj
 	 */
-	val = SET_RDLVL_RDDATA_ADJ;
+	val = PHY_CON1_RESET_VAL;
+	val |= mem->rdlvl_rddata_adj << PHY_CON1_RDLVL_RDDATA_ADJ_SHIFT;
 	writel(val, &phy0_ctrl->phy_con1);
 	writel(val, &phy1_ctrl->phy_con1);
 
@@ -310,7 +309,7 @@ void lpddr2_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size)
 	update_reset_dll(dmc, DDR_MODE_LPDDR2);
 
 #if defined(CONFIG_RD_LVL)
-	config_rdlvl(dmc, phy0_ctrl, phy1_ctrl);
+	config_rdlvl(mem, dmc, phy0_ctrl, phy1_ctrl);
 #endif
 	config_prech(dmc);
 
