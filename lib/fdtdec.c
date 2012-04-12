@@ -49,6 +49,7 @@ static const char * const compat_names[COMPAT_COUNT] = {
 	COMPAT(SAMSUNG_EXYNOS5_MSHCI, "samsung,exynos5250-mshci"),
 	COMPAT(SAMSUNG_EXYNOS_SPI, "samsung,exynos-spi"),
 	COMPAT(NVIDIA_TEGRA20_KBC, "nvidia,tegra20-kbc"),
+	COMPAT(SAMSUNG_EXYNOS_DMC, "samsung,exynos-dmc"),
 };
 
 const char *fdtdec_get_compatible(enum fdt_compat_id id)

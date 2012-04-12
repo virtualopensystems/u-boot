@@ -74,6 +74,7 @@ enum fdt_compat_id {
 	COMPAT_SAMSUNG_EXYNOS5_MSHCI,   /* Exynos5 MSHCI */
 	COMPAT_SAMSUNG_EXYNOS_SPI,	/* Exynos SPI */
 	COMPAT_NVIDIA_TEGRA20_KBC,	/* Tegra2 Keyboard */
+	COMPAT_SAMSUNG_EXYNOS_DMC,	/* Exynos Dynamic Memory Controller */
 
 	COMPAT_COUNT,
 };
