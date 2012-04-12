@@ -33,8 +33,7 @@ int exynos_pinmux_config(enum periph_id peripheral, int flags)
 		(struct exynos5_gpio_part1 *) samsung_get_base_gpio_part1();
 	struct exynos5_gpio_part2 *gpio2 =
 		(struct exynos5_gpio_part2 *) samsung_get_base_gpio_part2();
-	struct s5p_gpio_bank *bank, *bank_ext;
-	int i, start, count;
+	int i, start, count, start_ext;
 
 	switch (peripheral) {
 	case PERIPH_ID_UART0:
@@ -44,25 +43,21 @@ int exynos_pinmux_config(enum periph_id peripheral, int flags)
 		switch (peripheral) {
 		default:
 		case PERIPH_ID_UART0:
-			bank = &gpio1->a0;
-			start = 0; count = 4;
+			start = GPIO_A00; count = 4;
 			break;
 		case PERIPH_ID_UART1:
-			bank = &gpio1->a0;
-			start = 4; count = 4;
+			start = GPIO_A04; count = 4;
 			break;
 		case PERIPH_ID_UART2:
-			bank = &gpio1->a1;
-			start = 0; count = 4;
+			start = GPIO_A10; count = 4;
 			break;
 		case PERIPH_ID_UART3:
-			bank = &gpio1->a1;
-			start = 4; count = 2;
+			start = GPIO_A14; count = 2;
 			break;
 		}
 		for (i = start; i < start + count; i++) {
-			s5p_gpio_set_pull(bank, i, GPIO_PULL_NONE);
-			s5p_gpio_cfg_pin(bank, i, GPIO_FUNC(0x2));
+			gpio_set_pull(i, GPIO_PULL_NONE);
+			gpio_cfg_pin(i, GPIO_FUNC(0x2));
 		}
 		break;
 	case PERIPH_ID_SDMMC0:
@@ -72,39 +67,39 @@ int exynos_pinmux_config(enum periph_id peripheral, int flags)
 		switch (peripheral) {
 		default:
 		case PERIPH_ID_SDMMC0:
-			bank = &gpio1->c0; bank_ext = &gpio1->c1;
+			start = GPIO_C00; start_ext = GPIO_C10;
 			break;
 		case PERIPH_ID_SDMMC1:
-			bank = &gpio1->c1; bank_ext = NULL;
+			start = GPIO_C10; start_ext = NULL;
 			break;
 		case PERIPH_ID_SDMMC2:
-			bank = &gpio1->c2; bank_ext = &gpio1->c3;
+			start = GPIO_C20; start_ext = GPIO_C30;
 			break;
 		case PERIPH_ID_SDMMC3:
-			bank = &gpio1->c3; bank_ext = NULL;
+			start = GPIO_C30; start_ext = NULL;
 			break;
 		}
-		if ((flags & PINMUX_FLAG_8BIT_MODE) && !bank_ext) {
+		if ((flags & PINMUX_FLAG_8BIT_MODE) && !start_ext) {
 			debug("SDMMC device %d does not support 8bit mode",
 					peripheral);
 			return -1;
 		}
 		if (flags & PINMUX_FLAG_8BIT_MODE) {
 			for (i = 3; i <= 6; i++) {
-				s5p_gpio_cfg_pin(bank_ext, i, GPIO_FUNC(0x3));
-				s5p_gpio_set_pull(bank_ext, i, GPIO_PULL_UP);
-				s5p_gpio_set_drv(bank_ext, i, GPIO_DRV_4X);
+				gpio_cfg_pin(start_ext + i, GPIO_FUNC(0x3));
+				gpio_set_pull(start_ext + i, GPIO_PULL_UP);
+				gpio_set_drv(start_ext + i, GPIO_DRV_4X);
 			}
 		}
 		for (i = 0; i < 2; i++) {
-			s5p_gpio_cfg_pin(bank, i, GPIO_FUNC(0x2));
-			s5p_gpio_set_pull(bank, i, GPIO_PULL_NONE);
-			s5p_gpio_set_drv(bank, i, GPIO_DRV_4X);
+			gpio_cfg_pin(start + i, GPIO_FUNC(0x2));
+			gpio_set_pull(start + i, GPIO_PULL_NONE);
+			gpio_set_drv(start + i, GPIO_DRV_4X);
 		}
 		for (i = 3; i <= 6; i++) {
-			s5p_gpio_cfg_pin(bank, i, GPIO_FUNC(0x2));
-			s5p_gpio_set_pull(bank, i, GPIO_PULL_UP);
-			s5p_gpio_set_drv(bank, i, GPIO_DRV_4X);
+			gpio_cfg_pin(start + i, GPIO_FUNC(0x2));
+			gpio_set_pull(start + i, GPIO_PULL_UP);
+			gpio_set_drv(start + i, GPIO_DRV_4X);
 		}
 		break;
 	case PERIPH_ID_SROMC:
@@ -123,13 +118,13 @@ int exynos_pinmux_config(enum periph_id peripheral, int flags)
 		 * GPY1[2]	SROM_WAIT(2)
 		 * GPY1[3]	EBI_DATA_RDn(2)
 		 */
-		s5p_gpio_cfg_pin(&gpio1->y0, flags & PINMUX_FLAG_BANK,
-					GPIO_FUNC(2));
-		s5p_gpio_cfg_pin(&gpio1->y0, 4, GPIO_FUNC(2));
-		s5p_gpio_cfg_pin(&gpio1->y0, 5, GPIO_FUNC(2));
+		gpio_cfg_pin(GPIO_Y00 + (flags & PINMUX_FLAG_BANK),
+				GPIO_FUNC(2));
+		gpio_cfg_pin(GPIO_Y04, GPIO_FUNC(2));
+		gpio_cfg_pin(GPIO_Y05, GPIO_FUNC(2));
 
 		for (i = 0; i < 4; i++)
-			s5p_gpio_cfg_pin(&gpio1->y1, i, GPIO_FUNC(2));
+			gpio_cfg_pin(GPIO_Y10 + i, GPIO_FUNC(2));
 
 		/*
 		 * EBI: 8 Addrss Lines
@@ -164,15 +159,15 @@ int exynos_pinmux_config(enum periph_id peripheral, int flags)
 		 * GPY6[7]	EBI_DATA[15](2)
 		 */
 		for (i = 0; i < 8; i++) {
-			s5p_gpio_cfg_pin(&gpio1->y3, i, GPIO_FUNC(2));
-			s5p_gpio_set_pull(&gpio1->y3, i, GPIO_PULL_UP);
+			gpio_cfg_pin(GPIO_Y30 + i, GPIO_FUNC(2));
+			gpio_set_pull(GPIO_Y30 + i, GPIO_PULL_UP);
 
-			s5p_gpio_cfg_pin(&gpio1->y5, i, GPIO_FUNC(2));
-			s5p_gpio_set_pull(&gpio1->y5, i, GPIO_PULL_UP);
+			gpio_cfg_pin(GPIO_Y50 + i, GPIO_FUNC(2));
+			gpio_set_pull(GPIO_Y50 + i, GPIO_PULL_UP);
 
 			if (flags & PINMUX_FLAG_16BIT) {
-				s5p_gpio_cfg_pin(&gpio1->y6, i, GPIO_FUNC(2));
-				s5p_gpio_set_pull(&gpio1->y6, i, GPIO_PULL_UP);
+				gpio_cfg_pin(GPIO_Y60 + i, GPIO_FUNC(2));
+				gpio_set_pull(GPIO_Y60 + i, GPIO_PULL_UP);
 			}
 		}
 		break;
@@ -186,100 +181,93 @@ int exynos_pinmux_config(enum periph_id peripheral, int flags)
 		switch (peripheral) {
 		default:
 		case PERIPH_ID_SPI0:
-			bank = &gpio1->a2;
-			start = 0; count = 4; cfg = 0x2;
+			start = GPIO_A20; count = 4; cfg = 0x2;
 			break;
 		case PERIPH_ID_SPI1:
-			bank = &gpio1->a2;
-			start = 4; count = 4; cfg = 0x2;
+			start = GPIO_A24; count = 4; cfg = 0x2;
 			break;
 		case PERIPH_ID_SPI2:
-			bank = &gpio1->b1;
-			start = 1; count = 4; cfg = 0x5;
+			start = GPIO_B11; count = 4; cfg = 0x5;
 			break;
 		case PERIPH_ID_SPI3:
-			bank = &gpio2->e0;
-			start = 0; count = 4; cfg = 0x2;
+			start = GPIO_E00; count = 4; cfg = 0x2;
 			break;
 		case PERIPH_ID_SPI4:
-			bank = &gpio2->f0;
-			start = 2; count = 2; cfg = 0x4;
+			start = GPIO_F02; count = 2; cfg = 0x4;
 			break;
 		}
 		cs_line = start + 1;
 
 		if (flags & PINMUX_FLAG_CS) {
-			s5p_gpio_direction_output(bank, cs_line, 1);
-			s5p_gpio_cfg_pin(bank, cs_line, GPIO_FUNC(0x1));
-			s5p_gpio_set_pull(bank, cs_line, GPIO_PULL_UP);
-			s5p_gpio_set_value(bank, cs_line,
+			gpio_direction_output(cs_line, 1);
+			gpio_cfg_pin(cs_line, GPIO_FUNC(0x1));
+			gpio_set_pull(cs_line, GPIO_PULL_UP);
+			gpio_set_value(cs_line,
 					flags & PINMUX_FLAG_ACTIVATE ? 0 : 1);
 		} else {
 			int mode = (flags & PINMUX_FLAG_SLAVE_MODE) ?
 					GPIO_PULL_DOWN : GPIO_PULL_UP;
 
 			for (i = start; i < start + count; i++) {
-				s5p_gpio_cfg_pin(bank, i, GPIO_FUNC(cfg));
+				gpio_cfg_pin(i, GPIO_FUNC(cfg));
 				if (i != cs_line)
-					s5p_gpio_set_pull(bank, i, mode);
+					gpio_set_pull(i, mode);
 				else if (flags & PINMUX_FLAG_SLAVE_MODE) {
-					s5p_gpio_set_pull(bank, i,
-							  GPIO_PULL_NONE);
+					gpio_set_pull(i, GPIO_PULL_NONE);
 				}
 			}
 			if (peripheral == PERIPH_ID_SPI4) {
 				/* Some irregularity here */
-				bank = &gpio2->e0;
 				for (i = 4; i < 6; i++) {
-					s5p_gpio_cfg_pin(bank, i,
-							 GPIO_FUNC(4));
-					s5p_gpio_set_pull(bank, i, mode);
+					gpio_cfg_pin(GPIO_E00 + i,
+							GPIO_FUNC(4));
+					gpio_set_pull(GPIO_E00 + i, mode);
 				}
 			}
 		}
 		break;
 	}
 	case PERIPH_ID_BACKLIGHT:
-		s5p_gpio_cfg_pin(&gpio1->b2, 0, GPIO_OUTPUT);
-		s5p_gpio_set_value(&gpio1->b2, 0, 1);
+		gpio_cfg_pin(GPIO_B20, GPIO_OUTPUT);
+		gpio_set_value(GPIO_B20, 1);
 		break;
 	case PERIPH_ID_LCD:
-		s5p_gpio_cfg_pin(&gpio1->x1, 5, GPIO_OUTPUT);
-		s5p_gpio_set_value(&gpio1->x1, 5, 1);
-		s5p_gpio_cfg_pin(&gpio1->x3, 0, GPIO_OUTPUT);
-		s5p_gpio_set_value(&gpio1->x3, 0, 1);
+		gpio_cfg_pin(GPIO_X15, GPIO_OUTPUT);
+		gpio_set_value(GPIO_X15, 1);
+		gpio_cfg_pin(GPIO_X30, GPIO_OUTPUT);
+		gpio_set_value(GPIO_X30, 1);
 		break;
 	case PERIPH_ID_I2C0:
-		s5p_gpio_cfg_pin(&gpio1->b3, 0, GPIO_FUNC(0x2));
-		s5p_gpio_cfg_pin(&gpio1->b3, 1, GPIO_FUNC(0x2));
+		gpio_cfg_pin(GPIO_B30, GPIO_FUNC(0x2));
+		gpio_cfg_pin(GPIO_B31, GPIO_FUNC(0x2));
 		break;
 	case PERIPH_ID_I2C1:
-		s5p_gpio_cfg_pin(&gpio1->b3, 2, GPIO_FUNC(0x2));
-		s5p_gpio_cfg_pin(&gpio1->b3, 3, GPIO_FUNC(0x2));
+		gpio_cfg_pin(GPIO_B32, GPIO_FUNC(0x2));
+		gpio_cfg_pin(GPIO_B33, GPIO_FUNC(0x2));
 		break;
 	case PERIPH_ID_I2C2:
-		s5p_gpio_cfg_pin(&gpio1->a0, 6, GPIO_FUNC(0x3));
-		s5p_gpio_cfg_pin(&gpio1->a0, 7, GPIO_FUNC(0x3));
+		gpio_cfg_pin(GPIO_A06, GPIO_FUNC(0x3));
+		gpio_cfg_pin(GPIO_A07, GPIO_FUNC(0x3));
 		break;
 	case PERIPH_ID_I2C3:
-		s5p_gpio_cfg_pin(&gpio1->a1, 2, GPIO_FUNC(0x3));
-		s5p_gpio_cfg_pin(&gpio1->a1, 3, GPIO_FUNC(0x3));
+		gpio_cfg_pin(GPIO_A12, GPIO_FUNC(0x3));
+		gpio_cfg_pin(GPIO_A13, GPIO_FUNC(0x3));
 		break;
 	case PERIPH_ID_I2C4:
-		s5p_gpio_cfg_pin(&gpio1->a2, 0, GPIO_FUNC(0x3));
-		s5p_gpio_cfg_pin(&gpio1->a2, 1, GPIO_FUNC(0x3));
+		gpio_cfg_pin(GPIO_A20, GPIO_FUNC(0x3));
+		gpio_cfg_pin(GPIO_A21, GPIO_FUNC(0x3));
 		break;
 	case PERIPH_ID_I2C5:
-		s5p_gpio_cfg_pin(&gpio1->a2, 2, GPIO_FUNC(0x3));
-		s5p_gpio_cfg_pin(&gpio1->a2, 3, GPIO_FUNC(0x3));
+		gpio_cfg_pin(GPIO_A22, GPIO_FUNC(0x3));
+		gpio_cfg_pin(GPIO_A23, GPIO_FUNC(0x3));
 		break;
 	case PERIPH_ID_I2C6:
-		s5p_gpio_cfg_pin(&gpio1->b1, 3, GPIO_FUNC(0x4));
-		s5p_gpio_cfg_pin(&gpio1->b1, 4, GPIO_FUNC(0x4));
+		gpio_cfg_pin(GPIO_B13, GPIO_FUNC(0x4));
+		gpio_cfg_pin(GPIO_B14, GPIO_FUNC(0x4));
 		break;
 	case PERIPH_ID_I2C7:
-		s5p_gpio_cfg_pin(&gpio1->b2, 2, GPIO_FUNC(0x3));
-		s5p_gpio_cfg_pin(&gpio1->b2, 3, GPIO_FUNC(0x3));
+		gpio_cfg_pin(GPIO_B22, GPIO_FUNC(0x3));
+		gpio_cfg_pin(GPIO_B23, GPIO_FUNC(0x3));
 		break;
 	default:
 		debug("%s: invalid peripheral %d", __func__, peripheral);
