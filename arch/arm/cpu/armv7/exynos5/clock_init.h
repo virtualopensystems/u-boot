@@ -66,6 +66,10 @@ struct mem_timings {
 	unsigned t_wrrdcmd;
 	unsigned memcontrol;
 	unsigned memconfig;
+
+	/* Channel and Chip Selection */
+	uint8_t dmc_channels;		/* number of memory channels */
+	uint8_t chips_per_channel;	/* number of chips per channel */
 };
 
 /**

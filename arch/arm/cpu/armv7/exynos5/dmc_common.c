@@ -83,15 +83,13 @@ void update_reset_dll(struct exynos5_dmc *dmc, enum ddr_mode mode)
 	writel(val, &dmc->phycontrol0);
 }
 
-void config_mrs(struct exynos5_dmc *dmc)
+void dmc_config_mrs(struct mem_timings *mem, struct exynos5_dmc *dmc)
 {
 	unsigned long channel, chip, mask = 0;
-	struct mem_timings *mem;
 
-	mem = clock_get_mem_timings();
-	for (channel = 0; channel < CONFIG_DMC_CHANNELS; channel++) {
+	for (channel = 0; channel < mem->dmc_channels; channel++) {
 		SET_CMD_CHANNEL(mask, channel);
-		for (chip = 0; chip < CONFIG_CHIPS_PER_CHANNEL; chip++) {
+		for (chip = 0; chip < mem->chips_per_channel; chip++) {
 			int i;
 
 			SET_CMD_CHIP(mask, chip);
@@ -110,13 +108,13 @@ void config_mrs(struct exynos5_dmc *dmc)
 	}
 }
 
-void config_prech(struct exynos5_dmc *dmc)
+void dmc_config_prech(struct mem_timings *mem, struct exynos5_dmc *dmc)
 {
 	unsigned long channel, chip, mask = 0;
 
-	for (channel = 0; channel < CONFIG_DMC_CHANNELS; channel++) {
+	for (channel = 0; channel < mem->dmc_channels; channel++) {
 		SET_CMD_CHANNEL(mask, channel);
-		for (chip = 0; chip < CONFIG_CHIPS_PER_CHANNEL; chip++) {
+		for (chip = 0; chip < mem->chips_per_channel; chip++) {
 			SET_CMD_CHIP(mask, chip);
 			/* PALL (all banks precharge) CMD */
 			writel(DIRECT_CMD_PALL | mask, &dmc->directcmd);

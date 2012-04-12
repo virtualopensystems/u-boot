@@ -40,13 +40,11 @@ static void reset_phy_ctrl(void)
 }
 
 /* Sending direct commands */
-static void direct_cmd(struct exynos5_dmc *dmc)
+static void direct_cmd(struct mem_timings *mem, struct exynos5_dmc *dmc)
 {
 	unsigned long channel, mask = 0;
-	struct mem_timings *mem;
 
-	mem = clock_get_mem_timings();
-	for (channel = 0; channel < CONFIG_DMC_CHANNELS; channel++) {
+	for (channel = 0; channel < mem->dmc_channels; channel++) {
 		int i;
 
 		SET_CMD_CHANNEL(mask, channel);
@@ -194,7 +192,7 @@ void ddr3_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size)
 	writel(mem->timing_data, &dmc->timingdata);
 	writel(mem->timing_power, &dmc->timingpower);
 
-	direct_cmd(dmc);
+	direct_cmd(mem, dmc);
 
 	config_ctrl_dll_on(0, phy0_ctrl, phy1_ctrl);
 

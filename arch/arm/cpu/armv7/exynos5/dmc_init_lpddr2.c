@@ -287,7 +287,7 @@ void lpddr2_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size)
 	update_reset_dll(dmc, DDR_MODE_LPDDR2);
 
 	/* Config MRS(Mode Register Settingg) */
-	config_mrs(dmc);
+	dmc_config_mrs(mem, dmc);
 
 	config_cdrex();
 
@@ -310,7 +310,7 @@ void lpddr2_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size)
 #if defined(CONFIG_RD_LVL)
 	config_rdlvl(mem, dmc, phy0_ctrl, phy1_ctrl);
 #endif
-	config_prech(dmc);
+	dmc_config_prech(mem, dmc);
 
 	/*
 	 * Dynamic Clock: Stops During Idle Period

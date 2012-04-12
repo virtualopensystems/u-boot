@@ -88,6 +88,8 @@ struct mem_timings mem_timings[] = {
 			DMC_MEMCONFIGx_CHIP_COL_10 |
 			DMC_MEMCONFIGx_CHIP_ROW_15 |
 			DMC_MEMCONFIGx_CHIP_BANK_8,
+		.dmc_channels = 2,
+		.chips_per_channel = 1,
 	}, {
 		.mem_type = DDR_MODE_DDR3,
 		.frequency_mhz = 800,
@@ -139,6 +141,8 @@ struct mem_timings mem_timings[] = {
 			DMC_MEMCONFIGx_CHIP_COL_10 |
 			DMC_MEMCONFIGx_CHIP_ROW_15 |
 			DMC_MEMCONFIGx_CHIP_BANK_8,
+		.dmc_channels = 2,
+		.chips_per_channel = 1,
 	}, {
 		.mem_type = DDR_MODE_LPDDR2,
 		.frequency_mhz = 667,
@@ -185,6 +189,8 @@ struct mem_timings mem_timings[] = {
 			DMC_MEMCONFIGx_CHIP_COL_10 |
 			DMC_MEMCONFIGx_CHIP_ROW_14 |
 			DMC_MEMCONFIGx_CHIP_BANK_8,
+		.dmc_channels = 2,
+		.chips_per_channel = 2,
 	}
 };
 

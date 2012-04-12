@@ -383,10 +383,6 @@
 #define ZQ_CLK_DIV_EN		(1 << 18)
 #define ZQ_MANUAL_STR		(1 << 1)
 
-/* Channel and Chip Selection */
-#define CONFIG_DMC_CHANNELS		2
-#define CONFIG_CHIPS_PER_CHANNEL	2
-
 #define SET_CMD_CHANNEL(x, y)	(x = (x & ~(1 << 28)) | y << 28)
 #define SET_CMD_CHIP(x, y)	(x = (x & ~(1 << 20)) | y << 20)
 
@@ -537,18 +533,22 @@ void tzpc_init(void);
 void dmc_config_zq(struct mem_timings *mem,
 		   struct exynos5_phy_control *phy0_ctrl,
 		   struct exynos5_phy_control *phy1_ctrl);
+
 /*
- * Sending NOP and MRS/EMRS Direct commands
+ * Send NOP and MRS/EMRS Direct commands
  *
- * @param exynos5_dmc	Pointer to struct of DMC registers
+ * @param mem		Memory timings for this memory type.
+ * @param dmc		Pointer to struct of DMC registers
  */
-void config_mrs(struct exynos5_dmc *);
+void dmc_config_mrs(struct mem_timings *mem, struct exynos5_dmc *dmc);
+
 /*
- * Sending PALL Direct commands
+ * Send PALL Direct commands
  *
- * @param exynos5_dmc	Pointer to struct of DMC registers
+ * @param mem		Memory timings for this memory type.
+ * @param dmc		Pointer to struct of DMC registers
  */
-void config_prech(struct exynos5_dmc *);
+void dmc_config_prech(struct mem_timings *mem, struct exynos5_dmc *dmc);
 
 /*
  * Configure the memconfig and membaseconfig registers
