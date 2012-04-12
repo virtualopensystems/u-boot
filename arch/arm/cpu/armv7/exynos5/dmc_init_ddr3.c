@@ -231,7 +231,8 @@ void ddr3_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size)
 	/* Setting Operation Mode as DDR3 and enabling byte_rdlvl */
 	val = PHY_CON0_RESET_VAL;
 	SET_CTRL_DDR_MODE(val, DDR_MODE_DDR3);
-	SET_T_RDDATA_MARGIN(val, DDR3_T_RDDATA_MARGIN);
+	clrsetbits_le32(&val, PHY_CON0_T_WRRDCMD_MASK,
+		mem->t_wrrdcmd << PHY_CON0_T_WRRDCMD_SHIFT);
 	val |= BYTE_RDLVL_EN;
 	writel(val, &phy0_ctrl->phy_con0);
 	writel(val, &phy1_ctrl->phy_con0);
@@ -265,7 +266,8 @@ void ddr3_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size)
 	/* Setting Operation Mode as DDR3 and enabling byte_rdlvl */
 	val = PHY_CON0_RESET_VAL;
 	SET_CTRL_DDR_MODE(val, DDR_MODE_DDR3);
-	SET_T_RDDATA_MARGIN(val, DDR3_T_RDDATA_MARGIN);
+	clrsetbits_le32(&val, PHY_CON0_T_WRRDCMD_MASK,
+		mem->t_wrrdcmd << PHY_CON0_T_WRRDCMD_SHIFT);
 	val |= BYTE_RDLVL_EN;
 	writel(val, &phy0_ctrl->phy_con0);
 	writel(val, &phy1_ctrl->phy_con0);
