@@ -59,6 +59,10 @@
 		status = "disabled";
 	};
 
+	mshci@12240000 {
+		samsung,mshci-bus-width = <8>;
+	};
+
 	sromc@12250000 {
 		compatible = "samsung,exynos-sromc";
 		bank = <3>;
