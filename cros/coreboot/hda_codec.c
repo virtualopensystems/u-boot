@@ -97,6 +97,7 @@ int write_one_verb(uint32_t base, uint32_t val)
  */
 static struct pci_device_id supported[] = {
 	{PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_COUGARPOINT_HDA},
+	{PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_PANTHERPOINT_HDA},
 	{}
 };
 
