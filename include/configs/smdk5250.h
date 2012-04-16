@@ -154,7 +154,9 @@
 #define CONFIG_ENV_SROM_BANK		1
 #endif
 
-#define CONFIG_LOADADDR			0x40000000
+/* Don't load kernel at the very bottom of ram so that it has room when
+ * it relocates down. */
+#define CONFIG_LOADADDR			0x42000000
 
 /* Keep kernel-passed data below 512MB (i.e. in lowmem with some margin) */
 #define CONFIG_SYS_BOOTMAPSZ		(512 << 20)
