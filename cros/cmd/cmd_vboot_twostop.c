@@ -190,6 +190,14 @@ twostop_init_cparams(struct twostop_fmap *fmap, void *gbb,
 
 #if defined(CONFIG_OF_CONTROL) && defined(CONFIG_ARM)
 
+#ifdef CONFIG_LCD
+static int lcd_fb_size(void)
+{
+	return panel_info.vl_row * panel_info.vl_col *
+		NBITS(panel_info.vl_bpix) / 8;
+}
+#endif
+
 extern uint8_t _start;
 extern uint8_t __bss_end__;
 
@@ -217,10 +225,9 @@ static void setup_arch_unused_memory(memory_wipe_t *wipe,
 
 #ifdef CONFIG_LCD
 	{
-		int fb_size, lcd_line_length;
-
 		/* Excludes the frame buffer. */
-		fb_size = lcd_get_size(&lcd_line_length);
+		int fb_size = lcd_fb_size();
+
 		memory_wipe_sub(wipe,
 				(uintptr_t)gd->fb_base,
 				(uintptr_t)gd->fb_base + fb_size);
