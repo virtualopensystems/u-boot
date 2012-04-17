@@ -57,14 +57,14 @@
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	CONFIG_CHROMEOS_EXTRA_ENV_SETTINGS \
 	CONFIG_CHROMEOS_SD_TO_SPI \
-	\
+	"dev_extras=daisy\0" \
 	"mmc_setup=" \
 		"mmc rescan ${devnum}; " \
 		"setenv devtype mmc; " \
 		"if test ${devnum} -eq 0; then " \
-			"setenv kernel_devnum 1; " \
-		"else " \
 			"setenv kernel_devnum 0; " \
+		"else " \
+			"setenv kernel_devnum 1; " \
 		"fi; " \
 		"setenv devname mmcblk${kernel_devnum}p\0"
 
