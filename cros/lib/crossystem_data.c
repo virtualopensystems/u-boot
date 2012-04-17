@@ -12,6 +12,7 @@
 #include <gbb_header.h> /* for GoogleBinaryBlockHeader */
 #include <cros/common.h>
 #include <cros/crossystem_data.h>
+#include <cros/nvstorage.h>
 #include <linux/string.h>
 
 #ifdef CONFIG_OF_LIBFDT

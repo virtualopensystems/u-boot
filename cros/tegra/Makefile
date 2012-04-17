@@ -12,7 +12,6 @@ include $(TOPDIR)/config.mk
 
 LIB	= $(obj)libcros_board.o
 
-COBJS-$(CONFIG_CHROMEOS) += nvstorage.o
 COBJS-$(CONFIG_CHROMEOS) += utility.o
 COBJS-$(CONFIG_CHROMEOS) += cros_gpio.o
 COBJS-$(CONFIG_CHROMEOS) += power_management.o

@@ -10,6 +10,7 @@
 
 #include <common.h>
 #include <cros/common.h>
+#include <cros/nvstorage.h>
 
 /* Import the header files from vboot_reference. */
 #include <vboot_api.h>
@@ -30,8 +31,8 @@ static int get_internal_disk(VbDiskInfo **disk_ptr)
 	static VbDiskInfo internal_disk;
 
 	if (internal_disk.handle == NULL) {
-		VbDiskInfo* disk_info;
-	        uint32_t disk_count;
+		VbDiskInfo *disk_info;
+		uint32_t disk_count;
 
 		if (VbExDiskGetInfo(&disk_info, &disk_count,
 				VB_DISK_FLAG_FIXED) || disk_count == 0) {

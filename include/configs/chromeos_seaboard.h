@@ -26,9 +26,6 @@
 /* We initialize Chrome OS -specific GPIOs here */
 #define CONFIG_MISC_INIT_R
 
-/* Store the VbNvContext in the first block of the disk. */
-#define CHROMEOS_VBNVCONTEXT_LBA	0
-
 /* Delay console init until after relocation (saves boot time) */
 #define CONFIG_DELAY_CONSOLE
 
