@@ -43,13 +43,6 @@
 	"sf update 40008000 0 80000; " \
 	"echo Flash completed\0"
 
-/*
- * TODO(clchiou): We override mmc_setup here because today on exynos U-Boot and
- * kernel disagree on eMMC and SD card index.  We should fix this so that the
- * index is consistent: 0 for internal (eMMC) and 1 for external (SD card).
- *
- * I will remove overriding mmc_setup after this is fixed.
- */
 /* Replace default CONFIG_EXTRA_ENV_SETTINGS */
 #ifdef CONFIG_EXTRA_ENV_SETTINGS
 #undef CONFIG_EXTRA_ENV_SETTINGS
@@ -57,16 +50,7 @@
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	CONFIG_CHROMEOS_EXTRA_ENV_SETTINGS \
 	CONFIG_CHROMEOS_SD_TO_SPI \
-	"dev_extras=daisy\0" \
-	"mmc_setup=" \
-		"mmc rescan ${devnum}; " \
-		"setenv devtype mmc; " \
-		"if test ${devnum} -eq 0; then " \
-			"setenv kernel_devnum 0; " \
-		"else " \
-			"setenv kernel_devnum 1; " \
-		"fi; " \
-		"setenv devname mmcblk${kernel_devnum}p\0"
+	"dev_extras=daisy\0"
 
 /* Replace default CONFIG_BOOTCOMMAND */
 #ifdef CONFIG_BOOTCOMMAND
