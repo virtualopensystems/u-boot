@@ -48,7 +48,7 @@ int boot_device_matches(const block_dev_desc_t *dev,
 {
 	*flags = dev->removable ? VB_DISK_FLAG_REMOVABLE :
 			VB_DISK_FLAG_FIXED;
-	return (*flags & disk_flags) == disk_flags;
+	return (*flags & disk_flags) == disk_flags && dev->lba;
 }
 
 /**
