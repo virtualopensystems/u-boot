@@ -330,6 +330,7 @@
 #endif
 
 #define CONFIG_HARDWARE_MAPPED_SPI
+#define CONFIG_INTEL_CORE_ARCH	/* Sandy bridge and ivy bridge chipsets. */
 
 /* Board specific late time init */
 #define CONFIG_MISC_INIT_R
