@@ -82,6 +82,7 @@ struct max77686_para {
 	u8	vol_bitmask;
 	u8	reg_enaddr;
 	u8	reg_enbitpos;
+	u8	reg_enbitmask;
 	u8	reg_enbiton;
 	u8	reg_enbitoff;
 	u32	vol_min;
@@ -90,9 +91,6 @@ struct max77686_para {
 
 /* I2C device address for pmic max77686 */
 #define MAX77686_I2C_ADDR (0x12 >> 1)
-
-/* poweron reset default value */
-#define	POR_DEFAULT	0x3
 
 enum {
 	REG_DISABLE = 0,
