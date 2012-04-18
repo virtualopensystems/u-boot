@@ -427,13 +427,36 @@ enum exynos5_gpio_pin {
 	GPIO_MAX_PORT_PART_1_2_3
 };
 
-/* Set GPIO pin configuration */
+/**
+ * Set GPIO pin configuration.
+ *
+ * @param gpio	GPIO pin
+ * @param cfg	Either GPIO_INPUT, GPIO_OUTPUT, or GPIO_IRQ
+ */
 void gpio_cfg_pin(int gpio, int cfg);
-/* Set GPIO pull mode */
+
+/**
+ * Set GPIO pull mode.
+ *
+ * @param gpio	GPIO pin
+ * @param mode	Either GPIO_PULL_DOWN or GPIO_PULL_UP
+ */
 void gpio_set_pull(int gpio, int mode);
-/* Set GPIO drive strength level */
+
+/**
+ * Set GPIO drive strength level.
+ *
+ * @param gpio	GPIO pin
+ * @param mode	Either GPIO_DRV_1X, GPIO_DRV_2X, GPIO_DRV_3X, or GPIO_DRV_4X
+ */
 void gpio_set_drv(int gpio, int mode);
-/* Set GPIO drive rate */
+
+/**
+ * Set GPIO drive rate.
+ *
+ * @param gpio	GPIO pin
+ * @param mode	Either GPIO_DRV_FAST or GPIO_DRV_SLOW
+ */
 void gpio_set_rate(int gpio, int mode);
 
 int gpio_direction_input(unsigned gpio);
