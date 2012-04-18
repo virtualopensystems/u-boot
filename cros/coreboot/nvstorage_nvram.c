@@ -11,6 +11,7 @@
 #include <common.h>
 #include <asm/arch-coreboot/sysinfo.h>
 #include <asm/io.h>
+#include <cros/nvstorage.h>
 
 /* Import the header files from vboot_reference. */
 #include <vboot_api.h>
@@ -50,7 +51,7 @@ void nvram_write(u8 val, u8 addr)
 	outb(val, rtc_port + 1);
 }
 
-VbError_t VbExNvStorageRead(uint8_t* buf)
+VbError_t nvstorage_read_nvram(uint8_t *buf)
 {
 	int i;
 
@@ -66,7 +67,7 @@ VbError_t VbExNvStorageRead(uint8_t* buf)
 	return VBERROR_SUCCESS;
 }
 
-VbError_t VbExNvStorageWrite(const uint8_t* buf)
+VbError_t nvstorage_write_nvram(const uint8_t *buf)
 {
 	int i;
 

@@ -70,7 +70,7 @@ static int get_nvcxt_block_of_disk(const VbDiskInfo *disk,
 	return 0;
 }
 
-VbError_t VbExNvStorageRead(uint8_t* buf)
+VbError_t nvstorage_read_disk(uint8_t *buf)
 {
 	VbDiskInfo *internal_disk;
 	uint8_t *block_buf;
@@ -87,7 +87,7 @@ VbError_t VbExNvStorageRead(uint8_t* buf)
 	return VBERROR_SUCCESS;
 }
 
-VbError_t VbExNvStorageWrite(const uint8_t* buf)
+VbError_t nvstorage_write_disk(const uint8_t *buf)
 {
 	VbDiskInfo *internal_disk;
 	uint8_t *block_buf;

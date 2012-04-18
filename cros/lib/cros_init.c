@@ -11,14 +11,19 @@
 #include <common.h>
 #include <cros/common.h>
 #include <cros/boot_device.h>
+#include <cros/nvstorage.h>
 
 int cros_init(void)
 {
-	int err = boot_device_init();
-
-	if (err) {
-		printf("vbexport_init: boot devices probe failed\n");
+	if (boot_device_init()) {
+		VBDEBUG("boot_device_init failed\n");
 		return -1;
 	}
+
+	if (nvstorage_init()) {
+		VBDEBUG("nvstorage_init failed\n");
+		return -1;
+	}
+
 	return 0;
 }

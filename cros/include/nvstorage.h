@@ -11,6 +11,8 @@
 #ifndef CHROMEOS_NVSTORAGE_H_
 #define CHROMEOS_NVSTORAGE_H_
 
+#include <vboot_api.h>
+
 /*
  * The VbNvContext is stored in block 0, which is also the MBR on x86
  * platforms but generally unused on ARM platforms.  Given this, it is not a
@@ -18,5 +20,21 @@
  * may use reliably, block 0 is our only option left.
  */
 #define CHROMEOS_VBNVCONTEXT_LBA	0
+
+int nvstorage_init(void);
+
+/*
+ * Declarations of implementations of VbExNvStorageRead and
+ * VbExNvStorageWrite on various storage media.
+ */
+
+typedef VbError_t (*nvstorage_read_funcptr)(uint8_t *buf);
+typedef VbError_t (*nvstorage_write_funcptr)(const uint8_t *buf);
+
+VbError_t nvstorage_read_nvram(uint8_t *buf);
+VbError_t nvstorage_write_nvram(const uint8_t *buf);
+
+VbError_t nvstorage_read_disk(uint8_t *buf);
+VbError_t nvstorage_write_disk(const uint8_t *buf);
 
 #endif /* CHROMEOS_NVSTORAGE_H_ */

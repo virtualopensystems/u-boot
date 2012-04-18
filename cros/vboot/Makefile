@@ -21,11 +21,8 @@ COBJS-$(CONFIG_CHROMEOS) += display.o
 COBJS-$(CONFIG_CHROMEOS) += keyboard.o
 COBJS-$(CONFIG_CHROMEOS) += load_firmware.o
 COBJS-$(CONFIG_CHROMEOS) += misc.o
-# TODO(clchiou): Unfortunately there are conflicts between vboot/nvstorage_disk
-# and coreboot/nvstorage that have not solved yet.
-ifndef CONFIG_SYS_COREBOOT
+COBJS-$(CONFIG_CHROMEOS) += nvstorage.o
 COBJS-$(CONFIG_CHROMEOS) += nvstorage_disk.o
-endif
 COBJS-$(CONFIG_CHROMEOS) += tlcl_stub.o
 COBJS-$(CONFIG_CHROMEOS) += utility.o
 
