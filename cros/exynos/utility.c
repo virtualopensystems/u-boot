@@ -15,9 +15,5 @@
 
 uint64_t VbExGetTimer(void)
 {
-	/*
-	 * TODO(chromium-os:28077) Implement VbExGetTimer and
-	 * timer_get_us() maybe
-	 */
-	return 0;
+	return timer_get_us();
 }
