@@ -22,7 +22,7 @@
 
 #include <common.h>
 #include <fdtdec.h>
-#include <asm/io.h>
+#include <max77686.h>
 #include <netdev.h>
 #include <asm/arch/cpu.h>
 #include <asm/arch/gpio.h>
@@ -164,6 +164,12 @@ int board_init(void)
 #ifdef CONFIG_EXYNOS_SPI
 	spi_init();
 #endif
+
+	if (max77686_enable_32khz_cp()) {
+		debug("%s: Failed to enable max77686 32khz coprocessor clock\n",
+				 __func__);
+		return -1;
+	}
 	return 0;
 }
 
