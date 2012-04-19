@@ -9,6 +9,9 @@
 
 #include <configs/smdk5250.h>
 
+#undef CONFIG_DEFAULT_DEVICE_TREE
+#define CONFIG_DEFAULT_DEVICE_TREE      exynos5250-daisy
+
 #define CONFIG_INITRD_ADDRESS 0x42000000
 
 #include <configs/chromeos.h>
