@@ -67,6 +67,7 @@ struct max77686_para max77686_param[] = {/*{regnum, vol_addr, vol_bitpos,
 	{PMIC_LDO24, 0x57, 0x0, 0x3F, 0x57, 0x6, 0x3, 0x3, 0x0, 800, 50000},
 	{PMIC_LDO25, 0x58, 0x0, 0x3F, 0x58, 0x6, 0x3, 0x3, 0x0, 800, 50000},
 	{PMIC_LDO26, 0x59, 0x0, 0x3F, 0x59, 0x6, 0x3, 0x3, 0x0, 800, 50000},
+	{PMIC_EN32KHZ_CP, 0x0, 0x0, 0x0, 0x7F, 0x1, 0x1, 0x1, 0x0, 0x0, 0x0},
 };
 
 /*
@@ -156,6 +157,11 @@ int max77686_volsetting(enum max77686_regnum reg, unsigned int volt, int enable)
 	int ret;
 
 	pmic = &max77686_param[reg];
+
+	if (pmic->vol_addr == 0) {
+		debug("not a voltage register.\n");
+		return -1;
+	}
 
 	ret = max77686_i2c_read(MAX77686_I2C_ADDR, pmic->vol_addr, &read_data);
 	if (ret != 0) {
