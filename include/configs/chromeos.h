@@ -250,6 +250,7 @@
 		"run ext2_boot\0" \
 	\
 	"mmc_setup=" \
+		"mmc dev ${devnum}; " \
 		"mmc rescan ${devnum}; " \
 		"setenv devtype mmc; " \
 		"setenv devname mmcblk${devnum}p\0" \
