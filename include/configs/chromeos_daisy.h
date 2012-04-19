@@ -46,11 +46,14 @@
 
 #define CONFIG_CHROMEOS_SD_TO_SPI \
 	"sd_to_spi=echo Flashing U-Boot from SD card to SPI flash; " \
-	"mmc rescan; " \
-	"mmc read 40008000 1 1000; " \
-	"sf probe 1:0; " \
-	"sf update 40008000 0 80000; " \
-	"echo Flash completed\0"
+	"if mmc dev 1 && " \
+	"mmc rescan && " \
+	"mmc read 40008000 1 1000 && " \
+	"sf probe 1:0 && " \
+	"sf update 40008000 0 80000; then " \
+	"echo Flash completed; else " \
+	"echo Flash failed; " \
+	"fi\0"
 
 /* Replace default CONFIG_EXTRA_ENV_SETTINGS */
 #ifdef CONFIG_EXTRA_ENV_SETTINGS
