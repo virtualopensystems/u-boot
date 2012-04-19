@@ -182,19 +182,19 @@ static int do_vboot_test_gpio(cmd_tbl_t *cmdtp,
 		int flag, int argc, char * const argv[])
 {
 	cros_gpio_t gpio;
-	int i;
+	int i, ret = 0;
 
 	for (i = 0; i < CROS_GPIO_MAX_GPIO; i++) {
 		if (cros_gpio_fetch(i, &gpio)) {
 			VbExDebug("Failed to fetch GPIO, %d!\n", i);
-			return 1;
+			ret = 1;
 		}
 		if (cros_gpio_dump(&gpio)) {
 			VbExDebug("Failed to dump GPIO, %d!\n", i);
-			return 1;
+			ret = 1;
 		}
 	}
-	return 0;
+	return ret;
 }
 
 static int do_vboot_test_all(cmd_tbl_t *cmdtp,
