@@ -35,50 +35,36 @@ DECLARE_GLOBAL_DATA_PTR;
 /* Information about each SPI controller */
 struct spi_bus {
 	enum periph_id periph_id;
+	int node;		/* Device tree node */
+	s32 frequency;		/* Default clock frequency, -1 for none */
 	struct exynos_spi *regs;
-	int inited;			/* 1 if this bus is ready for use */
+	int inited;		/* 1 if this bus is ready for use */
 };
 
 /* A list of spi buses that we know about */
 static struct spi_bus spi_bus[EXYNOS5_SPI_NUM_CONTROLLERS];
+static unsigned int bus_count;
 
 struct exynos_spi_slave {
 	struct spi_slave slave;
 	struct exynos_spi *regs;
-	unsigned int freq;
+	unsigned int freq;		/* Default frequency */
 	unsigned int mode;
 	enum periph_id periph_id;	/* Peripheral ID for this device */
 };
 
-/* We should not rely on any particular ordering of these IDs */
-static enum periph_id periph_for_dev[] = {
-	PERIPH_ID_SPI0,
-	PERIPH_ID_SPI1,
-	PERIPH_ID_SPI2,
-	PERIPH_ID_SPI3,
-	PERIPH_ID_SPI4,
-};
+static struct spi_bus *spi_get_bus(unsigned dev_index)
+{
+	if (dev_index < bus_count)
+		return &spi_bus[dev_index];
+	debug("%s: invalid bus %d", __func__, dev_index);
+
+	return NULL;
+}
 
 static inline struct exynos_spi_slave *to_exynos_spi(struct spi_slave *slave)
 {
 	return container_of(slave, struct exynos_spi_slave, slave);
-}
-
-static inline struct exynos_spi *exynos_get_base_spi(int dev_index)
-{
-	if (dev_index < 3)
-		return (struct exynos_spi *)samsung_get_base_spi() + dev_index;
-	else
-		return (struct exynos_spi *)samsung_get_base_spi_isp() +
-				(dev_index - 3);
-}
-
-static enum periph_id spi_get_periph_id(unsigned dev_index)
-{
-	if (dev_index < ARRAY_SIZE(periph_for_dev))
-		return periph_for_dev[dev_index];
-	debug("%s: invalid bus %d", __func__, dev_index);
-	return PERIPH_ID_NONE;
 }
 
 /**
@@ -125,28 +111,34 @@ static void spi_pinmux_init(struct exynos_spi_slave *spi)
  *			master or slave)
  * @return new device or NULL
  */
-struct spi_slave *spi_setup_slave(unsigned int bus, unsigned int cs,
+struct spi_slave *spi_setup_slave(unsigned int busnum, unsigned int cs,
 			unsigned int max_hz, unsigned int mode)
 {
 	struct exynos_spi_slave *spi_slave;
+	struct spi_bus *bus;
 
-	if (!spi_cs_is_valid(bus, cs))
+	if (!spi_cs_is_valid(busnum, cs)) {
+		debug("%s: Invalid bus/chip select %d, %d\n", __func__,
+		      busnum, cs);
 		return NULL;
+	}
 
 	spi_slave = malloc(sizeof(*spi_slave));
-	if (!spi_slave)
+	if (!spi_slave) {
+		debug("%s: Could not allocate spi_slave\n", __func__);
 		return NULL;
+	}
 
-	spi_slave->slave.bus = bus;
+	bus = &spi_bus[busnum];
+	spi_slave->slave.bus = busnum;
 	spi_slave->slave.cs = cs;
-	spi_slave->regs = exynos_get_base_spi(bus);
+	spi_slave->regs = bus->regs;
 	spi_slave->mode = mode;
-	spi_slave->periph_id = spi_get_periph_id(bus);
+	spi_slave->periph_id = bus->periph_id;
 
-	if (max_hz > EXYNOS_SPI_MAX_FREQ)
-		spi_slave->freq = EXYNOS_SPI_MAX_FREQ;
-	else
-		spi_slave->freq = max_hz;
+	spi_slave->freq = bus->frequency;
+	if (max_hz)
+		spi_slave->freq = min(max_hz, spi_slave->freq);
 
 	return &spi_slave->slave;
 }
@@ -374,9 +366,7 @@ int spi_xfer(struct spi_slave *slave, unsigned int bitlen, const void *dout,
  */
 int spi_cs_is_valid(unsigned int bus, unsigned int cs)
 {
-	enum periph_id periph_id = spi_get_periph_id(bus);
-
-	return periph_id != PERIPH_ID_NONE && cs == 0;
+	return spi_get_bus(bus) && cs == 0;
 }
 
 /**
@@ -418,6 +408,7 @@ void spi_cs_deactivate(struct spi_slave *slave)
  */
 static int spi_get_config(const void *blob, int node, struct spi_bus *bus)
 {
+	bus->node = node;
 	bus->regs = (struct exynos_spi *)fdtdec_get_addr(blob, node, "reg");
 	bus->periph_id = clock_decode_periph_id(blob, node);
 	if (bus->periph_id == PERIPH_ID_NONE) {
@@ -425,6 +416,9 @@ static int spi_get_config(const void *blob, int node, struct spi_bus *bus)
 		      bus->periph_id);
 		return -FDT_ERR_NOTFOUND;
 	}
+
+	/* Use 500KHz as a suitable default */
+	bus->frequency = fdtdec_get_int(blob, node, "clock-frequency", 500000);
 
 	return 0;
 }
@@ -457,12 +451,35 @@ static int process_nodes(const void *blob, int node_list[], int count)
 			return -1;
 		}
 
-		debug("spi: controller bus %d at %p, periph_id %d",
+		debug("spi: controller bus %d at %p, periph_id %d\n",
 		      i, bus->regs, bus->periph_id);
 		bus->inited = 1;
+		bus_count++;
 	}
 
 	return 0;
+}
+
+/**
+ * Set up a new SPI slave for an fdt node
+ *
+ * @param blob		Device tree blob
+ * @param node		SPI peripheral node to use
+ * @return 0 if ok, -1 on error
+ */
+struct spi_slave *exynos_spi_setup_slave(const void *blob, int node,
+		unsigned int cs, unsigned int max_hz, unsigned int mode)
+{
+	struct spi_bus *bus;
+	unsigned int i;
+
+	for (i = 0, bus = spi_bus; i < bus_count; i++, bus++) {
+		if (bus->node == node)
+			return spi_setup_slave(i, cs, max_hz, mode);
+	}
+
+	debug("%s: Failed to find bus node %d\n", __func__, node);
+	return NULL;
 }
 
 /* Sadly there is no error return from this function */
