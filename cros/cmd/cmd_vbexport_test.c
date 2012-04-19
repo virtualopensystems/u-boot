@@ -33,8 +33,8 @@ DECLARE_GLOBAL_DATA_PTR;
 
 #define KEY_CTRL_C	0x03
 
-static int do_vbexport_test_debug(
-		cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int do_vbexport_test_debug(cmd_tbl_t *cmdtp, int flag,
+		int argc, char * const argv[])
 {
 	const char c = 'K';
 	const char s[] = "Hello! It's \"Chrome OS\".";
@@ -87,8 +87,8 @@ static int do_vbexport_test_malloc_size(uint32_t size)
 	return 0;
 }
 
-static int do_vbexport_test_malloc(
-		cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int do_vbexport_test_malloc(cmd_tbl_t *cmdtp, int flag,
+		int argc, char * const argv[])
 {
 	int ret = 0;
 	VbExDebug("Performing the malloc/free tests...\n");
@@ -143,8 +143,8 @@ static int do_vbexport_test_sleep_time(sleep_handler_t handler, uint32_t msec)
 	return 0;
 }
 
-static int do_vbexport_test_sleep(
-		cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int do_vbexport_test_sleep(cmd_tbl_t *cmdtp, int flag,
+		int argc, char * const argv[])
 {
 	int ret = 0;
 	VbExDebug("Performing the sleep tests...\n");
@@ -156,8 +156,8 @@ static int do_vbexport_test_sleep(
 	return ret;
 }
 
-static int do_vbexport_test_longsleep(
-		cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int do_vbexport_test_longsleep(cmd_tbl_t *cmdtp, int flag,
+		int argc, char * const argv[])
 {
 	int ret = 0;
 	VbExDebug("Performing the long sleep tests...\n");
@@ -167,8 +167,8 @@ static int do_vbexport_test_longsleep(
 	return ret;
 }
 
-static int do_vbexport_test_beep(
-		cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int do_vbexport_test_beep(cmd_tbl_t *cmdtp, int flag,
+		int argc, char * const argv[])
 {
 	int ret = 0;
 	VbExDebug("Performing the beep tests...\n");
@@ -209,8 +209,8 @@ static int do_vbexport_test_diskinfo_flags(uint32_t flags)
 	return VbExDiskFreeInfo(info, NULL) || ret;
 }
 
-static int do_vbexport_test_diskinfo(
-		cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int do_vbexport_test_diskinfo(cmd_tbl_t *cmdtp, int flag,
+		int argc, char * const argv[])
 {
 	int ret = 0;
 
@@ -223,8 +223,8 @@ static int do_vbexport_test_diskinfo(
 	return ret;
 }
 
-static int do_vbexport_test_diskrw(
-		cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int do_vbexport_test_diskrw(cmd_tbl_t *cmdtp, int flag,
+		int argc, char * const argv[])
 {
 	int ret = 0;
 	VbDiskInfo *disk_info;
@@ -317,8 +317,8 @@ out:
 	return ret;
 }
 
-static int do_vbexport_test_nvclear(
-		cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int do_vbexport_test_nvclear(cmd_tbl_t *cmdtp, int flag,
+		int argc, char * const argv[])
 {
 	uint8_t zero_buf[VBNV_BLOCK_SIZE] = {0};
 
@@ -330,8 +330,8 @@ static int do_vbexport_test_nvclear(
 	return 0;
 }
 
-static int do_vbexport_test_nvrw(
-		cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int do_vbexport_test_nvrw(cmd_tbl_t *cmdtp, int flag,
+		int argc, char * const argv[])
 {
 	int ret = 0;
 	uint8_t original_buf[VBNV_BLOCK_SIZE];
@@ -370,8 +370,8 @@ static int do_vbexport_test_nvrw(
 	return ret;
 }
 
-static int do_vbexport_test_key(
-		cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int do_vbexport_test_key(cmd_tbl_t *cmdtp, int flag,
+		int argc, char * const argv[])
 {
 	int ret = 0;
 	uint32_t c = 0;
@@ -490,8 +490,8 @@ bad:
 	return 1;
 }
 
-static int do_vbexport_test_display(
-		cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int do_vbexport_test_display(cmd_tbl_t *cmdtp, int flag,
+		int argc, char * const argv[])
 {
 	int ret = 0;
 	uint32_t width, height;
@@ -534,16 +534,16 @@ static int do_vbexport_test_display(
 	return ret;
 }
 
-static int do_vbexport_test_isshutdown(
-		cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int do_vbexport_test_isshutdown(cmd_tbl_t *cmdtp, int flag,
+		int argc, char * const argv[])
 {
 	VbExDebug("Shutdown requested? %s\n",
 			VbExIsShutdownRequested() ? "Yes" : "No");
 	return 0;
 }
 
-static int do_vbexport_test_all(
-		cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int do_vbexport_test_all(cmd_tbl_t *cmdtp, int flag,
+		int argc, char * const argv[])
 {
 	int ret = 0;
 	ret |= do_vbexport_test_debug(cmdtp, flag, argc, argv);
@@ -561,7 +561,14 @@ static int do_vbexport_test_all(
 	return ret;
 }
 
+static int do_vbexport_init(cmd_tbl_t *cmdtp, int flag,
+		int argc, char * const argv[])
+{
+	return vbexport_init();
+}
+
 static cmd_tbl_t cmd_vbexport_test_sub[] = {
+	U_BOOT_CMD_MKENT(init, 0, 1, do_vbexport_init, "", ""),
 	U_BOOT_CMD_MKENT(all, 0, 1, do_vbexport_test_all, "", ""),
 	U_BOOT_CMD_MKENT(debug, 0, 1, do_vbexport_test_debug, "", ""),
 	U_BOOT_CMD_MKENT(malloc, 0, 1, do_vbexport_test_malloc, "", ""),
@@ -577,8 +584,8 @@ static cmd_tbl_t cmd_vbexport_test_sub[] = {
 	U_BOOT_CMD_MKENT(isshutdown, 0, 1, do_vbexport_test_isshutdown, "", ""),
 };
 
-static int do_vbexport_test(
-		cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int do_vbexport_test(cmd_tbl_t *cmdtp, int flag,
+		int argc, char * const argv[])
 {
 	cmd_tbl_t *c;
 
@@ -597,7 +604,8 @@ static int do_vbexport_test(
 
 U_BOOT_CMD(vbexport_test, CONFIG_SYS_MAXARGS, 1, do_vbexport_test,
 	"Perform tests for vboot_wrapper",
-	"all - perform all tests\n"
+	"init - initialize vbexport\n"
+	"vbexport_test all - perform all tests\n"
 	"vbexport_test debug - test the debug function\n"
 	"vbexport_test malloc - test the malloc and free functions\n"
 	"vbexport_test sleep - test the sleep and timer functions\n"
