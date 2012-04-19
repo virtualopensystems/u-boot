@@ -23,7 +23,7 @@
 
 #include <common.h>
 #include <i2c.h>
-#include "max77686.h"
+#include <max77686.h>
 
 /*
  * Max77686 parameters values
