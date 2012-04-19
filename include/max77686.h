@@ -99,6 +99,13 @@ enum {
 };
 
 /**
+ * This function enables the 32KHz coprocessor clock.
+ *
+ * Return 0 if ok, else -1
+ */
+int max77686_enable_32khz_cp(void);
+
+/**
  * This function sets the BUCK's/LDO's voltages of pmic
  *
  * Return 0 if ok, else -1

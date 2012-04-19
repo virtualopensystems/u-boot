@@ -191,6 +191,11 @@ static int max77686_volsetting(enum max77686_regnum reg, unsigned int volt,
 	return 0;
 }
 
+int max77686_enable_32khz_cp(void)
+{
+	return max77686_enablereg(PMIC_EN32KHZ_CP, REG_ENABLE);
+}
+
 /**
  * Initialize the pmic voltages to power up the system
  * This also calls i2c_init so that we can program the pmic
