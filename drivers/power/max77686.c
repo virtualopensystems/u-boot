@@ -108,7 +108,7 @@ static inline int max77686_i2c_read(unsigned char chip_addr,
 			needed to set the buck/ldo enable bit OFF
  * @return		Return 0 if ok, else -1
  */
-int max77686_enablereg(enum max77686_regnum reg, int enable)
+static int max77686_enablereg(enum max77686_regnum reg, int enable)
 {
 	struct max77686_para *pmic;
 	unsigned char read_data;
@@ -149,7 +149,8 @@ int max77686_enablereg(enum max77686_regnum reg, int enable)
  *
  * @return		Return 0 if ok, else -1
  */
-int max77686_volsetting(enum max77686_regnum reg, unsigned int volt, int enable)
+static int max77686_volsetting(enum max77686_regnum reg, unsigned int volt,
+			       int enable)
 {
 	struct max77686_para *pmic;
 	unsigned char read_data;
