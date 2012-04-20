@@ -302,7 +302,11 @@ int crossystem_data_update_acpi(crossystem_data_t *cdata)
 	len = min(ID_LEN, sizeof(acpi_table->vbt6));
 	memcpy(acpi_table->vbt6, cdata->readonly_firmware_id, len);
 
+#ifdef FACTORY_IMAGE
+	acpi_table->vbt7 = 3; /* '3' means 'netboot' to crossystem */
+#else
 	acpi_table->vbt7 = cdata->firmware_type;
+#endif
 	acpi_table->vbt8 = RECOVERY_REASON_NONE;
 	acpi_table->vbt9 = cdata->fmap_offset;
 

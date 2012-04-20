@@ -36,3 +36,6 @@
 
 HOSTCFLAGS_autoconf.mk.dep = -Wno-variadic-macros
 LD := $(LD).bfd
+ifdef BUILD_FACTORY_IMAGE
+PLATFORM_CPPFLAGS += -DFACTORY_IMAGE
+endif
