@@ -11,17 +11,19 @@
 /* Implementation of firmware storage access interface for SPI */
 
 #include <common.h>
+#include <fdtdec.h>
+#include <libfdt.h>
 #include <malloc.h>
 #include <spi_flash.h>
 #include <cros/common.h>
+#include <cros/cros_fdtdec.h>
 #include <cros/firmware_storage.h>
 
-#ifndef CONFIG_SF_DEFAULT_SPEED
-# define CONFIG_SF_DEFAULT_SPEED	1000000
-#endif
-#ifndef CONFIG_SF_DEFAULT_MODE
-# define CONFIG_SF_DEFAULT_MODE		SPI_MODE_3
-#endif
+DECLARE_GLOBAL_DATA_PTR;
+
+enum {
+	SF_DEFAULT_SPEED = 1000000,
+};
 
 /*
  * Check the right-exclusive range [offset:offset+*count_ptr), and adjust
@@ -49,10 +51,6 @@ static int border_check(struct spi_flash *flash, uint32_t offset,
 }
 
 #ifdef CONFIG_HARDWARE_MAPPED_SPI
-
-#include <libfdt.h>
-
-DECLARE_GLOBAL_DATA_PTR;
 
 /*
  * When using hardware mapped SPI the offset passed to the file_read()
@@ -204,14 +202,34 @@ static int close_spi(firmware_storage_t *file)
 
 int firmware_storage_open_spi(firmware_storage_t *file)
 {
-	const unsigned int bus = 0;
-	const unsigned int cs = 0;
-	const unsigned int max_hz = CONFIG_SF_DEFAULT_SPEED;
-	const unsigned int spi_mode = CONFIG_SF_DEFAULT_MODE;
+	const void *blob = gd->fdt_blob;
+	int node;
+	unsigned int bus, chip_select, max_frequency, mode;
 	struct spi_flash *flash;
 
-	if (!(flash = spi_flash_probe(bus, cs, max_hz, spi_mode))) {
-		VBDEBUG("fail to init SPI flash at %u:%u\n", bus, cs);
+	node = cros_fdtdec_config_node(blob);
+	if (node < 0)
+		return -1;
+	node = fdtdec_lookup_phandle(blob, node, "firmware-storage");
+	if (node < 0) {
+		VBDEBUG("fail to look up phandle: %d\n", node);
+		return -1;
+	}
+
+	bus = fdtdec_get_int(blob, node, "bus", 0);
+	chip_select = fdtdec_get_int(blob, node, "reg", 0);
+	max_frequency = fdtdec_get_int(blob, node, "spi-max-frequency",
+			SF_DEFAULT_SPEED);
+	mode = 0;
+	if (fdtdec_get_bool(blob, node, "spi-cpol"))
+		mode |= SPI_CPOL;
+	if (fdtdec_get_bool(blob, node, "spi-cpha"))
+		mode |= SPI_CPHA;
+	if (fdtdec_get_bool(blob, node, "spi-cs-high"))
+		mode |= SPI_CS_HIGH;
+	flash = spi_flash_probe(bus, chip_select, max_frequency, mode);
+	if (!flash) {
+		VBDEBUG("fail to init SPI flash at %u:%u\n", bus, chip_select);
 		return -1;
 	}
 
