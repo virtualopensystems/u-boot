@@ -24,7 +24,7 @@ int nvstorage_init(void)
 {
 	const void *blob = gd->fdt_blob;
 	int croscfg_node, length;
-	char *media;
+	const char *media;
 
 	croscfg_node = fdt_path_offset(blob, "/chromeos-config");
 	if (croscfg_node < 0) {
@@ -51,7 +51,7 @@ int nvstorage_init(void)
 		return 0;
 	}
 
-	VBDEBUG("Unknown/unsupport storage media: %d\n", media);
+	VBDEBUG("Unknown/unsupport storage media: %s\n", media);
 	return 1;
 }
 
