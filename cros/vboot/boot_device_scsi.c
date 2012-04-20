@@ -10,8 +10,7 @@
 
 #include <common.h>
 #include <scsi.h>
-
-#include "boot_device.h"
+#include <cros/boot_device.h>
 
 static int boot_device_scsi_start(uint32_t disk_flags)
 {

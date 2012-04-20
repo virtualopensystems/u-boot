@@ -10,8 +10,7 @@
 
 #include <common.h>
 #include <ide.h>
-
-#include "boot_device.h"
+#include <cros/boot_device.h>
 
 static int boot_device_ide_start(uint32_t disk_flags)
 {

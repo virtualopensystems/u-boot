@@ -10,11 +10,9 @@
 
 #include <common.h>
 #include <usb.h>
-
-#include "boot_device.h"
-
-#include <vboot_api.h>
+#include <cros/boot_device.h>
 #include <cros/crossystem_data.h>
+#include <vboot_api.h>
 
 extern int board_use_usb_keyboard(int boot_mode);
 

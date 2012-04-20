@@ -8,6 +8,9 @@
  * Software Foundation.
  */
 
+#ifndef CHROMEOS_BOOT_DEVICE_H_
+#define CHROMEOS_BOOT_DEVICE_H_
+
 /*
  * This is an interface that we can boot from. It provides a function to start
  * up the peripheral and also one to scan for available devices attached to
@@ -74,3 +77,5 @@ int boot_device_scsi_probe(void);
  * @return 0 if ok, -1 on error
  */
 int boot_device_init(void);
+
+#endif /* CHROMEOS_BOOT_DEVICE_H_ */

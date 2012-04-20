@@ -10,10 +10,7 @@
 
 #include <common.h>
 #include <mmc.h>
-
-#include "boot_device.h"
-
-#include <vboot_api.h>
+#include <cros/boot_device.h>
 
 static int boot_device_mmc_start(uint32_t disk_flags)
 {

@@ -11,12 +11,11 @@
 #include <common.h>
 #include <part.h>
 #include <cros/common.h>
+#include <cros/boot_device.h>
 #include <linux/list.h>
 
 /* Import the header files from vboot_reference. */
 #include <vboot_api.h>
-
-#include "boot_device.h"
 
 /* Maximum number of devices we can support */
 enum {

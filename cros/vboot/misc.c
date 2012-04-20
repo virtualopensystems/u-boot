@@ -10,10 +10,9 @@
 
 #include <common.h>
 #include <cros/common.h>
+#include <cros/boot_device.h>
 #include <cros/cros_gpio.h>
 #include <vboot_api.h>
-
-#include "boot_device.h"
 
 uint32_t VbExIsShutdownRequested(void)
 {
