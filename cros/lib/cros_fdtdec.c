@@ -103,6 +103,16 @@ int decode_firmware_entry(const char *blob, int fmap_offset, const char *name,
 	return err;
 }
 
+int cros_fdtdec_config_node(const void *blob)
+{
+	int node = fdt_path_offset(blob, "/chromeos-config");
+
+	if (node < 0)
+		VBDEBUG("failed to find /chromeos-config: %d\n", node);
+
+	return node;
+}
+
 int cros_fdtdec_mrc_cache_base(const char *blob, struct fmap_entry *fme)
 {
 	int fmap_offset;
@@ -156,25 +166,20 @@ int cros_fdtdec_flashmap(const void *blob, struct twostop_fmap *config)
 
 int cros_fdtdec_config_has_prop(const void *blob, const char *name)
 {
-	int nodeoffset = fdt_path_offset(blob, "/chromeos-config");
-	int len;
+	int nodeoffset = cros_fdtdec_config_node(blob);
 
-	if (nodeoffset < 0)
-		return 0;
-
-	return fdt_get_property(blob, nodeoffset, name, &len) != NULL;
+	return nodeoffset >= 0 &&
+		fdt_get_property(blob, nodeoffset, name, NULL) != NULL;
 }
 
 void *cros_fdtdec_alloc_region(const void *blob,
 		const char *prop_name, size_t *size)
 {
-	int node = fdt_path_offset(blob, "/chromeos-config");
+	int node = cros_fdtdec_config_node(blob);
 	void *ptr;
 
-	if (node < 0) {
-		VBDEBUG("failed to find /chromeos-config in fdt'\n");
+	if (node < 0)
 		return NULL;
-	}
 
 	if (fdtdec_decode_region(blob, node, prop_name, &ptr, size)) {
 		VBDEBUG("failed to find %s in /chromeos-config'\n", prop_name);

@@ -19,6 +19,14 @@
 int cros_fdtdec_flashmap(const void *fdt, struct twostop_fmap *config);
 
 /**
+ * Return offset of /chromeos-config node
+ *
+ * @param blob	FDT blob
+ * @return the offset or -FDT_ERR_NOTFOUND if not found
+ */
+int cros_fdtdec_config_node(const void *blob);
+
+/**
  * This checks whether a property exists.
  *
  * @param fdt	FDT blob to use
