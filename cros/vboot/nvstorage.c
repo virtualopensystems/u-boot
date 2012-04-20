@@ -11,6 +11,7 @@
 #include <common.h>
 #include <fdtdec.h>
 #include <cros/common.h>
+#include <cros/cros_fdtdec.h>
 #include <cros/nvstorage.h>
 
 #include <vboot_api.h>
@@ -26,11 +27,9 @@ int nvstorage_init(void)
 	int croscfg_node, length;
 	const char *media;
 
-	croscfg_node = fdt_path_offset(blob, "/chromeos-config");
-	if (croscfg_node < 0) {
-		VBDEBUG("Cannot find /chromeos-config: %d\n", croscfg_node);
+	croscfg_node = cros_fdtdec_config_node(blob);
+	if (croscfg_node < 0)
 		return 1;
-	}
 
 	media = fdt_getprop(blob, croscfg_node, "nvstorage-media", &length);
 	if (!media) {

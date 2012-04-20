@@ -12,6 +12,7 @@
 #include <gbb_header.h> /* for GoogleBinaryBlockHeader */
 #include <cros/common.h>
 #include <cros/crossystem_data.h>
+#include <cros/cros_fdtdec.h>
 #include <cros/nvstorage.h>
 #include <linux/string.h>
 
@@ -273,12 +274,9 @@ int crossystem_data_update_acpi(crossystem_data_t *cdata)
 	chromeos_acpi_t *acpi_table;
 	VbSharedDataHeader *vdat = (VbSharedDataHeader *)lib_sysinfo.vdat_addr;
 
-	node_offset = fdt_path_offset(fdt, "/chromeos-config");
-	if (node_offset < 0) {
-		VBDEBUG("crossystem_data_update_acpi: Couldn't access "
-			"chromeos-config.\n");
+	node_offset = cros_fdtdec_config_node(fdt);
+	if (node_offset < 0)
 		return 1;
-	}
 	cell = fdt_getprop(fdt, node_offset, "gnvs-vboot-table", NULL);
 	if (!cell) {
 		VBDEBUG("crossystem_data_update_acpi: Couldn't access "
