@@ -18,6 +18,7 @@
 #include <cros/crossystem_data.h>
 #include <cros/cros_fdtdec.h>
 #include <cros/cros_gpio.h>
+#include <cros/cros_init.h>
 #include <cros/firmware_storage.h>
 #include <cros/gbb.h>
 #include <cros/hasher_state.h>
@@ -880,6 +881,12 @@ do_vboot_twostop(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	uint32_t selection;
 
 	bootstage_mark_name(BOOTSTAGE_VBOOT_TWOSTOP, "do_vboot_twostop");
+
+	if (cros_init()) {
+		VBDEBUG("fail to init cros library\n");
+		goto on_error;
+	}
+
 	/*
 	 * TODO: We should clear screen later if we load graphics optionally.
 	 * In normal mode, we don't need to load graphics driver and clear
@@ -912,6 +919,7 @@ do_vboot_twostop(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 
 	assert(selection == TWOSTOP_SELECT_ERROR);
 
+on_error:
 	cold_reboot();
 	return 0;
 }
