@@ -190,6 +190,35 @@ unsigned int i2c_get_bus_num(void)
 }
 #endif
 
+/*
+ * Verify the whether I2C ACK was received or not
+ *
+ * @param i2c	pointer to I2C register base
+ * @param buf	array of data
+ * @param len	length of data
+ * return	I2C_OK when transmission done
+ *		I2C_NACK otherwise
+ */
+static int i2c_send_verify(struct s3c24x0_i2c *i2c, unsigned char buf[],
+							unsigned char len)
+{
+	int i, result = I2C_OK;
+
+	if (IsACK(i2c)) {
+		for (i = 0; (i < len) && (result == I2C_OK); i++) {
+			writel(buf[i], &i2c->iicds);
+			ReadWriteByte(i2c);
+			result = WaitForXfer(i2c);
+			if (!IsACK(i2c))
+				result = I2C_NACK;
+		}
+	} else {
+		result = I2C_NACK;
+	}
+
+	return result;
+}
+
 void i2c_init(int speed, int slaveadd)
 {
 	struct s3c24x0_i2c *i2c;
@@ -250,41 +279,30 @@ static int i2c_transfer(struct s3c24x0_i2c *i2c,
 		return I2C_NOK_TOUT;
 
 	writel(readl(&i2c->iiccon) | I2CCON_ACKGEN, &i2c->iiccon);
-	result = I2C_OK;
+
+	if (addr && addr_len) {
+		writel(chip, &i2c->iicds);
+		/* send START */
+		writel(I2C_MODE_MT | I2C_TXRX_ENA | I2C_START_STOP,
+			&i2c->iicstat);
+		if (WaitForXfer(i2c) == I2C_OK)
+			result = i2c_send_verify(i2c, addr, addr_len);
+		else
+			result = I2C_NACK;
+	} else
+		result = I2C_NACK;
 
 	switch (cmd_type) {
 	case I2C_WRITE:
-		if (addr && addr_len) {
+		if (result == I2C_OK)
+			result = i2c_send_verify(i2c, data, data_len);
+		else {
 			writel(chip, &i2c->iicds);
 			/* send START */
 			writel(I2C_MODE_MT | I2C_TXRX_ENA | I2C_START_STOP,
-			       &i2c->iicstat);
-			i = 0;
-			while ((i < addr_len) && (result == I2C_OK)) {
-				result = WaitForXfer(i2c);
-				writel(addr[i], &i2c->iicds);
-				ReadWriteByte(i2c);
-				i++;
-			}
-			i = 0;
-			while ((i < data_len) && (result == I2C_OK)) {
-				result = WaitForXfer(i2c);
-				writel(data[i], &i2c->iicds);
-				ReadWriteByte(i2c);
-				i++;
-			}
-		} else {
-			writel(chip, &i2c->iicds);
-			/* send START */
-			writel(I2C_MODE_MT | I2C_TXRX_ENA | I2C_START_STOP,
-			       &i2c->iicstat);
-			i = 0;
-			while ((i < data_len) && (result == I2C_OK)) {
-				result = WaitForXfer(i2c);
-				writel(data[i], &i2c->iicds);
-				ReadWriteByte(i2c);
-				i++;
-			}
+				&i2c->iicstat);
+			if (WaitForXfer(i2c) == I2C_OK)
+				result = i2c_send_verify(i2c, data, data_len);
 		}
 
 		if (result == I2C_OK)
@@ -296,48 +314,30 @@ static int i2c_transfer(struct s3c24x0_i2c *i2c,
 		break;
 
 	case I2C_READ:
-		if (addr && addr_len) {
+		if (result == I2C_OK) {
 			writel(chip, &i2c->iicds);
-			/* send START */
-			writel(I2C_MODE_MT | I2C_TXRX_ENA | I2C_START_STOP,
-			       &i2c->iicstat);
+			/* resend START */
+			writel(I2C_MODE_MR | I2C_TXRX_ENA |
+						I2C_START_STOP, &i2c->iicstat);
+			ReadWriteByte(i2c);
 			result = WaitForXfer(i2c);
-			if (IsACK(i2c)) {
-				i = 0;
-				while ((i < addr_len) && (result == I2C_OK)) {
-					writel(addr[i], &i2c->iicds);
-					ReadWriteByte(i2c);
-					result = WaitForXfer(i2c);
-					i++;
-				}
-
-				writel(chip, &i2c->iicds);
-				/* resend START */
-				writel(I2C_MODE_MR | I2C_TXRX_ENA |
-				       I2C_START_STOP, &i2c->iicstat);
-				ReadWriteByte(i2c);
-				result = WaitForXfer(i2c);
-				i = 0;
-				while ((i < data_len) && (result == I2C_OK)) {
-					/* disable ACK for final READ */
-					if (i == data_len - 1)
-						writel(readl(&i2c->iiccon)
+			i = 0;
+			while ((i < data_len) && (result == I2C_OK)) {
+				/* disable ACK for final READ */
+				if (i == data_len - 1)
+					writel(readl(&i2c->iiccon)
 							& ~I2CCON_ACKGEN,
 							&i2c->iiccon);
-					ReadWriteByte(i2c);
-					result = WaitForXfer(i2c);
-					data[i] = readl(&i2c->iicds);
-					i++;
-				}
-			} else {
-				result = I2C_NACK;
+				ReadWriteByte(i2c);
+				result = WaitForXfer(i2c);
+				data[i] = readl(&i2c->iicds);
+				i++;
 			}
-
 		} else {
 			writel(chip, &i2c->iicds);
 			/* send START */
 			writel(I2C_MODE_MR | I2C_TXRX_ENA | I2C_START_STOP,
-			       &i2c->iicstat);
+				&i2c->iicstat);
 			result = WaitForXfer(i2c);
 
 			if (IsACK(i2c)) {
