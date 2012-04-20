@@ -511,7 +511,7 @@ int fdtdec_decode_mshci(const void *blob, struct fdt_mshci *config)
 {
 	int node;
 
-	node = fdtdec_next_compatible(blob, 0, COMPAT_SAMSUNG_EXYNOS5_MSHC);
+	node = fdtdec_next_compatible(blob, 0, COMPAT_SAMSUNG_EXYNOS5_MSHCI);
 	if (node < 0)
 		return node;
 
