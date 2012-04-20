@@ -27,6 +27,7 @@
 #include <asm/arch/cpu.h>
 #include <asm/arch/gpio.h>
 #include <asm/arch/mmc.h>
+#include <asm/arch/mshc.h>
 #include <asm/arch/pinmux.h>
 #include <asm/arch/sromc.h>
 
@@ -217,11 +218,15 @@ int checkboard(void)
 int board_mmc_init(bd_t *bis)
 {
 	exynos_pinmux_config(PERIPH_ID_SDMMC2, PINMUX_FLAG_NONE);
+	exynos_pinmux_config(PERIPH_ID_SDMMC4, PINMUX_FLAG_8BIT_MODE);
 #ifdef CONFIG_OF_CONTROL
-	return s5p_mmc_init(gd->fdt_blob);
+	s5p_mmc_init(gd->fdt_blob);
+	s5p_mshci_init(gd->fdt_blob);
 #else
-	return s5p_mmc_init(2, 4);
+	s5p_mmc_init(2, 4);
+	s5p_mshci_init(NULL);
 #endif
+	return 0;
 }
 #endif
 

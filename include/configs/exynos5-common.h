@@ -41,7 +41,7 @@
 #define CONFIG_SYS_DCACHE_OFF
 
 #define CONFIG_SYS_SDRAM_BASE		0x40000000
-#define CONFIG_SYS_TEXT_BASE		0x43E00000
+#define CONFIG_SYS_TEXT_BASE		0x43D00000
 
 #define CONFIG_SETUP_MEMORY_TAGS
 #define CONFIG_CMDLINE_TAG
@@ -151,6 +151,9 @@
 
 /* U-boot copy size from boot Media to DRAM.*/
 #define BL2_START_OFFSET	(CONFIG_BL2_OFFSET/512)
+
+/* Set the emmc bus width to 8 */
+#define CONFIG_MSHC_BUS_WIDTH	8
 
 #if BUILD_PART_FS_STUFF
 #define CONFIG_DOS_PARTITION

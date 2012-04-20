@@ -210,6 +210,31 @@ void set_mmc_clk(int dev_index, unsigned int div)
 	writel(val, addr);
 }
 
+/* exynos5: set the mshc clock */
+int get_mshc_clk_div(void)
+{
+	struct exynos5_clock *clk =
+		(struct exynos5_clock *)samsung_get_base_clock();
+	unsigned int addr;
+	unsigned int div_mmc, div_mmc_pre;
+	unsigned int mpll_clock, sclk_mmc;
+
+	/*
+	 * CLK_DIV_FSYS3
+	 * MMC4_PRE_RATIO [15:8]
+	 * MMC4_RATIO [3:0]
+	 */
+	addr = (unsigned int)&clk->div_fsys3;
+	div_mmc = (readl(addr) & ~0xf) + 1;
+	div_mmc_pre = (readl(addr) & ~0xff00) + 1;
+
+	mpll_clock = get_pll_clk(MPLL);
+
+	sclk_mmc = (mpll_clock / div_mmc) / div_mmc_pre;
+
+	return sclk_mmc;
+}
+
 /* exynos5: obtaining the I2C clock */
 unsigned long get_i2c_clk(void)
 {
