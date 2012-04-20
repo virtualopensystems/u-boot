@@ -11,6 +11,7 @@
 #include <common.h>
 #include <cros/common.h>
 #include <cros/boot_device.h>
+#include <cros/cros_gpio.h>
 #include <cros/nvstorage.h>
 
 int cros_init(void)
@@ -22,6 +23,11 @@ int cros_init(void)
 
 	if (nvstorage_init()) {
 		VBDEBUG("nvstorage_init failed\n");
+		return -1;
+	}
+
+	if (cros_gpio_init()) {
+		VBDEBUG("cros_gpio_init failed\n");
 		return -1;
 	}
 

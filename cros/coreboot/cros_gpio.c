@@ -19,6 +19,11 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+int cros_gpio_init(void)
+{
+	return 0;
+}
+
 int cros_gpio_fetch(enum cros_gpio_index index, cros_gpio_t *gpio)
 {
 	const char const *name[CROS_GPIO_MAX_GPIO] = {

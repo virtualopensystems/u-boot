@@ -35,6 +35,13 @@ typedef struct {
 	int value;
 } cros_gpio_t;
 
+/**
+ * Initialize cros_gpio module
+ *
+ * @return zero on success and non-zero on failures
+ */
+int cros_gpio_init(void);
+
 int cros_gpio_fetch(enum cros_gpio_index index, cros_gpio_t *gpio);
 
 #ifdef VBOOT_DEBUG

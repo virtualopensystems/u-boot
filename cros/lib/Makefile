@@ -13,6 +13,10 @@ include $(TOPDIR)/config.mk
 LIB	= $(obj)libcros.o
 
 COBJS-$(CONFIG_CHROMEOS) += boot_kernel.o
+# TODO(clchiou): Work out the conflicts with coreboot/cros_gpio.o
+ifndef CONFIG_SYS_COREBOOT
+COBJS-$(CONFIG_CHROMEOS) += cros_gpio_fdt.o
+endif
 ifdef VBOOT_DEBUG
 COBJS-$(CONFIG_CHROMEOS) += cros_gpio_debug.o
 endif
