@@ -86,6 +86,12 @@
 		clock-frequency = <800000000>;
 	};
 
+	spi@12d30000 {
+		firmware_storage_spi: flash@0 {
+			bus = <1>;
+		};
+	};
+
 	spi@131b0000 {
 		mkbp {
 			compatible = "google,matrix-keyb1";
