@@ -22,18 +22,14 @@
  */
 
 #include <common.h>
+#include <asm/gpio.h>
 #include <asm/arch/cpu.h>
-#include <asm/arch/gpio.h>
 #include <asm/arch/pinmux.h>
 #include <asm/arch/sromc.h>
 
 int exynos_pinmux_config(enum periph_id peripheral, int flags)
 {
-	struct exynos5_gpio_part1 *gpio1 =
-		(struct exynos5_gpio_part1 *) samsung_get_base_gpio_part1();
-	struct exynos5_gpio_part2 *gpio2 =
-		(struct exynos5_gpio_part2 *) samsung_get_base_gpio_part2();
-	int i, start, count, start_ext;
+	int i, start, count, start_ext, pin_ext, pin, drv;
 
 	switch (peripheral) {
 	case PERIPH_ID_UART0:
@@ -64,19 +60,34 @@ int exynos_pinmux_config(enum periph_id peripheral, int flags)
 	case PERIPH_ID_SDMMC1:
 	case PERIPH_ID_SDMMC2:
 	case PERIPH_ID_SDMMC3:
+	case PERIPH_ID_SDMMC4:
+		pin = GPIO_FUNC(0x2);
+		pin_ext = GPIO_FUNC(0x3);
+		drv = GPIO_DRV_4X;
 		switch (peripheral) {
 		default:
 		case PERIPH_ID_SDMMC0:
-			start = GPIO_C00; start_ext = GPIO_C10;
+			start = GPIO_C00;
+			start_ext = GPIO_C10;
 			break;
 		case PERIPH_ID_SDMMC1:
-			start = GPIO_C10; start_ext = NULL;
+			start = GPIO_C10;
+			start_ext = 0;
 			break;
 		case PERIPH_ID_SDMMC2:
-			start = GPIO_C20; start_ext = GPIO_C30;
+			start = GPIO_C20;
+			start_ext = GPIO_C30;
 			break;
 		case PERIPH_ID_SDMMC3:
-			start = GPIO_C30; start_ext = NULL;
+			start = GPIO_C30;
+			start_ext = 0;
+			break;
+		case PERIPH_ID_SDMMC4:
+			start = GPIO_C00;
+			start_ext = GPIO_C10;
+			pin = GPIO_FUNC(0x3);
+			pin_ext = GPIO_FUNC(0x4);
+			drv = GPIO_DRV_2X;
 			break;
 		}
 		if ((flags & PINMUX_FLAG_8BIT_MODE) && !start_ext) {
@@ -86,20 +97,20 @@ int exynos_pinmux_config(enum periph_id peripheral, int flags)
 		}
 		if (flags & PINMUX_FLAG_8BIT_MODE) {
 			for (i = 3; i <= 6; i++) {
-				gpio_cfg_pin(start_ext + i, GPIO_FUNC(0x3));
+				gpio_cfg_pin(start_ext + i, pin_ext);
 				gpio_set_pull(start_ext + i, GPIO_PULL_UP);
-				gpio_set_drv(start_ext + i, GPIO_DRV_4X);
+				gpio_set_drv(start_ext + i, drv);
 			}
 		}
 		for (i = 0; i < 2; i++) {
-			gpio_cfg_pin(start + i, GPIO_FUNC(0x2));
+			gpio_cfg_pin(start + i, pin);
 			gpio_set_pull(start + i, GPIO_PULL_NONE);
-			gpio_set_drv(start + i, GPIO_DRV_4X);
+			gpio_set_drv(start + i, drv);
 		}
 		for (i = 3; i <= 6; i++) {
-			gpio_cfg_pin(start + i, GPIO_FUNC(0x2));
+			gpio_cfg_pin(start + i, pin);
 			gpio_set_pull(start + i, GPIO_PULL_UP);
-			gpio_set_drv(start + i, GPIO_DRV_4X);
+			gpio_set_drv(start + i, drv);
 		}
 		break;
 	case PERIPH_ID_SROMC:
