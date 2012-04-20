@@ -10,7 +10,6 @@
 
 #include <common.h>
 #include <cros/common.h>
-#include <cros/boot_device.h>
 #include <cros/cros_gpio.h>
 #include <vboot_api.h>
 
@@ -32,16 +31,5 @@ uint32_t VbExIsShutdownRequested(void)
 	 * Either the gpios don't exist, or the lid is up and and power button
 	 * is not pressed. No-Shutdown-Requested.
 	 */
-	return 0;
-}
-
-int vbexport_init(void)
-{
-	int err = boot_device_init();
-
-	if (err) {
-		printf("vbexport_init: boot devices probe failed\n");
-		return -1;
-	}
 	return 0;
 }

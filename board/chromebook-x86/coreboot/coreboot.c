@@ -38,6 +38,7 @@
 #include <asm/arch-coreboot/sysinfo.h>
 #include <coreboot_timestamp.h>
 #include <cros/common.h>
+#include <cros/cros_init.h>
 #include <cros/crossystem_data.h>
 #include <cros/cros_fdtdec.h>
 #include <cros/firmware_storage.h>
@@ -105,7 +106,7 @@ int board_early_init_r(void)
 	gd->fdt_blob = dtb;
 cbfs_failed:
 #endif /* CONFIG_CMD_CBFS && CONFIG_OF_CONTROL */
-	return vbexport_init();
+	return cros_init();
 }
 
 void show_boot_progress(int val)

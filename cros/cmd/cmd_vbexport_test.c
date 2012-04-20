@@ -17,6 +17,7 @@
 #include <common.h>
 #include <command.h>
 #include <gbb_header.h>
+#include <cros/cros_init.h>
 #include <cros/firmware_storage.h>
 #include <cros/gbb.h>
 
@@ -564,7 +565,7 @@ static int do_vbexport_test_all(cmd_tbl_t *cmdtp, int flag,
 static int do_vbexport_init(cmd_tbl_t *cmdtp, int flag,
 		int argc, char * const argv[])
 {
-	return vbexport_init();
+	return cros_init();
 }
 
 static cmd_tbl_t cmd_vbexport_test_sub[] = {
@@ -604,7 +605,7 @@ static int do_vbexport_test(cmd_tbl_t *cmdtp, int flag,
 
 U_BOOT_CMD(vbexport_test, CONFIG_SYS_MAXARGS, 1, do_vbexport_test,
 	"Perform tests for vboot_wrapper",
-	"init - initialize vbexport\n"
+	"init - initialize cros library\n"
 	"vbexport_test all - perform all tests\n"
 	"vbexport_test debug - test the debug function\n"
 	"vbexport_test malloc - test the malloc and free functions\n"

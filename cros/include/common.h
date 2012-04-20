@@ -46,13 +46,7 @@ enum {
 /* this function is implemented along with vboot_api */
 int display_clear(void);
 
-/* set up the vbexport library */
-int vbexport_init(void);
-
 /* put this prototype here for now */
 unsigned timer_get_us(void);
-
-/* this function is implemented along with vboot_api */
-int display_clear(void);
 
 #endif /* CHROMEOS_COMMON_H_ */
