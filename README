@@ -1267,6 +1267,11 @@ The following options need to be configured:
 		Export function i8042_kbd_init, i8042_tstc and i8042_getc
 		for cfb_console. Supports cursor blinking.
 
+		CONFIG_MKBP_KEYB
+		Enables a Chrome OS keyboard using the MKBP interface.
+		This uses MKBP to communicate with a second microcontroller
+		which provides key scans on request.
+
 - Video support:
 		CONFIG_VIDEO
 
