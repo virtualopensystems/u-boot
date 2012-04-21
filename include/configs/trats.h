@@ -32,6 +32,7 @@
  */
 #define CONFIG_SAMSUNG		/* in a SAMSUNG core */
 #define CONFIG_S5P		/* which is in a S5P Family */
+#define CONFIG_EXYNOS4		/* which is in a Exynos4 Family */
 #define CONFIG_EXYNOS4210	/* which is in a EXYNOS4210 */
 #define CONFIG_TRATS		/* working with TRATS */
 
