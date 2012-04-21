@@ -36,31 +36,65 @@
 #define RATE_MASK(x)		(0x1 << (x + 16))
 #define RATE_SET(x)		(0x1 << (x + 16))
 
-static struct s5p_gpio_bank *gpio_get_bank(unsigned gpio)
-{
-	int bank_offset;
+struct gpio_info {
+	unsigned int reg_addr;	/* Address of register for this part */
+	unsigned int max_gpio;	/* Maximum GPIO in this part */
+};
 
-	if (gpio < GPIO_MAX_PORT_PART_1) {
-		if (gpio > GPIO_Y67)
-			gpio = gpio + (0x4c * GPIO_PER_BANK);
-		bank_offset = gpio / GPIO_PER_BANK;
-		return (struct s5p_gpio_bank *)(EXYNOS5_GPIO_PART1_BASE +
-				(bank_offset * sizeof(struct s5p_gpio_bank)));
-	} else if (gpio < GPIO_MAX_PORT_PART_1_2) {
-		bank_offset = (gpio - GPIO_MAX_PORT_PART_1) / GPIO_PER_BANK;
-		return (struct s5p_gpio_bank *)(EXYNOS5_GPIO_PART2_BASE +
-				(bank_offset * sizeof(struct s5p_gpio_bank)));
-	} else if (gpio < GPIO_MAX_PORT_PART_1_2_3) {
-		if (gpio > GPIO_V37)
-			gpio = gpio + (0x20 * GPIO_PER_BANK);
-		bank_offset = (gpio - GPIO_MAX_PORT_PART_1_2) / GPIO_PER_BANK;
-		return (struct s5p_gpio_bank *)(EXYNOS5_GPIO_PART3_BASE +
-				(bank_offset * sizeof(struct s5p_gpio_bank)));
+#ifdef CONFIG_EXYNOS5
+
+static const struct gpio_info gpio_data[EXYNOS_GPIO_NUM_PARTS] = {
+	{ EXYNOS5_GPIO_PART1_BASE, GPIO_MAX_PORT_PART_1 },
+	{ EXYNOS5_GPIO_PART2_BASE, GPIO_MAX_PORT_PART_2 },
+	{ EXYNOS5_GPIO_PART3_BASE, GPIO_MAX_PORT_PART_3 },
+	{ EXYNOS5_GPIO_PART4_BASE, GPIO_MAX_PORT_PART_4 },
+	{ EXYNOS5_GPIO_PART5_BASE, GPIO_MAX_PORT_PART_5 },
+	{ EXYNOS5_GPIO_PART6_BASE, GPIO_MAX_PORT },
+};
+
+#define HAVE_GENERIC_GPIO
+
+#elif defined(CONFIG_EXYNOS4)
+
+static const struct gpio_info gpio_data[EXYNOS_GPIO_NUM_PARTS] = {
+	{ EXYNOS4_GPIO_PART1_BASE, GPIO_MAX_PORT_PART_1 },
+	{ EXYNOS4_GPIO_PART2_BASE, GPIO_MAX_PORT_PART_2 },
+	{ EXYNOS4_GPIO_PART3_BASE, GPIO_MAX_PORT_PART_3 },
+};
+
+#define HAVE_GENERIC_GPIO
+
+#endif
+
+/* This macro gets gpio pin offset from 0..7 */
+#define GPIO_BIT(x)     ((x) & 0x7)
+
+#ifdef HAVE_GENERIC_GPIO
+static struct s5p_gpio_bank *gpio_get_bank(unsigned int gpio)
+{
+	const struct gpio_info *data;
+	unsigned int upto;
+	int i;
+
+	for (i = upto = 0, data = gpio_data; i < EXYNOS_GPIO_NUM_PARTS;
+			i++, upto = data->max_gpio, data++) {
+		if (gpio < data->max_gpio) {
+			struct s5p_gpio_bank *bank;
+
+			bank = (struct s5p_gpio_bank *)data->reg_addr;
+			bank += (gpio - upto) / GPIO_PER_BANK;
+			return bank;
+		}
 	}
 
+#ifndef CONFIG_SPL_BUILD
+	assert(gpio < GPIO_MAX_PORT);	/* ...which it will not be */
+#endif
 	return NULL;
 }
+#endif
 
+/* TODO: Deprecation this interface in favour of asm-generic/gpio.h */
 void s5p_gpio_cfg_pin(struct s5p_gpio_bank *bank, int gpio, int cfg)
 {
 	unsigned int value;
@@ -167,20 +201,13 @@ void s5p_gpio_set_rate(struct s5p_gpio_bank *bank, int gpio, int mode)
 	writel(value, &bank->drv);
 }
 
-struct s5p_gpio_bank *s5p_gpio_get_bank(unsigned gpio)
-{
-	int bank = gpio / GPIO_PER_BANK;
-	bank *= sizeof(struct s5p_gpio_bank);
-
-	return (struct s5p_gpio_bank *) (s5p_gpio_base(gpio) + bank);
-}
-
 int s5p_gpio_get_pin(unsigned gpio)
 {
 	return gpio % GPIO_PER_BANK;
 }
 
-/* Common GPIO API */
+/* Common GPIO API - only available on Exynos5 */
+#ifdef HAVE_GENERIC_GPIO
 
 void gpio_cfg_pin(int gpio, int cfg)
 {
@@ -310,3 +337,56 @@ int gpio_set_value(unsigned gpio, int value)
 
 	return 0;
 }
+#else
+
+/*
+ * If we have the old-style GPIO numbering setup, use these functions
+ * which don't necessary provide sequentially increasing GPIO numbers.
+ */
+static struct s5p_gpio_bank *s5p_gpio_get_bank(unsigned gpio)
+{
+	int bank = gpio / GPIO_PER_BANK;
+	bank *= sizeof(struct s5p_gpio_bank);
+
+	return (struct s5p_gpio_bank *) (s5p_gpio_base(gpio) + bank);
+}
+
+int gpio_request(unsigned gpio, const char *label)
+{
+	return 0;
+}
+
+int gpio_free(unsigned gpio)
+{
+	return 0;
+}
+
+int gpio_direction_input(unsigned gpio)
+{
+	s5p_gpio_direction_input(s5p_gpio_get_bank(gpio),
+				s5p_gpio_get_pin(gpio));
+	return 0;
+}
+
+int gpio_direction_output(unsigned gpio, int value)
+{
+	s5p_gpio_direction_output(s5p_gpio_get_bank(gpio),
+				 s5p_gpio_get_pin(gpio), value);
+	return 0;
+}
+
+int gpio_get_value(unsigned gpio)
+{
+	return (int) s5p_gpio_get_value(s5p_gpio_get_bank(gpio),
+				       s5p_gpio_get_pin(gpio));
+}
+
+int gpio_set_value(unsigned gpio, int value)
+{
+	s5p_gpio_set_value(s5p_gpio_get_bank(gpio),
+			  s5p_gpio_get_pin(gpio), value);
+
+	return 0;
+}
+
+#endif /* HAVE_GENERIC_GPIO */

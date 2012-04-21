@@ -45,14 +45,16 @@ struct exynos5_gpio_part1 {
 	struct s5p_gpio_bank y4;
 	struct s5p_gpio_bank y5;
 	struct s5p_gpio_bank y6;
-	char res1[0x980];
+};
+
+struct exynos5_gpio_part2 {
 	struct s5p_gpio_bank x0;
 	struct s5p_gpio_bank x1;
 	struct s5p_gpio_bank x2;
 	struct s5p_gpio_bank x3;
 };
 
-struct exynos5_gpio_part2 {
+struct exynos5_gpio_part3 {
 	struct s5p_gpio_bank e0;
 	struct s5p_gpio_bank e1;
 	struct s5p_gpio_bank f0;
@@ -64,63 +66,30 @@ struct exynos5_gpio_part2 {
 	struct s5p_gpio_bank h1;
 };
 
-struct exynos5_gpio_part3 {
+struct exynos5_gpio_part4 {
 	struct s5p_gpio_bank v0;
 	struct s5p_gpio_bank v1;
 	struct s5p_gpio_bank v2;
 	struct s5p_gpio_bank v3;
-	struct s5p_gpio_bank res1[0x20];
+};
+
+struct exynos5_gpio_part5 {
 	struct s5p_gpio_bank v4;
 };
 
-struct exynos5_gpio_part4 {
+struct exynos5_gpio_part6 {
 	struct s5p_gpio_bank z;
 };
 
-#define exynos5_gpio_part1_get_nr(bank, pin) \
-	((((((unsigned int) &(((struct exynos5_gpio_part1 *) \
-			       EXYNOS5_GPIO_PART1_BASE)->bank)) \
-	    - EXYNOS5_GPIO_PART1_BASE) / sizeof(struct s5p_gpio_bank)) \
-	  * GPIO_PER_BANK) + pin)
+enum {
+	/* GPIO banks are split into this many parts */
+	EXYNOS_GPIO_NUM_PARTS		= 6
+};
 
-#define EXYNOS5_GPIO_PART1_MAX ((sizeof(struct exynos5_gpio_part1) \
-			    / sizeof(struct s5p_gpio_bank)) * GPIO_PER_BANK)
-
-#define exynos5_gpio_part2_get_nr(bank, pin) \
-	(((((((unsigned int) &(((struct exynos5_gpio_part2 *) \
-				EXYNOS5_GPIO_PART2_BASE)->bank)) \
-	    - EXYNOS5_GPIO_PART2_BASE) / sizeof(struct s5p_gpio_bank)) \
-	  * GPIO_PER_BANK) + pin) + EXYNOS5_GPIO_PART1_MAX)
-
-#define EXYNOS5_GPIO_PART2_MAX ((sizeof(struct exynos5_gpio_part2) \
-			    / sizeof(struct s5p_gpio_bank)) * GPIO_PER_BANK)
-
-#define exynos5_gpio_part3_get_nr(bank, pin) \
-	(((((((unsigned int) &(((struct exynos5_gpio_part3 *) \
-				EXYNOS5_GPIO_PART3_BASE)->bank)) \
-	    - EXYNOS5_GPIO_PART3_BASE) / sizeof(struct s5p_gpio_bank)) \
-	  * GPIO_PER_BANK) + pin) + EXYNOS5_GPIO_PART2_MAX)
-
-#define EXYNOS5_GPIO_PART3_MAX	((sizeof(struct exynos5_gpio_part3) \
-				/ sizeof(struct s5p_gpio_bank)) * GPIO_PER_BANK)
-
-/* This macro gets gpio pin offset from 0..7 */
-#define GPIO_BIT(x)     ((x) & 0x7)
-
-static inline unsigned int s5p_gpio_base(int nr)
-{
-	if (!cpu_is_exynos5())
-		return 0;
-	else if (nr < EXYNOS5_GPIO_PART1_MAX)
-			return EXYNOS5_GPIO_PART1_BASE;
-	else if (nr < EXYNOS5_GPIO_PART2_MAX)
-		return EXYNOS5_GPIO_PART2_BASE;
-	else
-		return EXYNOS5_GPIO_PART3_BASE;
-}
-
+/* A list of valid GPIO numbers for the asm-generic/gpio.h interface */
 enum exynos5_gpio_pin {
-	GPIO_A00,	/* GPIO_PART1_STARTS */
+	/* GPIO_PART1_STARTS */
+	GPIO_A00,
 	GPIO_A01,
 	GPIO_A02,
 	GPIO_A03,
@@ -280,7 +249,10 @@ enum exynos5_gpio_pin {
 	GPIO_Y65,
 	GPIO_Y66,
 	GPIO_Y67,
-	GPIO_X00,
+
+	/* GPIO_PART2_STARTS */
+	GPIO_MAX_PORT_PART_1,
+	GPIO_X00 = GPIO_MAX_PORT_PART_1,
 	GPIO_X01,
 	GPIO_X02,
 	GPIO_X03,
@@ -312,8 +284,10 @@ enum exynos5_gpio_pin {
 	GPIO_X35,
 	GPIO_X36,
 	GPIO_X37,
-	GPIO_MAX_PORT_PART_1,
-	GPIO_E00 = GPIO_MAX_PORT_PART_1,	/* GPIO_PART2_STARTS */
+
+	/* GPIO_PART3_STARTS */
+	GPIO_MAX_PORT_PART_2,
+	GPIO_E00 = GPIO_MAX_PORT_PART_2,
 	GPIO_E01,
 	GPIO_E02,
 	GPIO_E03,
@@ -385,8 +359,10 @@ enum exynos5_gpio_pin {
 	GPIO_H15,
 	GPIO_H16,
 	GPIO_H17,
-	GPIO_MAX_PORT_PART_1_2,
-	GPIO_V00 = GPIO_MAX_PORT_PART_1_2,	/* GPIO_PART3_STARTS */
+
+	/* GPIO_PART4_STARTS */
+	GPIO_MAX_PORT_PART_3,
+	GPIO_V00 = GPIO_MAX_PORT_PART_3,
 	GPIO_V01,
 	GPIO_V02,
 	GPIO_V03,
@@ -418,7 +394,10 @@ enum exynos5_gpio_pin {
 	GPIO_V35,
 	GPIO_V36,
 	GPIO_V37,
-	GPIO_V40,
+
+	/* GPIO_PART5_STARTS */
+	GPIO_MAX_PORT_PART_4,
+	GPIO_V40 = GPIO_MAX_PORT_PART_4,
 	GPIO_V41,
 	GPIO_V42,
 	GPIO_V43,
@@ -426,7 +405,17 @@ enum exynos5_gpio_pin {
 	GPIO_V45,
 	GPIO_V46,
 	GPIO_V47,
-	GPIO_MAX_PORT_PART_1_2_3
+
+	/* GPIO_PART6_STARTS */
+	GPIO_MAX_PORT_PART_5,
+	GPIO_Z0 = GPIO_MAX_PORT_PART_5,
+	GPIO_Z1,
+	GPIO_Z2,
+	GPIO_Z3,
+	GPIO_Z4,
+	GPIO_Z5,
+	GPIO_Z6,
+	GPIO_MAX_PORT
 };
 
 /**
