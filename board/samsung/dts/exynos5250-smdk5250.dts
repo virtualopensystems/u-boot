@@ -19,6 +19,11 @@
 	aliases {
 		serial0 = "/serial@12C30000";
 		sdmmc0 = "/sdhci@12220000";
+		spi0 = "/spi@12d20000";
+		spi1 = "/spi@12d30000";
+		spi2 = "/spi@12d40000";
+		spi3 = "/spi@131a0000";
+		spi4 = "/spi@131b0000";
 	};
 
 	serial@12C30000 {
