@@ -61,6 +61,8 @@ struct exynos4_gpio_part2 {
 	struct s5p_gpio_bank y5;
 	struct s5p_gpio_bank y6;
 	struct s5p_gpio_bank res1[80];
+
+	/* TODO(sjg@chromium.org): Split these into their own part */
 	struct s5p_gpio_bank x0;
 	struct s5p_gpio_bank x1;
 	struct s5p_gpio_bank x2;
@@ -69,6 +71,20 @@ struct exynos4_gpio_part2 {
 
 struct exynos4_gpio_part3 {
 	struct s5p_gpio_bank z;
+};
+
+enum {
+	/* GPIO banks are split into this many parts */
+	EXYNOS_GPIO_NUM_PARTS	= 3,
+	GPIO_MAX_PORT_PART_1	= sizeof(struct exynos4_gpio_part1) /
+					sizeof(struct s5p_gpio_bank),
+	GPIO_MAX_PORT_PART_2	= GPIO_MAX_PORT_PART_1 +
+					sizeof(struct exynos4_gpio_part2) /
+					sizeof(struct s5p_gpio_bank),
+	GPIO_MAX_PORT_PART_3	= GPIO_MAX_PORT_PART_2 +
+					sizeof(struct exynos4_gpio_part3) /
+					sizeof(struct s5p_gpio_bank),
+	GPIO_MAX_PORT		= GPIO_MAX_PORT_PART_3,
 };
 
 #define exynos4_gpio_part1_get_nr(bank, pin) \

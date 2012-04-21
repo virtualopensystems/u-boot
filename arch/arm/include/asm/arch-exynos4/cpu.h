@@ -53,6 +53,8 @@
 
 #define EXYNOS4_GPIO_PART4_BASE		DEVICE_NOT_AVAILABLE
 
+#define GPIO_NUM_PARTS			3
+
 /* Compatibility defines */
 #define EXYNOS_POWER_BASE               EXYNOS4_POWER_BASE
 
