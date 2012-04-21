@@ -69,7 +69,6 @@
 	};
 
 	sromc@12250000 {
-		compatible = "samsung,exynos-sromc";
 		bank = <3>;
 		srom-timing = <1 9 12 1 6 1 1>;
 		width = <2>;
