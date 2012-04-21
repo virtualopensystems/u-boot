@@ -25,6 +25,12 @@
  * These values come from arch/arm/include/arch-exynos5/periph.h. For
  * now they must be manually kept in sync.
  */
+/define/ PERIPH_ID_SDMMC0 <4>;
+/define/ PERIPH_ID_SDMMC1 <5>;
+/define/ PERIPH_ID_SDMMC2 <6>;
+/define/ PERIPH_ID_SDMMC3 <7>;
+/define/ PERIPH_ID_SDMMC4 <8>;
+
 /define/ PERIPH_ID_SPI0	<10>;
 /define/ PERIPH_ID_SPI1	<11>;
 /define/ PERIPH_ID_SPI2	<12>;
