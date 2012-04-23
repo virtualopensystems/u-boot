@@ -42,7 +42,7 @@ static struct s5p_gpio_bank *gpio_get_bank(unsigned gpio)
 
 	if (gpio < GPIO_MAX_PORT_PART_1) {
 		if (gpio > GPIO_Y67)
-			gpio = gpio + (0x980 * GPIO_PER_BANK);
+			gpio = gpio + (0x4c * GPIO_PER_BANK);
 		bank_offset = gpio / GPIO_PER_BANK;
 		return EXYNOS5_GPIO_PART1_BASE + (bank_offset *
 						sizeof(struct s5p_gpio_bank));
