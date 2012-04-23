@@ -23,9 +23,6 @@
 /* Use the default arch_phys_memset implementation */
 #define CONFIG_PHYSMEM
 
-/* We initialize Chrome OS -specific GPIOs here */
-#define CONFIG_MISC_INIT_R
-
 /* Delay console init until after relocation (saves boot time) */
 #define CONFIG_DELAY_CONSOLE
 
