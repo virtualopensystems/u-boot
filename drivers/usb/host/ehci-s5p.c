@@ -27,10 +27,22 @@
 #include <asm/arch/ehci-s5p.h>
 #include "ehci.h"
 
+int __board_usb_vbus_init(void)
+{
+	/* placeholder for board specific VBUS initialization */
+	return 0;
+}
+
+int board_usb_vbus_init(void)
+	__attribute__((weak, alias("__board_usb_vbus_init")));
+
 /* Setup the EHCI host controller. */
 static void setup_usb_phy(struct usb_phy *usb)
 {
 	unsigned int hostphy_ctrl0;
+
+	/* Enable VBUS */
+	board_usb_vbus_init();
 
 	power_enable_usb_phy();
 

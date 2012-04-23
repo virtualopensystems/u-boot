@@ -25,6 +25,7 @@
 #include <max77686.h>
 #include <netdev.h>
 #include <asm/arch/cpu.h>
+#include <asm/arch/ehci-s5p.h>
 #include <asm/arch/gpio.h>
 #include <asm/arch/mmc.h>
 #include <asm/arch/mshc.h>
@@ -140,6 +141,16 @@ int fdtdec_decode_memory(const void *blob, struct fdt_memory *config)
 	} else {
 		return -FDT_ERR_BADLAYOUT;
 	}
+
+	return 0;
+}
+
+int board_usb_vbus_init(void)
+{
+	/* Enable VBUS power switch */
+	gpio_direction_output(GPIO_X11, 1);
+	/* VBUS turn ON time */
+	mdelay(3);
 
 	return 0;
 }

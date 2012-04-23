@@ -60,4 +60,7 @@ struct usb_phy {
 	unsigned int usbotgtune;
 };
 
+/* Switch on the VBUS power. */
+int board_usb_vbus_init(void);
+
 #endif /* __ASM_ARM_ARCH_EXYNOS5_EHCI_S5P_H__ */
