@@ -38,6 +38,11 @@
 		machine-arch-id = <3774>;
 	};
 
+	chromeos-config {
+		/* TODO(clchiou): Add the rest of GPIOs */
+		recovery-switch = <&gpio 112 1>;
+	};
+
 	memory {
 		reg = <0x40000000 0x80000000>;
 	};
