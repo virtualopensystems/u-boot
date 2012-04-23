@@ -89,8 +89,8 @@ static int decode_block_lba(const void *blob, int offset, const char *path,
 	return 0;
 }
 
-int decode_firmware_entry(const char *blob, int fmap_offset, const char *name,
-		struct fmap_firmware_entry *entry)
+static int decode_firmware_entry(const char *blob, int fmap_offset,
+		const char *name, struct fmap_firmware_entry *entry)
 {
 	int err;
 
