@@ -177,6 +177,8 @@
 		};
 	};
 
+	gpio: gpio {};
+
 	gpio-controllers {
 		#address-cells = <1>;
 		#size-cells = <1>;
