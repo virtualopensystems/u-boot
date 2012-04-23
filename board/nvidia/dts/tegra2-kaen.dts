@@ -14,19 +14,14 @@
 		odmdata = <0x300d8011>;
 		hwid = "ARM KAEN TEST 3084";
 		machine-arch-id = <3217>;
+	};
 
-		/* Chrome OS specific GPIO */
-		/*
-		 * Parameter 3 bits
-		 * bit 0: 1=output, 0=input
-		 * bit 1: 1=high, 0=low
-		 * bit 2: 1=active low, 0=active high
-		 */
-		write-protect-switch	= <&gpio 59 4>;
-		recovery-switch		= <&gpio 56 4>;
+	chromeos-config {
+		write-protect-switch	= <&gpio 59 1>;
+		recovery-switch		= <&gpio 56 1>;
 		developer-switch	= <&gpio 168 0>;
-		lid-switch		= <&gpio 23 4>;
-		power-switch		= <&gpio 170 4>;
+		lid-switch		= <&gpio 23 1>;
+		power-switch		= <&gpio 170 1>;
 	};
 
 	chosen {
