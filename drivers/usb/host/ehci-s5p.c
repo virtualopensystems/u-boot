@@ -74,6 +74,9 @@ static void setup_usb_phy(struct usb_phy *usb)
 			EHCICTRL_ENAINCR4 |
 			EHCICTRL_ENAINCR8 |
 			EHCICTRL_ENAINCR16);
+
+	/* PHY clock and power setup time */
+	mdelay(50);
 }
 
 /* Reset the EHCI host controller. */
