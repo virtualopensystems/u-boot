@@ -28,6 +28,6 @@
 void spi_init(void);
 
 /* Init the I2C driver */
-void board_i2c_init(void);
+void board_i2c_init(const void *blob);
 
 #endif

@@ -23,28 +23,16 @@
 #ifndef _S3C24X0_I2C_H
 #define _S3C24X0_I2C_H
 
-/* I2C channels exynos5 has 8 i2c channel */
-#define I2C0		0
-#define I2C1		1
-#define I2C2		2
-#define I2C3		3
-#define I2C4		4
-#define I2C5		5
-#define I2C6		6
-#define I2C7		7
-
-#ifdef CONFIG_EXYNOS5
-#define CONFIG_MAX_I2C_NUM	8
-#else
-#define CONFIG_MAX_I2C_NUM	1
-#endif
-
 struct s3c24x0_i2c {
 	u32	iiccon;
 	u32	iicstat;
 	u32	iicadd;
 	u32	iicds;
 	u32	iiclc;
-	uchar	res1[0xffec];
+};
+
+struct s3c24x0_i2c_bus {
+	struct s3c24x0_i2c *regs;
+	enum periph_id id;
 };
 #endif /* _S3C24X0_I2C_H */

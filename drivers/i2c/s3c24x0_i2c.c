@@ -33,10 +33,9 @@
 #include <asm/arch/pinmux.h>
 
 #include <asm/io.h>
+#include <fdtdec.h>
 #include <i2c.h>
 #include "s3c24x0_i2c.h"
-
-/* TODO(crosbug.com/26861): Add back support of S3C24X0 via device tree. */
 
 #ifdef CONFIG_HARD_I2C
 
@@ -61,7 +60,8 @@
 #define I2C_TIMEOUT	1	/* 1 second */
 
 /* We should not rely on any particular ordering of these IDs */
-static enum periph_id periph_for_dev[] = {
+#ifndef CONFIG_OF_CONTROL
+static enum periph_id periph_for_dev[EXYNOS_I2C_MAX_CONTROLLERS] = {
 	PERIPH_ID_I2C0,
 	PERIPH_ID_I2C1,
 	PERIPH_ID_I2C2,
@@ -71,32 +71,31 @@ static enum periph_id periph_for_dev[] = {
 	PERIPH_ID_I2C6,
 	PERIPH_ID_I2C7,
 };
+#endif
 
 static unsigned int g_current_bus __attribute__((section(".data")));
 static struct s3c24x0_i2c *g_early_i2c_config __attribute__((section(".data")));
 
-static enum periph_id i2c_get_periph_id(unsigned dev_index)
-{
-	if (dev_index < ARRAY_SIZE(periph_for_dev))
-		return periph_for_dev[dev_index];
-	debug("%s: invalid bus %d", __func__, dev_index);
-	return PERIPH_ID_NONE;
-}
+static struct s3c24x0_i2c_bus i2c_bus[EXYNOS_I2C_MAX_CONTROLLERS];
+static int i2c_busses;
 
 void i2c_set_early_reg(unsigned int base)
 {
 	g_early_i2c_config = (struct s3c24x0_i2c *)base;
 }
 
-static struct s3c24x0_i2c *get_base_i2c(int bus_idx)
+static struct s3c24x0_i2c_bus *get_bus(int bus_idx)
 {
-	struct s3c24x0_i2c *i2c;
-
 	/* If an early i2c config exists we just use that */
-	if (g_early_i2c_config)
-		return g_early_i2c_config;
-	i2c = (struct s3c24x0_i2c *)samsung_get_base_i2c();
-	return &i2c[bus_idx];
+	if (g_early_i2c_config) {
+		i2c_bus[0].regs = g_early_i2c_config;
+		return &i2c_bus[0];
+	}
+
+	if (bus_idx < i2c_busses)
+		return &i2c_bus[bus_idx];
+	debug("Undefined bus: %d\n", bus_idx);
+	return NULL;
 }
 
 static inline struct exynos5_gpio_part1 *exynos_get_base_gpio1(void)
@@ -151,44 +150,71 @@ static void i2c_ch_init(struct s3c24x0_i2c *i2c, int speed, int slaveadd)
 	writel(I2C_MODE_MT | I2C_TXRX_ENA, &i2c->iicstat);
 }
 
-void board_i2c_init(void)
+void board_i2c_init(const void *blob)
 {
 	/*
 	 * Turn off the early i2c configuration and init the i2c properly,
 	 * this is done here to enable the use of i2c configs from FDT.
 	 */
 	i2c_set_early_reg(NULL);
-	i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
+
+#ifdef CONFIG_OF_CONTROL
+	int node_list[EXYNOS_I2C_MAX_CONTROLLERS];
+	int i, count;
+
+	count = fdtdec_find_aliases_for_id(blob, "i2c",
+		COMPAT_SAMSUNG_S3C2440_I2C, node_list,
+		EXYNOS_I2C_MAX_CONTROLLERS);
+
+	for (i = 0; i < count; i++) {
+		int node = node_list[i];
+		int bus_idx;
+
+		if (node < 0)
+			continue;
+		bus_idx = i2c_busses++;
+		i2c_bus[bus_idx].regs = (struct s3c24x0_i2c *)
+			fdtdec_get_addr(blob, node, "reg");
+		i2c_bus[bus_idx].id = (enum periph_id)
+			fdtdec_get_int(blob, node, "samsung,periph-id", -1);
+	}
+#else
+	int i;
+
+	for (i = 0; i < EXYNOS_I2C_MAX_CONTROLLERS; i++) {
+		uintptr_t reg_addr = samsung_get_base_i2c() +
+			EXYNOS_I2C_SPACING * i;
+
+		i2c_bus[i].regs = (struct s3c24x0_i2c_bus *)reg_addr;
+		i2c_bus[i].id = periph_for_dev[i];
+	}
+	i2c_busses = EXYNOS_I2C_MAX_CONTROLLERS;
+#endif
 }
 
 /*
  * MULTI BUS I2C support
  */
 #ifdef CONFIG_EXYNOS5
-static void i2c_bus_init(struct s3c24x0_i2c *i2c, unsigned int bus)
+static void i2c_bus_init(struct s3c24x0_i2c_bus *i2c, unsigned int bus)
 {
-	int periph_id = i2c_get_periph_id(bus);
+	exynos_pinmux_config(i2c->id, 0);
 
-	exynos_pinmux_config(periph_id, 0);
-
-	i2c_ch_init(i2c, CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
+	i2c_ch_init(i2c->regs, CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
 }
 #else
-static void i2c_bus_init(struct s3c24x0_i2c *i2c, unsigned int bus) {}
+static void i2c_bus_init(struct s3c24x0_i2c_bus *i2c, unsigned int bus) {}
 #endif
 
 #ifdef CONFIG_I2C_MULTI_BUS
 int i2c_set_bus_num(unsigned int bus)
 {
-	struct s3c24x0_i2c *i2c;
+	struct s3c24x0_i2c_bus *i2c;
 
-	if ((bus < 0) || (bus >= CONFIG_MAX_I2C_NUM)) {
-		debug("Bad bus: %d\n", bus);
+	i2c = get_bus(bus);
+	if (!i2c)
 		return -1;
-	}
-
 	g_current_bus = bus;
-	i2c = get_base_i2c(g_current_bus);
 	i2c_bus_init(i2c, g_current_bus);
 
 	return 0;
@@ -210,7 +236,7 @@ unsigned int i2c_get_bus_num(void)
  *		I2C_NACK otherwise
  */
 static int i2c_send_verify(struct s3c24x0_i2c *i2c, unsigned char buf[],
-							unsigned char len)
+			   unsigned char len)
 {
 	int i, result = I2C_OK;
 
@@ -231,20 +257,22 @@ static int i2c_send_verify(struct s3c24x0_i2c *i2c, unsigned char buf[],
 
 void i2c_init(int speed, int slaveadd)
 {
-	struct s3c24x0_i2c *i2c;
+	struct s3c24x0_i2c_bus *i2c;
 	struct exynos5_gpio_part1 *gpio;
 	int i;
 
 	/* By default i2c channel 0 is the current bus */
-	g_current_bus = I2C0;
+	g_current_bus = 0;
 
-	i2c = get_base_i2c(g_current_bus);
+	i2c = get_bus(g_current_bus);
+	if (!i2c)
+		return;
 
 	i2c_bus_init(i2c, g_current_bus);
 
 	/* wait for some time to give previous transfer a chance to finish */
 	i = I2C_TIMEOUT * 1000;
-	while ((readl(&i2c->iicstat) & I2CSTAT_BSY) && (i > 0)) {
+	while ((readl(&i2c->regs->iicstat) & I2CSTAT_BSY) && (i > 0)) {
 		udelay(1000);
 		i--;
 	}
@@ -252,7 +280,7 @@ void i2c_init(int speed, int slaveadd)
 	gpio = exynos_get_base_gpio1();
 	writel((readl(&gpio->b3.con) & ~0x00FF) | 0x0022, &gpio->b3.con);
 
-	i2c_ch_init(i2c, speed, slaveadd);
+	i2c_ch_init(i2c->regs, speed, slaveadd);
 }
 
 /*
@@ -384,10 +412,12 @@ static int i2c_transfer(struct s3c24x0_i2c *i2c,
 
 int i2c_probe(uchar chip)
 {
-	struct s3c24x0_i2c *i2c;
+	struct s3c24x0_i2c_bus *i2c;
 	uchar buf[1];
 
-	i2c = get_base_i2c(g_current_bus);
+	i2c = get_bus(g_current_bus);
+	if (!i2c)
+		return -1;
 	buf[0] = 0;
 
 	/*
@@ -395,12 +425,13 @@ int i2c_probe(uchar chip)
 	 * address was <ACK>ed (i.e. there was a chip at that address which
 	 * drove the data line low).
 	 */
-	return i2c_transfer(i2c, I2C_READ, chip << 1, 0, 0, buf, 1) != I2C_OK;
+	return i2c_transfer(i2c->regs, I2C_READ, chip << 1, 0, 0, buf, 1) !=
+			    I2C_OK;
 }
 
 int i2c_read(uchar chip, uint addr, int alen, uchar *buffer, int len)
 {
-	struct s3c24x0_i2c *i2c;
+	struct s3c24x0_i2c_bus *i2c;
 	uchar xaddr[4];
 	int ret;
 
@@ -432,9 +463,11 @@ int i2c_read(uchar chip, uint addr, int alen, uchar *buffer, int len)
 		chip |= ((addr >> (alen * 8)) &
 			 CONFIG_SYS_I2C_EEPROM_ADDR_OVERFLOW);
 #endif
-	i2c = get_base_i2c(g_current_bus);
-	ret = i2c_transfer(i2c, I2C_READ, chip << 1, &xaddr[4 - alen], alen,
-			buffer, len);
+	i2c = get_bus(g_current_bus);
+	if (!i2c)
+		return -1;
+	ret = i2c_transfer(i2c->regs, I2C_READ, chip << 1, &xaddr[4 - alen],
+			   alen, buffer, len);
 	if (ret) {
 		debug("I2c read: failed %d\n", ret);
 		return 1;
@@ -444,7 +477,7 @@ int i2c_read(uchar chip, uint addr, int alen, uchar *buffer, int len)
 
 int i2c_write(uchar chip, uint addr, int alen, uchar *buffer, int len)
 {
-	struct s3c24x0_i2c *i2c;
+	struct s3c24x0_i2c_bus *i2c;
 	uchar xaddr[4];
 
 	if (alen > 4) {
@@ -474,10 +507,12 @@ int i2c_write(uchar chip, uint addr, int alen, uchar *buffer, int len)
 		chip |= ((addr >> (alen * 8)) &
 			 CONFIG_SYS_I2C_EEPROM_ADDR_OVERFLOW);
 #endif
-	i2c = get_base_i2c(g_current_bus);
+	i2c = get_bus(g_current_bus);
+	if (!i2c)
+		return -1;
 	return (i2c_transfer
-		(i2c, I2C_WRITE, chip << 1, &xaddr[4 - alen], alen, buffer,
-		 len) != 0);
+		(i2c->regs, I2C_WRITE, chip << 1, &xaddr[4 - alen], alen,
+		 buffer, len) != 0);
 }
 
 #endif /* CONFIG_HARD_I2C */

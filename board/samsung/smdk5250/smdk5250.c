@@ -189,7 +189,7 @@ int board_init(void)
 	spi_init();
 #endif
 
-	board_i2c_init();
+	board_i2c_init(gd->fdt_blob);
 
 /* Enable power for LCD */
 #ifdef CONFIG_TPS65090_POWER
