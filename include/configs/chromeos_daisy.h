@@ -12,6 +12,10 @@
 #undef CONFIG_DEFAULT_DEVICE_TREE
 #define CONFIG_DEFAULT_DEVICE_TREE      exynos5250-daisy
 
+/* Generally verified boot needs more heap space */
+#undef CONFIG_SYS_MALLOC_LEN
+#define CONFIG_SYS_MALLOC_LEN	(32 << 20)
+
 #define CONFIG_INITRD_ADDRESS 0x42000000
 
 #include <configs/chromeos.h>
