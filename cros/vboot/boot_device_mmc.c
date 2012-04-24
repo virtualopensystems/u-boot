@@ -10,6 +10,7 @@
 
 #include <common.h>
 #include <mmc.h>
+#include <cros/common.h>
 #include <cros/boot_device.h>
 
 static int boot_device_mmc_start(uint32_t disk_flags)
@@ -31,16 +32,25 @@ static int boot_device_mmc_scan(block_dev_desc_t **desc, int max_devs,
 		if (!mmc)
 			break;
 
+		/* Set has_init to false so that we can rescan it. */
+		mmc->has_init = 0;
+
 		/* Skip device that don't match or cannot be initialized */
-		if (boot_device_matches(&mmc->block_dev, disk_flags, &flags) &&
-				mmc_init(mmc) == 0) {
-			/*
-			* find_mmc_device() returns a pointer from a global
-			* linked list. So &mmc->block_dev is not a dangling
-			* pointer after this function is returned.
-			*/
-			desc[found++] = &mmc->block_dev;
+		if (mmc_init(mmc)) {
+			VBDEBUG("mmc_init fail\n");
+			continue;
 		}
+		if (!boot_device_matches(&mmc->block_dev, disk_flags, &flags)) {
+			VBDEBUG("device does not match\n");
+			continue;
+		}
+
+		/*
+		 * find_mmc_device() returns a pointer from a global
+		 * linked list. So &mmc->block_dev is not a dangling
+		 * pointer after this function is returned.
+		 */
+		desc[found++] = &mmc->block_dev;
 	}
 	return found;
 }
