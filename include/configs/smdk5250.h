@@ -161,8 +161,8 @@
 	"bootm ${loadaddr}; " \
 	""
 
-/* Will get defined by the script script_generate_bootargs */
-#define CONFIG_BOOTARGS	"*** please edit script_generate_bootargs ***"
+/* Define a basic bootargs for CHROMEOS_BOOTARGS */
+#define CONFIG_BOOTARGS "console=ttySAC3," STRINGIFY(CONFIG_BAUDRATE)
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	SCRIPT_GENERATE_BOOTARGS \
