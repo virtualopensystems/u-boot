@@ -42,8 +42,10 @@ int cros_gpio_init(void)
 		return -1;
 
 	for (i = 0; i < CROS_GPIO_MAX_GPIO; i++) {
-		if (fdtdec_decode_gpio(blob, config, gpio_name[i], &gs))
-			return -1;
+		if (fdtdec_decode_gpio(blob, config, gpio_name[i], &gs)) {
+			VBDEBUG("decoding GPIO failed: %s\n", gpio_name[i]);
+			continue;
+		}
 		fdtdec_setup_gpio(&gs);
 		if (fdt_gpio_isvalid(&gs))
 			gpio_direction_input(gs.gpio);
