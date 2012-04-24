@@ -705,8 +705,8 @@ twostop_main_firmware(struct twostop_fmap *fmap, void *gbb,
 #ifdef VBOOT_DEBUG
 	int i;
 	for (i = 0; i < 16; i++)
-		VBDEBUG(" %02x", kparams.partition_guid[i]);
-	VBDEBUG("\n");
+		VbExDebug(" %02x", kparams.partition_guid[i]);
+	VbExDebug("\n");
 #endif /* VBOOT_DEBUG */
 
 	crossystem_data_dump(cdata);
