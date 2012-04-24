@@ -40,6 +40,9 @@
 /* Keep L2 Cache Disabled */
 #define CONFIG_SYS_DCACHE_OFF
 
+#define CONFIG_CMD_SHA256
+#define CONFIG_EXYNOS_ACE_SHA
+
 #define CONFIG_SYS_SDRAM_BASE		0x40000000
 #define CONFIG_SYS_TEXT_BASE		0x43e00000
 
