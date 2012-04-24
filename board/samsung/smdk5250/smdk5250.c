@@ -187,6 +187,8 @@ int board_init(void)
 	spi_init();
 #endif
 
+	exynos_i2c_init(gd->fdt_blob);
+
 	if (max77686_enable_32khz_cp()) {
 		debug("%s: Failed to enable max77686 32khz coprocessor clock\n",
 				 __func__);
