@@ -19,6 +19,8 @@
 
 #include <vboot_api.h>
 
+enum { CROS_32BIT_ENTRY_ADDR = 0x100000 };
+
 #ifdef CONFIG_OF_UPDATE_FDT_BEFORE_BOOT
 /*
  * We uses a static variable to communicate with fit_update_fdt_before_boot().
@@ -44,13 +46,15 @@ int do_bootm(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);
  * image. This function calculates the address of the command line from the
  * bootloader address.
  *
- * @param bootloader_address is the address of the bootloader in the buffer
+ * @param kernel_buffer		Address of kernel buffer in memory
+ * @param bootloader_offset	Offset of bootloader in kernel_buffer
  * @return kernel config address
  */
-static char *get_kernel_config(char *bootloader_address)
+static char *get_kernel_config(void *kernel_buffer, size_t bootloader_offset)
 {
 	/* Use the bootloader address to find the kernel config location. */
-	return bootloader_address - CROS_PARAMS_SIZE - CROS_CONFIG_SIZE;
+	return kernel_buffer + bootloader_offset -
+		(CROS_PARAMS_SIZE + CROS_CONFIG_SIZE);
 }
 
 static uint32_t get_dev_num(const block_dev_desc_t *dev)
@@ -219,12 +223,23 @@ int boot_kernel(VbSelectAndLoadKernelParams *kparams, crossystem_data_t *cdata)
 	strcpy(cmdline_buf, CHROMEOS_BOOTARGS);
 
 	/*
-	 * casting bootloader_address of uint64_t type to uintptr_t before
-	 * further casting it to char * to avoid compiler warning "cast to
-	 * pointer from integer of different size" on 32-bit address machine.
+	 * bootloader_address is the offset in kernel image plus kernel body
+	 * load address; so subtrate this address from bootloader_address and
+	 * you have the offset.
+	 *
+	 * Note that kernel body load address is kept in kernel preamble but
+	 * actually serves no real purpose; for one, kernel buffer is not
+	 * always allocated at that address (nor even recommended to be).
+	 *
+	 * Because this address does not effect kernel buffer location (or in
+	 * fact anything else), the current consensus is not to adjust this
+	 * address on a per-board basis.
+	 *
+	 * If for any unforeseeable reason this address is going to be not
+	 * CROS_32BIT_ENTRY_ADDR=0x100000, please also update codes here.
 	 */
-	cmdline = get_kernel_config((char *)
-			(uintptr_t)kparams->bootloader_address);
+	cmdline = get_kernel_config(kparams->kernel_buffer,
+			kparams->bootloader_address - CROS_32BIT_ENTRY_ADDR);
 	/*
 	 * strncat could write CROS_CONFIG_SIZE + 1 bytes to cmdline_buf. This
 	 * is okay because the extra 1 byte has been reserved in sizeof().
