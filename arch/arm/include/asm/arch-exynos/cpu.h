@@ -40,6 +40,8 @@
 
 #define EXYNOS_IRAM_SECONDARY_BASE	0x02020018
 
+#define EXYNOS_I2C_SPACING		0x10000
+
 #ifndef __ASSEMBLY__
 #include <asm/io.h>
 
