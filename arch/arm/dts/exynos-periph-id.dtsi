@@ -30,3 +30,12 @@
 /define/ PERIPH_ID_SPI2	<12>;
 /define/ PERIPH_ID_SPI3	<13>;
 /define/ PERIPH_ID_SPI4	<14>;
+
+/define/ PERIPH_ID_I2C0 <17>;
+/define/ PERIPH_ID_I2C1 <18>;
+/define/ PERIPH_ID_I2C2 <19>;
+/define/ PERIPH_ID_I2C3 <20>;
+/define/ PERIPH_ID_I2C4 <21>;
+/define/ PERIPH_ID_I2C5 <22>;
+/define/ PERIPH_ID_I2C6 <23>;
+/define/ PERIPH_ID_I2C7 <24>;
