@@ -40,9 +40,8 @@
 #define CONFIG_DIRECT_BOOTARGS \
 	"console=ttySAC3," STRINGIFY(CONFIG_BAUDRATE) " debug earlyprintk"
 
-/* TODO(clchiou): Provide actual value to it later */
 /* Standard input, output and error device of U-Boot console. */
-#define CONFIG_STD_DEVICES_SETTINGS ""
+#define CONFIG_STD_DEVICES_SETTINGS 	EXYNOS_DEVICE_SETTINGS
 
 #define CONFIG_CHROMEOS_SD_TO_SPI \
 	"sd_to_spi=echo Flashing U-Boot from SD card to SPI flash; " \

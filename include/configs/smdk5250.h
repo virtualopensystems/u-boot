@@ -136,6 +136,18 @@
 #define CONFIG_ENV_SROM_BANK		1
 #endif
 
+/* Enable keyboard */
+#define CONFIG_MKBP		/* MKBP protocol */
+#define CONFIG_MKBP_KEYB	/* MKBP keyboard input */
+#define CONFIG_CMD_MKBP
+#define CONFIG_KEYBOARD
+#define CONFIG_CONSOLE_MUX
+#define CONFIG_SYS_CONSOLE_IS_IN_ENV
+
+#define EXYNOS_DEVICE_SETTINGS	"stdin=serial,mkbp-keyb\0" \
+					"stdout=serial\0" \
+					"stderr=serial\0"
+
 /* Don't load kernel at the very bottom of ram so that it has room when
  * it relocates down. */
 #define CONFIG_LOADADDR			0x42000000
@@ -167,6 +179,7 @@
 #define CONFIG_BOOTARGS "console=ttySAC3," STRINGIFY(CONFIG_BAUDRATE)
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
+	EXYNOS_DEVICE_SETTINGS \
 	SCRIPT_GENERATE_BOOTARGS \
 	\
 	"boot_udevnum=0\0" \
