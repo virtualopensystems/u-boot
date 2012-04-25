@@ -54,6 +54,21 @@
 			required;
 		};
 
+		ro-fmap {
+			label = "fmap";
+
+			/* We encourage to align FMAP partition in as large
+			 * block as possible so that flashrom can find it soon.
+			 * For example, aligning to 512KB is better than to
+			 * 256KB. */
+
+			reg = <0x00080000 0x00001000>;
+			read-only;
+			type = "fmap";
+			ver-major = <1>;
+			ver-minor = <0>;
+		};
+
                 /* ---- Section: Vital-product data (VPD) ---- */
 		ro-vpd {
 			label = "ro-vpd";
