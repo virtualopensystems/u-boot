@@ -24,7 +24,9 @@ struct fmap_firmware_entry {
 	struct fmap_entry boot;		/* U-Boot */
 	struct fmap_entry vblock;
 	struct fmap_entry firmware_id;
-	uint64_t block_lba;
+
+	/* The offset of the first block of R/W firmware when stored on disk */
+	uint64_t block_offset;
 };
 
 /*

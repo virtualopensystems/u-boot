@@ -25,7 +25,7 @@ dump_fmap_firmware_entry(const char *name, struct fmap_firmware_entry *entry)
 	dump_fmap_entry("boot", &entry->boot);
 	dump_fmap_entry("vblock", &entry->vblock);
 	dump_fmap_entry("firmware_id", &entry->firmware_id);
-	VBDEBUG("%-20s %08llx\n", "LBA", entry->block_lba);
+	VBDEBUG("%-20s %08llx\n", "block_offset", entry->block_offset);
 }
 
 void

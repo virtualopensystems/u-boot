@@ -70,22 +70,22 @@ static int decode_fmap_entry(const void *blob, int offset, const char *base,
 	return 0;
 }
 
-static int decode_block_lba(const void *blob, int offset, const char *path,
+static int decode_block_offset(const void *blob, int offset, const char *path,
 		uint64_t *out)
 {
-	int length;
-	uint32_t *property;
+	uint64_t val;
 
 	offset = relpath_offset(blob, offset, path);
 	if (offset < 0)
 		return offset;
 
-	property = (uint32_t *)fdt_getprop(blob, offset, "block-lba", &length);
-	if (!property) {
-		VBDEBUG("failed to load LBA '%s/block-lba'\n", path);
-		return -FDT_ERR_MISSING;
+	val = fdtdec_get_uint64(blob, offset, "block-offset", ~0ULL);
+	if (val == ~0ULL) {
+		VBDEBUG("fail to decode block-offset\n");
+		return -1;
 	}
-	*out = fdt32_to_cpu(*property);
+
+	*out = val;
 	return 0;
 }
 
@@ -99,7 +99,8 @@ static int decode_firmware_entry(const char *blob, int fmap_offset,
 			&entry->vblock);
 	err |= decode_fmap_entry(blob, fmap_offset, name, "firmware-id",
 			&entry->firmware_id);
-	err |= decode_block_lba(blob, fmap_offset, name, &entry->block_lba);
+	err |= decode_block_offset(blob, fmap_offset, name,
+			&entry->block_offset);
 	return err;
 }
 
