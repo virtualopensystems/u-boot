@@ -17,7 +17,7 @@
 
 / {
 	model = "Daisy Board based on Exynos5250";
-	compatible = "samsung,daisy", "samsung,exynos5250";
+	compatible = "google,daisy", "samsung,exynos5250";
 
 	aliases {
 		serial0 = "/serial@12C30000";
