@@ -11,12 +11,21 @@
 /* Implementation of per-board power management function */
 
 #include <common.h>
+#include <asm/arch/cpu.h>
 #include <cros/power_management.h>
 
 int is_processor_reset(void)
 {
-	/* TODO(chromium-os:28077) Implement is_processor_reset */
-	return 0;
+	static uint8_t inited, is_reset;
+	uint32_t marker_value;
+
+	if (!inited) {
+		marker_value = exynos5_read_and_clear_spl_marker();
+		is_reset = marker_value == EXYNOS5_SPL_MARKER;
+		inited = 1;
+	}
+
+	return is_reset;
 }
 
 /* This function never returns */

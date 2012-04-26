@@ -34,6 +34,14 @@ lowlevel_init:
 
 	/* use iRAM stack in bl2 */
 	ldr	sp, =CONFIG_IRAM_STACK
+#if defined(CONFIG_SPL_BUILD)
+	/* In SPL, write a special marker value at the bottom of IRAM stack */
+	ldr	r0, =EXYNOS5_SPL_MARKER
+	stmdb	r13!, {r0}
+#else
+	/* Otherwise, leave the marker value untouched */
+	sub	r13, r13, #4
+#endif
 	stmdb	r13!, {ip,lr}
 
 	/*

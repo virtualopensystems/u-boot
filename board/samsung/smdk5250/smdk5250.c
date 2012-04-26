@@ -62,6 +62,17 @@ static int decode_sromc(const void *blob, struct fdt_sromc *config)
 }
 #endif
 
+uint32_t exynos5_read_and_clear_spl_marker(void)
+{
+	uint32_t value, *marker = (uint32_t *)CONFIG_IRAM_STACK;
+
+	/* Stack grows toward lower address of memory */
+	value = marker[-1];
+	marker[-1] = 0;
+
+	return value;
+}
+
 int board_eth_init(bd_t *bis)
 {
 #ifdef CONFIG_SMC911X

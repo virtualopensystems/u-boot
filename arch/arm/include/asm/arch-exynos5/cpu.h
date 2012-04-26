@@ -69,7 +69,17 @@
 /* Compatibility defines */
 #define EXYNOS_POWER_BASE		EXYNOS5_POWER_BASE
 
+/* Marker values stored at the bottom of IRAM stack by SPL */
+#define EXYNOS5_SPL_MARKER	0xb004f1a9	/* hexspeak word: bootflag */
+
 #ifndef __ASSEMBLY__
+
+/**
+ * Read and clear the marker value; then return the read value.
+ *
+ * @return marker value
+ */
+uint32_t exynos5_read_and_clear_spl_marker(void);
 
 #define SAMSUNG_BASE(device, base)				\
 static inline unsigned int samsung_get_base_##device(void)	\
