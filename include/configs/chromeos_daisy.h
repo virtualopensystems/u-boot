@@ -20,6 +20,8 @@
 
 #include <configs/chromeos.h>
 
+#define CONFIG_CHROMEOS_USB
+
 /* Use the default arch_phys_memset implementation */
 #define CONFIG_PHYSMEM
 
