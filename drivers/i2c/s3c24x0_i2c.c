@@ -154,9 +154,6 @@ static void i2c_ch_init(struct s3c24x0_i2c *i2c, int speed, int slaveadd)
 #ifdef CONFIG_EXYNOS5
 static void i2c_bus_init(struct s3c24x0_i2c *i2c, unsigned int bus)
 {
-	struct exynos5_gpio_part1 *gpio;
-	gpio = exynos_get_base_gpio1();
-
 	int periph_id = i2c_get_periph_id(bus);
 
 	exynos_pinmux_config(periph_id, 0);
