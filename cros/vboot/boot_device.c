@@ -126,7 +126,7 @@ VbError_t VbExDiskGetInfo(VbDiskInfo **infos_ptr, uint32_t *count_ptr,
 
 		/* Now record the devices that have the required flags */
 		count += add_matching_devices(iface->name, dev, found,
-					      disk_flags, infos);
+					      disk_flags, infos + count);
 	}
 
 	if (count) {
