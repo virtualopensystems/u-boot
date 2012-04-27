@@ -33,7 +33,6 @@ COBJS-y += exports.o
 COBJS-$(CONFIG_SYS_HUSH_PARSER) += hush.o
 COBJS-y += image.o
 COBJS-y += s_record.o
-COBJS-$(CONFIG_SERIAL_MULTI) += serial.o
 COBJS-y += xyzModem.o
 
 # boards
@@ -193,6 +192,7 @@ endif
 COBJS-y += console.o
 COBJS-y += dlmalloc.o
 COBJS-y += memsize.o
+COBJS-$(CONFIG_SERIAL_MULTI) += serial.o
 COBJS-y += stdio.o
 
 
