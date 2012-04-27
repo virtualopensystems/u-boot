@@ -157,6 +157,8 @@ void board_init_f(unsigned long bootflag)
 	memzero((void *)gd, sizeof(gd_t));
 	early_serial_init();
 
+	printf("\n\nU-Boot SPL\n");
+
 	copy_uboot_to_ram();
 	/* Jump to U-Boot image */
 	uboot = (void *)CONFIG_SYS_TEXT_BASE;
