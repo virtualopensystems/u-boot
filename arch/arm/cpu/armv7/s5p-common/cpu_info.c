@@ -38,15 +38,6 @@ void cpu_info_init(void)
 	s5p_set_cpu_id();
 }
 
-#ifdef CONFIG_ARCH_CPU_INIT
-int arch_cpu_init(void)
-{
-	s5p_set_cpu_id();
-
-	return 0;
-}
-#endif
-
 u32 get_device_type(void)
 {
 	return s5p_cpu_id;
