@@ -22,6 +22,9 @@
 
 #include <common.h>
 #include <config.h>
+#include <asm/arch/pinmux.h>
+
+DECLARE_GLOBAL_DATA_PTR;
 
 #define OM_STAT		(0x1f << 1)
 
@@ -121,12 +124,40 @@ static void copy_uboot_to_ram(void)
 	}
 }
 
+/* The memzero function is not in SPL u-boot, so create one. */
+void memzero(void *s, size_t n)
+{
+	char *ptr = s;
+	size_t i;
+
+	for (i = 0; i < n; i++)
+		*ptr++ = '\0';
+}
+
+/*
+ * Initialize the serial driver in SPL u-boot.
+ * Besides the serial driver, it also setup the minimal set of its dependency,
+ * like gd struct, pinmux, and serial.
+ */
+static void early_serial_init(void)
+{
+	gd->flags |= GD_FLG_RELOC;
+	gd->baudrate = CONFIG_BAUDRATE;
+	gd->have_console = 1;
+
+	exynos_pinmux_config(EXYNOS_UART, PINMUX_FLAG_NONE);
+	serial_init();
+}
+
 void board_init_f(unsigned long bootflag)
 {
 	__attribute__((noreturn)) void (*uboot)(void);
 
-	copy_uboot_to_ram();
+	gd = (gd_t *) ((CONFIG_SYS_INIT_SP_ADDR) & ~0x07);
+	memzero((void *)gd, sizeof(gd_t));
+	early_serial_init();
 
+	copy_uboot_to_ram();
 	/* Jump to U-Boot image */
 	uboot = (void *)CONFIG_SYS_TEXT_BASE;
 	uboot();
