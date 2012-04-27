@@ -26,8 +26,12 @@
 #include <asm/arch/clk.h>
 
 /* support 4 mmc hosts */
-struct mmc mmc_dev[4];
-struct mmc_host mmc_host[4];
+enum {
+	MAX_MMC_HOSTS	= 4
+};
+
+static struct mmc mmc_dev[MAX_MMC_HOSTS];
+static struct mmc_host mmc_host[MAX_MMC_HOSTS];
 
 #ifdef CONFIG_OF_CONTROL
 #define MAX_MMC_GPIOS	10 /* Maximum 8 data, 1 clk and 1 cmd line */
