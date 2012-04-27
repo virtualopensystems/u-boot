@@ -39,7 +39,6 @@
 	};
 
 	sdhci@12220000 {
-		id = <2>;
 		samsung,sdhci-bus-width = <4>;
 	};
 
