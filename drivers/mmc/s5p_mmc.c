@@ -43,11 +43,13 @@ struct fdt_sdhci {
 };
 #endif
 
+#ifndef CONFIG_OF_CONTROL
 static inline struct s5p_mmc *s5p_get_base_mmc(int dev_index)
 {
 	unsigned long offset = dev_index * sizeof(struct s5p_mmc);
 	return (struct s5p_mmc *)(samsung_get_base_mmc() + offset);
 }
+#endif
 
 static void mmc_prepare_data(struct mmc_host *host, struct mmc_data *data)
 {
@@ -492,7 +494,7 @@ static int s5p_mmc_initialize(int dev_index, int bus_width, struct s5p_mmc *reg)
 
 	mmc_host[dev_index].dev_index = dev_index;
 	mmc_host[dev_index].clock = 0;
-	mmc_host[dev_index].reg = s5p_get_base_mmc(dev_index);
+	mmc_host[dev_index].reg = reg;
 	mmc->b_max = 0;
 	mmc_register(mmc);
 
