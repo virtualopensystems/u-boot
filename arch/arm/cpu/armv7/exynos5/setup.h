@@ -499,6 +499,10 @@ struct mem_timings;
 
 /* Functions common between LPDDR2 and DDR3 */
 void sdelay(unsigned long);
+
+/* CPU info initialization code */
+void cpu_info_init(void);
+
 void mem_ctrl_init(void);
 /*
  * Memory variant specific initialization code

@@ -81,6 +81,9 @@ lowlevel_init:
 	cmp	r1, r2
 	beq	wakeup_reset
 
+	/* Setup cpu info which is needed to select correct register offsets */
+	bl	cpu_info_init
+
 	/* Set the PS-Hold in SPL */
 	bl	ps_hold_setup
 

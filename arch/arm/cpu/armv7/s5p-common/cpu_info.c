@@ -24,10 +24,19 @@
 #include <asm/io.h>
 #include <asm/arch/clk.h>
 
-/* Default is s5pc100 */
-unsigned int s5p_cpu_id = 0xC100;
-/* Default is EVT1 */
-unsigned int s5p_cpu_rev = 1;
+/*
+ * The following CPU infos are initialized in lowlevel_init(). They should be
+ * put in the .data section. Otherwise, a compile will put them in the .bss
+ * section since they don't have initial values. The relocation code which
+ * runs after lowlevel_init() will reset them to zero.
+ */
+unsigned int s5p_cpu_id __attribute__((section(".data")));
+unsigned int s5p_cpu_rev __attribute__((section(".data")));
+
+void cpu_info_init(void)
+{
+	s5p_set_cpu_id();
+}
 
 #ifdef CONFIG_ARCH_CPU_INIT
 int arch_cpu_init(void)

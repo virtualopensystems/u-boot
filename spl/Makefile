@@ -59,6 +59,7 @@ LIBS-$(CONFIG_SPL_DMA_SUPPORT) += drivers/dma/libdma.o
 LIBS-$(CONFIG_SPL_POST_MEM_SUPPORT) += post/drivers/memory.o
 
 ifneq ($(CONFIG_EXYNOS4)$(CONFIG_EXYNOS5),)
+LIBS-y += $(CPUDIR)/s5p-common/libs5p-common.o
 LIBS-y += $(CPUDIR)/exynos-common/libexynos-common.o
 endif
 

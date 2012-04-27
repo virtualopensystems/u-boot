@@ -60,14 +60,6 @@
 
 #define I2C_TIMEOUT	1	/* 1 second */
 
-/*
- * This is needed here, as i2c is build as a part of SPL,
- * and during the i2c clock calculation its actually looks for the s5p_cpu_id
- */
-#ifdef CONFIG_SPL_BUILD
-unsigned int s5p_cpu_id = 0xc520;
-#endif
-
 /* We should not rely on any particular ordering of these IDs */
 #ifndef CONFIG_OF_CONTROL
 static enum periph_id periph_for_dev[EXYNOS_I2C_MAX_CONTROLLERS] = {
