@@ -24,6 +24,7 @@
 #include <asm/io.h>
 #include <asm/arch/mmc.h>
 #include <asm/arch/clk.h>
+#include <asm/arch/pinmux.h>
 
 /* support 4 mmc hosts */
 enum {
@@ -34,12 +35,15 @@ static struct mmc mmc_dev[MAX_MMC_HOSTS];
 static struct mmc_host mmc_host[MAX_MMC_HOSTS];
 
 #ifdef CONFIG_OF_CONTROL
+#include <asm/arch/clock.h>
+#include <asm/arch/periph.h>
+
 #define MAX_MMC_GPIOS	10 /* Maximum 8 data, 1 clk and 1 cmd line */
 
 struct fdt_sdhci {
-	struct s5p_mmc *reg;   /* address of registers in physical memory */
-	int id; /* host controller index */
-	int width; /* bus width  */
+	struct s5p_mmc *reg;	/* address of registers in physical memory */
+	int bus_width;		/* bus width  */
+	enum periph_id periph_id;	/* Peripheral ID for this peripheral */
 };
 #endif
 
@@ -469,7 +473,8 @@ static int mmc_core_init(struct mmc *mmc)
 	return 0;
 }
 
-static int s5p_mmc_initialize(int dev_index, int bus_width, struct s5p_mmc *reg)
+static int s5p_mmc_initialize(int dev_index, int bus_width,
+			      struct s5p_mmc *reg)
 {
 	struct mmc *mmc;
 
@@ -497,6 +502,8 @@ static int s5p_mmc_initialize(int dev_index, int bus_width, struct s5p_mmc *reg)
 	mmc_host[dev_index].reg = reg;
 	mmc->b_max = 0;
 	mmc_register(mmc);
+	debug("s5p_mmc: dev_index=%d, width=%d, reg=%p\n", dev_index,
+	      bus_width, reg);
 
 	return 0;
 }
@@ -504,14 +511,11 @@ static int s5p_mmc_initialize(int dev_index, int bus_width, struct s5p_mmc *reg)
 #ifdef CONFIG_OF_CONTROL
 int fdtdec_decode_sdmmc(const void *blob, int node, struct fdt_sdhci *config)
 {
-	config->id = fdtdec_get_int(blob, node, "id", -1);
-	if (config->id == -1)
-		return -FDT_ERR_NOTFOUND;
-
-	config->width = fdtdec_get_int(blob, node,
+	config->bus_width = fdtdec_get_int(blob, node,
 				"samsung,sdhci-bus-width", 4);
 
 	config->reg = (struct s5p_mmc *)fdtdec_get_addr(blob, node, "reg");
+	config->periph_id = clock_decode_periph_id(blob, node);
 	if ((fdt_addr_t)config->reg == FDT_ADDR_T_NONE)
 		return -FDT_ERR_NOTFOUND;
 
@@ -521,22 +525,45 @@ int fdtdec_decode_sdmmc(const void *blob, int node, struct fdt_sdhci *config)
 int s5p_mmc_init(const void *blob)
 {
 	struct fdt_sdhci config;
-	int node;
-	int upto = 0;
-	do {
-		node = fdtdec_next_alias(blob, "sdmmc",
-				COMPAT_SAMSUNG_EXYNOS5_SDHCI, &upto);
-		if (node < 0)
-			break;
+	int node_list[MAX_MMC_HOSTS];
+	int node, i;
+	int count;
+	int ret = 0;
+
+	count = fdtdec_find_aliases_for_id(blob, "sdmmc",
+			COMPAT_SAMSUNG_EXYNOS5_SDHCI, node_list,
+					   MAX_MMC_HOSTS);
+	for (i = 0; i < count; i++) {
+		node = node_list[i];
+
+		if (node <= 0)
+			continue;
+
 		if (fdtdec_decode_sdmmc(blob, node, &config))
 			return -1;
-	} while (node);
 
-	return s5p_mmc_initialize(config.id, config.width, config.reg);
+		/* For now, set the pinmux here */
+		exynos_pinmux_config(config.periph_id,
+			config.bus_width == 8 ? PINMUX_FLAG_8BIT_MODE : 0);
+
+		/* TODO(sjg): Move to using peripheral IDs in this driver */
+		if (s5p_mmc_initialize(config.periph_id - PERIPH_ID_SDMMC0,
+				config.bus_width, config.reg)) {
+			debug("%s: Failed to init SDHCI %d\n", __func__, i);
+			ret = -1;
+			continue;
+		}
+	}
+
+	return ret;
 }
 #else
 int s5p_mmc_init(int dev_index, int bus_width)
 {
+	/* For now, set the pinmux here */
+	exynos_pinmux_config(PERIPH_ID_SDMMC0 + dev_index,
+		bus_width == 8 ? PINMUX_FLAG_8BIT_MODE : 0);
+
 	return s5p_mmc_initialize(dev_index, bus_width,
 				s5p_get_base_mmc(dev_index));
 }
