@@ -60,7 +60,7 @@
 #define CONFIG_GENERIC_MMC
 #define CONFIG_MMC
 #define CONFIG_S5P_MMC
-#define CONFIG_S5P_MSHC
+#define CONFIG_S5P_MSHCI
 
 /* Command definition*/
 #include <config_cmd_default.h>

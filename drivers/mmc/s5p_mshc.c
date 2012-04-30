@@ -593,9 +593,9 @@ int s5p_mshci_init(const void *blob)
 		}
 	}
 #else
-	config.width = CONFIG_MSHC_BUS_WIDTH;
+	config.width = CONFIG_MSHCI_BUS_WIDTH;
 	config.reg = (struct s5p_mshci *)samsung_get_base_mshci();
-	config.periph_id = CONFIG_MSHC_PERIPH_ID;
+	config.periph_id = CONFIG_MSHCI_PERIPH_ID;
 	if (s5p_mshci_initialize(&config) {
 		debug("%s: Failed to init MSHCI %d\n", __func__, i);
 		ret = -1;
