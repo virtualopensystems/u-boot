@@ -25,17 +25,31 @@
 #include <mmc.h>
 #include <asm/arch/clk.h>
 #include <asm/arch/cpu.h>
+#include <asm/arch/gpio.h>
 #include <asm/arch/mshc.h>
+#include <asm/arch/pinmux.h>
 
-/* Support just the one mshc host */
-struct mmc mshci_dev;
-struct mshci_host mshci_host;
+/* support 4 mmc hosts */
+enum {
+	MAX_MMC_HOSTS	= 4
+};
+
+static struct mmc mshci_dev[MAX_MMC_HOSTS];
+static struct mshci_host mshci_host[MAX_MMC_HOSTS];
+static int num_devs;
+
+#ifdef CONFIG_OF_CONTROL
+#include <asm/arch/clock.h>
+#include <asm/arch/periph.h>
 
 /* Struct to hold mshci register and bus width */
 struct fdt_mshci {
 	struct s5p_mshci *reg;	/* address of registers in physical memory */
-	int width;		/* bus width  */
+	int bus_width;		/* bus width  */
+	enum periph_id periph_id;	/* Peripheral ID for this peripheral */
+	struct fdt_gpio_state enable_gpio;	/* How to enable it */
 };
+#endif
 
 /**
  * Set bits of MSHCI host control register.
@@ -474,11 +488,18 @@ static int s5p_mphci_init(struct mmc *mmc)
 	return 0;
 }
 
-static int s5p_mshci_initialize(int bus_width, struct s5p_mshci *reg)
+static int s5p_mshci_initialize(struct fdt_mshci *config)
 {
+	struct mshci_host *mmc_host;
 	struct mmc *mmc;
 
-	mmc = &mshci_dev;
+	if (num_devs == MAX_MMC_HOSTS) {
+		debug("%s: Too many hosts\n", __func__);
+		return -1;
+	}
+	mmc = &mshci_dev[num_devs];
+	mmc_host = &mshci_host[num_devs];
+	num_devs++;
 
 	sprintf(mmc->name, "S5P MSHC");
 
@@ -490,7 +511,7 @@ static int s5p_mshci_initialize(int bus_width, struct s5p_mshci *reg)
 	mmc->voltages = MMC_VDD_32_33 | MMC_VDD_33_34;
 	mmc->host_caps = MMC_MODE_HS_52MHz | MMC_MODE_HS | MMC_MODE_HC;
 
-	if (bus_width == 8)
+	if (config->bus_width == 8)
 		mmc->host_caps |= MMC_MODE_8BIT;
 	else
 		mmc->host_caps |= MMC_MODE_4BIT;
@@ -498,50 +519,88 @@ static int s5p_mshci_initialize(int bus_width, struct s5p_mshci *reg)
 	mmc->f_min = 400000;
 	mmc->f_max = 40000000;
 
-	mshci_host.clock = 0;
-	mshci_host.reg =  reg;
+	exynos_pinmux_config(config->periph_id,
+			config->bus_width == 8 ? PINMUX_FLAG_8BIT_MODE : 0);
+	fdtdec_setup_gpio(&config->enable_gpio);
+	if (fdt_gpio_isvalid(&config->enable_gpio)) {
+		int pin = config->enable_gpio.gpio;
+		int err;
+
+		err = gpio_direction_output(pin, 1); /* Power on */
+		if (err) {
+			debug("%s: Unable to power on MSHCI\n", __func__);
+			return -1;
+		}
+		gpio_set_pull(pin, GPIO_PULL_NONE);
+		gpio_set_drv(pin, GPIO_DRV_4X);
+	}
+
+	mmc_host->clock = 0;
+	mmc_host->reg = config->reg;
 	mmc->b_max = 1;
 	mmc_register(mmc);
+	debug("s5p_mshci: periph_id=%d, width=%d, reg=%p, enable=%d\n",
+	      config->periph_id, config->bus_width, config->reg,
+	      config->enable_gpio.gpio);
 
 	return 0;
 }
 
 #ifdef CONFIG_OF_CONTROL
-int fdtdec_decode_mshci(const void *blob, struct fdt_mshci *config)
+int fdtdec_decode_mshci(const void *blob, int node, struct fdt_mshci *config)
 {
-	int node;
-
-	node = fdtdec_next_compatible(blob, 0, COMPAT_SAMSUNG_EXYNOS5_MSHCI);
-	if (node < 0)
-		return node;
-
-	config->width = fdtdec_get_int(blob, node,
-				"samsung,mshci-bus-width", 8);
+	config->bus_width = fdtdec_get_int(blob, node,
+				"samsung,mshci-bus-width", 4);
 
 	config->reg = (struct s5p_mshci *)fdtdec_get_addr(blob, node, "reg");
 	if ((fdt_addr_t)config->reg == FDT_ADDR_T_NONE)
 		return -FDT_ERR_NOTFOUND;
+	config->periph_id = clock_decode_periph_id(blob, node);
+	fdtdec_decode_gpio(blob, node, "enable-gpios", &config->enable_gpio);
 
 	return 0;
 }
+#endif
 
 int s5p_mshci_init(const void *blob)
 {
 	struct fdt_mshci config;
+	int ret = 0;
 
-	if (fdtdec_decode_mshci(blob, &config)) {
-		debug("mshc configuration failed\n");
-		return -1;
+#ifdef CONFIG_OF_CONTROL
+	int node_list[MAX_MMC_HOSTS];
+	int node, i;
+	int count;
+
+	count = fdtdec_find_aliases_for_id(blob, "sdmmc",
+			COMPAT_SAMSUNG_EXYNOS5_MSHCI, node_list,
+					   MAX_MMC_HOSTS);
+	debug("%s: %d nodes\n", count);
+	for (i = 0; i < count; i++) {
+		node = node_list[i];
+
+		if (node < 0)
+			continue;
+
+		if (fdtdec_decode_mshci(blob, node, &config))
+			return -1;
+
+		/* TODO(sjg): Move to using peripheral IDs in this driver */
+		if (s5p_mshci_initialize(&config)) {
+			debug("%s: Failed to init MSHCI %d\n", __func__, i);
+			ret = -1;
+			continue;
+		}
 	}
-
-	return s5p_mshci_initialize(config.width, config.reg);
-}
 #else
-int s5p_mshci_init(const void *blob)
-{
-	struct s5p_mshci *base_addr =
-		(struct s5p_mshci *)(samsung_get_base_mshci());
-
-	return s5p_mshci_initialize(CONFIG_MSHC_BUS_WIDTH, base_addr);
-}
+	config.width = CONFIG_MSHC_BUS_WIDTH;
+	config.reg = (struct s5p_mshci *)samsung_get_base_mshci();
+	config.periph_id = CONFIG_MSHC_PERIPH_ID;
+	if (s5p_mshci_initialize(&config) {
+		debug("%s: Failed to init MSHCI %d\n", __func__, i);
+		ret = -1;
+		continue;
+	}
 #endif
+	return ret;
+}

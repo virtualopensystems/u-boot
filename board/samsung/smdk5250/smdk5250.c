@@ -247,14 +247,13 @@ int checkboard(void)
 #ifdef CONFIG_GENERIC_MMC
 int board_mmc_init(bd_t *bis)
 {
-	exynos_pinmux_config(PERIPH_ID_SDMMC2, PINMUX_FLAG_NONE);
-	exynos_pinmux_config(PERIPH_ID_SDMMC4, PINMUX_FLAG_8BIT_MODE);
+#ifdef CONFIG_S5P_MSHCI
+	s5p_mshci_init(gd->fdt_blob);
+#endif
 #ifdef CONFIG_OF_CONTROL
 	s5p_mmc_init(gd->fdt_blob);
-	s5p_mshci_init(gd->fdt_blob);
 #else
 	s5p_mmc_init(2, 4);
-	s5p_mshci_init(NULL);
 #endif
 	return 0;
 }
