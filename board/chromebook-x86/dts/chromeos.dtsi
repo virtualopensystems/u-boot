@@ -21,6 +21,7 @@
 		/* This value will be filled in by coreboot at runtime */
 		gnvs-vboot-table = <0>;
 
+		firmware-storage = <&firmware_storage_spi>;
 		nvstorage-media = "nvram";
 	};
 
@@ -32,4 +33,11 @@
 		bootargs = "";
 	};
 
+        /* Use default values */
+        spi {
+                firmware_storage_spi: flash@0 {
+		      spi-cpol;
+		      spi-cpha;
+                };
+        };
 };
