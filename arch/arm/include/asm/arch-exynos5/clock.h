@@ -99,10 +99,12 @@ struct exynos5_clock {
 	unsigned char	res19[0xf8];
 	unsigned int	div_core0;
 	unsigned int	div_core1;
-	unsigned char	res20[0xf8];
+	unsigned int	div_sysrgt;
+	unsigned char	res20[0xf4];
 	unsigned int	div_stat_core0;
 	unsigned int	div_stat_core1;
-	unsigned char	res21[0x2f8];
+	unsigned int	div_stat_sysrgt;
+	unsigned char	res21[0x2f4];
 	unsigned int	gate_ip_core;
 	unsigned char	res22[0xfc];
 	unsigned int	clkout_cmu_core;
@@ -130,7 +132,11 @@ struct exynos5_clock {
 	unsigned int	div_stat_acp;
 	unsigned char	res30[0x1fc];
 	unsigned int	gate_ip_acp;
-	unsigned char	res31[0x1fc];
+	unsigned char	res31a[0xfc];
+	unsigned int	div_syslft;
+	unsigned char	res31b[0xc];
+	unsigned int	div_stat_syslft;
+	unsigned char	res31c[0xec];
 	unsigned int	clkout_cmu_acp;
 	unsigned int	clkout_cmu_acp_div_stat;
 	unsigned char	res32[0x38f8];
@@ -161,7 +167,9 @@ struct exynos5_clock {
 	unsigned int	epll_lock;
 	unsigned char	res40[0xc];
 	unsigned int	vpll_lock;
-	unsigned char	res41[0xdc];
+	unsigned char	res41a[0xc];
+	unsigned int	gpll_lock;
+	unsigned char	res41b[0xcc];
 	unsigned int	cpll_con0;
 	unsigned int	cpll_con1;
 	unsigned char	res42[0x8];
@@ -172,7 +180,10 @@ struct exynos5_clock {
 	unsigned int	vpll_con0;
 	unsigned int	vpll_con1;
 	unsigned int	vpll_con2;
-	unsigned char	res44[0xc4];
+	unsigned char	res44a[0x4];
+	unsigned int	gpll_con0;
+	unsigned int	gpll_con1;
+	unsigned char	res44b[0xb8];
 	unsigned int	src_top0;
 	unsigned int	src_top1;
 	unsigned int	src_top2;
@@ -304,7 +315,9 @@ struct exynos5_clock {
 	unsigned char	res84[0x37f8];
 
 	unsigned int	src_lex;		/* base + 0x14200 */
-	unsigned char	res85[0x2fc];
+	unsigned char	res85[0x1fc];
+	unsigned int	mux_stat_lex;
+	unsigned char	res85b[0xfc];
 	unsigned int	div_lex;
 	unsigned char	res86[0xfc];
 	unsigned int	div_stat_lex;
@@ -360,7 +373,10 @@ struct exynos5_clock {
 	unsigned int	clkout_cmu_cdrex_div_stat;
 	unsigned char	res108[0x8];
 	unsigned int	lpddr3phy_ctrl;
-	unsigned char	res109[0xf5f8];
+	unsigned char	res109a[0xc];
+	unsigned int	lpddr3phy_con3;
+	unsigned int	pll_div2_sel;
+	unsigned char	res109b[0xf5e4];
 };
 
 /**
