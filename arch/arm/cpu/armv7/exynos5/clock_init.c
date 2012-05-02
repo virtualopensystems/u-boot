@@ -147,55 +147,6 @@ struct mem_timings mem_timings[] = {
 		.dmc_channels = 2,
 		.chips_per_channel = 1,
 		.send_zq_init = 1,
-	}, {
-		.mem_type = DDR_MODE_LPDDR2,
-		.frequency_mhz = 667,
-		.bpll_mdiv = 0x215,
-		.bpll_pdiv = 0xc,
-		.bpll_sdiv = 0x1,
-		.pclk_cdrex_ratio = 0x3,
-		.direct_cmd_msr = {
-			0x00071c00, 0x00010bfc, 0x00000708, 0x00000818
-		},
-		.timing_ref = 0x0000005d,
-		.timing_row = 0x2336544C,
-		.timing_data = 0x24202408,
-		.timing_power = 0x38260235,
-		/* ctrl_force seems to be hard-coded in dmc_init_lpddr2.c */
-		.ctrl_rdlat = 0x08,
-		.ctrl_bstlen = 0x04,
-		.rd_fetch = 0x2,
-		.zq_mode_dds = 5,
-		.zq_mode_term = 5,
-		.zq_mode_noterm = 1,
-		.rdlvl_rddata_adj = 0x0001,
-		/*
-		* Dynamic Clock: Always Running
-		* Memory Burst length: 4
-		* Number of chips: 2
-		* Memory Bus width: 32 bit
-		* Memory Type: LPDDR2-S4
-		* Additional Latancy for PLL: 1 Cycle
-		*/
-		.memcontrol = DMC_MEMCONTROL_CLK_STOP_DISABLE |
-			DMC_MEMCONTROL_DPWRDN_DISABLE |
-			DMC_MEMCONTROL_DPWRDN_ACTIVE_PRECHARGE |
-			DMC_MEMCONTROL_TP_DISABLE |
-			DMC_MEMCONTROL_DSREF_DISABLE |
-			DMC_MEMCONTROL_ADD_LAT_PALL_CYCLE(0) |
-			DMC_MEMCONTROL_MEM_TYPE_LPDDR2 |
-			DMC_MEMCONTROL_MEM_WIDTH_32BIT |
-			DMC_MEMCONTROL_NUM_CHIP_2 |
-			DMC_MEMCONTROL_BL_4 |
-			DMC_MEMCONTROL_PZQ_DISABLE |
-			DMC_MEMCONTROL_MRR_BYTE_7_0,
-		.memconfig = DMC_MEMCONFIGx_CHIP_MAP_INTERLEAVED |
-			DMC_MEMCONFIGx_CHIP_COL_10 |
-			DMC_MEMCONFIGx_CHIP_ROW_14 |
-			DMC_MEMCONFIGx_CHIP_BANK_8,
-		.dmc_channels = 2,
-		.chips_per_channel = 2,
-		.send_zq_init = 0,
 	}
 };
 

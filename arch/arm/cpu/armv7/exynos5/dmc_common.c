@@ -156,8 +156,10 @@ void mem_ctrl_init()
 	struct mem_timings *mem;
 
 	mem = clock_get_mem_timings();
+
+	/* If there are any other memory variant, add their init call below */
 	if (param->mem_type == DDR_MODE_DDR3)
 		ddr3_mem_ctrl_init(mem, param->mem_iv_size);
-	else
-		lpddr2_mem_ctrl_init(mem, param->mem_iv_size);
+
+	/* TODO: Call panic when unknown memory type is encountered */
 }

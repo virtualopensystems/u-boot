@@ -514,7 +514,6 @@ void mem_ctrl_init(void);
  *			accesses; may vary across boards.
  */
 void ddr3_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size);
-void lpddr2_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size);
 
 void system_clock_init(void);
 
