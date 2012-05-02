@@ -40,8 +40,9 @@
 	};
 
 	chromeos-config {
-		/* TODO(clchiou): Add the rest of GPIOs */
+		developer-switch = <&gpio 168 0>;
 		recovery-switch = <&gpio 112 1>;
+		write-protect-switch = <&gpio 102 1>;
 	};
 
 	memory {
