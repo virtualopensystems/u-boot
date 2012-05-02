@@ -62,7 +62,7 @@ int exynos_pinmux_config(enum periph_id peripheral, int flags)
 	case PERIPH_ID_SDMMC3:
 	case PERIPH_ID_SDMMC4:
 		pin = GPIO_FUNC(0x2);
-		pin_ext = GPIO_FUNC(0x3);
+		pin_ext = GPIO_FUNC(0x2);
 		drv = GPIO_DRV_4X;
 		switch (peripheral) {
 		default:
@@ -76,7 +76,11 @@ int exynos_pinmux_config(enum periph_id peripheral, int flags)
 			break;
 		case PERIPH_ID_SDMMC2:
 			start = GPIO_C20;
-			start_ext = GPIO_C30;
+			/*
+			 * TODO: (alim.akhtar@samsung.com)
+			 * add support for 8 bit mode
+			 */
+			start_ext = 0;
 			break;
 		case PERIPH_ID_SDMMC3:
 			start = GPIO_C30;
@@ -96,7 +100,8 @@ int exynos_pinmux_config(enum periph_id peripheral, int flags)
 			return -1;
 		}
 		if (flags & PINMUX_FLAG_8BIT_MODE) {
-			for (i = 3; i <= 6; i++) {
+			assert(peripheral == PERIPH_ID_SDMMC0);
+			for (i = 0; i <= 3; i++) {
 				gpio_cfg_pin(start_ext + i, pin_ext);
 				gpio_set_pull(start_ext + i, GPIO_PULL_UP);
 				gpio_set_drv(start_ext + i, drv);
@@ -107,7 +112,7 @@ int exynos_pinmux_config(enum periph_id peripheral, int flags)
 			gpio_set_pull(start + i, GPIO_PULL_NONE);
 			gpio_set_drv(start + i, drv);
 		}
-		for (i = 3; i <= 6; i++) {
+		for (i = 2; i <= 6; i++) {
 			gpio_cfg_pin(start + i, pin);
 			gpio_set_pull(start + i, GPIO_PULL_UP);
 			gpio_set_drv(start + i, drv);
