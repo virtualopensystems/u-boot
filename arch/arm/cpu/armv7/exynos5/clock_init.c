@@ -136,60 +136,6 @@ struct arm_clk_ratios arm_clk_ratios[] = {
 struct mem_timings mem_timings[] = {
 	{
 		.mem_type = DDR_MODE_DDR3,
-		.frequency_mhz = 667,
-		.bpll_mdiv = 0x185,
-		.bpll_pdiv = 0x7,
-		.bpll_sdiv = 0x1,
-		.pclk_cdrex_ratio = 0x4,
-		.direct_cmd_msr = {
-			0x00020010, 0x00030000, 0x00010042, 0x00000b50
-		},
-		.timing_ref = 0x000000bb,
-		.timing_row = 0x7645644d,
-		.timing_data = 0x45414709,
-		.timing_power = 0x3a000a3c,
-		.phy0_dqs = 0x08080808,
-		.phy1_dqs = 0x08080808,
-		.phy0_dq = 0x08080808,
-		.phy1_dq = 0x00080808,
-		.ctrl_force = 0x33,
-		.ctrl_rdlat = 0x09,
-		.ctrl_bstlen = 0x08,
-		.rd_fetch = 0x2,
-		.zq_mode_dds = 7,
-		.zq_mode_term = 2,
-		.zq_mode_noterm = 0,	/* do nothing for ddr3 */
-		.rdlvl_rddata_adj = 0xff00,
-		.t_wrrdcmd = 2,
-		/*
-		* Dynamic Clock: Always Running
-		* Memory Burst length: 8
-		* Number of chips: 1
-		* Memory Bus width: 32 bit
-		* Memory Type: DDR3
-		* Additional Latancy for PLL: 0 Cycle
-		*/
-		.memcontrol = DMC_MEMCONTROL_CLK_STOP_DISABLE |
-			DMC_MEMCONTROL_DPWRDN_DISABLE |
-			DMC_MEMCONTROL_DPWRDN_ACTIVE_PRECHARGE |
-			DMC_MEMCONTROL_TP_DISABLE |
-			DMC_MEMCONTROL_DSREF_DISABLE |
-			DMC_MEMCONTROL_ADD_LAT_PALL_CYCLE(0) |
-			DMC_MEMCONTROL_MEM_TYPE_DDR3 |
-			DMC_MEMCONTROL_MEM_WIDTH_32BIT |
-			DMC_MEMCONTROL_NUM_CHIP_1 |
-			DMC_MEMCONTROL_BL_8 |
-			DMC_MEMCONTROL_PZQ_DISABLE |
-			DMC_MEMCONTROL_MRR_BYTE_7_0,
-		.memconfig = DMC_MEMCONFIGx_CHIP_MAP_INTERLEAVED |
-			DMC_MEMCONFIGx_CHIP_COL_10 |
-			DMC_MEMCONFIGx_CHIP_ROW_15 |
-			DMC_MEMCONFIGx_CHIP_BANK_8,
-		.dmc_channels = 2,
-		.chips_per_channel = 1,
-		.send_zq_init = 1,
-	}, {
-		.mem_type = DDR_MODE_DDR3,
 		.frequency_mhz = 800,
 		.mpll_mdiv = 0xC8,
 		.mpll_pdiv = 0x6,
