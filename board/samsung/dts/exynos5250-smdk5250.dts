@@ -18,7 +18,8 @@
 
 	aliases {
 		serial0 = "/serial@12C30000";
-		sdmmc0 = "/sdhci@12220000";
+		sdmmc0 = "/mshci@12200000";
+		sdmmc1 = "/mshci@12220000";
 		spi0 = "/spi@12d20000";
 		spi1 = "/spi@12d30000";
 		spi2 = "/spi@12d40000";
@@ -54,10 +55,14 @@
 		status = "disabled";
 	};
 
-	mshci@12240000 {
+	mshci@12200000 {
 		samsung,mshci-bus-width = <8>;
+		enable-gpios = <&gpio 58 0>;
 	};
 
+	mshci@12220000 {
+		samsung,mshci-bus-width = <4>;
+	};
 	sromc@12250000 {
 		bank = <1>;
 		srom-timing = <1 9 12 1 6 1 1>;
