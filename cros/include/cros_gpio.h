@@ -42,6 +42,16 @@ typedef struct {
  */
 int cros_gpio_init(void);
 
+/**
+ * Board-specific setup of GPIO ports that is called from the generic
+ * cros_gpio_init.
+ *
+ * @param index		CrOS input type of GPIO port
+ * @param port		GPIO port
+ * @return zero on success and non-zero on failures
+ */
+int cros_gpio_setup(enum cros_gpio_index index, int port);
+
 int cros_gpio_fetch(enum cros_gpio_index index, cros_gpio_t *gpio);
 
 #ifdef VBOOT_DEBUG

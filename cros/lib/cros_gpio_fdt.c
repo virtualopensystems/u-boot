@@ -30,6 +30,15 @@ static char *gpio_name[CROS_GPIO_MAX_GPIO] = {
 static int config = -1;
 static unsigned long valid_time;
 
+/* Default empty implementation */
+static int __cros_gpio_setup(enum cros_gpio_index index, int port)
+{
+	return 0;
+}
+
+int cros_gpio_setup(enum cros_gpio_index index, int port)
+	__attribute__((weak, alias("__cros_gpio_setup")));
+
 int cros_gpio_init(void)
 {
 	const void *blob = gd->fdt_blob;
@@ -47,8 +56,13 @@ int cros_gpio_init(void)
 			continue;
 		}
 		fdtdec_setup_gpio(&gs);
-		if (fdt_gpio_isvalid(&gs))
+		if (fdt_gpio_isvalid(&gs)) {
+			if (cros_gpio_setup(i, gs.gpio)) {
+				VBDEBUG("setup failed: %s\n", gpio_name[i]);
+				continue;
+			}
 			gpio_direction_input(gs.gpio);
+		}
 	}
 
 	/*
