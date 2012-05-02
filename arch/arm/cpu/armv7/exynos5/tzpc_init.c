@@ -40,7 +40,14 @@ void tzpc_init(void)
 		writel(DECPROTXSET, &tzpc->decprot0set);
 		writel(DECPROTXSET, &tzpc->decprot1set);
 
-		if (addr != TZPC9_BASE) {
+		if (addr == TZPC9_BASE) {
+
+		/* TODO: Add comment here describing the numerical values
+		 * used below.
+		 */
+			writel(0xf0, &tzpc->decprot2set);
+			writel(0x50, &tzpc->decprot3set);
+		} else {
 			writel(DECPROTXSET, &tzpc->decprot2set);
 			writel(DECPROTXSET, &tzpc->decprot3set);
 		}
