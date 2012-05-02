@@ -216,25 +216,38 @@ void set_mmc_clk(int dev_index, unsigned int div)
 	writel(val, addr);
 }
 
-/* exynos5: set the mshc clock */
-int get_mshc_clk_div(void)
+int get_mshci_clk_div(enum periph_id peripheral)
 {
 	struct exynos5_clock *clk =
 		(struct exynos5_clock *)samsung_get_base_clock();
-	unsigned int addr;
+	u32 *addr;
 	unsigned int div_mmc, div_mmc_pre;
 	unsigned int mpll_clock, sclk_mmc;
 
-	/*
-	 * CLK_DIV_FSYS3
-	 * MMC4_PRE_RATIO [15:8]
-	 * MMC4_RATIO [3:0]
-	 */
-	addr = (unsigned int)&clk->div_fsys3;
-	div_mmc = (readl(addr) & ~0xf) + 1;
-	div_mmc_pre = (readl(addr) & ~0xff00) + 1;
-
 	mpll_clock = get_pll_clk(MPLL);
+
+	/*
+	 * CLK_DIV_FSYS1
+	 * MMC0_PRE_RATIO [15:8]
+	 * MMC0_RATIO [3:0]
+	 * CLK_DIV_FSYS2
+	 * MMC2_PRE_RATIO [15:8]
+	 * MMC2_RATIO [3:0]
+	 */
+	switch (peripheral) {
+	case PERIPH_ID_SDMMC0:
+		addr = &clk->div_fsys1;
+		break;
+	case PERIPH_ID_SDMMC2:
+		addr = &clk->div_fsys2;
+		break;
+	default:
+		debug("invalid peripheral\n");
+		return -1;
+	}
+
+	div_mmc = (readl(addr) & 0xf) + 1;
+	div_mmc_pre = ((readl(addr) & 0xff00) >> 8) + 1;
 
 	sclk_mmc = (mpll_clock / div_mmc) / div_mmc_pre;
 
@@ -303,6 +316,44 @@ void clock_ll_set_pre_ratio(enum periph_id periph_id, unsigned divisor)
 		return;
 	}
 	clrsetbits_le32(reg, mask << shift, (divisor & mask) << shift);
+}
+
+int clock_set_mshci(enum periph_id peripheral)
+{
+	struct exynos5_clock *clk =
+		(struct exynos5_clock *)samsung_get_base_clock();
+	u32 *addr;
+	unsigned int clock;
+	unsigned int tmp;
+	unsigned int i;
+
+	/* get mpll clock */
+	clock = get_pll_clk(MPLL) / 1000000;
+
+	/*
+	 * CLK_DIV_FSYS1
+	 * MMC0_PRE_RATIO [15:8], MMC0_RATIO [3:0]
+	 * CLK_DIV_FSYS2
+	 * MMC2_PRE_RATIO [15:8], MMC2_RATIO [3:0]
+	 */
+	switch (peripheral) {
+	case PERIPH_ID_SDMMC0:
+		addr = &clk->div_fsys1;
+		break;
+	case PERIPH_ID_SDMMC2:
+		addr = &clk->div_fsys2;
+		break;
+	default:
+		debug("invalid peripheral\n");
+		return -1;
+	}
+	tmp = readl(addr) & ~0xff0f;
+	for (i = 0; i <= 0xf; i++) {
+		if ((clock / (i + 1)) <= 400) {
+			writel(tmp | i << 0, addr);
+			break;
+		}
+	}
 }
 
 #ifdef CONFIG_OF_CONTROL
