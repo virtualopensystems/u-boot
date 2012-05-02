@@ -60,7 +60,6 @@
 /* SD/MMC configuration */
 #define CONFIG_GENERIC_MMC
 #define CONFIG_MMC
-#define CONFIG_S5P_MMC
 #define CONFIG_S5P_MSHCI
 
 /* Command definition*/
