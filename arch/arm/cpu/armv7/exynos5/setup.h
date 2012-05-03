@@ -419,6 +419,14 @@
 #define MMC2_PRE_RATIO_VAL	0x9
 #define MMC2_PRE_RATIO_OFFSET	8
 
+#define MMC3_RATIO_MASK		0xf
+#define MMC3_RATIO_VAL		0x1
+#define MMC3_RATIO_OFFSET	16
+
+#define MMC3_PRE_RATIO_MASK	0xff
+#define MMC3_PRE_RATIO_VAL	0x0
+#define MMC3_PRE_RATIO_OFFSET	24
+
 /* CLK_SRC_LEX */
 #define CLK_SRC_LEX_VAL         0x0
 

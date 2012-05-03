@@ -562,11 +562,10 @@ void system_clock_init()
 	writel(CLK_SRC_PERIC1_VAL, &clk->src_peric1);
 	writel(CLK_DIV_PERIC1_VAL, &clk->div_peric1);
 
-	val = readl(&clk->div_fsys2);
-	val &= ~(MMC2_PRE_RATIO_MASK << MMC2_PRE_RATIO_OFFSET);
-	val &= ~(MMC2_RATIO_MASK << MMC2_RATIO_OFFSET);
-	val |= (MMC2_PRE_RATIO_VAL << MMC2_PRE_RATIO_OFFSET);
-	val |= (MMC2_RATIO_VAL << MMC2_RATIO_OFFSET);
+	val = MMC2_PRE_RATIO_VAL << MMC2_PRE_RATIO_OFFSET
+		| MMC2_RATIO_VAL << MMC2_RATIO_OFFSET
+		| MMC3_PRE_RATIO_VAL << MMC3_PRE_RATIO_OFFSET
+		| MMC3_RATIO_VAL << MMC3_RATIO_OFFSET;
 	writel(val, &clk->div_fsys2);
 }
 
