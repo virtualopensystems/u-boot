@@ -43,39 +43,18 @@
 		interrupts = <0 43 0>, <0 44 0>;
 	};
 
-	sdhci@12200000 {
-		compatible = "samsung,exynos4210-sdhci";
+	mshci@12200000 {
+		compatible = "samsung,exynos5250-mshci";
 		reg = <0x12200000 0x100>;
-		interrupts = <0 75 0>;
+		interrupts = <0 123 0>;
 		samsung,periph-id = <PERIPH_ID_SDMMC0>;
 	};
 
-	sdhci@12210000 {
-		compatible = "samsung,exynos4210-sdhci";
-		reg = <0x12210000 0x100>;
-		interrupts = <0 76 0>;
-		samsung,periph-id = <PERIPH_ID_SDMMC1>;
-	};
-
-	sdhci@12220000 {
-		compatible = "samsung,exynos4210-sdhci";
-		reg = <0x12220000 0x100>;
-		interrupts = <0 77 0>;
-		samsung,periph-id = <PERIPH_ID_SDMMC2>;
-	};
-
-	sdhci@12230000 {
-		compatible = "samsung,exynos4210-sdhci";
-		reg = <0x12230000 0x100>;
-		interrupts = <0 78 0>;
-		samsung,periph-id = <PERIPH_ID_SDMMC3>;
-	};
-
-	mshci@12240000 {
+	mshci@12220000 {
 		compatible = "samsung,exynos5250-mshci";
-		reg = <0x12240000 0x100>;
+		reg = <0x12220000 0x100>;
 		interrupts = <0 123 0>;
-		samsung,periph-id = <PERIPH_ID_SDMMC4>;
+		samsung,periph-id = <PERIPH_ID_SDMMC2>;
 	};
 
 	serial@12C00000 {
