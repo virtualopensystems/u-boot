@@ -20,10 +20,12 @@
 #ifndef __ASM_ARCH_COMMON_MSHC_H
 #define __ASM_ARCH_COMMON_MSHC_H
 
+#include <asm/arch/pinmux.h>
 #ifndef __ASSEMBLY__
 struct mshci_host {
 	struct s5p_mshci	*reg;		/* Mapped address */
 	unsigned int		clock;		/* Current clock in MHz */
+	enum periph_id	peripheral;
 };
 
 struct s5p_mshci {
