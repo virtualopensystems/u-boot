@@ -475,6 +475,16 @@
 #define CTRL_SHGATE	(1 << 29)	/* Duration of DQS gating signal */
 #define FP_RSYNC	(1 << 3)	/* Force DLL resyncronization */
 
+/* Driver strength for CK, CKE, CS & CA */
+#define IMP_OUTPUT_DRV_40_OHM	0x5
+#define CA_CK_DRVR_DS_OFFSET	9
+#define CA_CKE_DRVR_DS_OFFSET	6
+#define CA_CS_DRVR_DS_OFFSET	3
+#define CA_ADR_DRVR_DS_OFFSET	0
+
+#define PHY_CON42_CTRL_BSTLEN_SHIFT	8
+#define PHY_CON42_CTRL_RDLAT_SHIFT	0
+
 struct mem_timings;
 
 /* Functions common between LPDDR2 and DDR3 */
