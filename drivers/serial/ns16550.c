@@ -47,7 +47,7 @@
  * memory mapped 16550 compatible chip.
  * See serial_fdt.c for an example.
  */
-static int NS16550_io_mapped;
+static int NS16550_io_mapped __attribute__((section(".data")));
 
 void NS16550_is_io_mapped(int io_mapped)
 {
