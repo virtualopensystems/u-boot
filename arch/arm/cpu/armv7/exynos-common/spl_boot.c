@@ -143,3 +143,42 @@ void board_init_r(gd_t *id, ulong dest_addr)
 }
 
 void save_boot_params(u32 r0, u32 r1, u32 r2, u32 r3) {}
+
+/*
+ * The following functions are required when linking console library to SPL.
+ *
+ * Enabling UART in SPL u-boot requires console library. But some
+ * functions we needed in the console library depends on a bunch
+ * of library in libgeneric, like lib/ctype.o, lib/div64.o, lib/string.o,
+ * and lib/vsprintf.o. Adding them makes the SPL u-boot too large and not
+ * fit into the expected size.
+ *
+ * So we mock these functions in SPL, i.e. vsprintf() and panic(), in order
+ * to cut its dependency.
+ */
+int vsprintf(char *buf, const char *fmt, va_list args)
+{
+	char *str = buf;
+
+	/*
+	 * We won't implement all full functions of vsprintf().
+	 * We ignore the args and just use the format string as its result.
+	 */
+	while (*fmt)
+		*str++ = *fmt++;
+	*str = '\0';
+	return str - buf;
+}
+
+void panic(const char *fmt, ...)
+{
+	puts(fmt);
+#if defined(CONFIG_PANIC_HANG)
+	hang();
+#else
+	udelay(100000);		/* allow messages to go out */
+	do_reset(NULL, 0, 0, NULL);
+#endif
+	while (1)
+		;
+}
