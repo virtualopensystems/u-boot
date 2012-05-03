@@ -1358,6 +1358,12 @@ int usb_storage_probe(struct usb_device *dev, unsigned int ifnum,
 	return 1;
 }
 
+/*
+ * It looks like some USB storage devices have problems handling excessive
+ * numbers of blocks per transaction, 20 is a good confirmed limit.
+ */
+#define USB_MAX_READ_BLK 20
+
 int usb_stor_get_info(struct usb_device *dev, struct us_data *ss,
 		      block_dev_desc_t *dev_desc)
 {
@@ -1440,8 +1446,10 @@ int usb_stor_get_info(struct usb_device *dev, struct us_data *ss,
 	/*
 	 * The U-Boot EHCI driver cannot handle more than 4096 * 5 bytes in a
 	 * transfer without running itself out of qt_buffers.
+	 *
+	 * Number of blocks should be capped also.
 	 */
-	ss->max_xfer_blk = (4096 * 5) / dev_desc->blksz;
+	ss->max_xfer_blk = min((4096 * 5) / dev_desc->blksz, USB_MAX_READ_BLK);
 
 	init_part(dev_desc);
 
