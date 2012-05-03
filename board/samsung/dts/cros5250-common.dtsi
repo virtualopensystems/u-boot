@@ -40,6 +40,10 @@
 		reg = <0x40000000 0x80000000>;
 	};
 
+	ramoops {
+		reg = <0x41f00000 0x00100000>;
+	};
+
 	sdhci@12200000 {
 		status = "disabled";
 	};
