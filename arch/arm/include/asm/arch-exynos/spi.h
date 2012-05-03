@@ -75,20 +75,5 @@ struct exynos_spi {
 /* Packet Count */
 #define SPI_PACKET_CNT_EN	(1 << 16)
 
-/**
- * Set up a SPI slave for a particular device tree node
- *
- * This calls spi_setup_slave() with the correct bus number. Call
- * spi_free_slave() to free it later.
- *
- * @param blob		Device tree blob
- * @param node		SPI peripheral node to use
- * @param max_hz	Maximum SCK rate in Hz (0 for default)
- * @param mode		Clock polarity, clock phase and other parameters
- * @return pointer to new spi_slave structure
- */
-struct spi_slave *exynos_spi_setup_slave(const void *blob, int node,
-		unsigned int cs, unsigned int max_hz, unsigned int mode);
-
 #endif /* __ASSEMBLY__ */
 #endif

@@ -467,7 +467,7 @@ static int process_nodes(const void *blob, int node_list[], int count)
  * @param node		SPI peripheral node to use
  * @return 0 if ok, -1 on error
  */
-struct spi_slave *exynos_spi_setup_slave(const void *blob, int node,
+struct spi_slave *spi_setup_slave_fdt(const void *blob, int node,
 		unsigned int cs, unsigned int max_hz, unsigned int mode)
 {
 	struct spi_bus *bus;
