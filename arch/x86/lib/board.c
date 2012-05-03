@@ -287,8 +287,6 @@ void board_init_f(ulong boot_flags)
 
 	gd->flags |= GD_FLG_RELOC;
 
-	printf("Relocating to %p\n", (void *)gd->relocaddr);
-
 	/* Enter the relocated U-Boot! */
 	relocate_code(gd->start_addr_sp, gd, gd->relocaddr);
 
