@@ -421,7 +421,8 @@ static int spi_get_config(const void *blob, int node, struct spi_bus *bus)
 	}
 
 	/* Use 500KHz as a suitable default */
-	bus->frequency = fdtdec_get_int(blob, node, "clock-frequency", 500000);
+	bus->frequency = fdtdec_get_int(blob, node, "spi-max-frequency",
+					500000);
 
 	return 0;
 }
