@@ -308,14 +308,17 @@ int spi_xfer(struct spi_slave *slave, unsigned int bitlen, const void *dout,
 			uchar data;
 
 			writel(txp[i], &regs->tx_data);
-			debug("txp:0x%x\n", txp[i]);
+			debug("txp:0x%x", txp[i]);
 			do {
 				sts = readl(&regs->spi_sts);
 			} while (!((sts >> SPI_RX_LVL_OFFSET) &
 				fifo_lvl_mask));
 			data = readl(&regs->rx_data);
-			if (din)
+			if (din) {
 				*rxp++ = data;
+				debug(", rxp:0x%x", data);
+			}
+			debug("\n");
 		}
 		clrbits_le32(&regs->ch_cfg, SPI_TX_CH_ON);
 	}

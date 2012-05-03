@@ -590,7 +590,7 @@ int s5p_mshci_init(const void *blob)
 	count = fdtdec_find_aliases_for_id(blob, "sdmmc",
 			COMPAT_SAMSUNG_EXYNOS5_MSHCI, node_list,
 					   MAX_MMC_HOSTS);
-	debug("%s: %d nodes\n", count);
+	debug("%s: %d nodes\n", __func__, count);
 	for (i = 0; i < count; i++) {
 		node = node_list[i];
 
