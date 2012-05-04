@@ -49,7 +49,7 @@
 	};
 
 	ramoops@2000000 {
-		reg = <0x02000000 0x02100000>;
+		reg = <0x02000000 0x00100000>;
 	};
 
 	/* This is not used in U-Boot, but is expected to be in kernel .dts */

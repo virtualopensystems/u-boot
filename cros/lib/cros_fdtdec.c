@@ -208,7 +208,7 @@ int cros_fdtdec_memory(const void *blob, const char *name,
 	cell = fdt_getprop(blob, node, "reg", &len);
 	if (cell && len == sizeof(fdt_addr_t) * 2) {
 		config->start = fdt_addr_to_cpu(cell[0]);
-		config->end = fdt_addr_to_cpu(cell[1]);
+		config->end = config->start + fdt_addr_to_cpu(cell[1]);
 	} else
 		return -FDT_ERR_BADLAYOUT;
 
