@@ -23,8 +23,7 @@
 
 #include <asm/arch-exynos/mshc.h>
 
-#define MAX_MSHCI_CLOCK	52000000 /* Max limit for mshc clock is 52MHz */
-#define MIN_MSHCI_CLOCK	400000 /* Lower limit for mshc clock is 400KHz */
+#define MAX_EMMC_CLOCK	40000000 /* Limit mshc clock to 40Mhz */
 #define COMMAND_TIMEOUT 10000
 #define TIMEOUT_MS	100
 

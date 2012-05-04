@@ -358,45 +358,35 @@ static void mshci_clock_onoff(struct mshci_host *host, int val)
  *
  * @param host		pointer to mshci_host
  * @param clock		request clock
- *
- * Return	0 if ok else -1
  */
-static int mshci_change_clock(struct mshci_host *host, uint clock)
+static void mshci_change_clock(struct mshci_host *host, uint clock)
 {
 	int div;
 	u32 sclk_mshc;
 
 	if (clock == host->clock)
-		return 0;
+		return;
 
 	/* If Input clock is higher than maximum mshc clock */
-	if (clock > MAX_MSHCI_CLOCK) {
+	if (clock > MAX_EMMC_CLOCK) {
 		debug("Input clock is too high\n");
-		clock = MAX_MSHCI_CLOCK;
+		clock = MAX_EMMC_CLOCK;
 	}
 
 	/* disable the clock before changing it */
 	mshci_clock_onoff(host, CLK_DISABLE);
 
-	/* set the clock for mshci controller */
-	if (!clock_set_mshci(host->peripheral)) {
-		debug("clock_set_mshci failed\n");
-		return -1;
-	}
+	sclk_mshc = get_mshc_clk_div();
 
-	/* get the clock division */
-	sclk_mshc = get_mshci_clk_div(host->peripheral);
-
-	/* CLKDIV */
-	for (div = 1 ; div <= 0xff; div++) {
-		if (((sclk_mshc / 4) / (2 * div)) <= clock) {
+	/* clkdiv */
+	for (div = 1 ; div <= 0xFF; div++) {
+		if (((sclk_mshc / 2) / (2 * div)) <= clock) {
 			writel(div, &host->reg->clkdiv);
 			break;
 		}
 	}
 
 	writel(div, &host->reg->clkdiv);
-
 	writel(0, &host->reg->cmd);
 	writel(CMD_ONLY_CLK, &host->reg->cmd);
 
@@ -406,7 +396,8 @@ static int mshci_change_clock(struct mshci_host *host, uint clock)
 	mshci_clock_onoff(host, CLK_ENABLE);
 	host->clock = clock;
 
-	return 0;
+	host->clock = clock;
+	return;
 }
 
 /*
@@ -420,8 +411,8 @@ static void s5p_mshci_set_ios(struct mmc *mmc)
 
 	debug("bus_width: %x, clock: %d\n", mmc->bus_width, mmc->clock);
 
-	if (mmc->clock > 0 && mshci_change_clock(host, mmc->clock))
-		debug("mshci_change_clock failed\n");
+	if (mmc->clock > 0)
+		mshci_change_clock(host, mmc->clock);
 
 	if (mmc->bus_width == 8)
 		writel(PORT0_CARD_WIDTH8, &host->reg->ctype);
@@ -430,10 +421,7 @@ static void s5p_mshci_set_ios(struct mmc *mmc)
 	else
 		writel(PORT0_CARD_WIDTH1, &host->reg->ctype);
 
-	if (host->peripheral == PERIPH_ID_SDMMC0)
-		writel(0x03030001, &host->reg->clksel);
-	if (host->peripheral == PERIPH_ID_SDMMC2)
-		writel(0x03020001, &host->reg->clksel);
+	writel(0x00020001, &host->reg->clksel);
 }
 
 /*
@@ -477,10 +465,7 @@ static int s5p_mphci_init(struct mmc *mmc)
 	mshci_init(host);
 
 	/* enumerate at 400KHz */
-	if (mshci_change_clock(host, 400000)) {
-		debug("mshci_change_clock failed\n");
-		return -1;
-	}
+	mshci_change_clock(host, 400000);
 
 	/* set auto stop command */
 	ier = readl(&host->reg->ctrl);
@@ -514,11 +499,11 @@ static int s5p_mshci_initialize(struct fdt_mshci *config)
 	}
 	mmc = &mshci_dev[num_devs];
 	mmc_host = &mshci_host[num_devs];
-
-	sprintf(mmc->name, "S5P MSHC%d", num_devs);
 	num_devs++;
 
-	mmc->priv = mmc_host;
+	sprintf(mmc->name, "S5P MSHC");
+
+	mmc->priv = &mshci_host;
 	mmc->send_cmd = s5p_mshci_send_command;
 	mmc->set_ios = s5p_mshci_set_ios;
 	mmc->init = s5p_mphci_init;
@@ -531,8 +516,8 @@ static int s5p_mshci_initialize(struct fdt_mshci *config)
 	else
 		mmc->host_caps |= MMC_MODE_4BIT;
 
-	mmc->f_min = MIN_MSHCI_CLOCK;
-	mmc->f_max = MAX_MSHCI_CLOCK;
+	mmc->f_min = 400000;
+	mmc->f_max = 40000000;
 
 	exynos_pinmux_config(config->periph_id,
 			config->bus_width == 8 ? PINMUX_FLAG_8BIT_MODE : 0);
@@ -549,9 +534,9 @@ static int s5p_mshci_initialize(struct fdt_mshci *config)
 		gpio_set_pull(pin, GPIO_PULL_NONE);
 		gpio_set_drv(pin, GPIO_DRV_4X);
 	}
+
 	mmc_host->clock = 0;
-	mmc_host->reg =  config->reg;
-	mmc_host->peripheral =  config->periph_id;
+	mmc_host->reg = config->reg;
 	mmc->b_max = 1;
 	mmc_register(mmc);
 	debug("s5p_mshci: periph_id=%d, width=%d, reg=%p, enable=%d\n",
