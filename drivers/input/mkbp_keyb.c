@@ -96,8 +96,12 @@ static int check_for_keys(struct keyb *config,
  */
 static int kbd_tstc(void)
 {
-	/* Just get input to do this for us */
-	return config.inited ? input_tstc(&config.input) : 0;
+	if (mkbp_interrupt_pending(config.dev)) {
+		/* Just get input to do this for us */
+		return input_tstc(&config.input);
+	}
+
+	return 0;
 }
 
 /**

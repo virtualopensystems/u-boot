@@ -35,6 +35,7 @@
 #include <malloc.h>
 #include <spi.h>
 #include <asm/arch-exynos/spi.h>
+#include <asm/gpio.h>
 #include <i2c.h>
 
 
@@ -54,6 +55,7 @@ struct mkbp_dev {
 	unsigned int addr;		/* Device address (for I2C) */
 	unsigned int bus_num;		/* Bus number (for I2C) */
 	unsigned int max_frequency;	/* Maximum interface frequency */
+	struct fdt_gpio_state ec_int;	/* GPIO used as EC interrupt line */
 	uint8_t din[MSG_BYTES];		/* Input data buffer */
 	uint8_t dout[MSG_BYTES];	/* Output data buffer */
 };
@@ -213,6 +215,16 @@ int mkbp_read_id(struct mkbp_dev *dev, char *id, int maxlen)
 	return 0;
 }
 
+int mkbp_interrupt_pending(struct mkbp_dev *dev)
+{
+	/* no interrupt support : always poll */
+	if (!fdt_gpio_isvalid(&dev->ec_int))
+		return 1;
+
+	return !gpio_get_value(dev->ec_int.gpio);
+}
+
+
 /**
  * Decode MBKP details from the device tree and allocate a suitable device.
  *
@@ -225,6 +237,7 @@ static int mkbp_decode_fdt(const void *blob, int node, struct mkbp_dev **devp)
 {
 	enum mkbp_interface_t interface;
 	enum fdt_compat_id compat;
+	struct fdt_gpio_state gpio;
 	struct mkbp_dev *dev;
 	int parent;
 
@@ -262,6 +275,7 @@ static int mkbp_decode_fdt(const void *blob, int node, struct mkbp_dev **devp)
 		return -1;
 	}
 
+	fdtdec_decode_gpio(blob, node, "ec-interrupt", &dev->ec_int);
 	dev->interface = interface;
 	dev->parent_node = parent;
 	*devp = dev;
@@ -301,6 +315,11 @@ struct mkbp_dev *mkbp_init(const void *blob)
 		i2c_init(dev->max_frequency, dev->addr);
 		break;
 	}
+	/* we will poll the EC interrupt line */
+	fdtdec_setup_gpio(&dev->ec_int);
+	if (fdt_gpio_isvalid(&dev->ec_int))
+		gpio_cfg_pin(dev->ec_int.gpio, GPIO_INPUT);
+
 	if (mkbp_read_id(dev, id, sizeof(id))) {
 		debug("%s: Could not read KBC ID\n", __func__);
 		return NULL;

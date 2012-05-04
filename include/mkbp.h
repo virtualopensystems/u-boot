@@ -57,6 +57,17 @@ int mkbp_read_id(struct mkbp_dev *dev, char *id, int maxlen);
 int mkbp_scan_keyboard(struct mkbp_dev *dev, struct mbkp_keyscan *scan);
 
 /**
+ * Check if the MKBP device has an interrupt pending.
+ *
+ * Read the status of the external interrupt connected to the MKBP device.
+ * If no external interrupt is configured, this always returns 1.
+ *
+ * @param dev		MKBP device
+ * @return 0 if no interrupt is pending
+ */
+int mkbp_interrupt_pending(struct mkbp_dev *dev);
+
+/**
  * Set up the Chromium OS matrix keyboard protocol
  *
  * @param blob		Device tree blob containing setup information
