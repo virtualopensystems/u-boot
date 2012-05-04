@@ -168,14 +168,14 @@ static int ahci_host_init(struct ahci_probe_ent *probe_ent)
 		writel(PORT_CMD_SPIN_UP, port_mmio + PORT_CMD);
 
 		j = 0;
-		while (j < 1000) {
+		while (j < 5000) {
 			msleep(1);
 			tmp = readl(port_mmio + PORT_SCR_STAT);
 			if ((tmp & 0xf) == 0x3)
 				break;
 			j++;
 		}
-		if (j == 1000)
+		if (j == 5000)
 			debug("timeout.\n");
 		else
 			debug("ok.\n");
@@ -395,7 +395,7 @@ static void ahci_set_feature(u8 port)
 	writel(1, port_mmio + PORT_CMD_ISSUE);
 	readl(port_mmio + PORT_CMD_ISSUE);
 
-	if (waiting_for_cmd_completed(port_mmio + PORT_CMD_ISSUE, 150, 0x1)) {
+	if (waiting_for_cmd_completed(port_mmio + PORT_CMD_ISSUE, 200, 0x1)) {
 		printf("set feature error on port %d!\n", port);
 	}
 }
@@ -496,7 +496,7 @@ static int ahci_device_data_io(u8 port, u8 *fis, int fis_len, u8 *buf,
 
 	writel_with_flush(1, port_mmio + PORT_CMD_ISSUE);
 
-	if (waiting_for_cmd_completed(port_mmio + PORT_CMD_ISSUE, 150, 0x1)) {
+	if (waiting_for_cmd_completed(port_mmio + PORT_CMD_ISSUE, 200, 0x1)) {
 		printf("timeout exit!\n");
 		return -1;
 	}
