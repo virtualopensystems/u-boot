@@ -26,6 +26,7 @@
 #include <asm/io.h>
 #include <asm/arch/uart.h>
 #include <asm/arch/clk.h>
+#include <asm/arch-exynos/spl.h>
 #include <fdtdec.h>
 #include <serial.h>
 
@@ -222,6 +223,14 @@ struct serial_device s5p_serial3_device =
 #ifdef CONFIG_OF_CONTROL
 int fdtdec_decode_console(int *index, struct fdt_serial *uart)
 {
+#ifdef CONFIG_SPL_BUILD
+	struct spl_machine_param *params = spl_get_machine_params();
+
+	uart->base_addr = params->serial_base;
+	/* The base_addr pointed to the right port, so ignore the port_id. */
+	uart->port_id = 0;
+	return 0;
+#else
 	const void *blob = gd->fdt_blob;
 	int node;
 
@@ -237,6 +246,7 @@ int fdtdec_decode_console(int *index, struct fdt_serial *uart)
 	uart->port_id = fdtdec_get_int(blob, node, "id", -1);
 
 	return 0;
+#endif
 }
 #endif
 
