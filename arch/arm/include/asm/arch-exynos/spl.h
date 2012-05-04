@@ -46,6 +46,7 @@ struct spl_machine_param {
 	 * b		boot_source
 	 * f		frequency_mhz (memory frequency in MHz)
 	 * a		ARM clock frequency in MHz
+	 * s		serial base address
 	 * <space>	empty parameter, skip
 	 */
 	char		params[8];	/* Length must be word-aligned */
@@ -60,8 +61,9 @@ struct spl_machine_param {
 	 */
 	u32		uboot_size;
 	enum boot_mode	boot_source;	/* Boot device */
-	unsigned frequency_mhz;		/* Frequency of memory in MHz */
-	unsigned arm_freq_mhz;		/* ARM Frequency in MHz */
+	unsigned	frequency_mhz;	/* Frequency of memory in MHz */
+	unsigned	arm_freq_mhz;	/* ARM Frequency in MHz */
+	u32		serial_base;	/* Serial base address */
 } __attribute__((__packed__));
 
 /**
