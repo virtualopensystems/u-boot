@@ -54,7 +54,7 @@ enum message_cmd_t {
 	CMDC_ID,			/* Read EC ID */
 
 	/* Functional messages */
-	CMDC_KEY_STATE	= 0x20,		/* Read key state */
+	CMDC_KEY_STATE	= 0x60,		/* Read key state */
 };
 
 /* Some useful constants */

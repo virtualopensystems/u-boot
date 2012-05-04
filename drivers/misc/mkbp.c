@@ -35,12 +35,14 @@
 #include <malloc.h>
 #include <spi.h>
 #include <asm/arch-exynos/spi.h>
+#include <i2c.h>
 
 
 /* Which interface is the device on? */
 enum mkbp_interface_t {
 	MKBPIF_NONE,
 	MKBPIF_SPI,
+	MKBPIF_I2C,
 };
 
 /* Our configuration information */
@@ -49,7 +51,9 @@ struct mkbp_dev {
 	struct spi_slave *spi;		/* Our SPI slave, if using SPI */
 	int parent_node;		/* Our parent node (interface) */
 	unsigned int cs;		/* Our chip select */
-	unsigned int max_frequency;	/* Maximum SPI frequency */
+	unsigned int addr;		/* Device address (for I2C) */
+	unsigned int bus_num;		/* Bus number (for I2C) */
+	unsigned int max_frequency;	/* Maximum interface frequency */
 	uint8_t din[MSG_BYTES];		/* Input data buffer */
 	uint8_t dout[MSG_BYTES];	/* Output data buffer */
 };
@@ -71,20 +75,64 @@ static int mkbp_send_message(struct mkbp_dev *dev, uint8_t din[], int din_len,
 {
 	const uint8_t *p, *end;
 	int len = 0;
+	int old_bus = 0;
 
 	memset(din, '\0', din_len);
-	if (spi_claim_bus(dev->spi)) {
-		debug("%s: Cannot claim SPI bus\n", __func__);
-		return -1;
-	}
+
+	switch (dev->interface) {
+	case MKBPIF_SPI:
+		if (spi_claim_bus(dev->spi)) {
+			debug("%s: Cannot claim SPI bus\n", __func__);
+			return -1;
+		}
 #ifdef CONFIG_NEW_SPI_XFER
-	if (spi_xfer(dev->spi, dout, din_len * 8, din, din_len * 8)) {
+		if (spi_xfer(dev->spi, dout, din_len * 8, din, din_len * 8)) {
 #else
-	if (spi_xfer(dev->spi, din_len * 8, dout, din,
-				SPI_XFER_BEGIN | SPI_XFER_END)) {
+		if (spi_xfer(dev->spi, din_len * 8, dout, din,
+					SPI_XFER_BEGIN | SPI_XFER_END)) {
 #endif
-		debug("%s: Cannot complete SPI transfer\n", __func__);
-		return -1;
+			debug("%s: Cannot complete SPI transfer\n", __func__);
+			return -1;
+		}
+		spi_release_bus(dev->spi);
+		break;
+	case MKBPIF_I2C:
+		din_len += 2; /* Add space for checksum and return code */
+		old_bus = i2c_get_bus_num();
+		/* Set to the proper i2c bus */
+		if (i2c_set_bus_num(dev->bus_num)) {
+			debug("%s: Cannot change to I2C bus %d\n", __func__,
+			       dev->bus_num);
+			return -1;
+		}
+		/* Send read key state command */
+		if (i2c_write(dev->addr, 0, 0, dout, 1)) {
+			debug("%s: Cannot complete I2C write to 0x%x\n",
+			       __func__, dev->addr);
+			return -1;
+		}
+		/* Receive the key state */
+		if (i2c_read(dev->addr, 0, 0, din, din_len)) {
+			debug("%s: Cannot complete I2C read from 0x%x\n",
+			       __func__, dev->addr);
+			return -1;
+		}
+		/* Return to original bus number */
+		if (i2c_set_bus_num(old_bus)) {
+			debug("%s: Cannot change to I2C bus %d\n", __func__,
+			       old_bus);
+			return -1;
+		}
+		/*
+		 * I2C currently uses a simpler protocol, so we don't
+		 * deal with the full header, the checksum byte on the end
+		 * is ignored.
+		 * TODO(bhthompson): Migrate to new protocol.
+		 */
+		if (din[0] != 0x00) /* EC_RES_SUCCESS */
+			return -1;
+		*replyp = &din[1]; /* skip return code */
+		return din_len - 2; /* ignore checksum/return code */
 	}
 
 	/* Scan to start of reply */
@@ -109,8 +157,6 @@ static int mkbp_send_message(struct mkbp_dev *dev, uint8_t din[], int din_len,
 		len -= MSG_PROTO_BYTES;	/* remove header, checksum, trailer */
 		*replyp = p;
 	}
-	spi_release_bus(dev->spi);
-
 	return len;
 }
 
@@ -189,26 +235,34 @@ static int mkbp_decode_fdt(const void *blob, int node, struct mkbp_dev **devp)
 		return -1;
 	}
 
+	dev = (struct mkbp_dev *)calloc(1, sizeof(*dev));
+	if (!dev) {
+		debug("%s: Cannot allocate memory\n", __func__);
+		return -1;
+	}
+
 	compat = fdtdec_lookup(blob, parent);
 	switch (compat) {
 	case COMPAT_SAMSUNG_EXYNOS_SPI:
 		interface = MKBPIF_SPI;
+		dev->max_frequency = fdtdec_get_int(blob, node,
+						"spi-max-frequency", 500000);
+		dev->cs = fdtdec_get_int(blob, node, "reg", 0);
+		break;
+	case COMPAT_SAMSUNG_S3C2440_I2C:
+		interface = MKBPIF_I2C;
+		dev->max_frequency = fdtdec_get_int(blob, node,
+						    "i2c-max-frequency",
+						    CONFIG_SYS_I2C_SPEED);
+		dev->bus_num = i2c_get_bus_num_fdt(blob, parent);
+		dev->addr = fdtdec_get_int(blob, node, "reg", 0);
 		break;
 	default:
 		debug("%s: Unknown compat id %d\n", __func__, compat);
 		return -1;
 	}
 
-	dev = (struct mkbp_dev *)calloc(1, sizeof(*dev));
-	if (!dev) {
-		debug("%s: Cannot allocate memory\n", __func__);
-		return -1;
-	}
 	dev->interface = interface;
-	dev->cs = fdtdec_get_int(blob, node, "reg", 0);
-	dev->max_frequency = fdtdec_get_int(blob, node, "spi-max-frequency",
-					    500000);
-
 	dev->parent_node = parent;
 	*devp = dev;
 
@@ -242,11 +296,14 @@ struct mkbp_dev *mkbp_init(const void *blob)
 			debug("%s: Could not setup SPI slave\n", __func__);
 			return NULL;
 		}
-		if (mkbp_read_id(dev, id, sizeof(id))) {
-			debug("%s: Could not read KBC ID\n", __func__);
-			return NULL;
-		}
 		break;
+	case MKBPIF_I2C:
+		i2c_init(dev->max_frequency, dev->addr);
+		break;
+	}
+	if (mkbp_read_id(dev, id, sizeof(id))) {
+		debug("%s: Could not read KBC ID\n", __func__);
+		return NULL;
 	}
 	debug("Google Matrix Keyboard ready, id '%s'\n", id);
 
