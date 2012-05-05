@@ -49,8 +49,6 @@ void ddr3_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size)
 	phy1_ctrl = (struct exynos5_phy_control *)EXYNOS5_DMC_PHY1_BASE;
 	dmc = (struct exynos5_dmc *)EXYNOS5_DMC_CTRL_BASE;
 
-	mem_clk_setup(mem);
-
 	reset_phy_ctrl();
 
 	/* Set Impedance Output Driver */

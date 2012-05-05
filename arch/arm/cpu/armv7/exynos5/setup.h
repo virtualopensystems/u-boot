@@ -507,13 +507,6 @@ void ddr3_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size);
 
 void system_clock_init(void);
 
-/*
- * Set up the memory clocks
- *
- * @param mem		Memory timings for this memory type.
- */
-void mem_clk_setup(struct mem_timings *mem);
-
 void tzpc_init(void);
 /*
  * Configure ZQ I/O interface

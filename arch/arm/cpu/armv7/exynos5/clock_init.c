@@ -570,25 +570,6 @@ void system_clock_init()
 	writel(val, &clk->div_fsys2);
 }
 
-/*
- * Set up the memory clocks
- *
- * @param mem		Memory timings for this memory type.
- */
-void mem_clk_setup(struct mem_timings *mem)
-{
-	struct exynos5_clock *clk = (struct exynos5_clock *)EXYNOS5_CLOCK_BASE;
-	u32 val;
-
-	writel(0x0, &clk->src_cdrex);
-	writel(CLK_DIV_CDREX_VAL, &clk->div_cdrex);
-
-	writel(MPLL_CON1_VAL, &clk->mpll_con1);
-	writel(MPLL_CON0_VAL, &clk->mpll_con0);
-
-	writel(CLK_SRC_CORE1_VAL, &clk->src_core1);
-}
-
 #ifdef CONFIG_SPL_BUILD
 /*
  * This is a custom implementation for the udelay(), as we do not the timer
