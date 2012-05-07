@@ -39,10 +39,16 @@
 #define BUILD_CMD_LINE_STUFF 1
 #define BUILD_NETWORK_STUFF  1
 #define BUILD_PART_FS_STUFF  1
+#define CONFIG_STD_DEVICES_SETTINGS     "stdin=usbkbd,vga,serial\0" \
+					"stdout=vga,serial,cbmem\0" \
+					"stderr=vga,serial,cbmem\0"
 #else
 #define BUILD_CMD_LINE_STUFF 0
 #define BUILD_NETWORK_STUFF  0
 #define BUILD_PART_FS_STUFF  0
+#define CONFIG_STD_DEVICES_SETTINGS     "stdin=usbkbd,vga,serial\0" \
+					"stdout=serial,cbmem\0" \
+					"stderr=vga,serial,cbmem\0"
 #endif
 
 /* FDT support */
@@ -118,9 +124,6 @@
 
 #define CONFIG_SYS_CONSOLE_IS_IN_ENV
 #define CONFIG_SYS_STDIO_DEREGISTER
-#define CONFIG_STD_DEVICES_SETTINGS     "stdin=usbkbd,vga,serial\0" \
-					"stdout=serial,cbmem\0" \
-					"stderr=vga,serial,cbmem\0"
 
 #if BUILD_IDE_STUFF
 /* max. 1 IDE bus	*/
