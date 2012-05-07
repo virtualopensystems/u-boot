@@ -75,7 +75,6 @@ enum fdt_compat_id {
 	COMPAT_SAMSUNG_EXYNOS_SPI,	/* Exynos SPI */
 	COMPAT_NVIDIA_TEGRA20_KBC,	/* Tegra2 Keyboard */
 	COMPAT_SAMSUNG_EXYNOS_DMC,	/* Exynos Dynamic Memory Controller */
-	COMPAT_SAMSUNG_S3C2440_I2C,	/* Exynos I2C Controller */
 	COMPAT_GOOGLE_MKBP,		/* Google MKBP Protocol */
 	COMPAT_GOOGLE_MKBP_KEYB,	/* Google MKBP Keyboard */
 

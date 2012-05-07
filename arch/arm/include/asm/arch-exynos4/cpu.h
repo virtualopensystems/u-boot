@@ -85,6 +85,4 @@ SAMSUNG_BASE(watchdog, WATCHDOG_BASE)
 SAMSUNG_BASE(power, POWER_BASE)
 #endif
 
-#define EXYNOS_I2C_MAX_CONTROLLERS	1
-
 #endif	/* _EXYNOS4_CPU_H */
