@@ -39,12 +39,10 @@
 #define BUILD_CMD_LINE_STUFF 1
 #define BUILD_NETWORK_STUFF  1
 #define BUILD_PART_FS_STUFF  1
-#define CONFIG_BOOTDELAY    -1
 #else
 #define BUILD_CMD_LINE_STUFF 0
 #define BUILD_NETWORK_STUFF  0
 #define BUILD_PART_FS_STUFF  0
-#define CONFIG_BOOTDELAY     0
 #endif
 
 /* FDT support */
@@ -347,6 +345,7 @@
 
 /* Boot options */
 
+#define CONFIG_BOOTDELAY     0
 #define CONFIG_ZERO_BOOTDELAY_CHECK
 #define CONFIG_BOOTARGS		""
 
