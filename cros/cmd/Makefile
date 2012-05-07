@@ -17,6 +17,7 @@ COBJS-$(CONFIG_CHROMEOS_TEST)	+= cmd_cros_tpm_test.o
 COBJS-$(CONFIG_CHROMEOS_TEST)	+= cmd_vbexport_test.o
 COBJS-$(CONFIG_CHROMEOS_TEST)	+= cmd_vboot_test.o
 COBJS-$(CONFIG_CHROMEOS)	+= cmd_vboot_twostop.o
+COBJS-$(CONFIG_FACTORY_IMAGE)	+= cmd_netboot.o
 
 COBJS	:= $(COBJS-y)
 OBJS	:= $(addprefix $(obj),$(COBJS))
