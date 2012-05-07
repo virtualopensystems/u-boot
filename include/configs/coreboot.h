@@ -349,16 +349,41 @@
 #define CONFIG_ZERO_BOOTDELAY_CHECK
 #define CONFIG_BOOTARGS		""
 
-#define CONFIG_BOOTCOMMAND	"run set_bootargs; "\
-				"fatload ${devtype} ${devnum}:c 3000000 syslinux/vmlinuz.a; "\
-				"zboot 3000000; "
+#ifdef CONFIG_FACTORY_IMAGE
+#define CONFIG_BOOTCOMMAND			"netboot_acpi; "\
+						"setenv bootargs root=/dev/ram0 rw init=/sbin/init i915.modeset=1 cros_legacy ramdisk_size=409600; "\
+						"usb start; "\
+						"setenv autoboot n; "\
+						"dhcp; "\
+						"tftp 0x100000 uImage; "\
+						"tftp 0x12008000 rootImg; "\
+						"bootm 0x100000 0x12008000; "\
+						"setenv devtype usb; "\
+						"setenv devname sdb; "\
+						"setenv devnum 0; "\
+						"run set_bootargs; "\
+						"setenv bootargs ${bootargs} cros_factory_install; "\
+						"if fatload ${devtype} ${devnum}:c 3000000 syslinux/vmlinuz.A; then "\
+							"zboot 3000000; "\
+							"fi; "\
+						"setenv devnum 1; "\
+						"run set_bootargs; "\
+						"setenv bootargs ${bootargs} cros_factory_install; "\
+						"if fatload ${devtype} ${devnum}:c 3000000 syslinux/vmlinuz.A; then "\
+							"zboot 3000000; "\
+							"fi; "
+#else
+#define CONFIG_BOOTCOMMAND			"run set_bootargs; "\
+						"setenv bootargs ${bootargs} console=uart8250,mmio,0xe0401000,115200n8; "\
+						"fatload ${devtype} ${devnum}:c 3000000 syslinux/vmlinuz.a; "\
+						"zboot 3000000; "
+#endif
 
 #define CONFIG_EXTRA_ENV_SETTINGS		"devtype=scsi\0"\
 						"devnum=0\0"\
 						"devname=sda\0"\
 						CONFIG_STD_DEVICES_SETTINGS \
 						"set_bootargs=setenv bootargs "\
-							"console=uart8250,mmio,0xe0401000,115200n8 "\
 							"root=/dev/${devname}3 "\
 							"init=/sbin/init "\
 							"i915.modeset=1 "\
