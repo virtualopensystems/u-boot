@@ -27,7 +27,4 @@
 /* Init the SPI driver */
 void spi_init(void);
 
-/* Init the I2C driver */
-void exynos_i2c_init(const void *blob);
-
 #endif
