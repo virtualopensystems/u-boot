@@ -362,13 +362,6 @@ void board_init_r(gd_t *id, ulong dest_addr)
 
 	bootstage_mark(BOOTSTAGE_ID_BOARD_FLASH_37);
 
-	/* initialize environment */
-	if (should_load_env())
-		env_relocate();
-	else
-		env_set_default();
-	bootstage_mark(BOOTSTAGE_ID_BOARD_ENV);
-
 #ifdef CONFIG_CMD_NET
 	/* IP Address */
 	bd_data.bi_ip_addr = getenv_IPaddr("ipaddr");
@@ -394,6 +387,13 @@ void board_init_r(gd_t *id, ulong dest_addr)
 #ifdef CONFIG_CMD_SPI
 	spi_init();
 #endif
+
+	/* initialize environment */
+	if (should_load_env())
+		env_relocate();
+	else
+		env_set_default();
+	bootstage_mark(BOOTSTAGE_ID_BOARD_ENV);
 
 #ifdef CONFIG_MISC_INIT_R
 	show_boot_progress(0x27);
