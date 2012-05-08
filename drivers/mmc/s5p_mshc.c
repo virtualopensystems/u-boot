@@ -378,12 +378,6 @@ static int mshci_change_clock(struct mshci_host *host, uint clock)
 	/* disable the clock before changing it */
 	mshci_clock_onoff(host, CLK_DISABLE);
 
-	/* set the clock for mshci controller */
-	if (!clock_set_mshci(host->peripheral)) {
-		debug("clock_set_mshci failed\n");
-		return -1;
-	}
-
 	/* get the clock division */
 	sclk_mshc = get_mshci_clk_div(host->peripheral);
 
@@ -512,6 +506,13 @@ static int s5p_mshci_initialize(struct fdt_mshci *config)
 		debug("%s: Too many hosts\n", __func__);
 		return -1;
 	}
+
+	/* set the clock for mshci controller */
+	if (!clock_set_mshci(config->periph_id)) {
+		debug("clock_set_mshci failed\n");
+		return -1;
+	}
+
 	mmc = &mshci_dev[num_devs];
 	mmc_host = &mshci_host[num_devs];
 
