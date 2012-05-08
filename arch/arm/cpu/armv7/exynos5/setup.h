@@ -42,10 +42,6 @@
 #define TZPC8_BASE		0x10180000
 #define TZPC9_BASE		0x10190000
 
-#define MPLL_MDIV              0x64
-#define MPLL_PDIV              0x3
-#define MPLL_SDIV              0x0
-
 /* APLL_CON1	*/
 #define APLL_CON1_VAL	(0x00203800)
 
@@ -71,7 +67,6 @@
 
 /* Set PLL */
 #define set_pll(mdiv, pdiv, sdiv)	(1<<31 | mdiv<<16 | pdiv<<8 | sdiv)
-#define MPLL_CON0_VAL  set_pll(MPLL_MDIV, MPLL_PDIV, MPLL_SDIV)
 
 /* CLK_SRC_CPU	*/
 /* 0 = MOUTAPLL,  1 = SCLKMPLL	*/
