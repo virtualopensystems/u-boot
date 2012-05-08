@@ -1,0 +1,29 @@
+/dts-v1/;
+
+/include/ "skeleton.dtsi"
+/include/ "chromeos.dtsi"
+/include/ "flashmap-8mb_1mbRom.dtsi"
+
+/ {
+	model = "Google Link";
+	compatible = "google,link", "intel,celeron-ivybridge";
+
+	config {
+	       hwid = "X86 LINK TEST 6638";
+	       silent_console = <0>;
+	};
+
+	aliases {
+		console = "/serial@3f8";
+	};
+
+	serial@3f8 {
+		compatible = "ns16550";
+		reg = <0x3f8 8>;
+		reg-shift = <1>;
+		clock-frequency = <115200>;
+		multiplier = <1>;
+		io-mapped = <1>;
+	};
+
+};
