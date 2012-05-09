@@ -18,4 +18,16 @@
 / {
         model = "Google Daisy";
         compatible = "google,daisy", "samsung,smdk5250", "samsung,exynos5250";
+
+	sromc@12250000 {
+		bank = <3>;
+		srom-timing = <1 9 12 1 6 1 1>;
+		width = <2>;
+		lan@7000000 {
+			compatible = "smsc,lan9215", "smsc,lan";
+			reg = <0x7000000 0x100>;
+			phy-mode = "mii";
+		};
+	};
+
 };
