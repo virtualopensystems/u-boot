@@ -69,31 +69,47 @@ struct exynos5_dsim {
 
 
 #define DSIM_PHYACCHR_AFC_EN		(1 << 14)
+#define DSIM_PHYACCHR_AFC_CTL_VAL	0x3
 #define DSIM_PHYACCHR_AFC_CTL_OFFSET	5
 
+#define DSIM_PLLCTRL_PMS_VAL		0x3399
 #define DSIM_PLLCTRL_PMS_OFFSET		1
+#define DSIM_FREQ_BAND			0x8
 #define DSIM_FREQ_BAND_OFFSET		24
 
+#define DSIM_PLLTMR_VAL			0x1f4
+
+#define DSIM_ESC_PRESCALAR_VAL		0x90
 #define LANE_ESC_CLK_EN_ALL		(0x1f << 19)
 #define BYTE_CLK_EN			(1 << 24)
 #define DSIM_ESC_CLK_EN			(1 << 28)
 #define TXREQUEST_HS_CLK_ON		(1 << 31)
 
 #define LP_MODE_ENABLE			(1 << 7)
+#define STOP_STATE_CNT_VAL		0xf
 #define STOP_STATE_CNT_OFFSET		21
 
+#define MAIN_VBP_VAL		0x4
 #define MAIN_VBP_OFFSET		0
+#define STABLE_VFP_VAL		0x4
 #define STABLE_VFP_OFFSET	16
+#define CMD_ALLOW_VAL		0xf
 #define CMD_ALLOW_OFFSET	28
 
+#define MAIN_HBP_VAL		0x4
 #define MAIN_HBP_OFFSET		0
+#define MAIN_HFP_VAL		0x4
 #define MAIN_HFP_OFFSET		16
 
+#define MAIN_HSA_VAL		0x4
 #define MAIN_HSA_OFFSET		0
+#define MAIN_VSA_VAL		0x4
 #define MAIN_VSA_OFFSET		22
 
 #define MAIN_STANDBY		(1 << 31)
+#define MAIN_VRESOL_VAL		0x320
 #define MAIN_VRESOL_OFFSET	16
+#define MAIN_HRESOL_VAL		0x500
 #define MAIN_HRESOL_OFFSET	0
 
 #define SFR_FIFO_EMPTY		(1 << 29)

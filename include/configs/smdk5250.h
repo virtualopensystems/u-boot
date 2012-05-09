@@ -107,23 +107,6 @@
 #define LCD_YRES		800
 #define LCD_BPP			LCD_COLOR16
 
-/* DSIM */
-#define DSIM_PHYACCHR_AFC_CTL_VAL	0x3
-#define DSIM_PLLCTRL_PMS_VAL		0x3399
-#define DSIM_FREQ_BAND			0x8
-#define DSIM_PLLTMR_VAL			0x1f4
-#define DSIM_ESC_PRESCALAR_VAL		0x90
-#define STOP_STATE_CNT_VAL		0xf
-#define MAIN_VBP_VAL			0x4
-#define STABLE_VFP_VAL			0x4
-#define CMD_ALLOW_VAL			0xf
-#define MAIN_HBP_VAL			0x4
-#define MAIN_HFP_VAL			0x4
-#define MAIN_HSA_VAL			0x4
-#define MAIN_VSA_VAL			0x4
-#define MAIN_VRESOL_VAL			0x320
-#define MAIN_HRESOL_VAL			0x500
-
 #define CONFIG_MAX77686_POWER
 
 #define CONFIG_TPS65090_POWER
