@@ -32,15 +32,11 @@
 /* FIXME(crosbug.com/28214): Revisit this burst limitation */
 #define CONFIG_TPM_I2C_BURST_LIMITATION		3
 
-/* Adjust the display resolution. */
+/* Adjust the DSIM configuration. */
 #undef MAIN_VRESOL_VAL
 #undef MAIN_HRESOL_VAL
 #define MAIN_VRESOL_VAL 0x300
 #define MAIN_HRESOL_VAL 0x556
-#undef LCD_XRES
-#undef LCD_YRES
-#define LCD_XRES 1366
-#define LCD_YRES 768
 
 /*
  * Extra bootargs used for direct booting, but not for vboot.
