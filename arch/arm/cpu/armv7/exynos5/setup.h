@@ -458,11 +458,27 @@
 #define LPDDR3PHY_CTRL_PHY_RESET	(1 << 0)
 #define LPDDR3PHY_CTRL_PHY_RESET_OFF	(0 << 0)
 
+#define PHY_CON0_RESET_VAL	0x17020a40
+#define P0_CMD_EN		(1 << 14)
+#define BYTE_RDLVL_EN		(1 << 13)
+#define CTRL_SHGATE		(1 << 8)
+
+#define PHY_CON1_RESET_VAL	0x09210100
+#define CTRL_GATEDURADJ_MASK	(0xf << 20)
+
+#define PHY_CON2_RESET_VAL	0x00010004
+#define INIT_DESKEW_EN		(1 << 6)
+#define RDLVL_GATE_EN		(1 << 24)
+
 /*ZQ Configurations */
 #define PHY_CON16_RESET_VAL	0x08000304
 
 #define ZQ_CLK_DIV_EN		(1 << 18)
 #define ZQ_MANUAL_STR		(1 << 1)
+#define ZQ_DONE			(1 << 0)
+
+#define CTRL_RDLVL_GATE_ENABLE	1
+#define CTRL_RDLVL_GATE_DISABLE	1
 
 /* Direct Command */
 #define DIRECT_CMD_NOP			0x07000000

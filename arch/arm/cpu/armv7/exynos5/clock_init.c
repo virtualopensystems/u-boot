@@ -158,7 +158,7 @@ struct mem_timings mem_timings[] = {
 		.bpll_sdiv = 0x0,
 		.pclk_cdrex_ratio = 0x5,
 		.direct_cmd_msr = {
-			0x00020018, 0x00030000, 0x00010042, 0x00000d70
+			0x00020018, 0x00030000, 0x00010000, 0x00000d70
 		},
 		.timing_ref = 0x000000bb,
 		.timing_row = 0x8C36650E,
@@ -180,21 +180,23 @@ struct mem_timings mem_timings[] = {
 		.ctrl_ddl_on = (0x1 << 5),
 		.ctrl_ref = (0x1 << 4),
 
+		.ctrl_force = (0x1a << 8),
 		.ctrl_rdlat = 0x0b,
 		.ctrl_bstlen = 0x08,
 
 		.mem_term_en = (0x3 << 30),
 		.ctrl_shgate = (0x1 << 29),
 		.fp_resync = 0x8,
-		.iv_size = 0x3,
+		.iv_size = 0x7,
 		.dfi_init_start = (1 << 28),
 		.aref_en = (1 << 5),
 
 		.rd_fetch = (0x3 << 12),
 
 		.zq_clk_en = (0x1 << 27),
-		.zq_mode_dds = 0x6,
+		.zq_mode_dds = 0x5,
 		.zq_mode_term = 0x1,
+		.zq_mode_noterm = 1,
 		.zq_clk_div_en = (0x1 << 18),
 		.zq_udt_dly = (0x30 << 4),
 		.zq_manual_mode = (0x1 << 2),

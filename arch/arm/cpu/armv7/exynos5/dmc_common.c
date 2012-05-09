@@ -32,6 +32,7 @@ void dmc_config_zq(struct mem_timings *mem,
 		   struct exynos5_phy_control *phy1_ctrl)
 {
 	unsigned long val = 0;
+	unsigned long stat = 0;
 
 	/*
 	 * ZQ Calibration:
@@ -55,11 +56,22 @@ void dmc_config_zq(struct mem_timings *mem,
 	val |= ZQ_MANUAL_STR;
 	writel(val, &phy0_ctrl->phy_con16);
 	writel(val, &phy1_ctrl->phy_con16);
-	sdelay(0x20000);
 
 	/* ZQ_MANUAL_START: Disable */
 	val &= ~ZQ_MANUAL_STR;
+
+	/*
+	 * Since we are manaully calibrating the ZQ values,
+	 * we are looping for the ZQ_init to complete.
+	 */
+	do {
+		stat = readl(&phy0_ctrl->phy_con17);
+	} while (stat & ZQ_DONE != ZQ_DONE);
 	writel(val, &phy0_ctrl->phy_con16);
+
+	do {
+		stat = readl(&phy1_ctrl->phy_con17);
+	} while (stat & ZQ_DONE != ZQ_DONE);
 	writel(val, &phy1_ctrl->phy_con16);
 }
 
