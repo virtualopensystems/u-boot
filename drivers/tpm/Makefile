@@ -30,12 +30,12 @@ $(shell mkdir -p $(obj)$(IFXDIR))
 COBJS-$(CONFIG_DUMMY_TPM) = dummy_tpm.o
 COBJS-$(CONFIG_GENERIC_LPC_TPM) = generic_lpc_tpm.o
 COBJS-$(CONFIG_INFINEON_TPM_I2C) = slb9635_i2c.o \
-	$(IFXDIR)/tpm_proto.o \
 	$(IFXDIR)/tpm.o \
-	$(IFXDIR)/tpm_tis_i2c.o \
-	$(IFXDIR)/tddl.o \
-	$(IFXDIR)/ifx_v05.o \
-	$(IFXDIR)/ifx_v03.o
+	$(IFXDIR)/tpm_tis_i2c.o
+COBJS-$(CONFIG_TPM_SLB9635_I2C) += $(IFXDIR)/ifx_v05.o \
+	$(IFXDIR)/tddl.o
+COBJS-$(CONFIG_TPM_SLB9635_I2C_V03) += $(IFXDIR)/ifx_v03.o \
+	$(IFXDIR)/tpm_proto.o
 
 COBJS	:= $(COBJS-y)
 SRCS	:= $(COBJS:.o=.c)
