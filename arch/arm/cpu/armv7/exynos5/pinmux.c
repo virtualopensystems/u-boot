@@ -60,7 +60,6 @@ int exynos_pinmux_config(enum periph_id peripheral, int flags)
 	case PERIPH_ID_SDMMC1:
 	case PERIPH_ID_SDMMC2:
 	case PERIPH_ID_SDMMC3:
-	case PERIPH_ID_SDMMC4:
 		pin = GPIO_FUNC(0x2);
 		pin_ext = GPIO_FUNC(0x2);
 		drv = GPIO_DRV_4X;
@@ -71,28 +70,25 @@ int exynos_pinmux_config(enum periph_id peripheral, int flags)
 			start_ext = GPIO_C10;
 			break;
 		case PERIPH_ID_SDMMC1:
-			start = GPIO_C10;
+			start = GPIO_C20;
 			start_ext = 0;
 			break;
 		case PERIPH_ID_SDMMC2:
-			start = GPIO_C20;
+			start = GPIO_C30;
 			/*
 			 * TODO: (alim.akhtar@samsung.com)
-			 * add support for 8 bit mode
+			 * add support for 8 bit mode (needs to be a per-board
+			 * option, so in the FDT).
 			 */
 			start_ext = 0;
 			break;
 		case PERIPH_ID_SDMMC3:
-			start = GPIO_C30;
-			start_ext = 0;
-			break;
-		case PERIPH_ID_SDMMC4:
-			start = GPIO_C00;
-			start_ext = GPIO_C10;
-			pin = GPIO_FUNC(0x3);
-			pin_ext = GPIO_FUNC(0x4);
-			drv = GPIO_DRV_2X;
-			break;
+			/*
+			 * TODO: Need to add defintions for GPC4 before
+			 * enabling this.
+			 */
+			debug("SDMMC3 not supported yet");
+			return -1;
 		}
 		if ((flags & PINMUX_FLAG_8BIT_MODE) && !start_ext) {
 			debug("SDMMC device %d does not support 8bit mode",

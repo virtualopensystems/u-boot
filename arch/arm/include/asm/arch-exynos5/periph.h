@@ -39,8 +39,9 @@ enum periph_id {
 	PERIPH_ID_SDMMC1,
 	PERIPH_ID_SDMMC2,
 	PERIPH_ID_SDMMC3,
-	PERIPH_ID_SDMMC4,
-	PERIPH_ID_SROMC,
+
+	/* TODO: make sequential again when FDT doesn't hardcode. */
+	PERIPH_ID_SROMC = 9,
 	PERIPH_ID_SPI0,
 	PERIPH_ID_SPI1,
 	PERIPH_ID_SPI2,
