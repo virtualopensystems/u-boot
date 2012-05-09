@@ -27,4 +27,7 @@
 /* Init the SPI driver */
 void spi_init(void);
 
+/* Init the I2C driver */
+void board_i2c_init(void);
+
 #endif

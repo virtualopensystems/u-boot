@@ -250,4 +250,12 @@ static inline void I2C_SET_BUS(unsigned int bus)
 		i2c_set_bus_num(bus);
 }
 
+/*
+ * Set an early register base for a given i2c peripheral.
+ * This is used to access a single i2c bus early on in the boot sequence.
+ *
+ * @param base:	The base address of the i2c peripheral's register map
+ */
+void i2c_set_early_reg(unsigned int base);
+
 #endif	/* _I2C_H_ */

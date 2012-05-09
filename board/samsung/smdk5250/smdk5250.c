@@ -24,6 +24,7 @@
 #include <fdtdec.h>
 #include <max77686.h>
 #include <netdev.h>
+#include <i2c.h>
 #include <asm/arch/cpu.h>
 #include <asm/arch/ehci-s5p.h>
 #include <asm/arch/gpio.h>
@@ -187,6 +188,7 @@ int board_init(void)
 	spi_init();
 #endif
 
+	board_i2c_init();
 
 	if (max77686_enable_32khz_cp()) {
 		debug("%s: Failed to enable max77686 32khz coprocessor clock\n",

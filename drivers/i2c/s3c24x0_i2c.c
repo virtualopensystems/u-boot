@@ -72,7 +72,8 @@ static enum periph_id periph_for_dev[] = {
 	PERIPH_ID_I2C7,
 };
 
-static unsigned int g_current_bus;
+static unsigned int g_current_bus __attribute__((section(".data")));
+static struct s3c24x0_i2c *g_early_i2c_config __attribute__((section(".data")));
 
 static enum periph_id i2c_get_periph_id(unsigned dev_index)
 {
@@ -82,9 +83,19 @@ static enum periph_id i2c_get_periph_id(unsigned dev_index)
 	return PERIPH_ID_NONE;
 }
 
+void i2c_set_early_reg(unsigned int base)
+{
+	g_early_i2c_config = (struct s3c24x0_i2c *)base;
+}
+
 static struct s3c24x0_i2c *get_base_i2c(int bus_idx)
 {
-	struct s3c24x0_i2c *i2c = (struct s3c24x0_i2c *)samsung_get_base_i2c();
+	struct s3c24x0_i2c *i2c;
+
+	/* If an early i2c config exists we just use that */
+	if (g_early_i2c_config)
+		return g_early_i2c_config;
+	i2c = (struct s3c24x0_i2c *)samsung_get_base_i2c();
 	return &i2c[bus_idx];
 }
 
@@ -138,6 +149,16 @@ static void i2c_ch_init(struct s3c24x0_i2c *i2c, int speed, int slaveadd)
 	writel(slaveadd, &i2c->iicadd);
 	/* program Master Transmit (and implicit STOP) */
 	writel(I2C_MODE_MT | I2C_TXRX_ENA, &i2c->iicstat);
+}
+
+void board_i2c_init(void)
+{
+	/*
+	 * Turn off the early i2c configuration and init the i2c properly,
+	 * this is done here to enable the use of i2c configs from FDT.
+	 */
+	i2c_set_early_reg(NULL);
+	i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
 }
 
 /*
