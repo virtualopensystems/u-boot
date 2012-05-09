@@ -32,12 +32,6 @@
 /* FIXME(crosbug.com/28214): Revisit this burst limitation */
 #define CONFIG_TPM_I2C_BURST_LIMITATION		3
 
-/* Adjust the DSIM configuration. */
-#undef MAIN_VRESOL_VAL
-#undef MAIN_HRESOL_VAL
-#define MAIN_VRESOL_VAL 0x300
-#define MAIN_HRESOL_VAL 0x556
-
 /*
  * Extra bootargs used for direct booting, but not for vboot.
  * - console of the board
