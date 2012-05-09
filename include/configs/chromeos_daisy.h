@@ -27,7 +27,6 @@
 
 /* TPM */
 #define CONFIG_INFINEON_TPM_I2C
-#define CONFIG_INFINEON_TPM_I2C_BUS		3
 #define CONFIG_TPM_SLB9635_I2C
 /* FIXME(crosbug.com/28214): Revisit this burst limitation */
 #define CONFIG_TPM_I2C_BURST_LIMITATION		3
