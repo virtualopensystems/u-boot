@@ -74,9 +74,13 @@ static int decode_uart_console(const void *blob, struct fdt_uart *uart,
 {
 	int node;
 
+	memset(uart, '\0', sizeof(*uart));
+	uart->compat = COMPAT_UNKNOWN;
 	node = fdtdec_find_alias_node(blob, "console");
-	if (node < 0)
-		return node;
+	if (node < 0) {
+		debug("%s: Cannot find console alias in fdt\n", __func__);
+		return 0;
+	}
 	uart->reg = fdtdec_get_addr(blob, node, "reg");
 	uart->id = 3;
 	uart->reg_shift = fdtdec_get_int(blob, node, "reg-shift", 2);
@@ -158,6 +162,8 @@ static int fserial_getc(void)
 	DECLARE_CONSOLE;
 
 	switch (uart->compat) {
+	case COMPAT_UNKNOWN:
+		return 0;
 #ifdef CONFIG_SYS_NS16550
 	case COMPAT_SERIAL_TEGRA20_UART:
 	case COMPAT_SERIAL_NS16550:
