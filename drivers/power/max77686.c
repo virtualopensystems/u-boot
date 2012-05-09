@@ -141,16 +141,8 @@ static int max77686_enablereg(enum max77686_regnum reg, int enable)
 	return 0;
 }
 
-/* Set the required voltage level of pmic
- *
- * @param reg		register number of buck/ldo to be set
- * @param volt		voltage level to be set
- * @param enable	enable or disable bit
- *
- * @return		Return 0 if ok, else -1
- */
-static int max77686_volsetting(enum max77686_regnum reg, unsigned int volt,
-			       int enable)
+int max77686_volsetting(enum max77686_regnum reg, unsigned int volt,
+			int enable)
 {
 	struct max77686_para *pmic;
 	unsigned char read_data;
@@ -196,31 +188,3 @@ int max77686_enable_32khz_cp(void)
 	return max77686_enablereg(PMIC_EN32KHZ_CP, REG_ENABLE);
 }
 
-/**
- * Initialize the pmic voltages to power up the system
- * This also calls i2c_init so that we can program the pmic
- *
- * REG_ENABLE = 0, needed to set the buck/ldo enable bit ON
- *
- * @return	Return 0 if ok, else -1
- */
-int power_init(void)
-{
-	int error = 0;
-
-	/* init the i2c so that we can program pmic chip */
-	i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
-
-	error = max77686_volsetting(PMIC_BUCK2, CONFIG_VDD_ARM, REG_ENABLE);
-	error |= max77686_volsetting(PMIC_BUCK3, CONFIG_VDD_INT, REG_ENABLE);
-	error |= max77686_volsetting(PMIC_BUCK4, CONFIG_VDD_G3D, REG_ENABLE);
-	error |= max77686_volsetting(PMIC_BUCK1, CONFIG_VDD_MIF, REG_ENABLE);
-	error |= max77686_volsetting(PMIC_LDO2, CONFIG_VDD_LDO2, REG_ENABLE);
-	error |= max77686_volsetting(PMIC_LDO3, CONFIG_VDD_LDO3, REG_ENABLE);
-	error |= max77686_volsetting(PMIC_LDO5, CONFIG_VDD_LDO5, REG_ENABLE);
-	error |= max77686_volsetting(PMIC_LDO10, CONFIG_VDD_LDO10, REG_ENABLE);
-	if (error != 0)
-		debug("power init failed\n");
-
-	return error;
-}

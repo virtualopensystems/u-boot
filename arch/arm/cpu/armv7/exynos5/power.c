@@ -26,6 +26,8 @@
 #include <asm/arch/cpu.h>
 #include <asm/arch/power.h>
 #include <asm/arch/sysreg.h>
+#include <i2c.h>
+#include <max77686.h>
 
 void ps_hold_setup(void)
 {
@@ -64,4 +66,32 @@ void power_disable_usb_phy(void)
 
 	/* Disabling USBHost_PHY */
 	clrbits_le32(&power->usb_host_phy_ctrl, POWER_USB_HOST_PHY_CTRL_EN);
+}
+
+/**
+ * Initialize the pmic voltages to power up the system
+ * This also calls i2c_init so that we can program the pmic
+ *
+ * REG_ENABLE = 0, needed to set the buck/ldo enable bit ON
+ *
+ * @return	Return 0 if ok, else -1
+ */
+int power_init(void)
+{
+	int error = 0;
+
+	/* init the i2c so that we can program pmic chip */
+	i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
+
+	error = max77686_volsetting(PMIC_BUCK2, CONFIG_VDD_ARM, REG_ENABLE);
+	error |= max77686_volsetting(PMIC_BUCK3, CONFIG_VDD_INT, REG_ENABLE);
+	error |= max77686_volsetting(PMIC_BUCK1, CONFIG_VDD_MIF, REG_ENABLE);
+	error |= max77686_volsetting(PMIC_LDO2, CONFIG_VDD_LDO2, REG_ENABLE);
+	error |= max77686_volsetting(PMIC_LDO3, CONFIG_VDD_LDO3, REG_ENABLE);
+	error |= max77686_volsetting(PMIC_LDO5, CONFIG_VDD_LDO5, REG_ENABLE);
+	error |= max77686_volsetting(PMIC_LDO10, CONFIG_VDD_LDO10, REG_ENABLE);
+	if (error != 0)
+		debug("power init failed\n");
+
+	return error;
 }
