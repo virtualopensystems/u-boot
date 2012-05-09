@@ -193,7 +193,8 @@ struct mem_timings mem_timings[] = {
 		.rd_fetch = (0x3 << 12),
 
 		.zq_clk_en = (0x1 << 27),
-		.zq_mode_dds = (0x6 << 24),
+		.zq_mode_dds = 0x6,
+		.zq_mode_term = 0x1,
 		.zq_clk_div_en = (0x1 << 18),
 		.zq_udt_dly = (0x30 << 4),
 		.zq_manual_mode = (0x1 << 2),
