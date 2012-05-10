@@ -142,11 +142,11 @@ static int max77686_enablereg(enum max77686_regnum reg, int enable)
 }
 
 int max77686_volsetting(enum max77686_regnum reg, unsigned int volt,
-			int enable)
+			int enable, int volt_units)
 {
 	struct max77686_para *pmic;
 	unsigned char read_data;
-	unsigned int vol_level = 0;
+	int vol_level = 0;
 	int ret;
 
 	pmic = &max77686_param[reg];
@@ -162,8 +162,16 @@ int max77686_volsetting(enum max77686_regnum reg, unsigned int volt,
 		return -1;
 	}
 
-	if (volt - pmic->vol_min > 0)
-		vol_level = ((volt - pmic->vol_min) * 1000) / pmic->vol_div;
+	if (volt_units == MAX77686_UV)
+		vol_level = volt - pmic->vol_min * 1000;
+	else
+		vol_level = (volt - pmic->vol_min) * 1000;
+
+	if (vol_level < 0) {
+		debug("Not a valid voltage level to set\n");
+		return -1;
+	}
+	vol_level /= pmic->vol_div;
 
 	clrsetbits_8(&read_data, pmic->vol_bitmask << pmic->vol_bitpos,
 			vol_level << pmic->vol_bitpos);

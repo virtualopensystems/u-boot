@@ -83,14 +83,22 @@ int power_init(void)
 	/* init the i2c so that we can program pmic chip */
 	i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
 
-	error = max77686_volsetting(PMIC_BUCK2, CONFIG_VDD_ARM_MV, REG_ENABLE);
-	error |= max77686_volsetting(PMIC_BUCK3, CONFIG_VDD_INT_MV, REG_ENABLE);
-	error |= max77686_volsetting(PMIC_BUCK4, CONFIG_VDD_G3D_MV, REG_ENABLE);
-	error |= max77686_volsetting(PMIC_BUCK1, CONFIG_VDD_MIF_MV, REG_ENABLE);
-	error |= max77686_volsetting(PMIC_LDO2, CONFIG_VDD_LDO2_MV, REG_ENABLE);
-	error |= max77686_volsetting(PMIC_LDO3, CONFIG_VDD_LDO3_MV, REG_ENABLE);
-	error |= max77686_volsetting(PMIC_LDO5, CONFIG_VDD_LDO5_MV, REG_ENABLE);
-	error |= max77686_volsetting(PMIC_LDO10, CONFIG_VDD_LDO10_MV, REG_ENABLE);
+	error = max77686_volsetting(PMIC_BUCK2, CONFIG_VDD_ARM_MV,
+						REG_ENABLE, MAX77686_MV);
+	error |= max77686_volsetting(PMIC_BUCK3, CONFIG_VDD_INT_MV,
+						REG_ENABLE, MAX77686_MV);
+	error |= max77686_volsetting(PMIC_BUCK1, CONFIG_VDD_MIF_MV,
+						REG_ENABLE, MAX77686_MV);
+	error |= max77686_volsetting(PMIC_BUCK4, CONFIG_VDD_G3D_MV,
+						REG_ENABLE, MAX77686_MV);
+	error |= max77686_volsetting(PMIC_LDO2, CONFIG_VDD_LDO2_MV,
+						REG_ENABLE, MAX77686_MV);
+	error |= max77686_volsetting(PMIC_LDO3, CONFIG_VDD_LDO3_MV,
+						REG_ENABLE, MAX77686_MV);
+	error |= max77686_volsetting(PMIC_LDO5, CONFIG_VDD_LDO5_MV,
+						REG_ENABLE, MAX77686_MV);
+	error |= max77686_volsetting(PMIC_LDO10, CONFIG_VDD_LDO10_MV,
+						REG_ENABLE, MAX77686_MV);
 	if (error != 0)
 		debug("power init failed\n");
 

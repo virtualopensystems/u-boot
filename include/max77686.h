@@ -110,15 +110,18 @@ enum {
  */
 int max77686_enable_32khz_cp(void);
 
-/* Set the required voltage level of pmic
+/**
+ * Set the required voltage level of pmic
  *
  * @param reg		register number of buck/ldo to be set
  * @param volt		voltage level to be set
  * @param enable	enable or disable bit
+ * @param volt_units	MAX77686_MV or MAX77686_UV, unit of the
+ *			voltage parameters
  *
  * @return		Return 0 if ok, else -1
  */
 int max77686_volsetting(enum max77686_regnum reg, unsigned int volt,
-			int enable);
+			int enable, int volt_units);
 
 #endif /* __MAX77686_PMIC_H_ */
