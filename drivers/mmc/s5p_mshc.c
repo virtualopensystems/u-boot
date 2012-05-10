@@ -38,7 +38,6 @@ static struct mmc mshci_dev[MAX_MMC_HOSTS];
 static struct mshci_host mshci_host[MAX_MMC_HOSTS];
 static int num_devs;
 
-#ifdef CONFIG_OF_CONTROL
 #include <asm/arch/clock.h>
 #include <asm/arch/periph.h>
 
@@ -46,10 +45,10 @@ static int num_devs;
 struct fdt_mshci {
 	struct s5p_mshci *reg;	/* address of registers in physical memory */
 	int bus_width;		/* bus width  */
+	int removable;		/* removable device? */
 	enum periph_id periph_id;	/* Peripheral ID for this peripheral */
 	struct fdt_gpio_state enable_gpio;	/* How to enable it */
 };
-#endif
 
 /**
  * Set bits of MSHCI host control register.
@@ -555,6 +554,7 @@ static int s5p_mshci_initialize(struct fdt_mshci *config)
 	mmc_host->peripheral =  config->periph_id;
 	mmc->b_max = 1;
 	mmc_register(mmc);
+	mmc->block_dev.removable = config->removable;
 	debug("s5p_mshci: periph_id=%d, width=%d, reg=%p, enable=%d\n",
 	      config->periph_id, config->bus_width, config->reg,
 	      config->enable_gpio.gpio);
@@ -573,6 +573,8 @@ int fdtdec_decode_mshci(const void *blob, int node, struct fdt_mshci *config)
 		return -FDT_ERR_NOTFOUND;
 	config->periph_id = clock_decode_periph_id(blob, node);
 	fdtdec_decode_gpio(blob, node, "enable-gpios", &config->enable_gpio);
+
+	config->removable = fdtdec_get_bool(blob, node, "samsung,removable");
 
 	return 0;
 }
@@ -612,6 +614,7 @@ int s5p_mshci_init(const void *blob)
 	config.width = CONFIG_MSHCI_BUS_WIDTH;
 	config.reg = (struct s5p_mshci *)samsung_get_base_mshci();
 	config.periph_id = CONFIG_MSHCI_PERIPH_ID;
+	config.removable = 1;
 	if (s5p_mshci_initialize(&config) {
 		debug("%s: Failed to init MSHCI %d\n", __func__, i);
 		ret = -1;
