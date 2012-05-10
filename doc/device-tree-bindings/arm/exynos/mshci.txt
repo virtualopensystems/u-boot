@@ -1,0 +1,10 @@
+Exynos (MSHCI) Mass Storage High Capacity Interface Controller
+
+The device node for a MSHCI controller that is part of an Exynos SoC.
+
+Required properties :
+ - samsung,mshci-bus-width : Bus witdh in bits for MSHCI controller
+
+Optional properties :
+ - samsung,removable : If present, mark block device as removable
+ - enable-gpios : GPIOs to power on the device

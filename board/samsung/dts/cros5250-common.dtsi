@@ -63,6 +63,7 @@
 
 	mshci@12220000 {
 		samsung,mshci-bus-width = <4>;
+		samsung,removable;
 	};
 
 	dmc@10C00000 {
