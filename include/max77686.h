@@ -98,6 +98,11 @@ enum {
 	REG_ENABLE
 };
 
+enum {
+	MAX77686_MV = 0,	/* mili volt */
+	MAX77686_UV		/* micro volt */
+};
+
 /**
  * This function enables the 32KHz coprocessor clock.
  *
