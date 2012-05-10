@@ -149,6 +149,8 @@ int max77686_volsetting(enum max77686_regnum reg, unsigned int volt,
 	int vol_level = 0;
 	int ret;
 
+	i2c_set_bus_num(0);
+
 	pmic = &max77686_param[reg];
 
 	if (pmic->vol_addr == 0) {
@@ -193,6 +195,7 @@ int max77686_volsetting(enum max77686_regnum reg, unsigned int volt,
 
 int max77686_enable_32khz_cp(void)
 {
+	i2c_set_bus_num(0);
 	return max77686_enablereg(PMIC_EN32KHZ_CP, REG_ENABLE);
 }
 
