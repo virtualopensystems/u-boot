@@ -191,6 +191,13 @@ int board_init(void)
 
 	board_i2c_init(gd->fdt_blob);
 
+/* Enable power for LCD */
+#ifdef CONFIG_TPS65090_POWER
+	tps65090_init();
+	tps65090_fet_enable(1); /* Enable FET1, backlight */
+	tps65090_fet_enable(6); /* Enable FET6, lcd panel */
+#endif
+
 	if (max77686_enable_32khz_cp()) {
 		debug("%s: Failed to enable max77686 32khz coprocessor clock\n",
 				 __func__);
