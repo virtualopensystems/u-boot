@@ -26,6 +26,7 @@
 #include <asm/arch/cpu.h>
 #include <asm/arch/power.h>
 #include <asm/arch/sysreg.h>
+#include <asm/arch-exynos/spl.h>
 #include <i2c.h>
 #include <max77686.h>
 
@@ -79,6 +80,13 @@ void power_disable_usb_phy(void)
 int power_init(void)
 {
 	int error = 0;
+
+#ifdef CONFIG_SPL_BULD
+	struct spl_machine_param *param = spl_get_machine_params();
+
+	/* Set the i2c register address base so i2c works before FDT */
+	i2c_set_early_reg(param->i2c_base);
+#endif
 
 	/* init the i2c so that we can program pmic chip */
 	i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
