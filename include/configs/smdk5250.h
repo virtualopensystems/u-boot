@@ -102,7 +102,7 @@
 #define CONFIG_TPS65090_I2C_BUS	0x4
 
 #define CONFIG_VDD_ARM_MV	1300 /* 1.3v */
-#define CONFIG_VDD_INT_MV	1150 /* 1.15v */
+#define CONFIG_VDD_INT_UV	1012500 /* 1.0125v */
 #define CONFIG_VDD_MIF_MV	1200 /* 1.2v */
 #define CONFIG_VDD_G3D_MV	1200 /* 1.2v */
 #define CONFIG_VDD_LDO2_MV	1500 /* 1.5v */

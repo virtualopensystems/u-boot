@@ -85,8 +85,8 @@ int power_init(void)
 
 	error = max77686_volsetting(PMIC_BUCK2, CONFIG_VDD_ARM_MV,
 						REG_ENABLE, MAX77686_MV);
-	error |= max77686_volsetting(PMIC_BUCK3, CONFIG_VDD_INT_MV,
-						REG_ENABLE, MAX77686_MV);
+	error |= max77686_volsetting(PMIC_BUCK3, CONFIG_VDD_INT_UV,
+						REG_ENABLE, MAX77686_UV);
 	error |= max77686_volsetting(PMIC_BUCK1, CONFIG_VDD_MIF_MV,
 						REG_ENABLE, MAX77686_MV);
 	error |= max77686_volsetting(PMIC_BUCK4, CONFIG_VDD_G3D_MV,
