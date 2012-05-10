@@ -47,9 +47,10 @@ struct spl_machine_param {
 	 * f		frequency_mhz (memory frequency in MHz)
 	 * a		ARM clock frequency in MHz
 	 * s		serial base address
-	 * <space>	empty parameter, skip
+	 * i		i2c base address for early access (meant for PMIC)
+	 * \0		termination
 	 */
-	char		params[8];	/* Length must be word-aligned */
+	char		params[12];	/* Length must be word-aligned */
 	u32		mem_iv_size;	/* Memory channel interleaving size */
 	enum ddr_mode	mem_type;	/* Type of on-board memory */
 	/*
@@ -64,6 +65,7 @@ struct spl_machine_param {
 	unsigned	frequency_mhz;	/* Frequency of memory in MHz */
 	unsigned	arm_freq_mhz;	/* ARM Frequency in MHz */
 	u32		serial_base;	/* Serial base address */
+	u32		i2c_base;	/* i2c base address */
 } __attribute__((__packed__));
 
 /**
