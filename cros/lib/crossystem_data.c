@@ -82,7 +82,7 @@ int crossystem_data_init(crossystem_data_t *cdata,
 	memcpy(cdata->readonly_firmware_id, readonly_firmware_id,
 			sizeof(cdata->readonly_firmware_id));
 
-#ifdef CONFIG_TEGRA2
+#ifdef CONFIG_ARM
 	cdata->board.arm.nonvolatile_context_lba = CHROMEOS_VBNVCONTEXT_LBA;
 	cdata->board.arm.nonvolatile_context_offset = 0;
 	cdata->board.arm.nonvolatile_context_size = VBNV_BLOCK_SIZE;
@@ -232,7 +232,7 @@ int crossystem_data_embed_into_fdt(crossystem_data_t *cdata, void *fdt,
 	err |= set_array_prop("readonly-firmware-version",
 			readonly_firmware_id);
 
-#ifdef CONFIG_TEGRA2
+#ifdef CONFIG_ARM
 	err |= set_scalar_prop("nonvolatile-context-lba",
 			board.arm.nonvolatile_context_lba);
 	err |= set_scalar_prop("nonvolatile-context-offset",
@@ -342,7 +342,7 @@ void crossystem_data_dump(crossystem_data_t *cdata)
 	_p("\"%s\"",	readonly_firmware_id);
 	_p("\"%s\"",	firmware_id);
 
-#ifdef CONFIG_TEGRA2
+#ifdef CONFIG_ARM
 	_p("%08llx",	board.arm.nonvolatile_context_lba);
 	_p("%08x",	board.arm.nonvolatile_context_offset);
 	_p("%08x",	board.arm.nonvolatile_context_size);
