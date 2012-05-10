@@ -91,7 +91,7 @@ void dmc_config_mrs(struct mem_timings *mem, struct exynos5_dmc *dmc)
 		unsigned long mask;
 
 		mask = channel << DIRECT_CMD_CHANNEL_SHIFT;
-		for (chip = 0; chip < mem->chips_per_channel; chip++) {
+		for (chip = 0; chip < mem->chips_to_configure; chip++) {
 			int i;
 
 			mask |= chip << DIRECT_CMD_CHIP_SHIFT;
