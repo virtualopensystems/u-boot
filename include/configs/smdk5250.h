@@ -103,7 +103,7 @@
 
 #define CONFIG_VDD_ARM_MV	1300 /* 1.3v */
 #define CONFIG_VDD_INT_UV	1012500 /* 1.0125v */
-#define CONFIG_VDD_MIF_MV	1200 /* 1.2v */
+#define CONFIG_VDD_MIF_MV	1000 /* 1.0v */
 #define CONFIG_VDD_G3D_MV	1200 /* 1.2v */
 #define CONFIG_VDD_LDO2_MV	1500 /* 1.5v */
 #define CONFIG_VDD_LDO3_MV	1800 /* 1.8v */
