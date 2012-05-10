@@ -236,6 +236,7 @@ struct mem_timings mem_timings[] = {
 			DMC_CONCONTROL_IO_PD_CON_DISABLE,
 		.dmc_channels = 2,
 		.chips_per_channel = 2,
+		.chips_to_configure = 1,
 		.send_zq_init = 1,
 	}
 };
