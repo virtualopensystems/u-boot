@@ -362,11 +362,6 @@ void board_init_r(gd_t *id, ulong dest_addr)
 
 	bootstage_mark(BOOTSTAGE_ID_BOARD_FLASH_37);
 
-#ifdef CONFIG_CMD_NET
-	/* IP Address */
-	bd_data.bi_ip_addr = getenv_IPaddr("ipaddr");
-#endif
-
 #if defined(CONFIG_PCI)
 	/*
 	 * Do pci configuration
@@ -375,14 +370,6 @@ void board_init_r(gd_t *id, ulong dest_addr)
 #endif
 
 	bootstage_mark(BOOTSTAGE_ID_BOARD_PCI);
-
-
-	stdio_init();
-
-	jumptable_init();
-
-	/* Initialize the console (after the relocation and devices init) */
-	console_init_r();
 
 #ifdef CONFIG_CMD_SPI
 	spi_init();
@@ -394,6 +381,18 @@ void board_init_r(gd_t *id, ulong dest_addr)
 	else
 		env_set_default();
 	bootstage_mark(BOOTSTAGE_ID_BOARD_ENV);
+
+#ifdef CONFIG_CMD_NET
+	/* IP Address */
+	bd_data.bi_ip_addr = getenv_IPaddr("ipaddr");
+#endif
+
+	stdio_init();
+
+	jumptable_init();
+
+	/* Initialize the console (after the relocation and devices init) */
+	console_init_r();
 
 #ifdef CONFIG_MISC_INIT_R
 	show_boot_progress(0x27);
