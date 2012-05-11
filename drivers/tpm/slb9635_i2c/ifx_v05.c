@@ -9,14 +9,6 @@
 #include <i2c.h>
 #include "tddl.h"
 
-#define TPM_V05_DEFAULT_ADDR (0x20)
-
-#ifdef CONFIG_TPM_SLB9635_I2C_ADDR
-#define TPM_V05_ADDR CONFIG_TPM_SLB9635_I2C_ADDR
-#else
-#define TPM_V05_ADDR TPM_V05_DEFAULT_ADDR
-#endif
-
 DECLARE_GLOBAL_DATA_PTR;
 
 /* TPM configuration */
