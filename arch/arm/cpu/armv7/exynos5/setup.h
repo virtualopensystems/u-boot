@@ -444,6 +444,9 @@
 /* CLK_DIV_ISP2 */
 #define CLK_DIV_ISP2_VAL        0x1
 
+/* CLK_SRC_DISP1_0 */
+#define CLK_SRC_DISP1_0_VAL	0x6
+
 /*
  * TZPC Register Value :
  * R0SIZE: 0x0 : Size of secured ram

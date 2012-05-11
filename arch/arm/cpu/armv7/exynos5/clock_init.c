@@ -578,6 +578,9 @@ void system_clock_init()
 	writel(CLK_SRC_PERIC1_VAL, &clk->src_peric1);
 	writel(CLK_DIV_PERIC1_VAL, &clk->div_peric1);
 
+	/* FIMD1 SRC CLK SELECTION */
+	writel(CLK_SRC_DISP1_0_VAL, &clk->src_disp1_0);
+
 	val = MMC2_PRE_RATIO_VAL << MMC2_PRE_RATIO_OFFSET
 		| MMC2_RATIO_VAL << MMC2_RATIO_OFFSET
 		| MMC3_PRE_RATIO_VAL << MMC3_PRE_RATIO_OFFSET
