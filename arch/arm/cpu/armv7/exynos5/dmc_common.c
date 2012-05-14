@@ -80,7 +80,7 @@ void update_reset_dll(struct exynos5_dmc *dmc, enum ddr_mode mode)
 	unsigned long val;
 
 	if (mode == DDR_MODE_DDR3) {
-		val = MEM_TERM_EN | PHY_TERM_EN | CTRL_SHGATE;
+		val = MEM_TERM_EN | PHY_TERM_EN | DMC_CTRL_SHGATE;
 		writel(val, &dmc->phycontrol0);
 	}
 

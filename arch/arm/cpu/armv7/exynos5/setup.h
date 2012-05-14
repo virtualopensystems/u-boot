@@ -29,6 +29,7 @@
 #include <version.h>
 
 #include <asm/arch/cpu.h>
+#include <asm/arch/dmc.h>
 
 /* TZPC : Register Offsets */
 #define TZPC0_BASE		0x10100000
@@ -491,7 +492,7 @@
 #define PHY_CONTROL0_RESET_VAL	0x0
 #define MEM_TERM_EN	(1 << 31)	/* Termination enable for memory */
 #define PHY_TERM_EN	(1 << 30)	/* Termination enable for PHY */
-#define CTRL_SHGATE	(1 << 29)	/* Duration of DQS gating signal */
+#define DMC_CTRL_SHGATE	(1 << 29)	/* Duration of DQS gating signal */
 #define FP_RSYNC	(1 << 3)	/* Force DLL resyncronization */
 
 /* Driver strength for CK, CKE, CS & CA */
