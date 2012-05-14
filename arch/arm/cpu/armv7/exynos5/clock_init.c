@@ -247,7 +247,6 @@ struct mem_timings mem_timings[] = {
 struct arm_clk_ratios *get_arm_ratios(void)
 {
 	struct arm_clk_ratios *arm_ratio;
-	unsigned arm_freq_mhz;
 	int i;
 
 	for (i = 0, arm_ratio = arm_clk_ratios; i < ARRAY_SIZE(arm_clk_ratios);
@@ -255,6 +254,9 @@ struct arm_clk_ratios *get_arm_ratios(void)
 		if (arm_ratio->arm_freq_mhz == arm_frq)
 			return arm_ratio;
 	}
+
+	panic("get_arm_ratios: Failed to find ratio\n");
+	return NULL;
 }
 
 #ifdef CONFIG_SPL_BUILD
