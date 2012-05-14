@@ -116,6 +116,8 @@
 #define CONFIG_CMD_SF
 #define CONFIG_CMD_SPI
 #define CONFIG_SPI_FLASH_WINBOND
+/* Enable Gigadevice SPI flash support for Snow board */
+#define CONFIG_SPI_FLASH_GIGADEVICE
 #define CONFIG_SF_DEFAULT_MODE SPI_MODE_0
 #endif
 
