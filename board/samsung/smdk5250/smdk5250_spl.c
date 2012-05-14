@@ -24,6 +24,7 @@
 #include <asm/arch-exynos/cpu.h>
 #include <asm/arch-exynos/spl.h>
 #include <asm/arch/dmc.h>
+#include <asm/arch/gpio.h>
 
 #define SIGNATURE	0xdeadbeef
 
@@ -32,7 +33,7 @@ static struct spl_machine_param machine_param
 		__attribute__((section(".machine_param"))) = {
 	.signature	= SIGNATURE,
 	.version	= 1,
-	.params		= "vmubfasi",
+	.params		= "vmubfasir",
 	.size		= sizeof(machine_param),
 
 	.mem_type	= DDR_MODE_DDR3,
@@ -53,6 +54,7 @@ static struct spl_machine_param machine_param
 	.arm_freq_mhz	= 1700,
 	.serial_base	= 0x12c30000,
 	.i2c_base	= 0x12c60000,
+	.board_rev_gpios = GPIO_D00 | (GPIO_D01 << 16),
 };
 
 struct spl_machine_param *spl_get_machine_params(void)
