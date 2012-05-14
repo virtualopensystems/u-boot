@@ -66,12 +66,12 @@ void dmc_config_zq(struct mem_timings *mem,
 	 */
 	do {
 		stat = readl(&phy0_ctrl->phy_con17);
-	} while (stat & ZQ_DONE != ZQ_DONE);
+	} while ((stat & ZQ_DONE) != ZQ_DONE);
 	writel(val, &phy0_ctrl->phy_con16);
 
 	do {
 		stat = readl(&phy1_ctrl->phy_con17);
-	} while (stat & ZQ_DONE != ZQ_DONE);
+	} while ((stat & ZQ_DONE) != ZQ_DONE);
 	writel(val, &phy1_ctrl->phy_con16);
 }
 
