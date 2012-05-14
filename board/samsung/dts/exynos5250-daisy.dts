@@ -30,6 +30,13 @@
 		};
 	};
 
+	i2c@12c90000 {
+		tpm@20 {
+			reg = <0x20>;
+			compatible = "infineon,slb9635-tpm";
+		};
+	};
+
 	spi@131b0000 {
 		mkbp@0 {
 			reg = <0>;
