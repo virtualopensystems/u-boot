@@ -78,6 +78,7 @@ enum fdt_compat_id {
 	COMPAT_SAMSUNG_S3C2440_I2C,	/* Exynos I2C Controller */
 	COMPAT_GOOGLE_MKBP,		/* Google MKBP Protocol */
 	COMPAT_GOOGLE_MKBP_KEYB,	/* Google MKBP Keyboard */
+	COMPAT_GOOGLE_BOARD_REV,	/* Google board revision number */
 
 	COMPAT_COUNT,
 };

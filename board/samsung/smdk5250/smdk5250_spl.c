@@ -23,6 +23,7 @@
 #include <common.h>
 #include <asm/arch-exynos/cpu.h>
 #include <asm/arch-exynos/spl.h>
+#include <asm/arch/board.h>
 #include <asm/arch/dmc.h>
 #include <asm/arch/gpio.h>
 
@@ -66,4 +67,14 @@ struct spl_machine_param *spl_get_machine_params(void)
 	}
 
 	return &machine_param;
+}
+
+int board_get_revision(void)
+{
+	struct spl_machine_param *params = spl_get_machine_params();
+	unsigned gpio[CONFIG_BOARD_REV_GPIO_COUNT];
+
+	gpio[0] = params->board_rev_gpios & 0xffff;
+	gpio[1] = params->board_rev_gpios >> 16;
+	return gpio_decode_number(gpio, CONFIG_BOARD_REV_GPIO_COUNT);
 }
