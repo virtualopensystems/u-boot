@@ -48,6 +48,8 @@ struct spl_machine_param {
 	 * a		ARM clock frequency in MHz
 	 * s		serial base address
 	 * i		i2c base address for early access (meant for PMIC)
+	 * r		board rev GPIO numbers used to read board revision
+	 *			(lower halfword=bit 0, upper=bit 1)
 	 * \0		termination
 	 */
 	char		params[12];	/* Length must be word-aligned */
@@ -66,6 +68,7 @@ struct spl_machine_param {
 	unsigned	arm_freq_mhz;	/* ARM Frequency in MHz */
 	u32		serial_base;	/* Serial base address */
 	u32		i2c_base;	/* i2c base address */
+	u32		board_rev_gpios;	/* Board revision GPIOs */
 } __attribute__((__packed__));
 
 /**
