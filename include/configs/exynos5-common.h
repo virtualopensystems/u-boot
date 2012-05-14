@@ -85,6 +85,9 @@
 #define CONFIG_SPL_SERIAL_SUPPORT
 #define CONFIG_SPL_LIBCOMMON_SUPPORT
 
+/* Number of GPIOS to use for board revision detection */
+#define CONFIG_BOARD_REV_GPIO_COUNT	2
+
 /* Miscellaneous configurable options */
 #define CONFIG_SYS_LONGHELP		/* undef to save memory */
 #define CONFIG_SYS_HUSH_PARSER		/* use "hush" command parser	*/
