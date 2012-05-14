@@ -81,56 +81,72 @@
 		interrupts = <0 54 0>;
 	};
 
-	i2c@12C60000 {
+	i2c@12c60000 {
+		#address-cells = <1>;
+		#size-cells = <0>;
 		compatible = "samsung,s3c2440-i2c";
 		reg = <0x12C60000 0x100>;
 		samsung,periph-id = <PERIPH_ID_I2C0>;
 		interrupts = <0 56 0>;
 	};
 
-	i2c@12C70000 {
+	i2c@12c70000 {
+		#address-cells = <1>;
+		#size-cells = <0>;
 		compatible = "samsung,s3c2440-i2c";
 		reg = <0x12C70000 0x100>;
 		samsung,periph-id = <PERIPH_ID_I2C1>;
 		interrupts = <0 57 0>;
 	};
 
-	i2c@12C80000 {
+	i2c@12c80000 {
+		#address-cells = <1>;
+		#size-cells = <0>;
 		compatible = "samsung,s3c2440-i2c";
 		reg = <0x12C80000 0x100>;
 		samsung,periph-id = <PERIPH_ID_I2C2>;
 		interrupts = <0 58 0>;
 	};
 
-	i2c@12C90000 {
+	i2c@12c90000 {
+		#address-cells = <1>;
+		#size-cells = <0>;
 		compatible = "samsung,s3c2440-i2c";
 		reg = <0x12C90000 0x100>;
 		samsung,periph-id = <PERIPH_ID_I2C3>;
 		interrupts = <0 59 0>;
 	};
 
-	i2c@12CA0000 {
+	i2c@12ca0000 {
+		#address-cells = <1>;
+		#size-cells = <0>;
 		compatible = "samsung,s3c2440-i2c";
 		reg = <0x12CA0000 0x100>;
 		samsung,periph-id = <PERIPH_ID_I2C4>;
 		interrupts = <0 60 0>;
 	};
 
-	i2c@12CB0000 {
+	i2c@12cb0000 {
+		#address-cells = <1>;
+		#size-cells = <0>;
 		compatible = "samsung,s3c2440-i2c";
 		reg = <0x12CB0000 0x100>;
 		samsung,periph-id = <PERIPH_ID_I2C5>;
 		interrupts = <0 61 0>;
 	};
 
-	i2c@12CC0000 {
+	i2c@12cc0000 {
+		#address-cells = <1>;
+		#size-cells = <0>;
 		compatible = "samsung,s3c2440-i2c";
 		reg = <0x12CC0000 0x100>;
 		samsung,periph-id = <PERIPH_ID_I2C6>;
 		interrupts = <0 62 0>;
 	};
 
-	i2c@12CD0000 {
+	i2c@12cd0000 {
+		#address-cells = <1>;
+		#size-cells = <0>;
 		compatible = "samsung,s3c2440-i2c";
 		reg = <0x12CD0000 0x100>;
 		samsung,periph-id = <PERIPH_ID_I2C7>;
