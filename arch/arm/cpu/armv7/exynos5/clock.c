@@ -354,6 +354,7 @@ int clock_set_mshci(enum periph_id peripheral)
 			break;
 		}
 	}
+	return 0;
 }
 
 #ifdef CONFIG_OF_CONTROL

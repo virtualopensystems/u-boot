@@ -507,7 +507,7 @@ static int s5p_mshci_initialize(struct fdt_mshci *config)
 	}
 
 	/* set the clock for mshci controller */
-	if (!clock_set_mshci(config->periph_id)) {
+	if (clock_set_mshci(config->periph_id)) {
 		debug("clock_set_mshci failed\n");
 		return -1;
 	}
