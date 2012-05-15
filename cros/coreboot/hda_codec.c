@@ -16,12 +16,37 @@
 #include <pci.h>
 #include <cros/hda_codec.h>
 
-#define HDA_CMD_REG 0x5C
+#define HDA_ICII_COMMAND_REG 0x5C
+#define HDA_ICII_RESPONSE_REG 0x60
 #define HDA_ICII_REG 0x64
 #define   HDA_ICII_BUSY (1 << 0)
 #define   HDA_ICII_VALID  (1 << 1)
 
-#define BEEP_FREQ_MAGIC 0x00C70A00
+/* Common node IDs. */
+#define HDA_ROOT_NODE 0x00
+
+/* HDA verbs. */
+#define HDA_VERB(nid, verb, param) ((nid) << 20 | (verb) << 8 | (param))
+
+#define HDA_VERB_GET_PARAMS 0xF00
+#define HDA_VERB_SET_BEEP 0x70A
+
+/* GET_PARAMS parameter IDs. */
+#define GET_PARAMS_NODE_COUNT 0x04
+#define GET_PARAMS_AUDIO_GROUP_CAPS 0x08
+#define GET_PARAMS_AUDIO_WIDGET_CAPS 0x09
+
+/* Get Sub-node count fields. */
+#define AUDIO_NODE_NUM_SUB_NODES(x) (x & 0x000000ff)
+#define AUDIO_NODE_FIRST_SUB_NODE(x) ((x >> 16) & 0x000000ff)
+
+/* Get Audio Function Group Capabilities fields. */
+#define AUDIO_GROUP_CAPS_BEEP_GEN 0x10000
+
+/* Get Audio Widget Capabilities fields. */
+#define AUDIO_WIDGET_TYPE_BEEP 0x7
+#define AUDIO_WIDGET_TYPE(x) (((x) >> 20) & 0x0f)
+
 #define BEEP_FREQ_BASE 12000
 
 /**
@@ -44,6 +69,7 @@ static int wait_for_ready(uint32_t base)
 		udelay(1);
 	}
 
+	printf("Audio: wait_for_ready timeout\n");
 	return -1;
 }
 
@@ -52,7 +78,7 @@ static int wait_for_ready(uint32_t base)
  *  the previous command.  No response would imply that the code
  *  is non-operative
  */
-static int wait_for_valid(uint32_t base)
+static int wait_for_response(uint32_t base, uint32_t *response)
 {
 	uint32_t reg32;
 
@@ -68,29 +94,41 @@ static int wait_for_valid(uint32_t base)
 	int timeout = 50;
 	while (timeout--) {
 		reg32 = readl(base + HDA_ICII_REG);
+		asm("" ::: "memory");
 		if ((reg32 & (HDA_ICII_VALID | HDA_ICII_BUSY)) ==
-				HDA_ICII_VALID)
+				HDA_ICII_VALID) {
+			if (response != NULL)
+				*response = readl(base + HDA_ICII_RESPONSE_REG);
 			return 0;
+		}
 		udelay(1);
 	}
 
+	printf("Audio: wait_for_valid timeout\n");
 	return -1;
 }
 
 /* Wait for the codec to be ready, write the verb, then wait for the
- * codec to be valid.
+ * codec to be have a valid response.
  */
-int write_one_verb(uint32_t base, uint32_t val)
+static int exec_one_verb(uint32_t base, uint32_t val, uint32_t *response)
 {
 	if (wait_for_ready(base) == -1)
 		return -1;
 
-	writel(val, base + HDA_CMD_REG);
+	writel(val, base + HDA_ICII_COMMAND_REG);
 
-	if (wait_for_valid(base) == -1)
+	if (wait_for_response(base, response) == -1)
 		return -1;
 
 	return 0;
+}
+
+/* Write one verb and ignore the response.
+ */
+static int write_one_verb(uint32_t base, uint32_t val)
+{
+	return exec_one_verb(base, val, NULL);
 }
 
 /* Supported sound devices.
@@ -119,19 +157,133 @@ static u32 get_hda_base(void)
 	return pci_mem_base;
 }
 
-static const u32 beep_cmd[] = {
-	0x00170500,			/* power up codec */
-	0x00270500,			/* power up DAC */
-	0x00670500,			/* power up speaker */
-	0x00670740,			/* enable speaker output */
-	0x0023B04B,			/* set DAC gain */
-};					/* and follow with BEEP_FREQ_MAGIC */
+/* Gets the count of sub-nodes and node id they start at for the given
+ * super-node.
+ */
+static uint32_t get_subnode_info(uint32_t base,
+				 uint32_t nid,
+				 uint32_t *num_sub_nodes,
+				 uint32_t *start_sub_node_nid)
+{
+	int rc;
+	uint32_t response;
+
+	rc = exec_one_verb(base,
+			   HDA_VERB(nid,
+				    HDA_VERB_GET_PARAMS,
+				    GET_PARAMS_NODE_COUNT),
+			   &response);
+	if (rc < 0) {
+		printf("Audio: Error reading sub-node info %d.\n", nid);
+		return rc;
+	}
+
+	*num_sub_nodes = AUDIO_NODE_NUM_SUB_NODES(response);
+	*start_sub_node_nid = AUDIO_NODE_FIRST_SUB_NODE(response);
+	return 0;
+}
+
+/* Searches the audio group for a node that supports beeping.
+ */
+static uint32_t find_beep_node_in_group(uint32_t base, uint32_t group_nid)
+{
+	int rc;
+	uint32_t node_count = 0;
+	uint32_t current_nid = 0;
+	uint32_t end_nid;
+	uint32_t response;
+
+	rc = get_subnode_info(base, group_nid, &node_count, &current_nid);
+	if (rc < 0)
+		return 0;
+
+	end_nid = current_nid + node_count;
+	while (current_nid < end_nid) {
+		rc = exec_one_verb(base,
+				   HDA_VERB(current_nid,
+					    HDA_VERB_GET_PARAMS,
+					    GET_PARAMS_AUDIO_WIDGET_CAPS),
+				   &response);
+		if (rc < 0) {
+			printf("Audio: Error reading widget caps.\n");
+			return 0;
+		}
+
+		if(AUDIO_WIDGET_TYPE(response) == AUDIO_WIDGET_TYPE_BEEP)
+			return current_nid;
+
+		current_nid++;
+	}
+
+	return 0; /* no beep node found. */
+}
+
+/* Checks if the given audio group contains a beep generator.
+ */
+static int audio_group_has_beep_node(uint32_t base, uint32_t nid)
+{
+	int rc;
+	uint32_t response;
+
+	rc = exec_one_verb(base,
+			   HDA_VERB(nid,
+				    HDA_VERB_GET_PARAMS,
+				    GET_PARAMS_AUDIO_GROUP_CAPS),
+			   &response);
+	if (rc < 0) {
+		printf("Audio: Error reading audio group caps %d.\n", nid);
+		return 0;
+	}
+
+	return !!(response & AUDIO_GROUP_CAPS_BEEP_GEN);
+}
+
+/* Finds the nid of the beep node if it exists, if not return 0. Starts at the
+ * root node, for each sub-node checks if the group contains a beep node.  If
+ * the group contains a beep node, polls each node in the group until it is
+ * found.
+ */
+static uint32_t get_hda_beep_nid(uint32_t base)
+{
+	int rc;
+	uint32_t node_count = 0;
+	uint32_t current_nid = 0;
+	uint32_t end_nid;
+
+	rc = get_subnode_info(base, HDA_ROOT_NODE, &node_count, &current_nid);
+	if (rc < 0)
+		return rc;
+
+	end_nid = current_nid + node_count;
+	while (current_nid < end_nid) {
+		if (audio_group_has_beep_node(base, current_nid))
+			return find_beep_node_in_group(base, current_nid);
+		current_nid++;
+	}
+
+	return 0; /* no beep node found. */
+}
+
+/* Sets the beep generator with the given divisor.  pass 0 to disable beep.
+ */
+static void set_beep_divisor(uint8_t divider)
+{
+	uint32_t base;
+	uint32_t beep_nid;
+
+	base = get_hda_base();
+	beep_nid = get_hda_beep_nid(base);
+	if (beep_nid <= 0) {
+		printf("Audio: Failed to find a beep-capable node.\n");
+		return;
+	}
+	write_one_verb(base,
+		       HDA_VERB(beep_nid, HDA_VERB_SET_BEEP, divider));
+}
 
 void enable_beep(uint32_t frequency)
 {
-	uint32_t base;
 	uint8_t divider_val;
-	int i;
 
 	if (0 == frequency)
 		divider_val = 0;	/* off */
@@ -142,18 +294,10 @@ void enable_beep(uint32_t frequency)
 	else
 		divider_val = (uint8_t)(0xFF & (BEEP_FREQ_BASE / frequency));
 
-	base = get_hda_base();
-	for (i = 0; i < sizeof(beep_cmd)/sizeof(beep_cmd[0]); i++) {
-		if (write_one_verb(base, beep_cmd[i]))
-			return;
-	}
-	write_one_verb(base, BEEP_FREQ_MAGIC|divider_val);
+	set_beep_divisor(divider_val);
 }
 
 void disable_beep(void)
 {
-	uint32_t base;
-
-	base = get_hda_base();
-	write_one_verb(base, 0x00C70A00); /* Disable beep gen */
+	set_beep_divisor(0);
 }
