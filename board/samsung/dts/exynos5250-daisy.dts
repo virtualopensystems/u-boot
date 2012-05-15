@@ -37,12 +37,4 @@
 		};
 	};
 
-	spi@131b0000 {
-		mkbp@0 {
-			reg = <0>;
-			compatible = "google,mkbp";
-			spi-max-frequency = <10000000>;
-		};
-	};
-
 };
