@@ -66,8 +66,9 @@ struct exynos5_fimd {
 
 /* LCDIF Register Map */
 struct exynos5_disp_ctrl {
+	unsigned int vidout_con;
 	unsigned int vidcon1;
-	unsigned char res1[0xc];
+	unsigned char res1[0x8];
 	unsigned int vidtcon0;
 	unsigned int vidtcon1;
 	unsigned int vidtcon2;
