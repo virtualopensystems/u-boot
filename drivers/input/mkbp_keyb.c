@@ -43,6 +43,7 @@ static struct keyb {
 	unsigned int repeat_delay_ms;	/* Time before autorepeat starts */
 	unsigned int repeat_rate_ms;	/* Autorepeat rate in ms */
 	int ghost_filter;		/* 1 to enable ghost filter, else 0 */
+	int inited;			/* 1 if keyboard is ready */
 } config;
 
 
@@ -96,7 +97,7 @@ static int check_for_keys(struct keyb *config,
 static int kbd_tstc(void)
 {
 	/* Just get input to do this for us */
-	return input_tstc(&config.input);
+	return config.inited ? input_tstc(&config.input) : 0;
 }
 
 /**
@@ -107,7 +108,7 @@ static int kbd_tstc(void)
 static int kbd_getc(void)
 {
 	/* Just get input to do this for us */
-	return input_getc(&config.input);
+	return config.inited ? input_getc(&config.input) : 0;
 }
 
 /**
@@ -204,6 +205,7 @@ static int mkbp_init_keyboard(void)
 		debug("%s: Could not decode key matrix from fdt\n", __func__);
 		return -1;
 	}
+	config.inited = 1;
 	debug("%s: Matrix keyboard %dx%d ready\n", __func__, config.key_rows,
 	      config.key_cols);
 
