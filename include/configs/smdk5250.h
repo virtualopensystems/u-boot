@@ -34,6 +34,10 @@
 /* High Level Configuration Options */
 #define CONFIG_SMDK5250
 
+/* Console configuration */
+#define CONFIG_CONSOLE_MUX
+#define CONFIG_SYS_CONSOLE_IS_IN_ENV
+
 /* Enable fdt support for SMDK5250 */
 #define CONFIG_DEFAULT_DEVICE_TREE      exynos5250-smdk5250
 #define CONFIG_OF_CONTROL
@@ -112,6 +116,13 @@
 #define MAIN_VSA_VAL			0x4
 #define MAIN_VRESOL_VAL			0x320
 #define MAIN_HRESOL_VAL			0x500
+
+/* LCD */
+#define CONFIG_LCD
+#define CONFIG_EXYNOS_LCD
+#define LCD_XRES		1280
+#define LCD_YRES		800
+#define LCD_BPP			LCD_COLOR16
 
 #define CONFIG_MAX77686_POWER
 
