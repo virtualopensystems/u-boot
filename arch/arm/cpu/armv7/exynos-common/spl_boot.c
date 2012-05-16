@@ -235,7 +235,11 @@ int vsprintf(char *buf, const char *fmt, va_list args)
 
 void panic(const char *fmt, ...)
 {
-	puts(fmt);
+	va_list args;
+	va_start(args, fmt);
+	vprintf(fmt, args);
+	putc('\n');
+	va_end(args);
 #if defined(CONFIG_PANIC_HANG)
 	hang();
 #else
