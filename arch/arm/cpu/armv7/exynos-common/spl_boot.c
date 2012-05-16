@@ -118,8 +118,7 @@ static void copy_uboot_to_ram(void)
 				CONFIG_SYS_TEXT_BASE);
 		break;
 	default:
-		/* TODO: Call panic() here */
-		debug("Invalid boot mode selection\n");
+		panic("Invalid boot mode selection\n");
 		break;
 	}
 }
