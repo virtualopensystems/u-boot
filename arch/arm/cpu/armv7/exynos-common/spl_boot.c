@@ -191,14 +191,44 @@ void save_boot_params(u32 r0, u32 r1, u32 r2, u32 r3) {}
  */
 int vsprintf(char *buf, const char *fmt, va_list args)
 {
-	char *str = buf;
+	char *str = buf, *s;
+	ulong u;
 
 	/*
 	 * We won't implement all full functions of vsprintf().
-	 * We ignore the args and just use the format string as its result.
+	 * We only implement %s and %u, and ignore others and directly use
+	 * the original format string as its result.
 	 */
-	while (*fmt)
-		*str++ = *fmt++;
+
+	while (*fmt) {
+		if (*fmt != '%') {
+			*str++ = *fmt++;
+			continue;
+		}
+		fmt++;
+		switch (*fmt) {
+		case '%':
+			*str++ = *fmt++;
+			break;
+		case 's':
+			fmt++;
+			s = va_arg(args, char *);
+			while (*s)
+				*str++ = *s++;
+			break;
+		case 'u':
+			fmt++;
+			u = va_arg(args, ulong);
+			s = simple_itoa(u);
+			while (*s)
+				*str++ = *s++;
+			break;
+		default:
+			/* Print the original string for unsupported formats */
+			*str++ = '%';
+			*str++ = *fmt++;
+		}
+	}
 	*str = '\0';
 	return str - buf;
 }
@@ -214,4 +244,18 @@ void panic(const char *fmt, ...)
 #endif
 	while (1)
 		;
+}
+
+char *simple_itoa(ulong i)
+{
+	/* 21 digits plus null terminator, good for 64-bit or smaller ints */
+	static char local[22];
+	char *p = &local[21];
+
+	*p-- = '\0';
+	do {
+		*p-- = '0' + i % 10;
+		i /= 10;
+	} while (i > 0);
+	return p + 1;
 }
