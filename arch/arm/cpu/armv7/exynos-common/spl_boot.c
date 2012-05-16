@@ -185,8 +185,8 @@ void save_boot_params(u32 r0, u32 r1, u32 r2, u32 r3) {}
  * and lib/vsprintf.o. Adding them makes the SPL u-boot too large and not
  * fit into the expected size.
  *
- * So we mock these functions in SPL, i.e. vsprintf() and panic(), in order
- * to cut its dependency.
+ * So we mock these functions in SPL, i.e. vsprintf(), panic(), etc.,
+ * in order to cut its dependency.
  */
 int vsprintf(char *buf, const char *fmt, va_list args)
 {
@@ -247,6 +247,14 @@ void panic(const char *fmt, ...)
 #endif
 	while (1)
 		;
+}
+
+void __assert_fail(const char *assertion, const char *file, unsigned line,
+		const char *function)
+{
+	/* This will not return */
+	panic("%s:%u: %s: Assertion `%s' failed.", file, line, function,
+			assertion);
 }
 
 char *simple_itoa(ulong i)
