@@ -12,6 +12,8 @@
 
 #include <common.h>
 #include <asm/arch/cpu.h>
+#include <asm/arch/power.h>
+#include <cros/common.h>
 #include <cros/power_management.h>
 
 int is_processor_reset(void)
@@ -37,5 +39,9 @@ void cold_reboot(void)
 /* This function never returns */
 void power_off(void)
 {
-	/* TODO(chromium-os:28077) Implement power_off */
+	power_shutdown();
+
+	/* It should never reach here */
+	VBDEBUG("Board cannot power off itself; enter infinite loop!\n");
+	hang();
 }

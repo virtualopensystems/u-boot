@@ -19,6 +19,7 @@
 #include <cros/cros_gpio.h>
 #include <cros/firmware_storage.h>
 #include <cros/memory_wipe.h>
+#include <cros/power_management.h>
 #include <vboot_api.h>
 
 /*
@@ -197,6 +198,13 @@ static int do_vboot_test_gpio(cmd_tbl_t *cmdtp,
 	return ret;
 }
 
+static int do_vboot_poweroff(cmd_tbl_t *cmdtp,
+		int flag, int argc, char * const argv[])
+{
+	power_off();
+	return 1; /* It should never reach here*/
+}
+
 static int do_vboot_test_all(cmd_tbl_t *cmdtp,
 		int flag, int argc, char * const argv[])
 {
@@ -214,6 +222,7 @@ static cmd_tbl_t cmd_vboot_test_sub[] = {
 	U_BOOT_CMD_MKENT(fwrw, 0, 1, do_vboot_test_fwrw, "", ""),
 	U_BOOT_CMD_MKENT(memwipe, 0, 1, do_vboot_test_memwipe, "", ""),
 	U_BOOT_CMD_MKENT(gpio, 0, 1, do_vboot_test_gpio, "", ""),
+	U_BOOT_CMD_MKENT(poweroff, 0, 1, do_vboot_poweroff, "", ""),
 };
 
 static int do_vboot_test(cmd_tbl_t *cmdtp,
@@ -240,5 +249,6 @@ U_BOOT_CMD(vboot_test, CONFIG_SYS_MAXARGS, 1, do_vboot_test,
 	"vboot_test fwrw [length] - test the firmware read/write\n"
 	"vboot_test memwipe - test the memory wipe functions\n"
 	"vboot_test gpio - print the status of gpio\n"
+	"vboot_test poweroff - test poweroff (board will be shut down!)\n"
 );
 
