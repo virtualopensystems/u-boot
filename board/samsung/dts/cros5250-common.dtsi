@@ -70,6 +70,7 @@
 		mem-interleave-size = <0x1f>;
 		mem-type = "ddr3";
 		clock-frequency = <800000000>;
+		arm-frequency = <1700000000>;
 	};
 
 	spi@12d30000 {

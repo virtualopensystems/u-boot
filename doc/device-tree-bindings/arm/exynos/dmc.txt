@@ -14,7 +14,10 @@ Required properties :
      lpddr2
      lpddr3
  - clock-frequency : Clock frequency of the memory in Hz.
+ - arm-frequency : Clock frequency of the ARM CPUs in Hz.
 
+TODO(sjg@chromium.org): Perhaps move this into another clock node if one
+is created in the future.
 
 Example:
 
@@ -23,4 +26,5 @@ dmc@10C00000 {
 	mem-interleave-size = <0x1f>;
 	mem-type = "ddr3";
 	clock-frequency = <800000000>;
+	arm-frequency = <1700000000>;
 };
