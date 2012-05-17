@@ -250,19 +250,20 @@ struct mem_timings mem_timings[] = {
  *
  * In SPL we have no device tree, so we use the machine parameters
  *
- * @param mem_type Returns memory type
+ * @param mem_type	Returns memory type
  * @param frequency_mhz	Returns memory speed in MHz
+ * @param arm_freq	Returns ARM clock speed in MHz
  * @return 0 if all ok (if not, this function currently does not return)
  */
 static int clock_get_mem_selection(enum ddr_mode *mem_type,
-				unsigned *frequency_mhz)
+		unsigned *frequency_mhz, unsigned *arm_freq)
 {
 	struct spl_machine_param *params;
 
 	params = spl_get_machine_params();
 	*mem_type = params->mem_type;
 	*frequency_mhz = params->frequency_mhz;
-	arm_frq = params->arm_freq_mhz;
+	*arm_freq = params->arm_freq_mhz;
 	return 0;
 }
 
@@ -276,10 +277,11 @@ static int clock_get_mem_selection(enum ddr_mode *mem_type,
  *
  * @param mem_type	Returns memory type
  * @param frequency_mhz	Returns memory speed in MHz
+ * @param arm_freq	Returns ARM clock speed in MHz
  * @return 0 if all ok (if not, this function currently does not return)
  */
 static int clock_get_mem_selection(enum ddr_mode *mem_type,
-				unsigned *frequency_mhz)
+		unsigned *frequency_mhz, unsigned *arm_freq)
 {
 	static const char *mem_types[DDR_MODE_COUNT] = {
 		"ddr2", "ddr3", "lpddr2", "lpddr3"
@@ -298,15 +300,19 @@ static int clock_get_mem_selection(enum ddr_mode *mem_type,
 	}
 	if (i == DDR_MODE_COUNT)
 		panic("Invalid memory type in device tree");
+	*mem_type = i;
 	*frequency_mhz = fdtdec_get_int(gd->fdt_blob, node, "clock-frequency",
 					0);
 	if (!*frequency_mhz)
 		panic("Invalid memory frequency in device tree");
-	*mem_type = i;
+
+	*arm_freq = fdtdec_get_int(gd->fdt_blob, node, "arm-frequency", 0);
+	/* TODO: Remove all these panics, and just return an error code */
+	if (!*arm_freq)
+		panic("Invalid ARM frequency in device tree");
 
 	return 0;
 }
-
 #endif
 
 /* Get the ratios for setting ARM clock */
@@ -329,10 +335,10 @@ struct mem_timings *clock_get_mem_timings(void)
 {
 	struct mem_timings *mem;
 	enum ddr_mode mem_type;
-	unsigned frequency_mhz;
+	unsigned frequency_mhz, arm_freq;
 	int i;
 
-	if (!clock_get_mem_selection(&mem_type, &frequency_mhz)) {
+	if (!clock_get_mem_selection(&mem_type, &frequency_mhz, &arm_freq)) {
 		for (i = 0, mem = mem_timings; i < ARRAY_SIZE(mem_timings);
 				i++, mem++) {
 			if (mem->mem_type == mem_type &&
