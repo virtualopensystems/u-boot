@@ -30,6 +30,8 @@
 #include "setup.h"
 #include "clock_init.h"
 
+#define RDLVL_COMPLETE_TIMEOUT	10000
+
 static void reset_phy_ctrl(void)
 {
 	struct exynos5_clock *clk = (struct exynos5_clock *)EXYNOS5_CLOCK_BASE;
@@ -43,6 +45,7 @@ void ddr3_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size)
 	unsigned int val;
 	struct exynos5_phy_control *phy0_ctrl, *phy1_ctrl;
 	struct exynos5_dmc *dmc;
+	int i;
 
 	phy0_ctrl = (struct exynos5_phy_control *)EXYNOS5_DMC_PHY0_BASE;
 	phy1_ctrl = (struct exynos5_phy_control *)EXYNOS5_DMC_PHY1_BASE;
@@ -172,10 +175,16 @@ void ddr3_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size)
 	writel(val, &phy1_ctrl->phy_con1);
 
 	writel(CTRL_RDLVL_GATE_ENABLE, &dmc->rdlvl_config);
-	do {
-		val = readl(&dmc->phystatus);
-	} while ((val & (RDLVL_COMPLETE_CHO | RDLVL_COMPLETE_CH1)) !=
-			(RDLVL_COMPLETE_CHO | RDLVL_COMPLETE_CH1));
+	i = RDLVL_COMPLETE_TIMEOUT;
+	while ((readl(&dmc->phystatus) &
+			(RDLVL_COMPLETE_CHO | RDLVL_COMPLETE_CH1)) !=
+			(RDLVL_COMPLETE_CHO | RDLVL_COMPLETE_CH1) && i > 0) {
+		/* TODO(waihong): Comment on how long this take to timeout */
+		sdelay(100);
+		i--;
+	}
+	if (!i)
+		panic("Wait RDLVL complete timeout");
 	writel(CTRL_RDLVL_GATE_DISABLE, &dmc->rdlvl_config);
 
 	writel(0, &phy0_ctrl->phy_con14);

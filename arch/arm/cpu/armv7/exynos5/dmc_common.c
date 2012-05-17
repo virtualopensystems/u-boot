@@ -27,12 +27,14 @@
 #include "clock_init.h"
 #include "setup.h"
 
+#define ZQ_INIT_TIMEOUT	10000
+
 void dmc_config_zq(struct mem_timings *mem,
 		   struct exynos5_phy_control *phy0_ctrl,
 		   struct exynos5_phy_control *phy1_ctrl)
 {
 	unsigned long val = 0;
-	unsigned long stat = 0;
+	int i;
 
 	/*
 	 * ZQ Calibration:
@@ -64,14 +66,22 @@ void dmc_config_zq(struct mem_timings *mem,
 	 * Since we are manaully calibrating the ZQ values,
 	 * we are looping for the ZQ_init to complete.
 	 */
-	do {
-		stat = readl(&phy0_ctrl->phy_con17);
-	} while ((stat & ZQ_DONE) != ZQ_DONE);
+	i = ZQ_INIT_TIMEOUT;
+	while ((readl(&phy0_ctrl->phy_con17) & ZQ_DONE) != ZQ_DONE && i > 0) {
+		sdelay(100);
+		i--;
+	}
+	if (!i)
+		panic("ZQ calibration timeout");
 	writel(val, &phy0_ctrl->phy_con16);
 
-	do {
-		stat = readl(&phy1_ctrl->phy_con17);
-	} while ((stat & ZQ_DONE) != ZQ_DONE);
+	i = ZQ_INIT_TIMEOUT;
+	while ((readl(&phy1_ctrl->phy_con17) & ZQ_DONE) != ZQ_DONE && i > 0) {
+		sdelay(100);
+		i--;
+	}
+	if (!i)
+		panic("ZQ calibration timeout");
 	writel(val, &phy1_ctrl->phy_con16);
 }
 
