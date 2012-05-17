@@ -97,7 +97,7 @@ enum {
 };
 
 
-#ifdef VBOOT_DEBUG
+#if defined(VBOOT_DEBUG) || defined(DEBUG)
 #define MY_ENUM_TO_STR(a) #a
 static const char *
 str_selection(uint32_t selection)
@@ -128,7 +128,7 @@ str_selection(uint32_t selection)
 	return "<UNKNOWN>";
 }
 #undef MY_ENUM_TO_STR
-#endif /* VBOOT_DEBUG */
+#endif /* VBOOT_DEBUG || DEBUG */
 
 /*
  * Implement a weak default function for boards that optionally
