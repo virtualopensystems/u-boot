@@ -261,7 +261,7 @@ void __assert_fail(const char *assertion, const char *file, unsigned line,
 char *simple_itoa(ulong i)
 {
 	/* 21 digits plus null terminator, good for 64-bit or smaller ints */
-	static char local[22];
+	static char local[22] __attribute__((section(".data")));
 	char *p = &local[21];
 
 	*p-- = '\0';
