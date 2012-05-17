@@ -95,8 +95,8 @@ static int console_setfile(int file, struct stdio_dev * dev)
 /** Console I/O multiplexing *******************************************/
 
 static struct stdio_dev *tstcdev;
-struct stdio_dev **console_devices[MAX_FILES];
-int cd_count[MAX_FILES];
+struct stdio_dev **console_devices[MAX_FILES] __attribute__((section(".data")));
+int cd_count[MAX_FILES] __attribute__((section(".data")));
 
 /*
  * This depends on tstc() always being called before getc().
