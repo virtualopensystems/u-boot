@@ -243,22 +243,6 @@ struct mem_timings mem_timings[] = {
 	}
 };
 
-/* Get the ratios for setting ARM clock */
-struct arm_clk_ratios *get_arm_ratios(void)
-{
-	struct arm_clk_ratios *arm_ratio;
-	int i;
-
-	for (i = 0, arm_ratio = arm_clk_ratios; i < ARRAY_SIZE(arm_clk_ratios);
-		i++, arm_ratio++) {
-		if (arm_ratio->arm_freq_mhz == arm_frq)
-			return arm_ratio;
-	}
-
-	panic("get_arm_ratios: Failed to find ratio\n");
-	return NULL;
-}
-
 #ifdef CONFIG_SPL_BUILD
 
 /**
@@ -324,6 +308,22 @@ static int clock_get_mem_selection(enum ddr_mode *mem_type,
 }
 
 #endif
+
+/* Get the ratios for setting ARM clock */
+struct arm_clk_ratios *get_arm_ratios(void)
+{
+	struct arm_clk_ratios *arm_ratio;
+	int i;
+
+	for (i = 0, arm_ratio = arm_clk_ratios; i < ARRAY_SIZE(arm_clk_ratios);
+		i++, arm_ratio++) {
+		if (arm_ratio->arm_freq_mhz == arm_frq)
+			return arm_ratio;
+	}
+
+	panic("get_arm_ratios: Failed to find ratio\n");
+	return NULL;
+}
 
 struct mem_timings *clock_get_mem_timings(void)
 {
