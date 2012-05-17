@@ -163,6 +163,7 @@ void board_init_f(unsigned long bootflag)
 	uboot = (void *)CONFIG_SYS_TEXT_BASE;
 	uboot();
 	/* Never returns Here */
+	panic("%s: u-boot jump failed", __func__);
 }
 
 /* Place Holders */
