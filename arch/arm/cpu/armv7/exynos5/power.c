@@ -39,6 +39,14 @@ void ps_hold_setup(void)
 	setbits_le32(&power->ps_hold_ctrl, POWER_PS_HOLD_CONTROL_DATA_HIGH);
 }
 
+void power_shutdown(void)
+{
+	struct exynos5_power *power =
+		(struct exynos5_power *)samsung_get_base_power();
+
+	clrbits_le32(&power->ps_hold_ctrl, POWER_PS_HOLD_CONTROL_DATA_HIGH);
+}
+
 void power_enable_usb_phy(void)
 {
 	struct exynos5_sysreg *sysreg =
