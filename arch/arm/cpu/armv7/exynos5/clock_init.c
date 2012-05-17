@@ -38,7 +38,6 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-unsigned arm_frq;
 struct arm_clk_ratios arm_clk_ratios[] = {
 	{
 		.arm_freq_mhz = 600,
@@ -319,11 +318,16 @@ static int clock_get_mem_selection(enum ddr_mode *mem_type,
 struct arm_clk_ratios *get_arm_ratios(void)
 {
 	struct arm_clk_ratios *arm_ratio;
+	enum ddr_mode mem_type;
+	unsigned frequency_mhz, arm_freq;
 	int i;
 
+	/* TODO(sjg@chromium.org): Return NULL and have caller deal with it */
+	if (clock_get_mem_selection(&mem_type, &frequency_mhz, &arm_freq))
+		;
 	for (i = 0, arm_ratio = arm_clk_ratios; i < ARRAY_SIZE(arm_clk_ratios);
 		i++, arm_ratio++) {
-		if (arm_ratio->arm_freq_mhz == arm_frq)
+		if (arm_ratio->arm_freq_mhz == arm_freq)
 			return arm_ratio;
 	}
 
