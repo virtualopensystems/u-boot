@@ -130,6 +130,7 @@ static int mshci_prepare_data(struct mshci_host *host, struct mmc_data *data)
 	unsigned int data_cnt;
 	unsigned int des_flag;
 	unsigned int blksz;
+	ulong data_start, data_end;
 	static struct mshci_idmac idmac_desc[0x10000];
 	/* TODO(alim.akhtar@samsung.com): do we really need this big array? */
 
@@ -166,6 +167,14 @@ static int mshci_prepare_data(struct mshci_host *host, struct mmc_data *data)
 		data_cnt -= 8;
 		pdesc_dmac++;
 	}
+
+	data_start = (ulong)idmac_desc;
+	data_end = (ulong)pdesc_dmac;
+	flush_dcache_range(data_start, data_end + ARCH_DMA_MINALIGN);
+
+	data_start = (ulong)data->dest;
+	data_end  = (ulong)(data->dest + data->blocks * data->blocksize);
+	flush_dcache_range(data_start, data_end);
 
 	writel((unsigned int)virt_to_phys(idmac_desc), &host->reg->dbaddr);
 
@@ -208,7 +217,7 @@ static int s5p_mshci_send_command(struct mmc *mmc, struct mmc_cmd *cmd,
 
 	int flags = 0, i;
 	unsigned int mask;
-	ulong start;
+	ulong start, data_start, data_end;
 
 	/*
 	* We shouldn't wait for data inihibit for stop commands, even
@@ -306,6 +315,12 @@ static int s5p_mshci_send_command(struct mmc *mmc, struct mmc_cmd *cmd,
 		while (!(mask & (DATA_ERR | DATA_TOUT | INTMSK_DTO)))
 			mask = readl(&host->reg->rintsts);
 		writel(mask, &host->reg->rintsts);
+		if (data->flags & MMC_DATA_READ) {
+			data_start = (ulong)data->dest;
+			data_end = (ulong)data->dest +
+					data->blocks * data->blocksize;
+			invalidate_dcache_range(data_start, data_end);
+		}
 		if (mask & (DATA_ERR | DATA_TOUT)) {
 			debug("error during transfer: 0x%x\n", mask);
 			/* make sure disable IDMAC and IDMAC_Interrupts */
