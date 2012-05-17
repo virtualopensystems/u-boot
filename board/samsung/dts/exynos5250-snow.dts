@@ -19,4 +19,10 @@
 	model = "Google Snow";
 	compatible = "google,snow", "google,daisy", "samsung,smdk5250",
 		   "samsung,exynos5250";
+
+	board-rev {
+		compatible = "google,board-revision";
+		google,board-rev-gpios = <&gpio 88 0>, <&gpio 89 0>;
+	};
+
 };
