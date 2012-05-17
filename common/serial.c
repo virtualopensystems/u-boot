@@ -30,7 +30,7 @@
 DECLARE_GLOBAL_DATA_PTR;
 
 static struct serial_device *serial_devices;
-static struct serial_device *serial_current;
+static struct serial_device *serial_current __attribute__((section(".data")));
 
 void serial_register(struct serial_device *dev)
 {
