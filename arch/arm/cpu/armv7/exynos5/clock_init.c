@@ -27,6 +27,7 @@
 #include <fdtdec.h>
 #include <version.h>
 #include <asm/io.h>
+#include <asm/arch/board.h>
 #include <asm/arch/clk.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/cpu.h>
@@ -354,6 +355,33 @@ struct mem_timings mem_timings[] = {
 	}
 };
 
+/**
+ * Detect what memory is present based on board strappings
+ *
+ * Boards have various resistor stuff options that are supposed to match
+ * which SDRAM is present (and which revision of the board this is).  This
+ * uses the resistor stuff options to figure out what memory manufacturer
+ * to use for matching in the memory tables.
+ *
+ * @return A MEM_MANUF_XXX constant, or -1 if an error occurred.
+ */
+static int autodetect_memory(void)
+{
+	int board_rev = board_get_revision();
+
+	if (board_rev == -1)
+		return -1;
+
+	switch (board_rev) {
+	case BOARD_REV_SAMSUNG_MEMORY:
+		return MEM_MANUF_SAMSUNG;
+	case BOARD_REV_ELPIDA_MEMORY:
+		return MEM_MANUF_ELPIDA;
+	}
+
+	return -1;
+}
+
 #ifdef CONFIG_SPL_BUILD
 
 /**
@@ -365,7 +393,7 @@ struct mem_timings mem_timings[] = {
  * @param frequency_mhz	Returns memory speed in MHz
  * @param arm_freq	Returns ARM clock speed in MHz
  * @param mem_manuf	Return Memory Manufacturer name
- * @return 0 if all ok (if not, this function currently does not return)
+ * @return 0 if all ok
  */
 static int clock_get_mem_selection(enum ddr_mode *mem_type,
 		unsigned *frequency_mhz, unsigned *arm_freq,
@@ -375,9 +403,16 @@ static int clock_get_mem_selection(enum ddr_mode *mem_type,
 
 	params = spl_get_machine_params();
 	*mem_type = params->mem_type;
-	*mem_manuf = params->mem_manuf;
+	if (params->mem_manuf == MEM_MANUF_AUTODETECT) {
+		*mem_manuf = autodetect_memory();
+		if (*mem_manuf == -1)
+			return -1;
+	} else {
+		*mem_manuf = params->mem_manuf;
+	}
 	*frequency_mhz = params->frequency_mhz;
 	*arm_freq = params->arm_freq_mhz;
+
 	return 0;
 }
 
@@ -430,7 +465,14 @@ static int clock_get_mem_selection(enum ddr_mode *mem_type,
 	}
 	if (i == MEM_MANUF_COUNT)
 		panic("Invalid memory manufacturer in device tree");
-	*mem_manuf = i;
+
+	if (i == MEM_MANUF_AUTODETECT) {
+		*mem_manuf = autodetect_memory();
+		if (*mem_manuf == -1)
+			return -1;
+	} else {
+		*mem_manuf = i;
+	}
 
 	*frequency_mhz = fdtdec_get_int(gd->fdt_blob, node, "clock-frequency",
 					0);

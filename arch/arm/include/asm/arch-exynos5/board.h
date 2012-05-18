@@ -24,6 +24,10 @@
 #ifndef __EXYNOS5_BOARD_H
 #define __EXYNOS5_BOARD_H
 
+/* How to interpret values from board_get_revision */
+#define BOARD_REV_ELPIDA_MEMORY		3
+#define BOARD_REV_SAMSUNG_MEMORY	4
+
 /**
  * Get the board revision information
  *
