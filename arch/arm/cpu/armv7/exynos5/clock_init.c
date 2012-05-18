@@ -134,6 +134,115 @@ struct arm_clk_ratios arm_clk_ratios[] = {
 
 struct mem_timings mem_timings[] = {
 	{
+		.mem_manuf = MEM_MANUF_ELPIDA,
+		.mem_type = DDR_MODE_DDR3,
+		.frequency_mhz = 800,
+		.mpll_mdiv = 0xC8,
+		.mpll_pdiv = 0x3,
+		.mpll_sdiv = 0x0,
+		.cpll_mdiv = 0xDE,
+		.cpll_pdiv = 0x4,
+		.cpll_sdiv = 0x2,
+		.gpll_mdiv = 0x215,
+		.gpll_pdiv = 0xC,
+		.gpll_sdiv = 0x1,
+		.epll_mdiv = 0x60,
+		.epll_pdiv = 0x3,
+		.epll_sdiv = 0x3,
+		.vpll_mdiv = 0x96,
+		.vpll_pdiv = 0x3,
+		.vpll_sdiv = 0x2,
+
+		.bpll_mdiv = 0x64,
+		.bpll_pdiv = 0x3,
+		.bpll_sdiv = 0x0,
+		.pclk_cdrex_ratio = 0x5,
+		.direct_cmd_msr = {
+			0x00020018, 0x00030000, 0x00010042, 0x00000d70
+		},
+		.timing_ref = 0x000000bb,
+		.timing_row = 0x8C36650E,
+		.timing_data = 0x3630580B,
+		.timing_power = 0x41000a44,
+		.phy0_dqs = 0x08080808,
+		.phy1_dqs = 0x08080808,
+		.phy0_dq = 0x08080808,
+		.phy1_dq = 0x08080808,
+		.phy0_tFS = 0x4,
+		.phy1_tFS = 0x4,
+		.phy0_pulld_dqs = 0xf,
+		.phy1_pulld_dqs = 0xf,
+
+		.lpddr3_ctrl_phy_reset = 0x1,
+		.ctrl_start_point = (0x1 << 28),
+		.ctrl_inc = (0x1 << 20),
+		.ctrl_start = (0x1 << 6),
+		.ctrl_ddl_on = (0x1 << 5),
+		.ctrl_ref = (0x1 << 4),
+
+		.ctrl_force = (0x1a << 8),
+		.ctrl_rdlat = 0x0b,
+		.ctrl_bstlen = 0x08,
+
+		.mem_term_en = (0x3 << 30),
+		.ctrl_shgate = (0x1 << 29),
+		.fp_resync = 0x8,
+		.iv_size = 0x7,
+		.dfi_init_start = (1 << 28),
+		.aref_en = (1 << 5),
+
+		.rd_fetch = (0x3 << 12),
+
+		.zq_clk_en = (0x1 << 27),
+		.zq_mode_dds = 0x7,
+		.zq_mode_term = 0x1,
+		.zq_mode_noterm = 0,
+		.zq_clk_div_en = (0x1 << 18),
+		.zq_udt_dly = (0x30 << 4),
+		.zq_manual_mode = (0x1 << 2),
+		.zq_manual_str = (0x1 << 1),
+
+		/*
+		* Dynamic Clock: Always Running
+		* Memory Burst length: 8
+		* Number of chips: 1
+		* Memory Bus width: 32 bit
+		* Memory Type: DDR3
+		* Additional Latancy for PLL: 0 Cycle
+		*/
+		.memcontrol = DMC_MEMCONTROL_CLK_STOP_DISABLE |
+			DMC_MEMCONTROL_DPWRDN_DISABLE |
+			DMC_MEMCONTROL_DPWRDN_ACTIVE_PRECHARGE |
+			DMC_MEMCONTROL_TP_DISABLE |
+			DMC_MEMCONTROL_DSREF_ENABLE |
+			DMC_MEMCONTROL_ADD_LAT_PALL_CYCLE(0) |
+			DMC_MEMCONTROL_MEM_TYPE_DDR3 |
+			DMC_MEMCONTROL_MEM_WIDTH_32BIT |
+			DMC_MEMCONTROL_NUM_CHIP_1 |
+			DMC_MEMCONTROL_BL_8 |
+			DMC_MEMCONTROL_PZQ_DISABLE |
+			DMC_MEMCONTROL_MRR_BYTE_7_0,
+		.memconfig = DMC_MEMCONFIGx_CHIP_MAP_INTERLEAVED |
+			DMC_MEMCONFIGx_CHIP_COL_10 |
+			DMC_MEMCONFIGx_CHIP_ROW_15 |
+			DMC_MEMCONFIGx_CHIP_BANK_8,
+		.membaseconfig0 = DMC_MEMBASECONFIG_VAL(0x40),
+		.membaseconfig1 = DMC_MEMBASECONFIG_VAL(0x80),
+		.prechconfig = (0xFF << 24),
+		.pwrdnconfig = ~(0xFF << 8),
+		.concontrol = DMC_CONCONTROL_DFI_INIT_START_DISABLE |
+			DMC_CONCONTROL_TIMEOUT_LEVEL0 |
+			DMC_CONCONTROL_RD_FETCH_DISABLE |
+			DMC_CONCONTROL_EMPTY_DISABLE |
+			DMC_CONCONTROL_AREF_EN_DISABLE |
+			DMC_CONCONTROL_IO_PD_CON_DISABLE,
+		.dmc_channels = 2,
+		.chips_per_channel = 2,
+		.chips_to_configure = 1,
+		.send_zq_init = 1,
+		.impedance = IMP_OUTPUT_DRV_30_OHM,
+		.gate_leveling_enable = 0,
+	}, {
 		.mem_manuf = MEM_MANUF_SAMSUNG,
 		.mem_type = DDR_MODE_DDR3,
 		.frequency_mhz = 800,
