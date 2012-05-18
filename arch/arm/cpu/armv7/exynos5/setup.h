@@ -500,6 +500,7 @@
 
 /* Driver strength for CK, CKE, CS & CA */
 #define IMP_OUTPUT_DRV_40_OHM	0x5
+#define IMP_OUTPUT_DRV_30_OHM	0x7
 #define CA_CK_DRVR_DS_OFFSET	9
 #define CA_CKE_DRVR_DS_OFFSET	6
 #define CA_CS_DRVR_DS_OFFSET	3
