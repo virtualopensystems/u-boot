@@ -25,4 +25,8 @@
 		google,board-rev-gpios = <&gpio 88 0>, <&gpio 89 0>;
 	};
 
+	dmc@10C00000 {
+		mem-manuf = "samsung";
+	};
+
 };

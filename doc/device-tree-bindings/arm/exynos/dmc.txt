@@ -13,6 +13,9 @@ Required properties :
      ddr3
      lpddr2
      lpddr3
+ - mem-manuf : Memory manufacturer as a string. Valid options are:
+     elpida
+     samsung
  - clock-frequency : Clock frequency of the memory in Hz.
  - arm-frequency : Clock frequency of the ARM CPUs in Hz.
 
@@ -25,6 +28,7 @@ dmc@10C00000 {
 	compatible = "samsung,exynos-dmc";
 	mem-interleave-size = <0x1f>;
 	mem-type = "ddr3";
+	mem-manuf = "elpida";
 	clock-frequency = <800000000>;
 	arm-frequency = <1700000000>;
 };
