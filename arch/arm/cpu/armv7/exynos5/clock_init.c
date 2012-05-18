@@ -134,6 +134,7 @@ struct arm_clk_ratios arm_clk_ratios[] = {
 
 struct mem_timings mem_timings[] = {
 	{
+		.mem_manuf = MEM_MANUF_SAMSUNG,
 		.mem_type = DDR_MODE_DDR3,
 		.frequency_mhz = 800,
 		.mpll_mdiv = 0xC8,
@@ -254,15 +255,18 @@ struct mem_timings mem_timings[] = {
  * @param mem_type	Returns memory type
  * @param frequency_mhz	Returns memory speed in MHz
  * @param arm_freq	Returns ARM clock speed in MHz
+ * @param mem_manuf	Return Memory Manufacturer name
  * @return 0 if all ok (if not, this function currently does not return)
  */
 static int clock_get_mem_selection(enum ddr_mode *mem_type,
-		unsigned *frequency_mhz, unsigned *arm_freq)
+		unsigned *frequency_mhz, unsigned *arm_freq,
+		enum mem_manuf *mem_manuf)
 {
 	struct spl_machine_param *params;
 
 	params = spl_get_machine_params();
 	*mem_type = params->mem_type;
+	*mem_manuf = params->mem_manuf;
 	*frequency_mhz = params->frequency_mhz;
 	*arm_freq = params->arm_freq_mhz;
 	return 0;
@@ -279,14 +283,21 @@ static int clock_get_mem_selection(enum ddr_mode *mem_type,
  * @param mem_type	Returns memory type
  * @param frequency_mhz	Returns memory speed in MHz
  * @param arm_freq	Returns ARM clock speed in MHz
+ * @param mem_manuf	Return Memory Manufacturer name
  * @return 0 if all ok (if not, this function currently does not return)
  */
 static int clock_get_mem_selection(enum ddr_mode *mem_type,
-		unsigned *frequency_mhz, unsigned *arm_freq)
+		unsigned *frequency_mhz, unsigned *arm_freq,
+		enum mem_manuf *mem_manuf)
 {
 	static const char *mem_types[DDR_MODE_COUNT] = {
 		"ddr2", "ddr3", "lpddr2", "lpddr3"
 	};
+
+	static const char *mem_manufs[MEM_MANUF_COUNT] = {
+		"autodetect", "elpida", "samsung"
+	};
+
 	const char *typestr;
 	int node, i;
 
@@ -302,6 +313,16 @@ static int clock_get_mem_selection(enum ddr_mode *mem_type,
 	if (i == DDR_MODE_COUNT)
 		panic("Invalid memory type in device tree");
 	*mem_type = i;
+
+	typestr = fdt_getprop(gd->fdt_blob, node, "mem-manuf", NULL);
+	for (i = 0; i < MEM_MANUF_COUNT; i++) {
+		if (!strcmp(typestr, mem_manufs[i]))
+			break;
+	}
+	if (i == MEM_MANUF_COUNT)
+		panic("Invalid memory manufacturer in device tree");
+	*mem_manuf = i;
+
 	*frequency_mhz = fdtdec_get_int(gd->fdt_blob, node, "clock-frequency",
 					0);
 	if (!*frequency_mhz)
@@ -321,11 +342,13 @@ struct arm_clk_ratios *get_arm_ratios(void)
 {
 	struct arm_clk_ratios *arm_ratio;
 	enum ddr_mode mem_type;
+	enum mem_manuf mem_manuf;
 	unsigned frequency_mhz, arm_freq;
 	int i;
 
 	/* TODO(sjg@chromium.org): Return NULL and have caller deal with it */
-	if (clock_get_mem_selection(&mem_type, &frequency_mhz, &arm_freq))
+	if (clock_get_mem_selection(&mem_type, &frequency_mhz,
+					&arm_freq, &mem_manuf))
 		;
 	for (i = 0, arm_ratio = arm_clk_ratios; i < ARRAY_SIZE(arm_clk_ratios);
 		i++, arm_ratio++) {
@@ -341,14 +364,17 @@ struct mem_timings *clock_get_mem_timings(void)
 {
 	struct mem_timings *mem;
 	enum ddr_mode mem_type;
+	enum mem_manuf mem_manuf;
 	unsigned frequency_mhz, arm_freq;
 	int i;
 
-	if (!clock_get_mem_selection(&mem_type, &frequency_mhz, &arm_freq)) {
+	if (!clock_get_mem_selection(&mem_type, &frequency_mhz,
+						&arm_freq, &mem_manuf)) {
 		for (i = 0, mem = mem_timings; i < ARRAY_SIZE(mem_timings);
 				i++, mem++) {
 			if (mem->mem_type == mem_type &&
-					mem->frequency_mhz == frequency_mhz)
+					mem->frequency_mhz == frequency_mhz &&
+					mem->mem_manuf == mem_manuf)
 				return mem;
 		}
 	}

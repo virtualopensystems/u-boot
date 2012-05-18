@@ -49,6 +49,7 @@ struct arm_clk_ratios {
 
 /* These are the memory timings for a particular memory type and speed */
 struct mem_timings {
+	enum mem_manuf mem_manuf;	/* Memory manufacturer */
 	enum ddr_mode mem_type;		/* Memory type */
 	unsigned frequency_mhz;		/* Frequency of memory in MHz */
 
