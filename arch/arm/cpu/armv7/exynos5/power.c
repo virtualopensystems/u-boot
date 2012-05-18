@@ -89,7 +89,7 @@ int power_init(void)
 {
 	int error = 0;
 
-#ifdef CONFIG_SPL_BULD
+#ifdef CONFIG_SPL_BUILD
 	struct spl_machine_param *param = spl_get_machine_params();
 
 	/* Set the i2c register address base so i2c works before FDT */
