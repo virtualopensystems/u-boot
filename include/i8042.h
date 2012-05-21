@@ -69,6 +69,8 @@
 
 /* exports */
 
+void i8042_flush(void);
+int i8042_disable(void);
 int i8042_kbd_init(void);
 int i8042_tstc(void);
 int i8042_getc(void);

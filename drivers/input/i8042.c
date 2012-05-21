@@ -333,6 +333,50 @@ int board_i8042_skip(void) __attribute__((weak, alias("__board_i8042_skip")));
 
 /*******************************************************************************
  *
+ * i8042_flush - flush all buffer from EC to host.
+ *               The delay is to give EC some time to fill next byte.
+ */
+void i8042_flush(void)
+{
+	int timeout;
+
+	while (1) {
+		timeout = 100;  /* wait for no longer than 100us */
+		while (timeout > 0 && (in8(I8042_STATUS_REG) & 0x01) == 0) {
+			udelay(1);
+			timeout--;
+		}
+
+		/* Try to pull next byte if not timeout. */
+		if (in8(I8042_STATUS_REG) & 0x01)
+			in8(I8042_DATA_REG);
+		else
+			return;
+	}
+}
+
+/*******************************************************************************
+ *
+ * i8042_disable - Disables the keyboard so that key stroke no longer generates
+ *                 scancode to host.
+ */
+int i8042_disable(void)
+{
+	if (kbd_input_empty() == 0)
+		return -1;
+
+	/* Disable keyboard */
+	out8(I8042_COMMAND_REG, 0xad);
+
+	if (kbd_input_empty() == 0)
+		return -1;
+
+	return 0;
+}
+
+
+/*******************************************************************************
+ *
  * i8042_kbd_init - reset keyboard and init state flags
  */
 int i8042_kbd_init(void)
