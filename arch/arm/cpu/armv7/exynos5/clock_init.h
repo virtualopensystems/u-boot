@@ -136,6 +136,8 @@ struct mem_timings {
 	uint8_t chips_per_channel;	/* number of chips per channel */
 	uint8_t chips_to_configure;	/* number of chips to configure */
 	uint8_t send_zq_init;		/* 1 to send this command */
+	unsigned impedance;		/* drive strength impedeance */
+	uint8_t gate_leveling_enable;	/* check gate leveling is enabled */
 };
 
 /**

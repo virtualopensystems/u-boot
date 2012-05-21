@@ -239,6 +239,8 @@ struct mem_timings mem_timings[] = {
 		.chips_per_channel = 2,
 		.chips_to_configure = 1,
 		.send_zq_init = 1,
+		.impedance = IMP_OUTPUT_DRV_40_OHM,
+		.gate_leveling_enable = 1,
 	}
 };
 

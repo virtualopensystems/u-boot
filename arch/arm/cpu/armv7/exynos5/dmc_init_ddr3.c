@@ -132,74 +132,79 @@ void ddr3_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size)
 	/* Send NOP, MRS and ZQINIT commands */
 	dmc_config_mrs(mem, dmc);
 
-	val = PHY_CON0_RESET_VAL;
-	val |= P0_CMD_EN;
-	writel(val, &phy0_ctrl->phy_con0);
-	writel(val, &phy1_ctrl->phy_con0);
+	if (mem->gate_leveling_enable) {
+		val = PHY_CON0_RESET_VAL;
+		val |= P0_CMD_EN;
+		writel(val, &phy0_ctrl->phy_con0);
+		writel(val, &phy1_ctrl->phy_con0);
 
-	val = PHY_CON2_RESET_VAL;
-	val |= INIT_DESKEW_EN;
-	writel(val, &phy0_ctrl->phy_con2);
-	writel(val, &phy1_ctrl->phy_con2);
+		val = PHY_CON2_RESET_VAL;
+		val |= INIT_DESKEW_EN;
+		writel(val, &phy0_ctrl->phy_con2);
+		writel(val, &phy1_ctrl->phy_con2);
 
-	val = PHY_CON0_RESET_VAL;
-	val |= P0_CMD_EN;
-	val |= BYTE_RDLVL_EN;
-	writel(val, &phy0_ctrl->phy_con0);
-	writel(val, &phy1_ctrl->phy_con0);
+		val = PHY_CON0_RESET_VAL;
+		val |= P0_CMD_EN;
+		val |= BYTE_RDLVL_EN;
+		writel(val, &phy0_ctrl->phy_con0);
+		writel(val, &phy1_ctrl->phy_con0);
 
-	val = mem->ctrl_start_point |
-		mem->ctrl_inc |
-		mem->ctrl_force |
-		mem->ctrl_start |
-		mem->ctrl_ref;
-	writel(val, &phy0_ctrl->phy_con12);
-	writel(val, &phy1_ctrl->phy_con12);
+		val = mem->ctrl_start_point |
+			mem->ctrl_inc |
+			mem->ctrl_force |
+			mem->ctrl_start |
+			mem->ctrl_ref;
+		writel(val, &phy0_ctrl->phy_con12);
+		writel(val, &phy1_ctrl->phy_con12);
 
-	val = PHY_CON2_RESET_VAL;
-	val |= INIT_DESKEW_EN;
-	val |= RDLVL_GATE_EN;
-	writel(val, &phy0_ctrl->phy_con2);
-	writel(val, &phy1_ctrl->phy_con2);
+		val = PHY_CON2_RESET_VAL;
+		val |= INIT_DESKEW_EN;
+		val |= RDLVL_GATE_EN;
+		writel(val, &phy0_ctrl->phy_con2);
+		writel(val, &phy1_ctrl->phy_con2);
 
-	val = PHY_CON0_RESET_VAL;
-	val |= P0_CMD_EN;
-	val |= BYTE_RDLVL_EN;
-	val |= CTRL_SHGATE;
-	writel(val, &phy0_ctrl->phy_con0);
-	writel(val, &phy1_ctrl->phy_con0);
+		val = PHY_CON0_RESET_VAL;
+		val |= P0_CMD_EN;
+		val |= BYTE_RDLVL_EN;
+		val |= CTRL_SHGATE;
+		writel(val, &phy0_ctrl->phy_con0);
+		writel(val, &phy1_ctrl->phy_con0);
 
-	val = PHY_CON1_RESET_VAL;
-	val &= ~(CTRL_GATEDURADJ_MASK);
-	writel(val, &phy0_ctrl->phy_con1);
-	writel(val, &phy1_ctrl->phy_con1);
+		val = PHY_CON1_RESET_VAL;
+		val &= ~(CTRL_GATEDURADJ_MASK);
+		writel(val, &phy0_ctrl->phy_con1);
+		writel(val, &phy1_ctrl->phy_con1);
 
-	writel(CTRL_RDLVL_GATE_ENABLE, &dmc->rdlvl_config);
-	i = RDLVL_COMPLETE_TIMEOUT;
-	while ((readl(&dmc->phystatus) &
+		writel(CTRL_RDLVL_GATE_ENABLE, &dmc->rdlvl_config);
+		i = RDLVL_COMPLETE_TIMEOUT;
+		while ((readl(&dmc->phystatus) &
 			(RDLVL_COMPLETE_CHO | RDLVL_COMPLETE_CH1)) !=
 			(RDLVL_COMPLETE_CHO | RDLVL_COMPLETE_CH1) && i > 0) {
-		/* TODO(waihong): Comment on how long this take to timeout */
-		sdelay(100);
-		i--;
+			/*
+			 * TODO(waihong): Comment on how long this take to
+			 * timeout
+			 */
+			sdelay(100);
+			i--;
+		}
+		if (!i)
+			panic("Wait RDLVL complete timeout");
+		writel(CTRL_RDLVL_GATE_DISABLE, &dmc->rdlvl_config);
+
+		writel(0, &phy0_ctrl->phy_con14);
+		writel(0, &phy1_ctrl->phy_con14);
+
+		val = mem->ctrl_start_point |
+			mem->ctrl_inc |
+			mem->ctrl_force |
+			mem->ctrl_start |
+			mem->ctrl_ddl_on |
+			mem->ctrl_ref;
+		writel(val, &phy0_ctrl->phy_con12);
+		writel(val, &phy1_ctrl->phy_con12);
+
+		update_reset_dll(dmc, DDR_MODE_DDR3);
 	}
-	if (!i)
-		panic("Wait RDLVL complete timeout");
-	writel(CTRL_RDLVL_GATE_DISABLE, &dmc->rdlvl_config);
-
-	writel(0, &phy0_ctrl->phy_con14);
-	writel(0, &phy1_ctrl->phy_con14);
-
-	val = mem->ctrl_start_point |
-		mem->ctrl_inc |
-		mem->ctrl_force |
-		mem->ctrl_start |
-		mem->ctrl_ddl_on |
-		mem->ctrl_ref;
-	writel(val, &phy0_ctrl->phy_con12);
-	writel(val, &phy1_ctrl->phy_con12);
-
-	update_reset_dll(dmc, DDR_MODE_DDR3);
 
 	/* Send PALL command */
 	dmc_config_prech(mem, dmc);
