@@ -44,24 +44,6 @@ const char *file_cbfs_error(void)
 	}
 }
 
-typedef struct CbfsFileHeader {
-	u8 magic[8];
-	u32 len;
-	u32 type;
-	u32 checksum;
-	u32 offset;
-} __attribute__((packed)) CbfsFileHeader;
-
-typedef struct CbfsCacheNode {
-	struct CbfsCacheNode *next;
-	u32 type;
-	void *data;
-	u32 dataLength;
-	char *name;
-	u32 nameLength;
-	u32 checksum;
-} __attribute__((packed)) CbfsCacheNode;
-
 
 static const u32 goodMagic = 0x4f524243;
 static const u8 goodFileMagic[] = "LARCHIVE";

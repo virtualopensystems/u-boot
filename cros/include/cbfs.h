@@ -54,9 +54,26 @@ typedef struct CbfsHeader {
 	u32 align;
 	u32 offset;
 	u32 pad[2];
-} __attribute__((packed)) CbfsHeader;
+} __packed CbfsHeader;
 
-struct CbfsCacheNode;
+typedef struct CbfsFileHeader {
+	u8 magic[8];
+	u32 len;
+	u32 type;
+	u32 checksum;
+	u32 offset;
+} __packed CbfsFileHeader;
+
+typedef struct CbfsCacheNode {
+	struct CbfsCacheNode *next;
+	u32 type;
+	void *data;
+	u32 dataLength;
+	char *name;
+	u32 nameLength;
+	u32 checksum;
+} __packed CbfsCacheNode;
+
 typedef const struct CbfsCacheNode *CbfsFile;
 
 extern CbfsResult file_cbfs_result;
