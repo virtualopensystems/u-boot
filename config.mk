@@ -232,6 +232,10 @@ CPPFLAGS += -I$(TOPDIR)/include
 CPPFLAGS += -fno-builtin -ffreestanding -nostdinc	\
 	-isystem $(gccincdir) -pipe $(PLATFORM_CPPFLAGS)
 
+ifeq ($(WERROR),y)
+CPPFLAGS += -Werror
+endif
+
 ifneq ($(CONFIG_CHROMEOS),)
 CPPFLAGS += -I$(TOPDIR)/cros/include
 endif
