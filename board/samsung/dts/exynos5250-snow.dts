@@ -26,7 +26,7 @@
 	};
 
 	dmc@10C00000 {
-		mem-manuf = "samsung";
+		mem-manuf = "autodetect";
 	};
 
 };
