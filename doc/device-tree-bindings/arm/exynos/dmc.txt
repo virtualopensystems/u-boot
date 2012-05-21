@@ -14,6 +14,7 @@ Required properties :
      lpddr2
      lpddr3
  - mem-manuf : Memory manufacturer as a string. Valid options are:
+     autodetect
      elpida
      samsung
  - clock-frequency : Clock frequency of the memory in Hz.
