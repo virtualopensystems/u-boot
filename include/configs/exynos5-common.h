@@ -180,4 +180,6 @@
 /* Enable devicetree support */
 #define CONFIG_OF_LIBFDT
 
+#define CONFIG_SYS_THUMB_BUILD
+
 #endif	/* __EXYNOS5_CONFIG_H */
