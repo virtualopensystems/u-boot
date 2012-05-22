@@ -54,10 +54,10 @@ void ddr3_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size)
 	reset_phy_ctrl();
 
 	/* Set Impedance Output Driver */
-	val = IMP_OUTPUT_DRV_40_OHM << CA_CK_DRVR_DS_OFFSET |
-		IMP_OUTPUT_DRV_40_OHM << CA_CKE_DRVR_DS_OFFSET |
-		IMP_OUTPUT_DRV_40_OHM << CA_CS_DRVR_DS_OFFSET |
-		IMP_OUTPUT_DRV_40_OHM << CA_ADR_DRVR_DS_OFFSET;
+	val = (mem->impedance << CA_CK_DRVR_DS_OFFSET) |
+		(mem->impedance << CA_CKE_DRVR_DS_OFFSET) |
+		(mem->impedance << CA_CS_DRVR_DS_OFFSET) |
+		(mem->impedance << CA_ADR_DRVR_DS_OFFSET);
 	writel(val, &phy0_ctrl->phy_con39);
 	writel(val, &phy1_ctrl->phy_con39);
 
