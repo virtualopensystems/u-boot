@@ -195,6 +195,57 @@ int tps65090_fet_is_enabled(unsigned int fet_id)
 	return reg & FET_CTRL_ENFET;
 }
 
+int tps65090_get_charging(void)
+{
+	unsigned char val;
+	int ret;
+
+	if (tps65090_select())
+		return -1;
+	ret = tps65090_i2c_read(REG_CG_CTRL0, &val);
+	tps65090_deselect();
+	if (ret)
+		return ret;
+	return val & CG_CTRL0_ENC_MASK ? 1 : 0;
+}
+
+int tps65090_set_charge_enable(int enable)
+{
+	unsigned char val;
+	int ret;
+
+	if (tps65090_select())
+		return -1;
+	ret = tps65090_i2c_read(REG_CG_CTRL0, &val);
+	if (!ret) {
+		if (enable)
+			val |= CG_CTRL0_ENC_MASK;
+		else
+			val &= ~CG_CTRL0_ENC_MASK;
+		ret = tps65090_i2c_write(REG_CG_CTRL0, val);
+	}
+	tps65090_deselect();
+	if (ret) {
+		debug("%s: Failed to read/write register\n", __func__);
+		return ret;
+	}
+	return 0;
+}
+
+int tps65090_get_status(void)
+{
+	unsigned char val;
+	int ret;
+
+	if (tps65090_select())
+		return -1;
+	ret = tps65090_i2c_read(REG_CG_STATUS1, &val);
+	tps65090_deselect();
+	if (ret)
+		return ret;
+	return val;
+}
+
 int tps65090_init(void)
 {
 	int ret;
