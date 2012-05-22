@@ -287,4 +287,29 @@ struct sysinfo_t;
 
 int get_coreboot_info(struct sysinfo_t *info);
 
+#define CBMEM_TOC_RESERVED      512
+#define MAX_CBMEM_ENTRIES       16
+#define CBMEM_MAGIC             0x434f5245
+
+struct cbmem_entry {
+	u32 magic;
+	u32 id;
+	u64 base;
+	u64 size;
+} __packed;
+
+#define CBMEM_ID_FREESPACE      0x46524545
+#define CBMEM_ID_GDT            0x4c474454
+#define CBMEM_ID_ACPI           0x41435049
+#define CBMEM_ID_CBTABLE        0x43425442
+#define CBMEM_ID_PIRQ           0x49525154
+#define CBMEM_ID_MPTABLE        0x534d5054
+#define CBMEM_ID_RESUME         0x5245534d
+#define CBMEM_ID_RESUME_SCRATCH 0x52455343
+#define CBMEM_ID_SMBIOS         0x534d4254
+#define CBMEM_ID_TIMESTAMP      0x54494d45
+#define CBMEM_ID_MRCDATA        0x4d524344
+#define CBMEM_ID_CONSOLE        0x434f4e53
+#define CBMEM_ID_NONE           0x00000000
+
 #endif

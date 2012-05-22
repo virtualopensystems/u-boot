@@ -54,13 +54,76 @@ unsigned long monitor_flash_len = CONFIG_SYS_MONITOR_LEN;
 /*
  * Miscellaneous platform dependent initializations
  */
+
+#if !defined CONFIG_CMD_CBFS || !defined CONFIG_OF_CONTROL
+#error coreboot needs CONFIG_CMD_CBFS and CONFIG_OF_CONTROL enabled.
+#endif
+
+static void *find_cbmem_area(void)
+{
+	int i;
+	struct cbmem_entry *cbmem_toc = NULL;
+
+	for (i = 0; i < lib_sysinfo.n_memranges; i++) {
+		struct memrange *memrange = &lib_sysinfo.memrange[i];
+		/* The CBMEM TOC lives at the last memory area marked
+		 * as "tables" in the coreboot memory map. Find it there
+		 */
+		if (memrange->type == CB_MEM_TABLE)
+			cbmem_toc = (struct cbmem_entry *)
+				(unsigned long)memrange->base;
+	}
+
+	if (!cbmem_toc) {
+		printf("Error: Could not find coreboot tables area\n");
+		return NULL;
+	}
+
+	if (cbmem_toc[0].magic != CBMEM_MAGIC) {
+		printf("Error: No CBMEM area found\n");
+		return NULL;
+	}
+
+	for (i = 0; i < MAX_CBMEM_ENTRIES; i++) {
+		if (cbmem_toc[i].magic == CBMEM_MAGIC &&
+			cbmem_toc[i].id == CBMEM_ID_RESUME)
+			printf("Found usable memory in CBMEM area at 0x%lx\n",
+				(unsigned long)cbmem_toc[i].base);
+			return (void *)(unsigned long)cbmem_toc[i].base;
+	}
+
+	printf("Error: No usable memory found in CBMEM area\n");
+	return NULL;
+}
+
 int cpu_init_f(void)
 {
+	CbfsFile file;
 	int ret = get_coreboot_info(&lib_sysinfo);
+	int size;
+	void *dtb;
+
 	if (ret != 0)
 		printf("Failed to parse coreboot tables.\n");
-	gd->fdt_blob = lib_sysinfo.sys_fdt;
+
+	file_cbfs_init(0xffffffff);
+	if (file_cbfs_result != CBFS_SUCCESS)
+		goto cbfs_failed;
+
+	file = file_cbfs_find_uncached(0xffffffff, "u-boot.dtb");
+	if (!file)
+		goto cbfs_failed;
+
+	size = file->dataLength < 16384 ? file->dataLength : 16384;
+	dtb = find_cbmem_area();
+
+	memcpy(dtb, (const void *)(file->data), size);
+	gd->fdt_blob = (const void *)dtb;
+	lib_sysinfo.sys_fdt = (void *)gd->fdt_blob;
+
 	timestamp_init();
+
+cbfs_failed:
 	return ret;
 }
 
@@ -71,7 +134,6 @@ int board_early_init_f(void)
 
 int board_early_init_r(void)
 {
-#if defined CONFIG_CMD_CBFS && defined CONFIG_OF_CONTROL
 	CbfsFile file;
 	void *dtb;
 	u32 size;
@@ -92,7 +154,7 @@ int board_early_init_r(void)
 		printf("%s.\n", file_cbfs_error());
 		goto cbfs_failed;
 	}
-	dtb = malloc(size);
+	dtb = malloc(size + 2048); /* 2K more for console + vdat */
 	if (!dtb) {
 		printf("Bad allocation!\n");
 		goto cbfs_failed;
@@ -103,8 +165,9 @@ int board_early_init_r(void)
 		goto cbfs_failed;
 	}
 	gd->fdt_blob = dtb;
+	lib_sysinfo.sys_fdt = (void *)gd->fdt_blob;
+
 cbfs_failed:
-#endif /* CONFIG_CMD_CBFS && CONFIG_OF_CONTROL */
 	return 0;
 }
 

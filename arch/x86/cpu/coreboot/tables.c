@@ -106,11 +106,6 @@ static void cb_parse_gpios(unsigned char *ptr, struct sysinfo_t *info)
 		info->gpios[i] = gpios->gpios[i];
 }
 
-static void cb_parse_fdt(unsigned char *ptr, struct sysinfo_t *info)
-{
-	info->sys_fdt = (((struct cb_fdt *)ptr) + 1);
-}
-
 static void cb_parse_vdat(unsigned char *ptr, struct sysinfo_t *info)
 {
 	struct cb_vdat *vdat = (struct cb_vdat *) ptr;
@@ -228,9 +223,6 @@ static int cb_parse_header(void *addr, int len, struct sysinfo_t *info)
 			break;
 		case CB_TAG_GPIO:
 			cb_parse_gpios(ptr, info);
-			break;
-		case CB_TAG_FDT:
-			cb_parse_fdt(ptr, info);
 			break;
 		case CB_TAG_VDAT:
 			cb_parse_vdat(ptr, info);
