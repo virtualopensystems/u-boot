@@ -12,6 +12,30 @@
 #include <i2c.h>
 #include <tps65090.h>
 
+/* TPS65090 register addresses */
+enum {
+	REG_CG_CTRL0 = 4,
+	REG_CG_STATUS1 = 0xa,
+	REG_FET1_CTRL = 0x0f,
+	REG_FET2_CTRL,
+	REG_FET3_CTRL,
+	REG_FET4_CTRL,
+	REG_FET5_CTRL,
+	REG_FET6_CTRL,
+	REG_FET7_CTRL,
+};
+
+enum {
+	CG_CTRL0_ENC_MASK	= 0x01,
+
+	MAX_FET_NUM	= 7,
+
+	/* TPS65090 FET_CTRL register values */
+	FET_CTRL_PGFET		= 0x10,  /* Power good for FET status */
+	FET_CTRL_ADENFET	= 0x02,  /* Enable output auto discharge */
+	FET_CTRL_ENFET		= 0x01,  /* Enable FET */
+};
+
 /**
  * Write a value to a register
  *
@@ -45,25 +69,25 @@ int tps65090_fet_enable(unsigned int fet_id)
 	unsigned char reg;
 	int ret;
 
-	if (fet_id == 0 || fet_id > TPS65090_MAX_FET_NUM) {
+	if (fet_id == 0 || fet_id > MAX_FET_NUM) {
 		debug("parameter fet_id is out of range, %u not in 1 ~ %u\n",
-				fet_id, TPS65090_MAX_FET_NUM);
+				fet_id, MAX_FET_NUM);
 		return -1;
 	}
 
 	ret = tps65090_i2c_write(TPS65090_I2C_ADDR,
-			TPS65090_REG_FET1_CTRL + fet_id - 1,
-			TPS65090_FET_CTRL_ADENFET | TPS65090_FET_CTRL_ENFET);
+			REG_FET1_CTRL + fet_id - 1,
+			FET_CTRL_ADENFET | FET_CTRL_ENFET);
 	if (ret)
 		return ret;
 
 	ret = tps65090_i2c_read(TPS65090_I2C_ADDR,
-			TPS65090_REG_FET1_CTRL + fet_id - 1,
+			REG_FET1_CTRL + fet_id - 1,
 			&reg);
 	if (ret)
 		return ret;
 
-	if (!(reg & TPS65090_FET_CTRL_PGFET)) {
+	if (!(reg & FET_CTRL_PGFET)) {
 		debug("still no power after enable FET%d\n", fet_id);
 		return -2;
 	}
@@ -76,25 +100,25 @@ int tps65090_fet_disable(unsigned int fet_id)
 	unsigned char reg;
 	int ret;
 
-	if (fet_id == 0 || fet_id > TPS65090_MAX_FET_NUM) {
+	if (fet_id == 0 || fet_id > MAX_FET_NUM) {
 		debug("parameter fet_id is out of range, %u not in 1 ~ %u\n",
-				fet_id, TPS65090_MAX_FET_NUM);
+				fet_id, MAX_FET_NUM);
 		return -1;
 	}
 
 	ret = tps65090_i2c_write(TPS65090_I2C_ADDR,
-			TPS65090_REG_FET1_CTRL + fet_id - 1,
-			TPS65090_FET_CTRL_ADENFET);
+			REG_FET1_CTRL + fet_id - 1,
+			FET_CTRL_ADENFET);
 	if (ret)
 		return ret;
 
 	ret = tps65090_i2c_read(TPS65090_I2C_ADDR,
-			TPS65090_REG_FET1_CTRL + fet_id - 1,
+			REG_FET1_CTRL + fet_id - 1,
 			&reg);
 	if (ret)
 		return ret;
 
-	if (reg & TPS65090_FET_CTRL_PGFET) {
+	if (reg & FET_CTRL_PGFET) {
 		debug("still power good after disable FET%d\n", fet_id);
 		return -2;
 	}
@@ -107,21 +131,21 @@ int tps65090_fet_is_enabled(unsigned int fet_id)
 	unsigned char reg;
 	int ret;
 
-	if (fet_id == 0 || fet_id > TPS65090_MAX_FET_NUM) {
+	if (fet_id == 0 || fet_id > MAX_FET_NUM) {
 		debug("parameter fet_id is out of range, %u not in 1 ~ %u\n",
-				fet_id, TPS65090_MAX_FET_NUM);
+				fet_id, MAX_FET_NUM);
 		return -1;
 	}
 
 	ret = tps65090_i2c_read(TPS65090_I2C_ADDR,
-			TPS65090_REG_FET1_CTRL + fet_id - 1,
+			REG_FET1_CTRL + fet_id - 1,
 			&reg);
 	if (ret) {
 		debug("fail to read FET%u_CTRL register over I2C", fet_id);
 		return -2;
 	}
 
-	return reg & TPS65090_FET_CTRL_ENFET;
+	return reg & FET_CTRL_ENFET;
 }
 
 int tps65090_init(void)
