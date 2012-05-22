@@ -23,6 +23,7 @@
 #ifndef __CBFS_H
 #define __CBFS_H
 
+#include <linux/compiler.h>
 #include <compiler.h>
 
 typedef enum CbfsResult {
