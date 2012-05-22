@@ -36,6 +36,12 @@ enum {
 	FET_CTRL_ENFET		= 0x01,  /* Enable FET */
 };
 
+static struct {
+	int bus;
+	int addr;
+	int old_bus;
+} config;
+
 /**
  * Write a value to a register
  *
@@ -44,10 +50,14 @@ enum {
  * @param	value		value to be written
  * @return	0 on success, non-0 on failure
  */
-static inline int tps65090_i2c_write(unsigned char chip_addr,
-				     unsigned int reg_addr, unsigned char value)
+static int tps65090_i2c_write(unsigned int reg_addr, unsigned char value)
 {
-	return i2c_write(chip_addr, reg_addr, 1, &value, 1);
+	int ret;
+
+	ret = i2c_write(config.addr, reg_addr, 1, &value, 1);
+	debug("%s: reg=%#x, value=%#x, ret=%d\n", __func__, reg_addr, value,
+	      ret);
+	return ret;
 }
 
 /**
@@ -58,10 +68,52 @@ static inline int tps65090_i2c_write(unsigned char chip_addr,
  * @param	value		address to store the value to be read
  * @return	0 on success, non-0 on failure
  */
-static inline int tps65090_i2c_read(unsigned char chip_addr,
-				    unsigned int reg_addr, unsigned char *value)
+static int tps65090_i2c_read(unsigned int reg_addr, unsigned char *value)
 {
-	return i2c_read(chip_addr, reg_addr, 1, value, 1);
+	int ret;
+
+	debug("%s: reg=%#x, ", __func__, reg_addr);
+	ret = i2c_read(config.addr, reg_addr, 1, value, 1);
+	if (ret)
+		debug("fail, ret=%d\n", ret);
+	else
+		debug("value=%#x, ret=%d\n", *value, ret);
+	return ret;
+}
+
+static int tps65090_select(void)
+{
+	int ret;
+
+	config.old_bus = i2c_get_bus_num();
+	if (config.old_bus != config.bus) {
+		debug("%s: Select bus %d\n", __func__, config.bus);
+		ret = i2c_set_bus_num(config.bus);
+		if (ret) {
+			debug("%s: Cannot select TPS65090, err %d\n",
+			      __func__, ret);
+			return -1;
+		}
+	}
+
+	return 0;
+}
+
+static int tps65090_deselect(void)
+{
+	int ret;
+
+	if (config.old_bus != i2c_get_bus_num()) {
+		ret = i2c_set_bus_num(config.old_bus);
+		debug("%s: Select bus %d\n", __func__, config.old_bus);
+		if (ret) {
+			debug("%s: Cannot restore i2c bus, err %d\n",
+			      __func__, ret);
+			return -1;
+		}
+	}
+	config.old_bus = -1;
+	return 0;
 }
 
 int tps65090_fet_enable(unsigned int fet_id)
@@ -75,14 +127,12 @@ int tps65090_fet_enable(unsigned int fet_id)
 		return -1;
 	}
 
-	ret = tps65090_i2c_write(TPS65090_I2C_ADDR,
-			REG_FET1_CTRL + fet_id - 1,
+	ret = tps65090_i2c_write(REG_FET1_CTRL + fet_id - 1,
 			FET_CTRL_ADENFET | FET_CTRL_ENFET);
 	if (ret)
 		return ret;
 
-	ret = tps65090_i2c_read(TPS65090_I2C_ADDR,
-			REG_FET1_CTRL + fet_id - 1,
+	ret = tps65090_i2c_read(REG_FET1_CTRL + fet_id - 1,
 			&reg);
 	if (ret)
 		return ret;
@@ -106,14 +156,12 @@ int tps65090_fet_disable(unsigned int fet_id)
 		return -1;
 	}
 
-	ret = tps65090_i2c_write(TPS65090_I2C_ADDR,
-			REG_FET1_CTRL + fet_id - 1,
+	ret = tps65090_i2c_write(REG_FET1_CTRL + fet_id - 1,
 			FET_CTRL_ADENFET);
 	if (ret)
 		return ret;
 
-	ret = tps65090_i2c_read(TPS65090_I2C_ADDR,
-			REG_FET1_CTRL + fet_id - 1,
+	ret = tps65090_i2c_read(REG_FET1_CTRL + fet_id - 1,
 			&reg);
 	if (ret)
 		return ret;
@@ -137,8 +185,7 @@ int tps65090_fet_is_enabled(unsigned int fet_id)
 		return -1;
 	}
 
-	ret = tps65090_i2c_read(TPS65090_I2C_ADDR,
-			REG_FET1_CTRL + fet_id - 1,
+	ret = tps65090_i2c_read(REG_FET1_CTRL + fet_id - 1,
 			&reg);
 	if (ret) {
 		debug("fail to read FET%u_CTRL register over I2C", fet_id);
@@ -152,20 +199,20 @@ int tps65090_init(void)
 {
 	int ret;
 
-	/* Init the I2C so that we can program TPS65090 chip */
-	ret = i2c_set_bus_num(CONFIG_TPS65090_I2C_BUS);
-	if (ret) {
-		debug("failed to set TPS65090 I2C bus 0x%x, returned %d\n",
-		      CONFIG_TPS65090_I2C_BUS, ret);
-		return ret;
-	}
+	/* TODO(sjg): Move to fdt */
+	config.old_bus = -1;
+	config.bus = CONFIG_TPS65090_I2C_BUS;
+	config.addr = TPS65090_I2C_ADDR;
+
+	if (tps65090_select())
+		return -1;
 
 	/* Probe the chip */
-	ret = i2c_probe(TPS65090_I2C_ADDR);
-	if (ret) {
-		debug("failed to probe TPS65090 over I2C, returned %d\n", ret);
-		return ret;
-	}
+	ret = i2c_probe(config.addr);
+	if (ret)
+		debug("%s: failed to probe TPS65090 over I2C, returned %d\n",
+		      __func__, ret);
+	tps65090_deselect();
 
-	return 0;
+	return ret;
 }
