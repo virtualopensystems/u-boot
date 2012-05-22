@@ -54,6 +54,7 @@
 /* FDT support */
 #define CONFIG_OF_LIBFDT	/* Device tree support */
 #define CONFIG_OF_CONTROL	/* Use the device tree to set up U-Boot */
+#define CONFIG_DEFAULT_DEVICE_TREE      link
 
 /*-----------------------------------------------------------------------
  * Memory layout
