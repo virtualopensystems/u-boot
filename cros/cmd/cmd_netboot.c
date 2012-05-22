@@ -23,10 +23,7 @@ DECLARE_GLOBAL_DATA_PTR;
 static int
 do_netboot_acpi(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
-	/* TODO: fdt should be retrieved from gd->fdt_blob. But somehow this
-	 * seems to point to CBFS and lose info from coreboot. This workaround
-	 * read fdt from sysinfo. */
-	const void *fdt = lib_sysinfo.sys_fdt;
+	const void *fdt = gd->fdt_blob;
 	int node_offset;
 	const uint32_t *cell;
 	chromeos_acpi_t *acpi_table;
