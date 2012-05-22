@@ -85,7 +85,6 @@ struct sysinfo_t {
 	void	*sys_fdt;
 	void	*tstamp_table;
 	void	*cbmem_cons;
-	void	*mrc_cache;
 };
 
 extern struct sysinfo_t lib_sysinfo;

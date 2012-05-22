@@ -129,11 +129,6 @@ static void cb_parse_cbmem_cons(unsigned char *ptr, struct sysinfo_t *info)
 	info->cbmem_cons = ((struct cb_cbmem_tab *)ptr)->cbmem_tab;
 }
 
-static void cb_parse_mrc_cache(unsigned char *ptr, struct sysinfo_t *info)
-{
-	info->mrc_cache = ((struct cb_cbmem_tab *)ptr)->cbmem_tab;
-}
-
 static void cb_parse_framebuffer(unsigned char *ptr, struct sysinfo_t *info)
 {
 	info->framebuffer = (struct cb_framebuffer *)ptr;
@@ -245,9 +240,6 @@ static int cb_parse_header(void *addr, int len, struct sysinfo_t *info)
 			break;
 		case CB_TAG_CBMEM_CONSOLE:
 			cb_parse_cbmem_cons(ptr, info);
-			break;
-		case CB_TAG_MRC_CACHE:
-			cb_parse_mrc_cache(ptr, info);
 			break;
 		case CB_TAG_VBNV:
 			cb_parse_vbnv(ptr, info);
