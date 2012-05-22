@@ -263,18 +263,12 @@ static int cb_parse_header(void *addr, int len, struct sysinfo_t *info)
 /* == Architecture specific == */
 /* This is the x86 specific stuff. */
 
-/* Assume no translation or that memory is identity mapped. */
-static void *phys_to_virt(unsigned long virt)
-{
-	return (void *)(uintptr_t)virt;
-}
-
 int get_coreboot_info(struct sysinfo_t *info)
 {
-	int ret = cb_parse_header(phys_to_virt(0x00000000), 0x1000, info);
+	int ret = cb_parse_header((void *)0x00000000, 0x1000, info);
 
 	if (ret != 1)
-		ret = cb_parse_header(phys_to_virt(0x000f0000), 0x1000, info);
+		ret = cb_parse_header((void *)0x000f0000, 0x1000, info);
 
 	return (ret == 1) ? 0 : -1;
 }
