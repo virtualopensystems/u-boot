@@ -40,7 +40,7 @@ static void reset_phy_ctrl(void)
 	writel(LPDDR3PHY_CTRL_PHY_RESET, &clk->lpddr3phy_ctrl);
 }
 
-void ddr3_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size)
+int ddr3_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size)
 {
 	unsigned int val;
 	struct exynos5_phy_control *phy0_ctrl, *phy1_ctrl;
@@ -68,7 +68,8 @@ void ddr3_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size)
 	writel(val, &phy1_ctrl->phy_con42);
 
 	/* ZQ Calibration */
-	dmc_config_zq(mem, phy0_ctrl, phy1_ctrl);
+	if (dmc_config_zq(mem, phy0_ctrl, phy1_ctrl))
+		return SETUP_ERR_ZQ_CALIBRATION_FAILURE;
 
 	/* DQ Signal */
 	writel(mem->phy0_pulld_dqs, &phy0_ctrl->phy_con14);
@@ -188,7 +189,7 @@ void ddr3_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size)
 			i--;
 		}
 		if (!i)
-			panic("Wait RDLVL complete timeout");
+			return SETUP_ERR_RDLV_COMPLETE_TIMEOUT;
 		writel(CTRL_RDLVL_GATE_DISABLE, &dmc->rdlvl_config);
 
 		writel(0, &phy0_ctrl->phy_con14);
@@ -214,4 +215,6 @@ void ddr3_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size)
 	/* Set DMC Concontrol and enable auto-refresh counter */
 	writel(mem->concontrol | mem->rd_fetch
 		| mem->aref_en, &dmc->concontrol);
+
+	return 0;
 }

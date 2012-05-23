@@ -22,6 +22,8 @@
  * MA 02111-1307 USA
  */
 
+#include <common.h>
+#include <vsprintf.h>
 #include <asm/arch-exynos/spl.h>
 
 #include "clock_init.h"
@@ -29,9 +31,9 @@
 
 #define ZQ_INIT_TIMEOUT	10000
 
-void dmc_config_zq(struct mem_timings *mem,
-		   struct exynos5_phy_control *phy0_ctrl,
-		   struct exynos5_phy_control *phy1_ctrl)
+int dmc_config_zq(struct mem_timings *mem,
+		  struct exynos5_phy_control *phy0_ctrl,
+		  struct exynos5_phy_control *phy1_ctrl)
 {
 	unsigned long val = 0;
 	int i;
@@ -72,7 +74,7 @@ void dmc_config_zq(struct mem_timings *mem,
 		i--;
 	}
 	if (!i)
-		panic("ZQ calibration timeout");
+		return -1;
 	writel(val, &phy0_ctrl->phy_con16);
 
 	i = ZQ_INIT_TIMEOUT;
@@ -81,8 +83,10 @@ void dmc_config_zq(struct mem_timings *mem,
 		i--;
 	}
 	if (!i)
-		panic("ZQ calibration timeout");
+		return -1;
 	writel(val, &phy1_ctrl->phy_con16);
+
+	return 0;
 }
 
 void update_reset_dll(struct exynos5_dmc *dmc, enum ddr_mode mode)
@@ -180,8 +184,10 @@ void mem_ctrl_init()
 	mem = clock_get_mem_timings();
 
 	/* If there are any other memory variant, add their init call below */
-	if (param->mem_type == DDR_MODE_DDR3)
-		ddr3_mem_ctrl_init(mem, param->mem_iv_size);
-
-	/* TODO: Call panic when unknown memory type is encountered */
+	if (param->mem_type == DDR_MODE_DDR3) {
+		if (ddr3_mem_ctrl_init(mem, param->mem_iv_size))
+			panic("Memory controller init failed");
+	} else {
+		panic("Unknown memory type");
+	}
 }

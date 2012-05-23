@@ -511,6 +511,13 @@
 
 struct mem_timings;
 
+/* Errors that we can encourter in low-level setup */
+enum {
+	SETUP_ERR_OK,
+	SETUP_ERR_RDLV_COMPLETE_TIMEOUT = -1,
+	SETUP_ERR_ZQ_CALIBRATION_FAILURE = -2,
+};
+
 /* Functions common between LPDDR2 and DDR3 */
 void sdelay(unsigned long);
 
@@ -526,8 +533,9 @@ void mem_ctrl_init(void);
  *			which the DMC uses to decide how to split a memory
  *			chunk into smaller chunks to support concurrent
  *			accesses; may vary across boards.
+ * @return 0 if ok, SETUP_ERR_... if there is a problem
  */
-void ddr3_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size);
+int ddr3_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size);
 
 void system_clock_init(void);
 
@@ -538,10 +546,11 @@ void tzpc_init(void);
  * @param mem		Memory timings for this memory type.
  * @param phy0_ctrl	Pointer to struct containing PHY0 control reg
  * @param phy1_ctrl	Pointer to struct containing PHY1 control reg
+ * @return 0 if ok, -1 on error
  */
-void dmc_config_zq(struct mem_timings *mem,
-		   struct exynos5_phy_control *phy0_ctrl,
-		   struct exynos5_phy_control *phy1_ctrl);
+int dmc_config_zq(struct mem_timings *mem,
+		  struct exynos5_phy_control *phy0_ctrl,
+		  struct exynos5_phy_control *phy1_ctrl);
 
 /*
  * Send NOP and MRS/EMRS Direct commands
