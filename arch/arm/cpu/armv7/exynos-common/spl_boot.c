@@ -76,7 +76,7 @@ static void copy_uboot_to_ram(void)
 	unsigned int sec_boot_check;
 	unsigned int uboot_size;
 	int is_cr_z_set;
-	enum boot_mode boot_source;
+	enum boot_mode boot_mode;
 	mmc_copy_func_t mmc_copy;
 
 #if defined(CONFIG_EXYNOS_SPI_BOOT)
@@ -85,7 +85,7 @@ static void copy_uboot_to_ram(void)
 	usb_copy_func_t usb_copy;
 
 	uboot_size = exynos_get_uboot_size();
-	boot_source = exynos_get_boot_device();
+	boot_mode = exynos_get_boot_device();
 
 	/* Read iRAM location to check for secondary USB boot mode */
 	sec_boot_check = readl(EXYNOS_IRAM_SECONDARY_BASE);
@@ -101,9 +101,9 @@ static void copy_uboot_to_ram(void)
 		return;
 	}
 
-	if (boot_source == BOOT_MODE_OM)
-		boot_source = readl(EXYNOS_POWER_BASE) & OM_STAT;
-	switch (boot_source) {
+	if (boot_mode == BOOT_MODE_OM)
+		boot_mode = readl(EXYNOS_POWER_BASE) & OM_STAT;
+	switch (boot_mode) {
 #if defined(CONFIG_EXYNOS_SPI_BOOT)
 	case BOOT_MODE_SERIAL:
 		spi_copy = *(spi_copy_func_t *)EXYNOS_COPY_SPI_FNPTR_ADDR;
