@@ -403,6 +403,8 @@ static int clock_get_mem_selection(enum ddr_mode *mem_type,
 
 	params = spl_get_machine_params();
 	*mem_type = params->mem_type;
+	*frequency_mhz = params->frequency_mhz;
+	*arm_freq = params->arm_freq_mhz;
 	if (params->mem_manuf == MEM_MANUF_AUTODETECT) {
 		*mem_manuf = autodetect_memory();
 		if (*mem_manuf == -1)
@@ -410,8 +412,6 @@ static int clock_get_mem_selection(enum ddr_mode *mem_type,
 	} else {
 		*mem_manuf = params->mem_manuf;
 	}
-	*frequency_mhz = params->frequency_mhz;
-	*arm_freq = params->arm_freq_mhz;
 
 	return 0;
 }
