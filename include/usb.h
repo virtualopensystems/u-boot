@@ -386,4 +386,13 @@ struct usb_hub_device {
 	struct usb_hub_descriptor desc;
 };
 
+int usb_hub_probe(struct usb_device *dev, int ifnum);
+void usb_hub_reset(void);
+int hub_port_reset(struct usb_device *dev, int port,
+			  unsigned short *portstat);
+
+struct usb_device *usb_alloc_new_device(void *controller);
+int usb_new_device(struct usb_device *dev);
+extern void usb_free_device(void);
+
 #endif /*_USB_H_ */
