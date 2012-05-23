@@ -87,22 +87,17 @@ static void copy_uboot_to_ram(void)
 	uboot_size = exynos_get_uboot_size();
 	boot_mode = exynos_get_boot_device();
 
-	/* Read iRAM location to check for secondary USB boot mode */
-	sec_boot_check = readl(EXYNOS_IRAM_SECONDARY_BASE);
-	if (sec_boot_check == EXYNOS_USB_SECONDARY_BOOT) {
-		/*
-		 * iROM needs program flow prediction to be disabled
-		 * before copy from USB device to RAM
-		 */
-		is_cr_z_set = config_branch_prediction(0);
-		usb_copy = *(usb_copy_func_t *)EXYNOS_COPY_USB_FNPTR_ADDR;
-		usb_copy();
-		config_branch_prediction(is_cr_z_set);
-		return;
+	if (boot_mode == BOOT_MODE_OM) {
+		/* Read iRAM location to check for secondary USB boot mode */
+		sec_boot_check = readl(EXYNOS_IRAM_SECONDARY_BASE);
+		if (sec_boot_check == EXYNOS_USB_SECONDARY_BOOT)
+			boot_mode = BOOT_MODE_USB;
 	}
+	debug("U-Boot size %u\n", uboot_size);
 
 	if (boot_mode == BOOT_MODE_OM)
 		boot_mode = readl(EXYNOS_POWER_BASE) & OM_STAT;
+
 	switch (boot_mode) {
 #if defined(CONFIG_EXYNOS_SPI_BOOT)
 	case BOOT_MODE_SERIAL:
@@ -117,10 +112,22 @@ static void copy_uboot_to_ram(void)
 		mmc_copy(BL2_START_OFFSET, uboot_size / 512,
 				CONFIG_SYS_TEXT_BASE);
 		break;
+	case BOOT_MODE_USB:
+		/*
+		 * iROM needs program flow prediction to be disabled
+		 * before copy from USB device to RAM
+		 */
+		is_cr_z_set = config_branch_prediction(0);
+		usb_copy = *(usb_copy_func_t *)
+				EXYNOS_COPY_USB_FNPTR_ADDR;
+		usb_copy();
+		config_branch_prediction(is_cr_z_set);
+		break;
 	default:
 		panic("Invalid boot mode selection\n");
 		break;
 	}
+	debug("U-Boot copied\n");
 }
 
 /* The memzero function is not in SPL u-boot, so create one. */

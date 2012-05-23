@@ -55,6 +55,7 @@ enum boot_mode {
 	BOOT_MODE_SERIAL = 20,
 	/* Boot based on Operating Mode pin settings */
 	BOOT_MODE_OM = 32,
+	BOOT_MODE_USB,		/* Boot using USB download */
 };
 
 /**
