@@ -22,6 +22,7 @@
 
 #include <common.h>
 #include <config.h>
+#include <asm/arch/board.h>
 #include <asm/arch/pinmux.h>
 
 DECLARE_GLOBAL_DATA_PTR;
