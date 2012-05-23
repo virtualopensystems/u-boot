@@ -156,7 +156,7 @@ void board_i2c_init(const void *blob)
 	 * Turn off the early i2c configuration and init the i2c properly,
 	 * this is done here to enable the use of i2c configs from FDT.
 	 */
-	i2c_set_early_reg(NULL);
+	i2c_set_early_reg(0);
 
 #ifdef CONFIG_OF_CONTROL
 	int node_list[EXYNOS_I2C_MAX_CONTROLLERS];
