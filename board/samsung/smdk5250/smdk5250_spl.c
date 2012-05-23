@@ -37,8 +37,8 @@ static struct spl_machine_param machine_param
 	.params		= "vmubfasirM",
 	.size		= sizeof(machine_param),
 
-	.mem_type	= DDR_MODE_DDR3,
 	.mem_iv_size	= 0x1f,
+	.mem_type	= DDR_MODE_DDR3,
 
 	/*
 	 * Set uboot_size to 0x100000 bytes.
