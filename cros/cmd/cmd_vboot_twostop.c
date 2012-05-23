@@ -142,6 +142,11 @@ int __board_use_usb_keyboard(void)
 int board_use_usb_keyboard(int boot_mode)
 	__attribute__((weak, alias("__board_use_usb_keyboard")));
 
+static inline int board_uses_virtual_dev_switch(void)
+{
+	return cros_fdtdec_config_has_prop(gd->fdt_blob, "virtual_dev_switch");
+}
+
 /*
  * Check if two stop boot sequence can be interrupted. If configured - use the
  * device tree contents to determine it. Some other means (like checking the
@@ -328,6 +333,8 @@ twostop_init_vboot_library(firmware_storage_t *file, void *gbb,
 		iparams.flags |= VB_INIT_FLAG_REC_BUTTON_PRESSED;
 	if (cdata->boot_developer_switch)
 		iparams.flags |= VB_INIT_FLAG_DEV_SWITCH_ON;
+	if (board_uses_virtual_dev_switch())
+		iparams.flags |= VB_INIT_FLAG_VIRTUAL_DEV_SWITCH;
 	VBDEBUG("iparams.flags: %08x\n", iparams.flags);
 
 	if ((err = VbInit(cparams, &iparams))) {
