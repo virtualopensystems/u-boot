@@ -1835,11 +1835,9 @@ int video_get_screen_columns (void)
 	return CONSOLE_COLS;
 }
 
-int video_clear(void)
+void video_clear(void)
 {
 	memsetl(video_fb_address,
 		(VIDEO_VISIBLE_ROWS * VIDEO_LINE_LEN) / sizeof(int), 0);
-
-	return 0;
 }
 
