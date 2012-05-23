@@ -756,6 +756,12 @@ void system_clock_init()
 
 	writel(CLK_SRC_PERIC1_VAL, &clk->src_peric1);
 	writel(CLK_DIV_PERIC1_VAL, &clk->div_peric1);
+	writel(CLK_DIV_PERIC2_VAL, &clk->div_peric2);
+	writel(SCLK_SRC_ISP_VAL, &clk->sclk_src_isp);
+	writel(SCLK_DIV_ISP_VAL, &clk->sclk_div_isp);
+	writel(CLK_DIV_ISP0_VAL, &clk->div_isp0);
+	writel(CLK_DIV_ISP1_VAL, &clk->div_isp1);
+	writel(CLK_DIV_ISP2_VAL, &clk->div_isp2);
 
 	/* FIMD1 SRC CLK SELECTION */
 	writel(CLK_SRC_DISP1_0_VAL, &clk->src_disp1_0);
