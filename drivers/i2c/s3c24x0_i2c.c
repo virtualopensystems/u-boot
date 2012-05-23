@@ -76,8 +76,9 @@ static enum periph_id periph_for_dev[EXYNOS_I2C_MAX_CONTROLLERS] = {
 static unsigned int g_current_bus __attribute__((section(".data")));
 static struct s3c24x0_i2c *g_early_i2c_config __attribute__((section(".data")));
 
-static struct s3c24x0_i2c_bus i2c_bus[EXYNOS_I2C_MAX_CONTROLLERS];
-static int i2c_busses;
+static struct s3c24x0_i2c_bus i2c_bus[EXYNOS_I2C_MAX_CONTROLLERS]
+		__attribute__((section(".data")));
+static int i2c_busses __attribute__((section(".data")));
 
 void i2c_set_early_reg(unsigned int base)
 {
