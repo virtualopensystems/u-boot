@@ -83,16 +83,6 @@ char usb_started; /* flag for the started/stopped USB status */
 struct usb_device *usb_alloc_new_device(void *controller);
 int usb_new_device(struct usb_device *dev);
 
-/***********************************************************************
- * wait_ms
- */
-
-inline void wait_ms(unsigned long ms)
-{
-	while (ms-- > 0)
-		udelay(1000);
-}
-
 /***************************************************************************
  * Init USB Device
  */
@@ -261,7 +251,7 @@ int usb_control_msg(struct usb_device *dev, unsigned int pipe,
 	while (timeout--) {
 		if (!((volatile unsigned long)dev->status & USB_ST_NOT_PROC))
 			break;
-		wait_ms(1);
+		mdelay(1);
 	}
 	if (dev->status)
 		return -1;
@@ -285,7 +275,7 @@ int usb_bulk_msg(struct usb_device *dev, unsigned int pipe,
 	while (timeout--) {
 		if (!((volatile unsigned long)dev->status & USB_ST_NOT_PROC))
 			break;
-		wait_ms(1);
+		mdelay(1);
 	}
 	*actual_length = dev->act_len;
 	if (dev->status == 0)
@@ -961,7 +951,7 @@ int usb_new_device(struct usb_device *dev)
 		return 1;
 	}
 
-	wait_ms(10);	/* Let the SET_ADDRESS settle */
+	mdelay(10);	/* Let the SET_ADDRESS settle */
 
 	tmp = sizeof(dev->descriptor);
 

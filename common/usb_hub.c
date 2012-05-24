@@ -126,7 +126,7 @@ static void usb_hub_power_on(struct usb_hub_device *hub)
 	}
 
 	/* Wait at least 100 msec for power to become stable */
-	wait_ms(max(pgood_delay, (unsigned)100));
+	mdelay(max(pgood_delay, (unsigned)100));
 }
 
 void usb_hub_reset(void)
@@ -181,7 +181,7 @@ static int hub_port_wait_reset(struct usb_device *dev, int port,
 			delay_time < HUB_RESET_TIMEOUT;
 			delay_time += delay) {
 		/* wait to give the device a chance to reset */
-		wait_ms(delay);
+		mdelay(delay);
 
 		/* read and decode port status */
 		ret = usb_get_port_status(dev, port + 1, &portsts);
@@ -258,7 +258,7 @@ int hub_port_reset(struct usb_device *dev, int port,
 		switch (status) {
 		case 0:
 			/* TRSTRCY = 10 ms; plus some extra */
-			wait_ms(10 + 40);
+			mdelay(10 + 40);
 			/* FALL THROUGH */
 		case -1:
 		case -ENOTCONN:
