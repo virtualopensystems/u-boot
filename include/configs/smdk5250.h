@@ -29,6 +29,10 @@
 #define CONFIG_SPI_FLASH
 #define CONFIG_ENV_IS_IN_SPI_FLASH
 
+/* Record boot stage delta time between records and print final report */
+#define CONFIG_BOOTSTAGE
+#define CONFIG_BOOTSTAGE_REPORT
+
 #include "exynos5-common.h"	/* Common Exynos5 based board configurations */
 
 /* High Level Configuration Options */
