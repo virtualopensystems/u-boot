@@ -324,6 +324,7 @@
 #define CONFIG_CMD_SF
 #define CONFIG_CMD_TIME
 #define CONFIG_CMD_TPM
+#define CONFIG_CMD_CBFS
 #define CONFIG_CMD_FAT
 #define CONFIG_CMD_EXT2
 #endif
@@ -333,7 +334,6 @@
 #define CONFIG_CMD_USB
 #define CONFIG_CMD_SCSI
 #define CONFIG_CMD_ZBOOT
-#define CONFIG_CMD_CBFS
 
 #if BUILD_NETWORK_STUFF
 #define CONFIG_CMD_NET
