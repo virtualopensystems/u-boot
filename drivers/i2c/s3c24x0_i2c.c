@@ -226,6 +226,29 @@ unsigned int i2c_get_bus_num(void)
 }
 #endif
 
+#ifdef CONFIG_OF_CONTROL
+int i2c_get_bus_num_fdt(const void *blob, int node)
+{
+	enum fdt_compat_id compat;
+	fdt_addr_t reg;
+	int i;
+
+	compat = fdtdec_lookup(blob, node);
+	if (compat != COMPAT_SAMSUNG_S3C2440_I2C) {
+		debug("%s: Not a supported I2C node\n", __func__);
+		return -1;
+	}
+
+	reg = fdtdec_get_addr(blob, node, "reg");
+	for (i = 0; i < i2c_busses; i++)
+		if (reg == i2c_bus[i].regs)
+			return i;
+
+	debug("%s: Can't find any matched I2C bus\n", __func__);
+	return -1;
+}
+#endif
+
 /*
  * Verify the whether I2C ACK was received or not
  *

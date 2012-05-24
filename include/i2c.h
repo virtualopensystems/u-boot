@@ -258,4 +258,13 @@ static inline void I2C_SET_BUS(unsigned int bus)
  */
 void i2c_set_early_reg(unsigned int base);
 
+/**
+ * Find the I2C bus number by given a FDT I2C node.
+ *
+ * @param blob	Device tree blbo
+ * @param node	FDT I2C node to find
+ * @return the number of I2C bus (zero based), or -1 on error
+ */
+int i2c_get_bus_num_fdt(const void *blob, int node);
+
 #endif	/* _I2C_H_ */
