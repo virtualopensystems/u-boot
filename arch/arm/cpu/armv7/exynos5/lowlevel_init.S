@@ -100,11 +100,11 @@ lowlevel_init:
 	cmp	r1, r2			/* compare r1, r2 */
 	beq	1f			/* r0 == r1 then skip sdram init */
 
-	/* init system clock */
-	bl	system_clock_init
-
 	/* init power */
 	bl	power_init
+
+	/* init system clock */
+	bl	system_clock_init
 
 #if defined(CONFIG_SPL_BUILD)
 	/* Memory initialize */
