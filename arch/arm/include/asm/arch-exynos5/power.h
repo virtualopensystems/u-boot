@@ -54,6 +54,9 @@ void power_reset(void);
  */
 void power_shutdown(void);
 
+/* Enable DPTX PHY */
+void power_enable_dp_phy(void);
+
 void power_enable_usb_phy(void);
 void power_disable_usb_phy(void);
 
