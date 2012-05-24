@@ -173,8 +173,8 @@
 #define CONFIG_SYS_CONSOLE_IS_IN_ENV
 
 #define EXYNOS_DEVICE_SETTINGS	"stdin=serial,mkbp-keyb\0" \
-					"stdout=serial\0" \
-					"stderr=serial\0"
+					"stdout=serial,lcd\0" \
+					"stderr=serial,lcd\0"
 
 /* Don't load kernel at the very bottom of ram so that it has room when
  * it relocates down. */
