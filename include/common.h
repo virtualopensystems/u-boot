@@ -778,6 +778,14 @@ void	clear_ctrlc (void);	/* clear the Control-C condition */
 int	disable_ctrlc (int);	/* 1 to disable, 0 to enable Control-C detect */
 
 /*
+ * A generic polling function
+ * This will be called to poll for some events,
+ * In this case this will be called form console_tstc() to monitor
+ * temperatur of the SOC
+ */
+void board_poll_devices(void);
+
+/*
  * STDIO based functions (can always be used)
  */
 /* serial stuff */

@@ -119,6 +119,11 @@ static int console_tstc(int file)
 	int i, ret;
 	struct stdio_dev *dev;
 
+#if defined CONFIG_BOARD_POLL
+	/* Generic polling function */
+	board_poll_devices();
+#endif
+
 	disable_ctrlc(1);
 	for (i = 0; i < cd_count[file]; i++) {
 		dev = console_devices[file][i];

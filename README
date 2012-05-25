@@ -2812,6 +2812,13 @@ Configuration Settings:
 	its config.mk file). If you find problems enabling this option on
 	your board please report the problem and send patches!
 
+- CONFIG_BOARD_POLL
+	There are various scenarios in which parallel-thread like
+	polling is required to monitor status of variety of devices.
+	For such situations CONFIG_BOARD_POLL shall be enabled
+	and funtion call board_poll_devices() from console_tstc()
+	will then poll for the device status as defined inside function.
+
 - CONFIG_SYS_SYM_OFFSETS
 	This is set by architectures that use offsets for link symbols
 	instead of absolute values. So bss_start is obtained using an
