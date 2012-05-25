@@ -25,7 +25,6 @@
 #include <common.h>
 #include <config.h>
 #include <fdtdec.h>
-#include <version.h>
 #include <asm/io.h>
 #include <asm/arch/board.h>
 #include <asm/arch/clk.h>

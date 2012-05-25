@@ -31,7 +31,6 @@
 
 #include <asm-offsets.h>
 #include <config.h>
-#include <version.h>
 #include <asm/system.h>
 
 .globl _start
