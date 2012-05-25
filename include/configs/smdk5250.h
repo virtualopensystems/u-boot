@@ -90,6 +90,7 @@
 
 /* Thermal Management Unit */
 #define CONFIG_EXYNOS_TMU
+#define CONFIG_CMD_TMU
 
 /* USB */
 #define CONFIG_CMD_USB
