@@ -177,6 +177,7 @@ SPD := y
 endif
 COBJS-$(SPD) += ddr_spd.o
 COBJS-$(CONFIG_HWCONFIG) += hwconfig.o
+COBJS-$(CONFIG_BATTERY) += battery.o
 COBJS-$(CONFIG_BOOTSTAGE) += bootstage.o
 COBJS-$(CONFIG_CONSOLE_MUX) += iomux.o
 COBJS-y += flash.o
