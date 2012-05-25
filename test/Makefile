@@ -24,6 +24,7 @@ include $(TOPDIR)/config.mk
 
 LIB	= $(obj)libtest.o
 
+COBJS-$(CONFIG_SANDBOX) += battery_ut.o
 COBJS-$(CONFIG_SANDBOX) += command_ut.o
 
 COBJS	:= $(COBJS-y)
