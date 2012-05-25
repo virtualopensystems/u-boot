@@ -114,20 +114,6 @@ int cros_fdtdec_config_node(const void *blob)
 	return node;
 }
 
-int cros_fdtdec_mrc_cache_base(const char *blob, struct fmap_entry *fme)
-{
-	int fmap_offset;
-
-	fmap_offset = fdt_node_offset_by_compatible(blob, -1,
-			"chromeos,flashmap");
-	if (fmap_offset < 0) {
-		VBDEBUG("chromeos,flashmap node is missing\n");
-		return fmap_offset;
-	}
-
-	return decode_fmap_entry(blob, fmap_offset, "rw", "mrc-cache", fme);
-}
-
 int cros_fdtdec_flashmap(const void *blob, struct twostop_fmap *config)
 {
 	int fmap_offset;

@@ -53,16 +53,6 @@ void *cros_fdtdec_alloc_region(const void *blob,
 		const char *prop_name, size_t *size);
 
 /**
- * Retrieve the MRC cache base address from the FMAP section of the device
- * tree.
- *
- * @param blob		FDT blob
- * @param fme		pointer to the return value (offset and length are
- *			saved in the structure)
- */
-int cros_fdtdec_mrc_cache_base(const char *blob, struct fmap_entry *fme);
-
-/**
  * Returns information from the FDT about memory for a given root
  *
  * @param blob          FDT blob to use
