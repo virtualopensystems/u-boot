@@ -268,7 +268,6 @@ int	print_buffer (ulong addr, void* data, uint width, uint count, uint linelen);
 /* common/main.c */
 void	main_loop	(void);
 int run_command(const char *cmd, int flag);
-int run_command_list(const char *cmd, int len, int flag);
 int	readline	(const char *const prompt);
 int	readline_into_buffer(const char *const prompt, char *buffer,
 			int timeout);
