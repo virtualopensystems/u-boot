@@ -1,0 +1,35 @@
+Exynos Thermal management Unit
+
+The device node for TMU that is a part of Exynos5250
+SOC is as described in the document "Open Firmware Recommended
+Practic : Universal Serial Bus" with the following modifications
+and additions:
+
+Required properties :
+ - compatible : Should be "samsung,exynos-tmu" for TMU
+ - samsung,mux : mux Address for the TMU to enable TMU core:
+ - samsung,min-temp : Minimum temperature, default is 25:
+ - samsung,max-temp : Maximum temperature, defalut set to 125:
+ - samsung,start-warning : temp at which TMU start giving warning:
+ - samsung,start-tripping : temp at which system will trip and shutdown:
+ - samsung,efuse-min-value : SOC efuse min value:
+ - samsung,efuse-value : SOC actual efuse value:
+ - samsung,efuse-max-value : SoC max efuse value:
+ - samsung,slope : Gain of amplifier, default is 268470274:
+ - samsung,dc-value : DC value of TMU, default is 25:
+
+Example:
+
+tmu@10060000 {
+	compatible = "samsung,exynos-tmu"
+	samsung,mux = <6>;
+	samsung,min-temp = <25>;
+	samsung,max-temp = <125>;
+	samsung,start-warning = <95>;
+	samsung,start-tripping = <105>;
+	samsung,efuse-min-value	= <40>;
+	samsung,efuse-value = <55>;
+	samsung,efuse-max-value	= <100>;
+	samsung,slope = <268470274>;
+	samsung,dc-value = <25>;
+};

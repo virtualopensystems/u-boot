@@ -79,6 +79,7 @@ enum fdt_compat_id {
 	COMPAT_GOOGLE_MKBP,		/* Google MKBP Protocol */
 	COMPAT_GOOGLE_MKBP_KEYB,	/* Google MKBP Keyboard */
 	COMPAT_GOOGLE_BOARD_REV,	/* Google board revision number */
+	COMPAT_SAMSUNG_EXYNOS_TMU,	/* Exynos TMU */
 
 	COMPAT_COUNT,
 };

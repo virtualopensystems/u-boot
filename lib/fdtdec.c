@@ -54,6 +54,7 @@ static const char * const compat_names[COMPAT_COUNT] = {
 	COMPAT(GOOGLE_MKBP, "google,mkbp"),
 	COMPAT(GOOGLE_MKBP_KEYB, "google,mkbp-keyb"),
 	COMPAT(GOOGLE_BOARD_REV, "google,board-revision"),
+	COMPAT(SAMSUNG_EXYNOS_TMU, "samsung,exynos-tmu"),
 };
 
 const char *fdtdec_get_compatible(enum fdt_compat_id id)
