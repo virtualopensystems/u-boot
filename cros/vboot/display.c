@@ -37,7 +37,7 @@ struct display_callbacks {
 	void (*dc_position_cursor) (unsigned col, unsigned row);
 	void (*dc_puts) (const char *s);
 	int (*dc_display_bitmap) (ulong, int, int);
-	void (*dc_display_clear) (void);
+	int (*dc_display_clear) (void);
 };
 
 #ifdef HAVE_DISPLAY
@@ -217,8 +217,8 @@ VbError_t VbExDisplayDebugInfo(const char *info_str)
 int display_clear(void)
 {
 #ifdef HAVE_DISPLAY
-	display_callbacks_.dc_display_clear();
-#endif
-
+	return display_callbacks_.dc_display_clear();
+#else
 	return 0;
+#endif
 }
