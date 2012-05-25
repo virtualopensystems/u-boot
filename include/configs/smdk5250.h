@@ -85,6 +85,12 @@
 #define CONFIG_BOOTDELAY		0
 #define CONFIG_ZERO_BOOTDELAY_CHECK
 
+/* Generic Device Polling */
+#define CONFIG_BOARD_POLL
+
+/* Thermal Management Unit */
+#define CONFIG_EXYNOS_TMU
+
 /* USB */
 #define CONFIG_CMD_USB
 #define CONFIG_USB_EHCI
