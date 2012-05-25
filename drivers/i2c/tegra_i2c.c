@@ -567,3 +567,24 @@ int i2c_set_bus_num(unsigned int bus)
 	return 0;
 }
 #endif
+
+int i2c_get_bus_num_fdt(const void *blob, int node)
+{
+	enum fdt_compat_id compat;
+	fdt_addr_t reg;
+	int i;
+
+	compat = fdtdec_lookup(blob, node);
+	if (compat != COMPAT_NVIDIA_TEGRA20_I2C) {
+		debug("%s: Not a supported I2C node\n", __func__);
+		return -1;
+	}
+
+	reg = fdtdec_get_addr(blob, node, "reg");
+	for (i = 0; i < TEGRA_I2C_NUM_CONTROLLERS; i++)
+		if (reg == i2c_controllers[i].regs)
+			return i;
+
+	debug("%s: Can't find any matched I2C bus\n", __func__);
+	return -1;
+}
