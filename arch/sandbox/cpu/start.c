@@ -75,6 +75,8 @@ int sandbox_early_getopt_check(void)
 	}
 
 	os_exit(0);
+
+	return 0;
 }
 
 static int sb_cmdline_cb_help(struct sandbox_state *state, const char *arg)
