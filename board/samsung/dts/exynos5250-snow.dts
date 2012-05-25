@@ -28,5 +28,13 @@
 	dmc@10C00000 {
 		mem-manuf = "elpida";
 	};
+	i2c@12ca0000 {
+		mkbp@1e {
+			reg = <0x1e>;
+			compatible = "google,mkbp";
+			i2c-max-frequency = <100000>;
+			ec-interrupt = <&gpio 174 1>;
+		};
+	};
 
 };
