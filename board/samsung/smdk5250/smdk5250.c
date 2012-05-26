@@ -33,10 +33,38 @@
 #include <asm/arch/mshc.h>
 #include <asm/arch/pinmux.h>
 #include <asm/arch/sromc.h>
+#include <asm/arch-exynos5/power.h>
+#include <asm/arch/exynos-tmu.h>
 
 #include "board.h"
 
 DECLARE_GLOBAL_DATA_PTR;
+
+/*
+ * Polling various devices on board for details and status monitoring purposes
+ */
+void board_poll_devices(void)
+{
+#if defined CONFIG_EXYNOS_TMU
+	int temp;
+
+	switch (tmu_monitor(&temp)) {
+	case TMU_STATUS_TRIPPED:
+		puts("EXYNOS_TMU: TRIPPING! Device power going down ...\n");
+		power_shutdown();
+		break;
+	case TMU_STATUS_WARNING:
+		puts("EXYNOS_TMU: WARNING! Temperature very high\n");
+		break;
+	case TMU_STATUS_INIT:
+	case TMU_STATUS_NORMAL:
+		debug("syetm is in normal temperature state\n");
+		break;
+	default:
+		debug("Unknown TMU state\n");
+	}
+#endif
+}
 
 #ifdef CONFIG_OF_CONTROL
 static int decode_sromc(const void *blob, struct fdt_sromc *config)
@@ -203,6 +231,13 @@ int board_init(void)
 				 __func__);
 		return -1;
 	}
+
+#if defined CONFIG_EXYNOS_TMU
+	if (tmu_init(gd->fdt_blob)) {
+		debug("%s: Failed to init TMU\n", __func__);
+		return -1;
+	}
+#endif
 	return 0;
 }
 
