@@ -113,7 +113,7 @@ enum exynos5_gpio_pin {
 	GPIO_A25,
 	GPIO_A26,
 	GPIO_A27,
-	GPIO_B00,
+	GPIO_B00,				/* 0x18 */
 	GPIO_B01,
 	GPIO_B02,
 	GPIO_B03,
@@ -145,7 +145,7 @@ enum exynos5_gpio_pin {
 	GPIO_B35,
 	GPIO_B36,
 	GPIO_B37,
-	GPIO_C00,
+	GPIO_C00,				/* 0x38 */
 	GPIO_C01,
 	GPIO_C02,
 	GPIO_C03,
@@ -177,7 +177,7 @@ enum exynos5_gpio_pin {
 	GPIO_C35,
 	GPIO_C36,
 	GPIO_C37,
-	GPIO_D00,
+	GPIO_D00,				/* 0x58 */
 	GPIO_D01,
 	GPIO_D02,
 	GPIO_D03,
@@ -193,7 +193,7 @@ enum exynos5_gpio_pin {
 	GPIO_D15,
 	GPIO_D16,
 	GPIO_D17,
-	GPIO_Y00,
+	GPIO_Y00,				/* 0x68 */
 	GPIO_Y01,
 	GPIO_Y02,
 	GPIO_Y03,
@@ -252,7 +252,7 @@ enum exynos5_gpio_pin {
 
 	/* GPIO_PART2_STARTS */
 	GPIO_MAX_PORT_PART_1,
-	GPIO_X00 = GPIO_MAX_PORT_PART_1,
+	GPIO_X00 = GPIO_MAX_PORT_PART_1,	/* 0xa0 */
 	GPIO_X01,
 	GPIO_X02,
 	GPIO_X03,
@@ -287,7 +287,7 @@ enum exynos5_gpio_pin {
 
 	/* GPIO_PART3_STARTS */
 	GPIO_MAX_PORT_PART_2,
-	GPIO_E00 = GPIO_MAX_PORT_PART_2,
+	GPIO_E00 = GPIO_MAX_PORT_PART_2,	/* 0xc0 */
 	GPIO_E01,
 	GPIO_E02,
 	GPIO_E03,
@@ -303,7 +303,7 @@ enum exynos5_gpio_pin {
 	GPIO_E15,
 	GPIO_E16,
 	GPIO_E17,
-	GPIO_F00,
+	GPIO_F00,				/* 0xd0 */
 	GPIO_F01,
 	GPIO_F02,
 	GPIO_F03,
