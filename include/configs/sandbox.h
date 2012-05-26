@@ -67,6 +67,8 @@
 					115200}
 #define CONFIG_SANDBOX_SERIAL
 
+#define CONFIG_BATTERY
+
 #define CONFIG_SYS_NO_FLASH
 
 /* include default commands */
