@@ -22,9 +22,10 @@
 
 #include <common.h>
 #include <fdtdec.h>
+#include <i2c.h>
 #include <max77686.h>
 #include <netdev.h>
-#include <i2c.h>
+#include <tps65090.h>
 #include <asm/arch/cpu.h>
 #include <asm/arch/ehci-s5p.h>
 #include <asm/arch/board.h>
