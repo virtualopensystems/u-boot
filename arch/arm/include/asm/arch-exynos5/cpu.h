@@ -74,6 +74,9 @@
 /* Marker values stored at the bottom of IRAM stack by SPL */
 #define EXYNOS5_SPL_MARKER	0xb004f1a9	/* hexspeak word: bootflag */
 
+/* Distance between each Trust Zone PC register set */
+#define TZPC_BASE_OFFSET		0x10000
+
 #ifndef __ASSEMBLY__
 
 /**
