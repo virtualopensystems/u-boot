@@ -66,6 +66,32 @@ struct exynos5_fimd {
 #define CLKVAL_F		0xb
 #define CLKVAL_F_OFFSET		6
 
+/*
+ * Structure containing display panel specific data for FIMD
+ */
+struct exynos5_fimd_panel {
+	unsigned int is_dp:1;		/* Display Panel interface is eDP */
+	unsigned int is_mipi:1;		/* Display Panel interface is MIPI */
+	unsigned int fixvclk:2;	/* VCLK hold scheme at data underflow */
+
+	/*
+	 * Polarity of the VCLK active edge
+	 *	0-falling
+	 *	1-rising
+	 */
+	unsigned int ivclk:1;
+	unsigned int clkval_f;		/* Divider to create pixel clock */
+
+	unsigned int upper_margin;	/* Vertical Backporch */
+	unsigned int lower_margin;	/* Vertical frontporch */
+	unsigned int vsync;		/* Vertical Sync Pulse Width */
+	unsigned int left_margin;	/* Horizantal Backporch */
+	unsigned int right_margin;	/* Horizontal Frontporch */
+	unsigned int hsync;		/* Horizontal Sync Pulse Width */
+	unsigned int xres;		/* X Resolution */
+	unsigned int yres;		/* Y Resopultion */
+};
+
 /* LCDIF Register Map */
 struct exynos5_disp_ctrl {
 	unsigned int vidout_con;
