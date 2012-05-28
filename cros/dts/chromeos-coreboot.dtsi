@@ -26,6 +26,27 @@
 
 		/* Only wait 2s in developer mode screen */
 		fast-developer-mode;
+
+		vboot-flag-write-protect {
+			compatible = "google,sysinfo-flag";
+			google,name = "write protect";
+		};
+		vboot-flag-recovery {
+			compatible = "google,sysinfo-flag";
+			google,name = "recovery";
+		};
+		vboot-flag-developer {
+			compatible = "google,sysinfo-flag";
+			google,name = "developer";
+		};
+		vboot-flag-lid-open {
+			compatible = "google,sysinfo-flag";
+			google,name = "lid";
+		};
+		vboot-flag-power-off {
+			compatible = "google,sysinfo-flag";
+			google,name = "power";
+		};
 	};
 
 	config {

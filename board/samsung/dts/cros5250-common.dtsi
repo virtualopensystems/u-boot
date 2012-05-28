@@ -47,6 +47,19 @@
 		developer-switch = <&gpio 168 0>;
 		recovery-switch = <&gpio 112 1>;
 		write-protect-switch = <&gpio 102 1>;
+
+		vboot-flag-write-protect {
+			compatible = "google,gpio-flag";
+			gpio = <&gpio 102 1>;
+		};
+		vboot-flag-recovery {
+			compatible = "google,gpio-flag";
+			gpio = <&gpio 112 1>;
+		};
+		vboot-flag-developer {
+			compatible = "google,gpio-flag";
+			gpio = <&gpio 168 0>;
+		};
 	};
 
 	memory {

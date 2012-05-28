@@ -22,6 +22,27 @@
 		developer-switch	= <&gpio 168 0>;
 		lid-switch		= <&gpio 23 1>;
 		power-switch		= <&gpio 170 1>;
+
+		vboot-flag-write-protect {
+			compatible = "google,gpio-flag";
+			gpio = <&gpio 59 1>;
+		};
+		vboot-flag-recovery {
+			compatible = "google,gpio-flag";
+			gpio = <&gpio 56 1>;
+		};
+		vboot-flag-developer {
+			compatible = "google,gpio-flag";
+			gpio = <&gpio 168 0>;
+		};
+		vboot-flag-lid-open {
+			compatible = "google,gpio-flag";
+			gpio = <&gpio 23 1>;
+		};
+		vboot-flag-power-off {
+			compatible = "google,gpio-flag";
+			gpio = <&gpio 170 1>;
+		};
 	};
 
 	chosen {
