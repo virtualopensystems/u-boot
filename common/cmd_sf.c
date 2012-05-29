@@ -61,6 +61,23 @@ static int sf_parse_len_arg(char *arg, ulong *len)
 	return 1;
 }
 
+/**
+ * This function takes a byte length and a delta unit of time to compute the
+ * approximate bytes per second
+ *
+ * @param len		amount of bytes currently processed
+ * @param start_ms	start time of processing in ms
+ * @return bytes per second if OK, 0 on error
+ */
+static const ulong bytes_per_second(unsigned int len, ulong start_ms)
+{
+	/* less accurate but avoids overflow */
+	if (len >= ((unsigned int) -1) / 1024)
+		return len / (max(get_timer(start_ms) / 1024, 1));
+	else
+		return 1024 * len / max(get_timer(start_ms), 1);
+}
+
 static int do_spi_flash_probe(int argc, char * const argv[])
 {
 	unsigned int bus = 0;
@@ -162,11 +179,18 @@ static int spi_flash_update(struct spi_flash *flash, u32 offset,
 	const char *end = buf + len;
 	size_t todo;		/* number of bytes to do in this pass */
 	size_t skipped = 0;	/* statistics */
+	const ulong start_time = get_timer(0);
+	const size_t scale = (end - buf) / 100;
+	const char *start_buf = buf;
+	ulong delta;
 
 	cmp_buf = malloc(flash->sector_size);
 	if (cmp_buf) {
 		for (; buf < end && !err_oper; buf += todo, offset += todo) {
 			todo = min(end - buf, flash->sector_size);
+			printf("Updating, %u%% %lu B/s\r",
+				100 - (end - buf) / scale,
+				bytes_per_second(buf - start_buf, start_time));
 			err_oper = spi_flash_update_block(flash, offset, todo,
 					buf, cmp_buf, &skipped);
 		}
@@ -178,8 +202,12 @@ static int spi_flash_update(struct spi_flash *flash, u32 offset,
 		printf("SPI flash failed in %s step\n", err_oper);
 		return 1;
 	}
-	printf("%zu bytes written, %zu bytes skipped\n", len - skipped,
-	       skipped);
+
+	delta = get_timer(start_time);
+	printf("%zu bytes written, %zu bytes skipped", len - skipped,
+		skipped);
+	printf(" in %ld.%ld seconds. Effective write: %ld B/s\n",
+		delta / 1000, delta % 1000, bytes_per_second(len, start_time));
 
 	return 0;
 }
