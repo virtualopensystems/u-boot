@@ -96,6 +96,60 @@ static void *find_cbmem_area(void)
 	return NULL;
 }
 
+static int map_coreboot_serial_to_fdt(void)
+{
+	void *fdt = lib_sysinfo.sys_fdt;
+	struct cb_serial *serial = lib_sysinfo.serial;
+	uint32_t reg[2];
+	int serial_offset = fdt_path_offset(fdt, "/serial");
+	int ret = 0;
+	unsigned long clock_frequency;
+
+	if (serial_offset < 0) {
+		/* No aliases node found. Bail out. */
+		printf("Couldn't find fdt \"serial\" node.\n");
+		return 1;
+	}
+
+	/*
+	 * If we don't have the a serial console, we don't need to fill
+	 * in any properties, so just return.
+	 */
+	if (!serial)
+		return 0;
+
+	/* If there's a serial node and device, populate the node. */
+	ret |= fdt_setprop_string(fdt, serial_offset, "compatible", "ns16550");
+	reg[0] = cpu_to_fdt32(serial->baseaddr);
+	reg[1] = cpu_to_fdt32(0x8);
+
+	ret |= fdt_setprop(fdt, serial_offset, "reg", reg, sizeof(reg));
+	ret |= fdt_setprop_cell(fdt, serial_offset, "id", 1);
+	ret |= fdt_setprop_cell(fdt, serial_offset, "reg-shift", 1);
+	ret |= fdt_setprop_cell(fdt, serial_offset, "baudrate", serial->baud);
+	/*
+	 * For now, assume an OXPCIE serial adapter
+	 * when it's memory mapped, since this is the
+	 * only one supported by coreboot.
+	 */
+	if (serial->type == CB_SERIAL_TYPE_MEMORY_MAPPED)
+		clock_frequency = 4000000;
+	else
+		clock_frequency = 115200;
+
+	ret |= fdt_setprop_cell(fdt, serial_offset,
+			"clock-frequency", clock_frequency);
+
+	ret |= fdt_setprop_cell(fdt, serial_offset, "multiplier", 1);
+
+	if (serial->type == CB_SERIAL_TYPE_IO_MAPPED)
+		ret |= fdt_setprop_cell(fdt, serial_offset, "io-mapped", 1);
+
+	ret |= fdt_setprop_string(fdt, serial_offset, "status", "ok");
+
+	return !!ret;
+}
+
 int cpu_init_f(void)
 {
 	CbfsFile file;
@@ -120,6 +174,8 @@ int cpu_init_f(void)
 	memcpy(dtb, (const void *)(file->data), size);
 	gd->fdt_blob = (const void *)dtb;
 	lib_sysinfo.sys_fdt = (void *)gd->fdt_blob;
+	if (map_coreboot_serial_to_fdt())
+		printf("Couldn't add serial port to FDT.\n");
 
 	timestamp_init();
 
@@ -166,6 +222,9 @@ int board_early_init_r(void)
 	}
 	gd->fdt_blob = dtb;
 	lib_sysinfo.sys_fdt = (void *)gd->fdt_blob;
+
+	if (map_coreboot_serial_to_fdt())
+		printf("Couldn't add serial port to FDT.\n");
 
 cbfs_failed:
 	return 0;

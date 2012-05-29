@@ -43,9 +43,6 @@
 #define SYSINFO_MAX_GPIOS 8
 
 struct sysinfo_t {
-	unsigned short ser_ioport;
-	unsigned long ser_base; /* for mmapped serial */
-
 	int n_memranges;
 	struct memrange {
 		unsigned long long base;
@@ -80,6 +77,8 @@ struct sysinfo_t {
 	void	*sys_fdt;
 	void	*tstamp_table;
 	void	*cbmem_cons;
+
+	struct cb_serial *serial;
 };
 
 extern struct sysinfo_t lib_sysinfo;

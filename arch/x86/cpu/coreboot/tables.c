@@ -81,9 +81,7 @@ static void cb_parse_memory(unsigned char *ptr, struct sysinfo_t *info)
 static void cb_parse_serial(unsigned char *ptr, struct sysinfo_t *info)
 {
 	struct cb_serial *ser = (struct cb_serial *)ptr;
-	if (ser->type != CB_SERIAL_TYPE_IO_MAPPED)
-		return;
-	info->ser_ioport = ser->baseaddr;
+	info->serial = ser;
 }
 
 static void cb_parse_vbnv(unsigned char *ptr, struct sysinfo_t *info)
