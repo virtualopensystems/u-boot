@@ -43,19 +43,16 @@
 #define SYSINFO_MAX_GPIOS 8
 
 struct sysinfo_t {
-	unsigned int cpu_khz;
 	unsigned short ser_ioport;
 	unsigned long ser_base; /* for mmapped serial */
 
 	int n_memranges;
-
 	struct memrange {
 		unsigned long long base;
 		unsigned long long size;
 		unsigned int type;
 	} memrange[SYSINFO_MAX_MEM_RANGES];
 
-	struct cb_cmos_option_table *option_table;
 	u32 cmos_range_start;
 	u32 cmos_range_end;
 	u32 cmos_checksum_location;
@@ -77,8 +74,6 @@ struct sysinfo_t {
 
 	int num_gpios;
 	struct cb_gpio gpios[SYSINFO_MAX_GPIOS];
-
-	unsigned long *mbtable; /** Pointer to the multiboot table */
 
 	void	*vdat_addr;
 	u32	vdat_size;
