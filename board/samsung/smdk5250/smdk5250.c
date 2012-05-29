@@ -26,6 +26,7 @@
 #include <max77686.h>
 #include <netdev.h>
 #include <tps65090.h>
+#include <asm/gpio.h>
 #include <asm/arch/cpu.h>
 #include <asm/arch/ehci-s5p.h>
 #include <asm/arch/board.h>
@@ -239,6 +240,12 @@ int board_init(void)
 		return -1;
 	}
 #endif
+
+	/* TODO(hatim.rv@samsung.com): Move to FDT */
+	/* Configure GPIO for backlight */
+	gpio_cfg_pin(GPIO_B20, GPIO_OUTPUT);
+	gpio_set_value(GPIO_B20, 1);
+
 	return 0;
 }
 
