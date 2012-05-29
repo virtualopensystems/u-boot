@@ -10,7 +10,7 @@
 
 #include <common.h>
 #include <cros/common.h>
-#include <cros/cros_gpio.h>
+#include <cros/vboot_flag.h>
 
 #ifdef VBOOT_DEBUG
 int cros_gpio_dump(cros_gpio_t *gpio)

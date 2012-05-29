@@ -38,12 +38,12 @@ include $(TOPDIR)/config.mk
 
 LIB     = $(obj)libcros_board.o
 
-COBJS-$(CONFIG_CHROMEOS) += cros_gpio.o
 COBJS-$(CONFIG_CHROMEOS) += power_management.o
 COBJS-$(CONFIG_CHROMEOS) += hda_codec.o
 COBJS-$(CONFIG_CHROMEOS) += nvstorage_nvram.o
 COBJS-$(CONFIG_CHROMEOS) += utility.o
 COBJS-$(CONFIG_CHROMEOS) += chromeos.o
+COBJS-$(CONFIG_CHROMEOS) += vboot_flag_sysinfo.o
 
 COBJS	:= $(COBJS-y)
 OBJS	:= $(addprefix $(obj),$(COBJS))

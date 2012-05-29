@@ -17,13 +17,13 @@
 #include <cros/common.h>
 #include <cros/crossystem_data.h>
 #include <cros/cros_fdtdec.h>
-#include <cros/cros_gpio.h>
 #include <cros/cros_init.h>
 #include <cros/firmware_storage.h>
 #include <cros/gbb.h>
 #include <cros/hasher_state.h>
 #include <cros/memory_wipe.h>
 #include <cros/power_management.h>
+#include <cros/vboot_flag.h>
 #include <usb.h>
 
 #ifdef CONFIG_VIDEO_TEGRA

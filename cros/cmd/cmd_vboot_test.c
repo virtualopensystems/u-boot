@@ -16,10 +16,10 @@
 #include <command.h>
 #include <cros/common.h>
 #include <cros/cros_fdtdec.h>
-#include <cros/cros_gpio.h>
 #include <cros/firmware_storage.h>
 #include <cros/memory_wipe.h>
 #include <cros/power_management.h>
+#include <cros/vboot_flag.h>
 #include <vboot_api.h>
 
 /*

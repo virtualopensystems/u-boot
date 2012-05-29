@@ -15,7 +15,7 @@
 #include <asm-generic/gpio.h>
 #include <asm/global_data.h>
 #include <cros/common.h>
-#include <cros/cros_gpio.h>
+#include <cros/vboot_flag.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

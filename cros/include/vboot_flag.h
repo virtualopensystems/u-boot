@@ -10,8 +10,8 @@
 
 /* GPIO interface for Chrome OS verified boot */
 
-#ifndef CROS_GPIO_H__
-#define CROS_GPIO_H__
+#ifndef __VBOOT_FLAG_H__
+#define __VBOOT_FLAG_H__
 
 enum cros_gpio_index {
 	CROS_GPIO_WPSW = 0,
@@ -56,4 +56,4 @@ int cros_gpio_fetch(enum cros_gpio_index index, cros_gpio_t *gpio);
 
 int cros_gpio_dump(cros_gpio_t *gpio);
 
-#endif /* CROS_GPIO_H__ */
+#endif /* __VBOOT_FLAG_H__ */

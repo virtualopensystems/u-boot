@@ -13,11 +13,6 @@ include $(TOPDIR)/config.mk
 LIB	= $(obj)libcros.o
 
 COBJS-$(CONFIG_CHROMEOS) += boot_kernel.o
-# TODO(clchiou): Work out the conflicts with coreboot/cros_gpio.o
-ifndef CONFIG_SYS_COREBOOT
-COBJS-$(CONFIG_CHROMEOS) += cros_gpio_fdt.o
-endif
-COBJS-$(CONFIG_CHROMEOS) += cros_gpio_debug.o
 COBJS-$(CONFIG_CHROMEOS) += cros_init.o
 COBJS-$(CONFIG_CHROMEOS) += crossystem_data.o
 ifeq ($(CONFIG_CHROMEOS),y)
@@ -27,6 +22,11 @@ COBJS-$(CONFIG_CHROMEOS) += firmware_storage_spi.o
 COBJS-$(CONFIG_CHROMEOS) += fmap.o
 COBJS-$(CONFIG_CHROMEOS) += gbb.o
 COBJS-$(CONFIG_CHROMEOS) += memory_wipe.o
+# TODO(clchiou): Work out the conflicts with coreboot/vboot_flag_sysinfo.o
+ifndef CONFIG_SYS_COREBOOT
+COBJS-$(CONFIG_CHROMEOS) += vboot_flag_gpio.o
+endif
+COBJS-$(CONFIG_CHROMEOS) += vboot_flag_debug.o
 
 # TODO(sjg): This MMC code is not needed as yet, and needs slight changes
 # to build now

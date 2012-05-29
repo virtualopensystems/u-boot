@@ -11,7 +11,7 @@
 #ifndef __CHROMEOS_CROSSYSTEM_DATA_H__
 #define __CHROMEOS_CROSSYSTEM_DATA_H__
 
-#include <cros/cros_gpio.h>
+#include <cros/vboot_flag.h>
 #include <vboot_nvstorage.h>
 #include <vboot_struct.h>
 

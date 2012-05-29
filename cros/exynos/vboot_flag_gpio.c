@@ -13,7 +13,7 @@
 #include <common.h>
 #include <asm/arch/gpio.h>
 #include <cros/common.h>
-#include <cros/cros_gpio.h>
+#include <cros/vboot_flag.h>
 
 int cros_gpio_setup(enum cros_gpio_index index, int port)
 {

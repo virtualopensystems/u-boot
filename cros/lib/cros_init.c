@@ -11,8 +11,8 @@
 #include <common.h>
 #include <cros/common.h>
 #include <cros/boot_device.h>
-#include <cros/cros_gpio.h>
 #include <cros/nvstorage.h>
+#include <cros/vboot_flag.h>
 
 int cros_init(void)
 {
