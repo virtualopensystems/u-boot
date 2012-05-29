@@ -20,6 +20,9 @@
 		firmware-storage = <&firmware_storage_spi>;
 		nvstorage-media = "disk";
 
+		/* Only wait 2s in developer mode screen */
+		fast-developer-mode;
+
 		/* Memory addresses for kernel, cros-system and gbb */
 		kernel = <0x42000000 0x00800000>;
 		cros-system-data = <0x42800000 0x8000>;
