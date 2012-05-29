@@ -34,7 +34,7 @@ DECLARE_GLOBAL_DATA_PTR;
 
 void chromeos_set_vboot_data_ptr(void)
 {
-	void *fdt = lib_sysinfo.sys_fdt;
+	void *fdt = (void *)gd->fdt_blob;
 	int node_offset, addr_cell_len;
 	const uint32_t *cell;
 	uintptr_t table_addr = (uintptr_t)lib_sysinfo.vdat_addr;
