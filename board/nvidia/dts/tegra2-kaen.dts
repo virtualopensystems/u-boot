@@ -17,12 +17,6 @@
 	};
 
 	chromeos-config {
-		write-protect-switch	= <&gpio 59 1>;
-		recovery-switch		= <&gpio 56 1>;
-		developer-switch	= <&gpio 168 0>;
-		lid-switch		= <&gpio 23 1>;
-		power-switch		= <&gpio 170 1>;
-
 		vboot-flag-write-protect {
 			compatible = "google,gpio-flag";
 			gpio = <&gpio 59 1>;
