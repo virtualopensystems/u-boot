@@ -15,4 +15,11 @@
 	chromeos-config {
 		virtual_dev_switch;
 	};
+
+	aliases {
+		console = "/serial";
+	};
+
+	serial {
+	};
 };

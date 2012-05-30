@@ -12,4 +12,11 @@
 		hwid = "X86 EMERALD LAKE 2 TEST 6638";
 		usb-keyboard;
 	};
+
+	aliases {
+		console = "/serial";
+	};
+
+	serial {
+	};
 };

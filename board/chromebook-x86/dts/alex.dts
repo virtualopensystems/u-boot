@@ -12,4 +12,11 @@
 	       silent_console = <0>;
 	       hwid = "X86 ALEX TEST 9769";
 	};
+
+	aliases {
+		console = "/serial";
+	};
+
+	serial {
+	};
 };

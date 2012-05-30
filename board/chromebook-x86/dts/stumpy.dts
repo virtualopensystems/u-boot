@@ -13,4 +13,11 @@
 		skip-i8042 = <1>;
 		usb-keyboard;
 	};
+
+	aliases {
+		console = "/serial";
+	};
+
+	serial {
+	};
 };
