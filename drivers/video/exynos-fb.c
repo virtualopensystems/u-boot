@@ -304,7 +304,7 @@ static void mipi_init(void)
 	 * Set escape clk prescalar value to 0x90
 	 */
 	val = DSIM_ESC_PRESCALAR_VAL | LANE_ESC_CLK_EN_ALL |
-		BYTE_CLK_EN | DSIM_ESC_CLK_EN;
+		BYTE_CLK_EN;/* | DSIM_ESC_CLK_EN;*/
 	writel(val, &dsim->clkctrl);
 
 	timeout =  100;
