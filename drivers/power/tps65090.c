@@ -116,24 +116,39 @@ static int tps65090_deselect(void)
 	return 0;
 }
 
-int tps65090_fet_enable(unsigned int fet_id)
+/**
+ * Checks for a valid FET number
+ *
+ * @param fet_id	FET number to check
+ * @return 0 if ok, -1 if FET value is out of range
+ */
+static int tps65090_check_fet(unsigned int fet_id)
 {
-	unsigned char reg;
-	int ret;
-
 	if (fet_id == 0 || fet_id > MAX_FET_NUM) {
 		debug("parameter fet_id is out of range, %u not in 1 ~ %u\n",
 				fet_id, MAX_FET_NUM);
 		return -1;
 	}
 
+	return 0;
+}
+
+int tps65090_fet_enable(unsigned int fet_id)
+{
+	unsigned char reg;
+	int ret;
+
+	if (tps65090_check_fet(fet_id))
+		return -1;
+	if (tps65090_select())
+		return -1;
 	ret = tps65090_i2c_write(REG_FET1_CTRL + fet_id - 1,
 			FET_CTRL_ADENFET | FET_CTRL_ENFET);
-	if (ret)
-		return ret;
-
-	ret = tps65090_i2c_read(REG_FET1_CTRL + fet_id - 1,
-			&reg);
+	if (!ret) {
+		ret = tps65090_i2c_read(REG_FET1_CTRL + fet_id - 1,
+				&reg);
+	}
+	tps65090_deselect();
 	if (ret)
 		return ret;
 
@@ -150,19 +165,17 @@ int tps65090_fet_disable(unsigned int fet_id)
 	unsigned char reg;
 	int ret;
 
-	if (fet_id == 0 || fet_id > MAX_FET_NUM) {
-		debug("parameter fet_id is out of range, %u not in 1 ~ %u\n",
-				fet_id, MAX_FET_NUM);
+	if (tps65090_check_fet(fet_id))
 		return -1;
-	}
-
+	if (tps65090_select())
+		return -1;
 	ret = tps65090_i2c_write(REG_FET1_CTRL + fet_id - 1,
 			FET_CTRL_ADENFET);
-	if (ret)
-		return ret;
-
-	ret = tps65090_i2c_read(REG_FET1_CTRL + fet_id - 1,
-			&reg);
+	if (!ret) {
+		ret = tps65090_i2c_read(REG_FET1_CTRL + fet_id - 1,
+				&reg);
+	}
+	tps65090_deselect();
 	if (ret)
 		return ret;
 
@@ -179,14 +192,13 @@ int tps65090_fet_is_enabled(unsigned int fet_id)
 	unsigned char reg;
 	int ret;
 
-	if (fet_id == 0 || fet_id > MAX_FET_NUM) {
-		debug("parameter fet_id is out of range, %u not in 1 ~ %u\n",
-				fet_id, MAX_FET_NUM);
+	if (tps65090_check_fet(fet_id))
 		return -1;
-	}
-
+	if (tps65090_select())
+		return -1;
 	ret = tps65090_i2c_read(REG_FET1_CTRL + fet_id - 1,
 			&reg);
+	tps65090_deselect();
 	if (ret) {
 		debug("fail to read FET%u_CTRL register over I2C", fet_id);
 		return -2;
