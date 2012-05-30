@@ -135,6 +135,8 @@ static int mkbp_send_message(struct mkbp_dev *dev, uint8_t din[], int din_len,
 			return -1;
 		*replyp = &din[1]; /* skip return code */
 		return din_len - 2; /* ignore checksum/return code */
+	case MKBPIF_NONE:
+		return -1;
 	}
 
 	/* Scan to start of reply */
