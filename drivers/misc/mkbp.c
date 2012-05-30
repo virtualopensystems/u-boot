@@ -226,6 +226,19 @@ int mkbp_interrupt_pending(struct mkbp_dev *dev)
 	return !gpio_get_value(dev->ec_int.gpio);
 }
 
+int mkbp_info(struct mkbp_dev *dev, struct mbkp_info *info)
+{
+	const uint8_t *p;
+	int len;
+
+	len = mkbp_send_command(dev, CMDC_INFO, sizeof(*info), &p);
+	if (len >= 0)
+		memcpy(info, p, len);
+	else
+		return -1;
+
+	return 0;
+}
 
 /**
  * Decode MBKP details from the device tree and allocate a suitable device.
@@ -295,8 +308,10 @@ struct mkbp_dev *mkbp_init(const void *blob)
 		debug("%s: Node not found\n", __func__);
 		return NULL;
 	}
-	if (mkbp_decode_fdt(blob, node, &dev))
+	if (mkbp_decode_fdt(blob, node, &dev)) {
+		debug("%s: Failed to decode device.\n", __func__);
 		return NULL;
+	}
 
 	/* Remember this device for use by the mkbp command */
 	last_dev = dev;
@@ -353,6 +368,16 @@ static int do_mkbp(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 			return 1;
 		}
 		printf("%s\n", id);
+	} else if (0 == strcmp("info", cmd)) {
+		struct mbkp_info info;
+
+		if (mkbp_info(dev, &info)) {
+			debug("%s: Could not read KBC info\n", __func__);
+			return 1;
+		}
+		printf("rows     = %u\n", info.rows);
+		printf("cols     = %u\n", info.cols);
+		printf("switches = %#x\n", info.switches);
 	}
 
 	return 0;
@@ -361,6 +386,7 @@ static int do_mkbp(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 U_BOOT_CMD(
 	mkbp,	5,	1,	do_mkbp,
 	"MKBP utility command",
-	"id        Read MKBP ID"
+	"id        Read MKBP ID\n"
+	"mkbp info      Read MKBP info"
 );
 #endif

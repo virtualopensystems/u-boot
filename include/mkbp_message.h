@@ -55,6 +55,7 @@ enum message_cmd_t {
 
 	/* Functional messages */
 	CMDC_KEY_STATE	= 0x60,		/* Read key state */
+	CMDC_INFO	= 0x61,		/* Get information about the matrix */
 };
 
 /* Some useful constants */

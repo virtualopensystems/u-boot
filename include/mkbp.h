@@ -24,6 +24,7 @@
 #ifndef _CROS_MKBP_H
 #define _CROS_MKBP_H
 
+#include <linux/compiler.h>
 #include <mkbp_message.h>
 
 struct mkbp_dev;
@@ -32,6 +33,13 @@ struct mkbp_dev;
 struct mbkp_keyscan {
 	uint8_t data[MSG_KEYSCAN_BYTES];
 };
+
+/* Information about the matrix */
+struct mbkp_info {
+	uint32_t rows;
+	uint32_t cols;
+	uint8_t switches;
+} __packed;
 
 /**
  * Read the ID of the MKBP device
@@ -74,5 +82,13 @@ int mkbp_interrupt_pending(struct mkbp_dev *dev);
  * @return pointer to the mkbp device
  */
 struct mkbp_dev *mkbp_init(const void *blob);
+
+/**
+ * Read information about the keyboard matrix
+ *
+ * @param dev		MKBP device
+ * @param info		Place to put the info structure
+ */
+int mkbp_info(struct mkbp_dev *dev, struct mbkp_info *info);
 
 #endif
