@@ -99,7 +99,7 @@ static void *find_cbmem_area(void)
 
 static int map_coreboot_serial_to_fdt(void)
 {
-	void *fdt = lib_sysinfo.sys_fdt;
+	void *fdt = (void *)gd->fdt_blob;
 	struct cb_serial *serial = lib_sysinfo.serial;
 	uint32_t reg[2];
 	int serial_offset = fdt_path_offset(fdt, "/serial");
@@ -174,7 +174,6 @@ int cpu_init_f(void)
 
 	memcpy(dtb, (const void *)(file->data), size);
 	gd->fdt_blob = (const void *)dtb;
-	lib_sysinfo.sys_fdt = (void *)gd->fdt_blob;
 	if (map_coreboot_serial_to_fdt())
 		printf("Couldn't add serial port to FDT.\n");
 
@@ -222,7 +221,6 @@ int board_early_init_r(void)
 		goto cbfs_failed;
 	}
 	gd->fdt_blob = dtb;
-	lib_sysinfo.sys_fdt = (void *)gd->fdt_blob;
 
 	chromeos_set_vboot_data_ptr();
 

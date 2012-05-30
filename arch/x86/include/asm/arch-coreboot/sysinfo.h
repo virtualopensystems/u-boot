@@ -74,7 +74,6 @@ struct sysinfo_t {
 
 	void	*vdat_addr;
 	u32	vdat_size;
-	void	*sys_fdt;
 	void	*tstamp_table;
 	void	*cbmem_cons;
 
