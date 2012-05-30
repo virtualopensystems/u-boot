@@ -212,7 +212,6 @@ int tps65090_init(void)
 	if (ret)
 		debug("%s: failed to probe TPS65090 over I2C, returned %d\n",
 		      __func__, ret);
-	tps65090_deselect();
 
 	return ret;
 }
