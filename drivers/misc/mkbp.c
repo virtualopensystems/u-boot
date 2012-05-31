@@ -239,7 +239,6 @@ static int mkbp_decode_fdt(const void *blob, int node, struct mkbp_dev **devp)
 {
 	enum mkbp_interface_t interface;
 	enum fdt_compat_id compat;
-	struct fdt_gpio_state gpio;
 	struct mkbp_dev *dev;
 	int parent;
 
