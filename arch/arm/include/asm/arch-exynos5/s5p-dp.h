@@ -488,4 +488,6 @@ struct exynos5_dp {
 #define DPCD_SET_POWER_STATE_D0			(1 << 0)
 #define DPCD_SET_POWER_STATE_D4			(2 << 0)
 
+/* Allow DP Gating clock and set FIMD source to 267 Mhz for DP */
+void clock_init_dp_clock(void);
 #endif

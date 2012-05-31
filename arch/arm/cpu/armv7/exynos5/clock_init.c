@@ -772,6 +772,17 @@ void system_clock_init()
 	writel(val, &clk->div_fsys2);
 }
 
+void clock_init_dp_clock(void)
+{
+	struct exynos5_clock *clk = (struct exynos5_clock *)EXYNOS5_CLOCK_BASE;
+
+	/* DP clock enable */
+	setbits_le32(&clk->gate_ip_disp1, CLK_GATE_DP1_ALLOW);
+
+	/* We run DP at 267 Mhz */
+	setbits_le32(&clk->div_disp1_0, CLK_DIV_DISP1_0_FIMD1);
+}
+
 #ifdef CONFIG_SPL_BUILD
 /*
  * This is a custom implementation for the udelay(), as we do not the timer
