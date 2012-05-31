@@ -1192,7 +1192,7 @@ static int do_sdram (cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
  *	i2c edid {i2c_chip}
  */
 #if defined(CONFIG_I2C_EDID)
-int do_edid(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
+int do_edid(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 {
 	u_char chip;
 	struct edid1_info edid;
