@@ -582,7 +582,7 @@ int i2c_get_bus_num_fdt(const void *blob, int node)
 
 	reg = fdtdec_get_addr(blob, node, "reg");
 	for (i = 0; i < TEGRA_I2C_NUM_CONTROLLERS; i++)
-		if (reg == i2c_controllers[i].regs)
+		if (reg == (fdt_addr_t)i2c_controllers[i].regs)
 			return i;
 
 	debug("%s: Can't find any matched I2C bus\n", __func__);
