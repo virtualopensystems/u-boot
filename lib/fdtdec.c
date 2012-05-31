@@ -59,6 +59,10 @@ static const char * const compat_names[COMPAT_COUNT] = {
 	COMPAT(SAMSUNG_EXYNOS_FIMD, "samsung,exynos-fb"),
 	COMPAT(INFINEON_SLB9635_TPM, "infineon,slb9635-tpm"),
 	COMPAT(SAMSUNG_EXYNOS_LCD, "samsung,exynos-lcd"),
+	COMPAT(GOOGLE_CONST_FLAG, "google,const-flag"),
+	COMPAT(GOOGLE_EC_FLAG, "google,ec-flag"),
+	COMPAT(GOOGLE_GPIO_FLAG, "google,gpio-flag"),
+	COMPAT(GOOGLE_SYSINFO_FLAG, "google,sysinfo-flag"),
 };
 
 const char *fdtdec_get_compatible(enum fdt_compat_id id)
