@@ -33,7 +33,7 @@ int is_processor_reset(void)
 /* This function never returns */
 void cold_reboot(void)
 {
-	/* TODO(chromium-os:28077) Implement cold_reboot */
+	power_reset();
 }
 
 /* This function never returns */
