@@ -36,6 +36,9 @@
 #include <asm/system.h>
 #include <asm/cache.h>
 #include <asm/armv7.h>
+#ifdef CONFIG_EXYNOS_LCD
+#include <exynos-fb.h>
+#endif
 
 void save_boot_params_default(u32 r0, u32 r1, u32 r2, u32 r3)
 {
@@ -53,6 +56,10 @@ int cleanup_before_linux(void)
 	 * we turn off caches etc ...
 	 */
 	disable_interrupts();
+
+#ifdef CONFIG_EXYNOS_LCD
+	exynos_fimd_disable();
+#endif
 
 	/*
 	 * Turn off I-cache and invalidate it

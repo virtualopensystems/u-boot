@@ -401,6 +401,15 @@ static void fb_init(void *lcdbase)
 	writel(val, &fimd->wincon0);
 }
 
+void exynos_fimd_disable(void)
+{
+	struct exynos5_fimd *fimd =
+		(struct exynos5_fimd *)samsung_get_base_fimd();
+
+	writel(0, &fimd->wincon0);
+	clrbits_le32(&fimd->shadowcon, CHANNEL0_EN);
+}
+
 void lcd_ctrl_init(void *lcdbase)
 {
 	exynos_pinmux_config(PERIPH_ID_BACKLIGHT, 0);
