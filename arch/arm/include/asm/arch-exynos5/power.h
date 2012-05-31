@@ -30,13 +30,20 @@
 /* Power Management Unit register map */
 struct exynos5_power {
 	/* Add registers as and when required */
-	unsigned char	reserved1[0x0708];
+	unsigned char	reserved1[0x0400];
+	unsigned int	sw_reset;		/* 0x0400 */
+	unsigned char	reserved2[0x0304];
 	unsigned int	usb_host_phy_ctrl;	/* 0x0708 */
-	unsigned char	reserved2[0x8];
+	unsigned char	reserved3[0x8];
 	unsigned int	mipi_phy1_control;	/* 0x0714 */
-	unsigned char	reserved3[0x2bf4];
+	unsigned char	reserved4[0x2bf4];
 	unsigned int	ps_hold_ctrl;		/* 0x330c */
 };
+
+/**
+ * Perform a software reset.
+ */
+void power_reset(void);
 
 /**
  * Power off the system; it should never return.
