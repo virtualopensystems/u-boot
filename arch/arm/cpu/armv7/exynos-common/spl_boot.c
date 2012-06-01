@@ -148,6 +148,16 @@ void memzero(void *s, size_t n)
  */
 static void early_serial_init(void)
 {
+	/*
+	 * The gd struct is only needed for serial initialization. Since this
+	 * function is called in SPL u-boot. We store the gd struct in the
+	 * stack instead of the default memory region which may not be
+	 * initialized.
+	 */
+	__attribute__((aligned(8))) gd_t local_gd;
+
+	gd = &local_gd;
+	memzero((void *)gd, sizeof(gd_t));
 	gd->flags |= GD_FLG_RELOC;
 	gd->baudrate = CONFIG_BAUDRATE;
 	gd->have_console = 1;
@@ -160,10 +170,7 @@ void board_init_f(unsigned long bootflag)
 {
 	__attribute__((noreturn)) void (*uboot)(void);
 
-	gd = (gd_t *) ((CONFIG_SYS_INIT_SP_ADDR) & ~0x07);
-	memzero((void *)gd, sizeof(gd_t));
 	early_serial_init();
-
 	printf("\n\nU-Boot SPL, board rev %u\n", board_get_revision());
 
 	copy_uboot_to_ram();
