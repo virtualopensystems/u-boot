@@ -80,6 +80,7 @@ enum fdt_compat_id {
 	COMPAT_GOOGLE_MKBP_KEYB,	/* Google MKBP Keyboard */
 	COMPAT_GOOGLE_BOARD_REV,	/* Google board revision number */
 	COMPAT_SAMSUNG_EXYNOS_TMU,	/* Exynos TMU */
+	COMPAT_SAMSUNG_EXYNOS_DP,	/* Exynos DP */
 	COMPAT_INFINEON_SLB9635_TPM,	/* Infineon SLB9635 TPM */
 	COMPAT_SAMSUNG_EXYNOS_LCD,	/* Exynos LCD */
 
