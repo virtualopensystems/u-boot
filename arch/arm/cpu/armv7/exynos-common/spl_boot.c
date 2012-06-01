@@ -146,7 +146,7 @@ void memzero(void *s, size_t n)
  * Besides the serial driver, it also setup the minimal set of its dependency,
  * like gd struct, pinmux, and serial.
  */
-static void early_serial_init(void)
+void early_serial_init(void)
 {
 	/*
 	 * The gd struct is only needed for serial initialization. Since this
@@ -170,7 +170,6 @@ void board_init_f(unsigned long bootflag)
 {
 	__attribute__((noreturn)) void (*uboot)(void);
 
-	early_serial_init();
 	printf("\n\nU-Boot SPL, board rev %u\n", board_get_revision());
 
 	copy_uboot_to_ram();
