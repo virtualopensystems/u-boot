@@ -27,6 +27,8 @@
 #define POWER_USB_HOST_PHY_CTRL_EN		(1 << 0)
 #define POWER_PS_HOLD_CONTROL_DATA_HIGH		(1 << 8)
 
+#define DPTX_PHY_ENABLE		(1 << 0)
+
 /* Power Management Unit register map */
 struct exynos5_power {
 	/* Add registers as and when required */
@@ -36,7 +38,9 @@ struct exynos5_power {
 	unsigned int	usb_host_phy_ctrl;	/* 0x0708 */
 	unsigned char	reserved3[0x8];
 	unsigned int	mipi_phy1_control;	/* 0x0714 */
-	unsigned char	reserved4[0x2bf4];
+	unsigned char	reserved4[0x8];
+	unsigned int	dptx_phy_control;	/* 0x0720 */
+	unsigned char	reserved5[0x2be8];
 	unsigned int	ps_hold_ctrl;		/* 0x330c */
 };
 
