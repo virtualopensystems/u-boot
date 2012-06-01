@@ -55,6 +55,8 @@ struct exynos5_fimd {
 	unsigned int win0map;
 	unsigned char res8[0xdc];
 	unsigned int blendcon;
+	unsigned char res9[0x18];
+	unsigned int dpclkcon;
 };
 
 #define W0_SHADOW_PROTECT	(0x1 << 10)
