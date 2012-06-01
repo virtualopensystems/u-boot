@@ -193,11 +193,18 @@ static int do_vboot_test_gpio(cmd_tbl_t *cmdtp,
 	return ret;
 }
 
+static int do_vboot_reboot(cmd_tbl_t *cmdtp,
+		int flag, int argc, char * const argv[])
+{
+	cold_reboot();
+	return 1; /* It should never reach here */
+}
+
 static int do_vboot_poweroff(cmd_tbl_t *cmdtp,
 		int flag, int argc, char * const argv[])
 {
 	power_off();
-	return 1; /* It should never reach here*/
+	return 1; /* It should never reach here */
 }
 
 static int do_vboot_test_all(cmd_tbl_t *cmdtp,
@@ -217,6 +224,7 @@ static cmd_tbl_t cmd_vboot_test_sub[] = {
 	U_BOOT_CMD_MKENT(fwrw, 0, 1, do_vboot_test_fwrw, "", ""),
 	U_BOOT_CMD_MKENT(memwipe, 0, 1, do_vboot_test_memwipe, "", ""),
 	U_BOOT_CMD_MKENT(gpio, 0, 1, do_vboot_test_gpio, "", ""),
+	U_BOOT_CMD_MKENT(reboot, 0, 1, do_vboot_reboot, "", ""),
 	U_BOOT_CMD_MKENT(poweroff, 0, 1, do_vboot_poweroff, "", ""),
 };
 
@@ -244,6 +252,7 @@ U_BOOT_CMD(vboot_test, CONFIG_SYS_MAXARGS, 1, do_vboot_test,
 	"vboot_test fwrw [length] - test the firmware read/write\n"
 	"vboot_test memwipe - test the memory wipe functions\n"
 	"vboot_test gpio - print the status of gpio\n"
+	"vboot_test reboot - test reboot (board will be rebooted!)\n"
 	"vboot_test poweroff - test poweroff (board will be shut down!)\n"
 );
 
