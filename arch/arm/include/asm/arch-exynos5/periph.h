@@ -57,6 +57,7 @@ enum periph_id {
 	PERIPH_ID_I2C5,
 	PERIPH_ID_I2C6,
 	PERIPH_ID_I2C7,
+	PERIPH_ID_DPHPD,	/* eDP hot plug detect */
 
 	PERIPH_ID_COUNT,
 	PERIPH_ID_NONE = -1,

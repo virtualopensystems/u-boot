@@ -281,6 +281,10 @@ int exynos_pinmux_config(enum periph_id peripheral, int flags)
 		gpio_cfg_pin(GPIO_B22, GPIO_FUNC(0x3));
 		gpio_cfg_pin(GPIO_B23, GPIO_FUNC(0x3));
 		break;
+	case PERIPH_ID_DPHPD:
+		/* Set Hotplug detect for DP */
+		gpio_cfg_pin(GPIO_X07, GPIO_FUNC(0x3));
+		break;
 	default:
 		debug("%s: invalid peripheral %d", __func__, peripheral);
 		return -1;
