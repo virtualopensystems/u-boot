@@ -23,8 +23,11 @@
  */
 
 #include <common.h>
+#include <lcd.h>
+#include <pwm.h>
 #include <asm/io.h>
 #include <asm/errno.h>
+#include <asm/unaligned.h>
 #include <asm/arch/clk.h>
 #include <asm/arch/dsim.h>
 #include <asm/arch/fimd.h>
@@ -32,10 +35,11 @@
 #include <asm/arch/pinmux.h>
 #include <asm/arch/power.h>
 #include <asm/arch/pwm.h>
+#include <asm/arch/s5p-dp.h>
 #include <asm/arch/sysreg.h>
-#include <lcd.h>
-#include <pwm.h>
-#include <asm/unaligned.h>
+#include <asm/arch-exynos/spl.h>
+
+#include "s5p-dp-core.h"
 
 /* MIPI DSI Processor-to-Peripheral transaction types */
 enum {
@@ -57,6 +61,54 @@ vidinfo_t panel_info = {
 	.vl_col		= LCD_XRES,
 	.vl_row		= LCD_YRES,
 	.vl_bpix	= LCD_COLOR16,
+};
+
+static struct exynos5_fimd_panel global_panel_data[2] = {
+	{
+		/* Display I/F is eDP */
+		.is_dp = 1,
+		.is_mipi = 0,
+		.fixvclk = 0,
+		.ivclk = 0,
+		.clkval_f = 2,
+		.upper_margin = 14,
+		.lower_margin = 3,
+		.vsync = 5,
+		.left_margin = 80,
+		.right_margin = 48,
+		.hsync = 32,
+	}, {
+		/* Display I/F is MIPI */
+		.is_dp = 0,
+		.is_mipi = 1,
+		.fixvclk = 1,
+		.ivclk = 1,
+		.clkval_f = 0xb,
+		.upper_margin = 3,
+		.lower_margin = 3,
+		.vsync = 3,
+		.left_margin = 3,
+		.right_margin = 3,
+		.hsync = 3,
+	}
+};
+
+static struct s5p_dp_device dp_device;
+
+static struct video_info smdk5250_dp_config = {
+	.name			= "eDP-LVDS NXP PTN3460",
+
+	.h_sync_polarity	= 0,
+	.v_sync_polarity	= 0,
+	.interlaced		= 0,
+
+	.color_space		= COLOR_RGB,
+	.dynamic_range		= VESA,
+	.ycbcr_coeff		= COLOR_YCBCR601,
+	.color_depth		= COLOR_8,
+
+	.link_rate		= LINK_RATE_2_70GBPS,
+	.lane_count		= LANE_COUNT2,
 };
 
 void lcd_show_board_info()
@@ -353,8 +405,9 @@ static void mipi_init(void)
  * Initialize display controller.
  *
  * @param lcdbase	pointer to the base address of framebuffer.
+ * @pd			pointer to the main panel_data structure
  */
-static void fb_init(void *lcdbase)
+static void fb_init(void *lcdbase, struct exynos5_fimd_panel *pd)
 {
 	unsigned int val;
 	ulong fbsize;
@@ -363,23 +416,22 @@ static void fb_init(void *lcdbase)
 	struct exynos5_disp_ctrl *disp_ctrl =
 		(struct exynos5_disp_ctrl *)samsung_get_base_disp_ctrl();
 
-	writel(VCLK_RISING_EDGE | VCLK_RUNNING, &disp_ctrl->vidcon1);
-
-	val = ENVID_ON | ENVID_F_ON | (CLKVAL_F << CLKVAL_F_OFFSET);
+	writel(pd->ivclk | pd->fixvclk, &disp_ctrl->vidcon1);
+	val = ENVID_ON | ENVID_F_ON | (pd->clkval_f << CLKVAL_F_OFFSET);
 	writel(val, &fimd->vidcon0);
 
-	val = (VSYNC_PULSE_WIDTH_VAL << VSYNC_PULSE_WIDTH_OFFSET) |
-		(V_FRONT_PORCH_VAL << V_FRONT_PORCH_OFFSET) |
-		(V_BACK_PORCH_VAL << V_BACK_PORCH_OFFSET);
+	val = (pd->vsync << VSYNC_PULSE_WIDTH_OFFSET) |
+		(pd->lower_margin << V_FRONT_PORCH_OFFSET) |
+		(pd->upper_margin << V_BACK_PORCH_OFFSET);
 	writel(val, &disp_ctrl->vidtcon0);
 
-	val = (HSYNC_PULSE_WIDTH_VAL << HSYNC_PULSE_WIDTH_OFFSET) |
-		(H_FRONT_PORCH_VAL << H_FRONT_PORCH_OFFSET) |
-		(H_BACK_PORCH_VAL << H_BACK_PORCH_OFFSET);
+	val = (pd->hsync << HSYNC_PULSE_WIDTH_OFFSET) |
+		(pd->right_margin << H_FRONT_PORCH_OFFSET) |
+		(pd->left_margin << H_BACK_PORCH_OFFSET);
 	writel(val, &disp_ctrl->vidtcon1);
 
-	val = ((LCD_XRES - 1) << HOZVAL_OFFSET) |
-		((LCD_YRES - 1) << LINEVAL_OFFSET);
+	val = ((pd->xres - 1) << HOZVAL_OFFSET) |
+		((pd->yres - 1) << LINEVAL_OFFSET);
 	writel(val, &disp_ctrl->vidtcon2);
 
 	writel((unsigned int)lcd_base, &fimd->vidw00add0b0);
@@ -387,18 +439,21 @@ static void fb_init(void *lcdbase)
 	fbsize = calc_fbsize();
 	writel((unsigned int)lcd_base + fbsize, &fimd->vidw00add1b0);
 
-	writel(LCD_XRES * 2, &fimd->vidw00add2);
+	writel(pd->xres * 2, &fimd->vidw00add2);
 
-	val = ((LCD_XRES - 1) << OSD_RIGHTBOTX_F_OFFSET);
-	val |= ((LCD_YRES - 1) << OSD_RIGHTBOTY_F_OFFSET);
+	val = ((pd->xres - 1) << OSD_RIGHTBOTX_F_OFFSET);
+	val |= ((pd->yres - 1) << OSD_RIGHTBOTY_F_OFFSET);
 	writel(val, &fimd->vidosd0b);
-	writel(LCD_XRES * LCD_YRES, &fimd->vidosd0c);
+	writel(pd->xres * pd->yres, &fimd->vidosd0c);
 
 	setbits_le32(&fimd->shadowcon, CHANNEL0_EN);
 
 	val = BPPMODE_F_RGB_16BIT_565 << BPPMODE_F_OFFSET;
 	val |= ENWIN_F_ENABLE | HALF_WORD_SWAP_EN;
 	writel(val, &fimd->wincon0);
+
+	/* DPCLKCON_ENABLE */
+	writel(1 << 1, &fimd->dpclkcon);
 }
 
 void exynos_fimd_disable(void)
@@ -410,12 +465,432 @@ void exynos_fimd_disable(void)
 	clrbits_le32(&fimd->shadowcon, CHANNEL0_EN);
 }
 
+/*
+ * Configure DP in slave mode and wait for video stream.
+ *
+ * param dp		pointer to main s5p-dp structure
+ * param video_info	pointer to main video_info structure.
+ * return		status
+ */
+static int s5p_dp_config_video(struct s5p_dp_device *dp,
+			struct video_info *video_info)
+{
+	int timeout = 0;
+	ulong start;
+	struct exynos5_dp *base = dp->base;
+
+	s5p_dp_config_video_slave_mode(dp, video_info);
+
+	s5p_dp_set_video_color_format(dp, video_info->color_depth,
+			video_info->color_space,
+			video_info->dynamic_range,
+			video_info->ycbcr_coeff);
+
+	if (s5p_dp_get_pll_lock_status(dp) == PLL_UNLOCKED) {
+		debug("PLL is not locked yet.\n");
+		return -EINVAL;
+	}
+
+	start = get_timer(0);
+	do {
+		if (s5p_dp_is_slave_video_stream_clock_on(dp) == 0) {
+			timeout++;
+			break;
+		}
+	} while (get_timer(start) <= STREAM_ON_TIMEOUT);
+
+	if (!timeout) {
+		debug("Video Clock Not ok\n");
+		return -1;
+	}
+
+	/* Set to use the register calculated M/N video */
+	s5p_dp_set_video_cr_mn(dp, CALCULATED_M, 0, 0);
+
+	clrbits_le32(&base->video_ctl_10, FORMAT_SEL);
+
+	/* Disable video mute */
+	clrbits_le32(&base->video_ctl_1, HDCP_VIDEO_MUTE);
+
+	/* Configure video slave mode */
+	s5p_dp_enable_video_master(dp);
+
+	/* Enable video */
+	setbits_le32(&base->video_ctl_1, VIDEO_EN);
+	timeout = s5p_dp_is_video_stream_on(dp);
+
+	if (timeout) {
+		debug("Video Stream Not on\n");
+		return -1;
+	}
+
+	return 0;
+}
+
+/*
+ * Set DP to enhanced mode. We use this for EVT1
+ * param dp	pointer to main s5p-dp structure
+ * return	status
+ */
+static int s5p_dp_enable_rx_to_enhanced_mode(struct s5p_dp_device *dp)
+{
+	u8 data;
+
+	if (s5p_dp_read_byte_from_dpcd(dp, DPCD_ADDR_LANE_COUNT_SET, &data)) {
+		debug("DPCD read error\n");
+		return -1;
+	}
+
+	if (s5p_dp_write_byte_to_dpcd(dp, DPCD_ADDR_LANE_COUNT_SET,
+					DPCD_ENHANCED_FRAME_EN |
+					(data & DPCD_LANE_COUNT_SET_MASK))) {
+		debug("DPCD write error\n");
+		return -1;
+	}
+
+	return 0;
+}
+
+/*
+ * Enable scrambles mode. We use this for EVT1
+ * param dp	pointer to main s5p-dp structure
+ * return	status
+ */
+static int s5p_dp_enable_scramble(struct s5p_dp_device *dp)
+{
+	u8 data;
+	struct exynos5_dp *base = dp->base;
+
+	clrbits_le32(&base->dp_training_ptn_set, SCRAMBLING_DISABLE);
+
+	if (s5p_dp_read_byte_from_dpcd(dp, DPCD_ADDR_TRAINING_PATTERN_SET,
+								&data)) {
+		debug("DPCD read error\n");
+		return -1;
+	}
+
+	if (s5p_dp_write_byte_to_dpcd(dp, DPCD_ADDR_TRAINING_PATTERN_SET,
+				(u8)(data & ~DPCD_SCRAMBLING_DISABLED))) {
+		debug("DPCD write error\n");
+		return -1;
+	}
+
+	return 0;
+}
+
+/*
+ * Reset DP and prepare DP for init training
+ * param dp	pointer to main s5p-dp structure
+ */
+static void s5p_dp_init_dp(struct s5p_dp_device *dp)
+{
+	u32 reg;
+	struct exynos5_dp *base = dp->base;
+
+	s5p_dp_reset(dp);
+
+	/* SW defined function Normal operation */
+	clrbits_le32(&base->func_en_1, SW_FUNC_EN_N);
+
+	s5p_dp_init_analog_func(dp);
+
+	/* Init HPD */
+	reg = HOTPLUG_CHG | HPD_LOST | PLUG;
+	writel(reg, &base->common_int_sta_4);
+
+	writel(INT_HPD, &base->int_sta_mask);
+
+	clrbits_le32(&base->func_en_1, F_HPD | HPD_CTRL);
+
+	s5p_dp_init_aux(dp);
+}
+
+/*
+ * Set pre-emphasis level
+ * param dp		pointer to main s5p-dp structure
+ * param pre_emphasis	pre-emphasis level
+ * param lane		lane number(0 - 3)
+ * return		status
+ */
+static int s5p_dp_set_lane_lane_pre_emphasis(struct s5p_dp_device *dp,
+					int pre_emphasis, int lane)
+{
+	u32 reg;
+	struct exynos5_dp *base = dp->base;
+
+	reg = pre_emphasis << PRE_EMPHASIS_SET_SHIFT;
+	switch (lane) {
+	case 0:
+		writel(reg, &base->ln0_link_trn_ctl);
+		break;
+	case 1:
+		writel(reg, &base->ln1_link_trn_ctl);
+		break;
+
+	case 2:
+		writel(reg, &base->ln2_link_trn_ctl);
+		break;
+
+	case 3:
+		writel(reg, &base->ln3_link_trn_ctl);
+		break;
+	default:
+		return -1;
+	}
+	return 0;
+}
+
+/*
+ * Read supported bandwidth type
+ * param dp		pointer to main s5p-dp structure
+ * param bandwidth	pointer to variable holding bandwidth type
+ */
+static void s5p_dp_get_max_rx_bandwidth(struct s5p_dp_device *dp,
+			u8 *bandwidth)
+{
+	u8 data;
+
+	/*
+	 * For DP rev.1.1, Maximum link rate of Main Link lanes
+	 * 0x06 = 1.62 Gbps, 0x0a = 2.7 Gbps
+	 */
+	s5p_dp_read_byte_from_dpcd(dp, DPCD_ADDR_MAX_LINK_RATE, &data);
+	*bandwidth = data;
+}
+
+/*
+ * Reset DP and prepare DP for init training
+ * param dp		pointer to main s5p-dp structure
+ * param lane_count	pointer to variable holding no of lanes
+ */
+static void s5p_dp_get_max_rx_lane_count(struct s5p_dp_device *dp,
+			u8 *lane_count)
+{
+	u8 data;
+
+	/*
+	 * For DP rev.1.1, Maximum number of Main Link lanes
+	 * 0x01 = 1 lane, 0x02 = 2 lanes, 0x04 = 4 lanes
+	 */
+	s5p_dp_read_byte_from_dpcd(dp, DPCD_ADDR_MAX_LANE_COUNT, &data);
+	*lane_count = data & DPCD_MAX_LANE_COUNT_MASK;
+}
+
+/*
+ * DP H/w Link Training. Set DPCD link rate and bandwidth.
+ * param dp		pointer to main s5p-dp structure
+ * param max_lane	No of lanes
+ * param max_rate	bandwidth
+ * return status
+ */
+static int s5p_dp_hw_link_training(struct s5p_dp_device *dp,
+				unsigned int max_lane,
+				unsigned int max_rate)
+{
+	u32 data;
+	int lane;
+	struct exynos5_dp *base = dp->base;
+
+	/* Stop Video */
+	clrbits_le32(&base->video_ctl_1, VIDEO_EN);
+
+	if (s5p_dp_get_pll_lock_status(dp) == PLL_UNLOCKED) {
+		debug("PLL is not locked yet.\n");
+		return -1;
+	}
+
+	/* Reset Macro */
+	setbits_le32(&base->dp_phy_test, MACRO_RST);
+
+	/* 10 us is the minimum reset time. */
+	udelay(10);
+
+	clrbits_le32(&base->dp_phy_test, MACRO_RST);
+
+	/* Set TX pre-emphasis to minimum */
+	for (lane = 0; lane < max_lane; lane++)
+		if (s5p_dp_set_lane_lane_pre_emphasis(dp,
+			PRE_EMPHASIS_LEVEL_0, lane)) {
+			debug("Unable to set pre emphasis level\n");
+			return -1;
+		}
+
+	/* All DP analog module power up */
+	writel(0x00, &base->dp_phy_pd);
+
+	/* Initialize by reading RX's DPCD */
+	s5p_dp_get_max_rx_bandwidth(dp, &dp->link_train.link_rate);
+	s5p_dp_get_max_rx_lane_count(dp, &dp->link_train.lane_count);
+
+	if ((dp->link_train.link_rate != LINK_RATE_1_62GBPS) &&
+		(dp->link_train.link_rate != LINK_RATE_2_70GBPS)) {
+		debug("Rx Max Link Rate is abnormal :%x !\n",
+			dp->link_train.link_rate);
+		/* Not Retrying */
+		return -1;
+	}
+
+	if (dp->link_train.lane_count == 0) {
+		debug("Rx Max Lane count is abnormal :%x !\n",
+			dp->link_train.lane_count);
+		/* Not retrying */
+		return -1;
+	}
+
+	/* Setup TX lane count & rate */
+	if (dp->link_train.lane_count > max_lane)
+		dp->link_train.lane_count = max_lane;
+	if (dp->link_train.link_rate > max_rate)
+		dp->link_train.link_rate = max_rate;
+
+	/* Set link rate and count as you want to establish*/
+	writel(dp->video_info->lane_count, &base->lane_count_set);
+	writel(dp->video_info->link_rate, &base->link_bw_set);
+
+	/* Set sink to D0 (Sink Not Ready) mode. */
+	s5p_dp_write_byte_to_dpcd(dp, DPCD_ADDR_SINK_POWER_STATE,
+				DPCD_SET_POWER_STATE_D0);
+
+	/* Start HW link training */
+	writel(HW_TRAINING_EN, &base->dp_hw_link_training);
+
+	/* Wait unitl HW link training done */
+	s5p_dp_wait_hw_link_training_done(dp);
+
+	/* Get hardware link training status */
+	data = readl(&base->dp_hw_link_training);
+	if (data != 0) {
+		debug(" H/W link training failure: 0x%x\n", data);
+		return -1;
+	}
+
+	/* Get Link Bandwidth */
+	data = readl(&base->link_bw_set);
+
+	dp->link_train.link_rate = data;
+
+	data = readl(&base->lane_count_set);
+	dp->link_train.lane_count = data;
+
+	return 0;
+}
+
+/*
+ * Initialize DP display
+ * param node		DP node
+ * return		Initialization status
+ */
+static int dp_main_init(void)
+{
+	int ret;
+	struct s5p_dp_device *dp = &dp_device;
+	struct exynos5_dp *base;
+
+	dp->video_info = &smdk5250_dp_config;
+
+	clock_init_dp_clock();
+	exynos_pinmux_config(PERIPH_ID_DPHPD, 0);
+
+	power_enable_dp_phy();
+	s5p_dp_init_dp(dp);
+
+	ret = s5p_dp_hw_link_training(dp, dp->video_info->lane_count,
+				dp->video_info->link_rate);
+	if (ret) {
+		debug("unable to do link train\n");
+		return -1;
+	}
+	/* Minimum delay after H/w Link training */
+	mdelay(1);
+
+	ret = s5p_dp_enable_scramble(dp);
+	if (ret) {
+		debug("unable to set scramble mode\n");
+		return -1;
+	}
+
+	ret = s5p_dp_enable_rx_to_enhanced_mode(dp);
+	if (ret) {
+		debug("unable to set enhanced mode\n");
+		return -1;
+	}
+
+
+	base = dp->base;
+	/* Enable enhanced mode */
+	setbits_le32(&base->sys_ctl_4, ENHANCED);
+
+	writel(dp->video_info->lane_count, &base->lane_count_set);
+	writel(dp->video_info->link_rate, &base->link_bw_set);
+
+	s5p_dp_init_video(dp);
+	ret = s5p_dp_config_video(dp, dp->video_info);
+	if (ret) {
+		debug("unable to config video\n");
+		return -1;
+	}
+
+	return 0;
+}
+
+/*
+ * Fill LCD timing data for DP or MIPI
+ * param node	DP/FIMD node
+ * return	(struct exynos5_fimd_panel *) LCD timing data
+ */
+static struct exynos5_fimd_panel *fill_panel_data(void)
+{
+	int val = 1;
+
+	global_panel_data[0].xres = panel_info.vl_col;
+	global_panel_data[0].yres = panel_info.vl_row;
+	global_panel_data[1].xres = panel_info.vl_col;
+	global_panel_data[1].yres = panel_info.vl_row;
+
+	if (val)
+		/* Display I/F is eDP */
+		return &global_panel_data[0];
+	else
+		/* Display I/F is MIPI */
+		return &global_panel_data[1];
+
+}
+
+/**
+ * Init the LCD controller
+ *
+ * @param lcdbase	Base address of LCD frame buffer
+ * @return 0 if ok, -ve error code on error
+ */
+static int init_lcd_controller(void *lcdbase)
+{
+	struct exynos5_fimd_panel *panel_data;
+	pwm_init(0, MUX_DIV_2, 0);
+
+	panel_data = fill_panel_data();
+
+	if (panel_data->is_mipi)
+		mipi_init();
+
+	fimd_bypass();
+	fb_init(lcdbase, panel_data);
+
+	if (panel_data->is_dp) {
+		if (dp_main_init()) {
+			debug("DP initialization failed\n");
+			return -2;
+		}
+	}
+
+	return 0;
+}
+
 void lcd_ctrl_init(void *lcdbase)
 {
-	exynos_pinmux_config(PERIPH_ID_BACKLIGHT, 0);
-	exynos_pinmux_config(PERIPH_ID_LCD, 0);
-	pwm_init(0, MUX_DIV_2, 0);
-	mipi_init();
-	fimd_bypass();
-	fb_init(lcdbase);
+	int ret;
+
+	/* We can't return an error, so for now print it */
+	ret = init_lcd_controller(lcdbase);
+	if (ret)
+		printf("LCD init error %d\n", ret);
 }
