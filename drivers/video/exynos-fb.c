@@ -23,6 +23,7 @@
  */
 
 #include <common.h>
+#include <fdtdec.h>
 #include <lcd.h>
 #include <pwm.h>
 #include <asm/io.h>
@@ -40,6 +41,8 @@
 #include <asm/arch-exynos/spl.h>
 
 #include "s5p-dp-core.h"
+
+DECLARE_GLOBAL_DATA_PTR;
 
 /* MIPI DSI Processor-to-Peripheral transaction types */
 enum {
@@ -780,12 +783,19 @@ static int s5p_dp_hw_link_training(struct s5p_dp_device *dp,
  * param node		DP node
  * return		Initialization status
  */
-static int dp_main_init(void)
+static int dp_main_init(int node)
 {
 	int ret;
 	struct s5p_dp_device *dp = &dp_device;
+	fdt_addr_t addr;
 	struct exynos5_dp *base;
 
+	addr = fdtdec_get_addr(gd->fdt_blob, node, "reg");
+	if (addr == FDT_ADDR_T_NONE) {
+		debug("%s: Missing dp-base\n", __func__);
+		return -1;
+	}
+	dp->base = (struct exynos5_dp *)addr;
 	dp->video_info = &smdk5250_dp_config;
 
 	clock_init_dp_clock();
@@ -838,16 +848,20 @@ static int dp_main_init(void)
  * param node	DP/FIMD node
  * return	(struct exynos5_fimd_panel *) LCD timing data
  */
-static struct exynos5_fimd_panel *fill_panel_data(void)
+static struct exynos5_fimd_panel *fill_panel_data(int node)
 {
-	int val = 1;
+	const char *interface;
+	int val;
+
+	interface = fdt_getprop(gd->fdt_blob, node, "samsung,interface", NULL);
+	val = interface && strcmp(interface, "edp");
 
 	global_panel_data[0].xres = panel_info.vl_col;
 	global_panel_data[0].yres = panel_info.vl_row;
 	global_panel_data[1].xres = panel_info.vl_col;
 	global_panel_data[1].yres = panel_info.vl_row;
 
-	if (val)
+	if (!val)
 		/* Display I/F is eDP */
 		return &global_panel_data[0];
 	else
@@ -865,9 +879,19 @@ static struct exynos5_fimd_panel *fill_panel_data(void)
 static int init_lcd_controller(void *lcdbase)
 {
 	struct exynos5_fimd_panel *panel_data;
+	int node;
+
+	/* Get the node from FDT for DP */
+	node = fdtdec_next_compatible(gd->fdt_blob, 0,
+					COMPAT_SAMSUNG_EXYNOS_DP);
+	if (node < 0) {
+		debug("EXYNOS_DP: No node for dp in device tree\n");
+		return -1;
+	}
+
 	pwm_init(0, MUX_DIV_2, 0);
 
-	panel_data = fill_panel_data();
+	panel_data = fill_panel_data(node);
 
 	if (panel_data->is_mipi)
 		mipi_init();
@@ -876,7 +900,7 @@ static int init_lcd_controller(void *lcdbase)
 	fb_init(lcdbase, panel_data);
 
 	if (panel_data->is_dp) {
-		if (dp_main_init()) {
+		if (dp_main_init(node)) {
 			debug("DP initialization failed\n");
 			return -2;
 		}
