@@ -12,6 +12,7 @@
 #include <cros/common.h>
 #include <cros/cros_gpio.h>
 
+#ifdef VBOOT_DEBUG
 int cros_gpio_dump(cros_gpio_t *gpio)
 {
 	const char const *name[CROS_GPIO_MAX_GPIO] = {
@@ -29,3 +30,9 @@ int cros_gpio_dump(cros_gpio_t *gpio)
 			gpio->port, gpio->polarity, gpio->value);
 	return 0;
 }
+#else
+int cros_gpio_dump(cros_gpio_t *gpio)
+{
+	return 0;
+}
+#endif

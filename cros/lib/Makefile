@@ -17,9 +17,7 @@ COBJS-$(CONFIG_CHROMEOS) += boot_kernel.o
 ifndef CONFIG_SYS_COREBOOT
 COBJS-$(CONFIG_CHROMEOS) += cros_gpio_fdt.o
 endif
-ifdef VBOOT_DEBUG
 COBJS-$(CONFIG_CHROMEOS) += cros_gpio_debug.o
-endif
 COBJS-$(CONFIG_CHROMEOS) += cros_init.o
 COBJS-$(CONFIG_CHROMEOS) += crossystem_data.o
 ifeq ($(CONFIG_CHROMEOS),y)

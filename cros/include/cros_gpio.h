@@ -54,10 +54,6 @@ int cros_gpio_setup(enum cros_gpio_index index, int port);
 
 int cros_gpio_fetch(enum cros_gpio_index index, cros_gpio_t *gpio);
 
-#ifdef VBOOT_DEBUG
 int cros_gpio_dump(cros_gpio_t *gpio);
-#else
-static int cros_gpio_dump(cros_gpio_t *gpio) { return 0; }
-#endif
 
 #endif /* CROS_GPIO_H__ */
