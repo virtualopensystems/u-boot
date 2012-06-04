@@ -120,6 +120,8 @@
 /* Enable Gigadevice SPI flash support for Snow board */
 #define CONFIG_SPI_FLASH_GIGADEVICE
 #define CONFIG_SF_DEFAULT_MODE SPI_MODE_0
+/* Set speed for SPI flash */
+#define CONFIG_SF_DEFAULT_SPEED	50000000
 #endif
 
 /* FLASH and environment organization */
