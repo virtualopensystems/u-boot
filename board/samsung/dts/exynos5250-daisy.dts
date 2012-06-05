@@ -70,4 +70,8 @@
 	dmc@10C00000 {
 		mem-manuf = "samsung";
 	};
+
+	dp@145b0000 {
+		samsung,interface = "mipi";
+	};
 };
