@@ -73,4 +73,8 @@
 		mem-type = "ddr3";
 		clock-frequency = <800000000>;
 	};
+
+	dp@145b0000 {
+		samsung,interface = "mipi";
+	};
 };
