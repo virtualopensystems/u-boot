@@ -444,6 +444,11 @@
 		reg = <0x10060000 0xffff>;
 	};
 
+	dp@145b0000 {
+		compatible = "samsung,exynos-dp";
+		reg = <0x145b0000 0x10000>;
+	};
+
 	spi@12d20000 {
 		compatible = "samsung,exynos-spi";
 		reg = <0x12d20000 0x30>;
