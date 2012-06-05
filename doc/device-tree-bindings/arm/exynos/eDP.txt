@@ -1,0 +1,17 @@
+Exynos eDP controller
+
+The device node for eDP controller for exynos has the following properties
+
+ - compatible :  Should be "samsung,exynos-dp"
+ - reg : tells the register base address and size of the SFR region
+ - samsung,interface : this property tells which interface the board supports:
+	edp = eDP interface is supported.
+	mipi = the board supports MIPI interface.
+
+Example:
+
+dp@145b0000 {
+	compatible = "samsung,exynos-dp";
+	reg = <0x145b0000 0x10000>;
+	samsung,interface = "edp";
+};
