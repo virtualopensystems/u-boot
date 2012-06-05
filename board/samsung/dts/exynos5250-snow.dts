@@ -37,4 +37,7 @@
 		};
 	};
 
+	dp@145b0000 {
+		samsung,interface = "edp";
+	};
 };
