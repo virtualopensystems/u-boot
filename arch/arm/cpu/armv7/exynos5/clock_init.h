@@ -104,8 +104,6 @@ struct mem_timings {
 	unsigned ctrl_rdlat;
 	unsigned ctrl_bstlen;
 
-	unsigned mem_term_en;
-	unsigned ctrl_shgate;
 	unsigned fp_resync;
 	unsigned iv_size;
 	unsigned dfi_init_start;
@@ -113,17 +111,10 @@ struct mem_timings {
 
 	unsigned rd_fetch;
 
-	unsigned zq_clk_en;
-	unsigned zq_clk_div_en;
-	unsigned zq_udt_dly;
-	unsigned zq_manual_mode;
-	unsigned zq_manual_str;
 	unsigned zq_mode_dds;
 	unsigned zq_mode_term;
 	unsigned zq_mode_noterm;	/* 1 to allow termination disable */
 
-	unsigned rdlvl_rddata_adj;
-	unsigned t_wrrdcmd;
 	unsigned memcontrol;
 	unsigned memconfig;
 

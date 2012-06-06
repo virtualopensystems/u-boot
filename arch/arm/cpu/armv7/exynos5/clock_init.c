@@ -184,8 +184,6 @@ struct mem_timings mem_timings[] = {
 		.ctrl_rdlat = 0x0b,
 		.ctrl_bstlen = 0x08,
 
-		.mem_term_en = (0x3 << 30),
-		.ctrl_shgate = (0x1 << 29),
 		.fp_resync = 0x8,
 		.iv_size = 0x7,
 		.dfi_init_start = 1,
@@ -193,14 +191,9 @@ struct mem_timings mem_timings[] = {
 
 		.rd_fetch = 0x3,
 
-		.zq_clk_en = (0x1 << 27),
 		.zq_mode_dds = 0x7,
 		.zq_mode_term = 0x1,
 		.zq_mode_noterm = 0,
-		.zq_clk_div_en = (0x1 << 18),
-		.zq_udt_dly = (0x30 << 4),
-		.zq_manual_mode = (0x1 << 2),
-		.zq_manual_str = (0x1 << 1),
 
 		/*
 		* Dynamic Clock: Always Running
