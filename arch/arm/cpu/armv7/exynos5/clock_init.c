@@ -174,13 +174,13 @@ struct mem_timings mem_timings[] = {
 		.phy1_pulld_dqs = 0xf,
 
 		.lpddr3_ctrl_phy_reset = 0x1,
-		.ctrl_start_point = (0x1 << 28),
-		.ctrl_inc = (0x1 << 20),
-		.ctrl_start = (0x1 << 6),
-		.ctrl_ddl_on = (0x1 << 5),
-		.ctrl_ref = (0x1 << 4),
+		.ctrl_start_point = 0x10,
+		.ctrl_inc = 0x10,
+		.ctrl_start = 0x1,
+		.ctrl_dll_on = 0x1,
+		.ctrl_ref = 0x8,
 
-		.ctrl_force = (0x1a << 8),
+		.ctrl_force = 0x1a,
 		.ctrl_rdlat = 0x0b,
 		.ctrl_bstlen = 0x08,
 
@@ -188,10 +188,10 @@ struct mem_timings mem_timings[] = {
 		.ctrl_shgate = (0x1 << 29),
 		.fp_resync = 0x8,
 		.iv_size = 0x7,
-		.dfi_init_start = (1 << 28),
-		.aref_en = (1 << 5),
+		.dfi_init_start = 1,
+		.aref_en = 1,
 
-		.rd_fetch = (0x3 << 12),
+		.rd_fetch = 0x3,
 
 		.zq_clk_en = (0x1 << 27),
 		.zq_mode_dds = 0x7,
@@ -228,8 +228,9 @@ struct mem_timings mem_timings[] = {
 			DMC_MEMCONFIGx_CHIP_BANK_8,
 		.membaseconfig0 = DMC_MEMBASECONFIG_VAL(0x40),
 		.membaseconfig1 = DMC_MEMBASECONFIG_VAL(0x80),
-		.prechconfig = (0xFF << 24),
-		.pwrdnconfig = ~(0xFF << 8),
+		.prechconfig_tp_cnt = 0xff,
+		.dpwrdn_cyc = 0xff,
+		.dsref_cyc = 0xffff,
 		.concontrol = DMC_CONCONTROL_DFI_INIT_START_DISABLE |
 			DMC_CONCONTROL_TIMEOUT_LEVEL0 |
 			DMC_CONCONTROL_RD_FETCH_DISABLE |
@@ -283,33 +284,26 @@ struct mem_timings mem_timings[] = {
 		.phy1_pulld_dqs = 0xf,
 
 		.lpddr3_ctrl_phy_reset = 0x1,
-		.ctrl_start_point = (0x1 << 28),
-		.ctrl_inc = (0x1 << 20),
-		.ctrl_start = (0x1 << 6),
-		.ctrl_ddl_on = (0x1 << 5),
-		.ctrl_ref = (0x1 << 4),
+		.ctrl_start_point = 0x10,
+		.ctrl_inc = 0x10,
+		.ctrl_start = 0x1,
+		.ctrl_dll_on = 0x1,
+		.ctrl_ref = 0x8,
 
-		.ctrl_force = (0x1a << 8),
+		.ctrl_force = 0x1a,
 		.ctrl_rdlat = 0x0b,
 		.ctrl_bstlen = 0x08,
 
-		.mem_term_en = (0x3 << 30),
-		.ctrl_shgate = (0x1 << 29),
 		.fp_resync = 0x8,
 		.iv_size = 0x7,
-		.dfi_init_start = (1 << 28),
-		.aref_en = (1 << 5),
+		.dfi_init_start = 1,
+		.aref_en = 1,
 
-		.rd_fetch = (0x3 << 12),
+		.rd_fetch = 0x3,
 
-		.zq_clk_en = (0x1 << 27),
 		.zq_mode_dds = 0x5,
 		.zq_mode_term = 0x1,
 		.zq_mode_noterm = 1,
-		.zq_clk_div_en = (0x1 << 18),
-		.zq_udt_dly = (0x30 << 4),
-		.zq_manual_mode = (0x1 << 2),
-		.zq_manual_str = (0x1 << 1),
 
 		/*
 		* Dynamic Clock: Always Running
@@ -337,8 +331,9 @@ struct mem_timings mem_timings[] = {
 			DMC_MEMCONFIGx_CHIP_BANK_8,
 		.membaseconfig0 = DMC_MEMBASECONFIG_VAL(0x40),
 		.membaseconfig1 = DMC_MEMBASECONFIG_VAL(0x80),
-		.prechconfig = (0xFF << 24),
-		.pwrdnconfig = ~(0xFF << 8),
+		.prechconfig_tp_cnt = 0xff,
+		.dpwrdn_cyc = 0xff,
+		.dsref_cyc = 0xffff,
 		.concontrol = DMC_CONCONTROL_DFI_INIT_START_DISABLE |
 			DMC_CONCONTROL_TIMEOUT_LEVEL0 |
 			DMC_CONCONTROL_RD_FETCH_DISABLE |

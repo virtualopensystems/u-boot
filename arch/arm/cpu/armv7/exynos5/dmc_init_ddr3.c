@@ -75,8 +75,9 @@ int ddr3_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size)
 	writel(mem->phy0_pulld_dqs, &phy0_ctrl->phy_con14);
 	writel(mem->phy1_pulld_dqs, &phy1_ctrl->phy_con14);
 
-	writel(mem->concontrol | mem->rd_fetch
-		| mem->dfi_init_start, &dmc->concontrol);
+	writel(mem->concontrol | (mem->rd_fetch << CONCONTROL_RD_FETCH_SHIFT)
+		| (mem->dfi_init_start << CONCONTROL_DFI_INIT_START_SHIFT),
+		&dmc->concontrol);
 
 	update_reset_dll(dmc, DDR_MODE_DDR3);
 
@@ -90,20 +91,23 @@ int ddr3_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size)
 	writel(mem->phy0_tFS, &phy0_ctrl->phy_con10);
 	writel(mem->phy1_tFS, &phy1_ctrl->phy_con10);
 
-	val = mem->ctrl_start_point |
-		mem->ctrl_inc |
-		mem->ctrl_ddl_on |
-		mem->ctrl_ref;
+	val = (mem->ctrl_start_point << PHY_CON12_CTRL_START_POINT_SHIFT) |
+		(mem->ctrl_inc << PHY_CON12_CTRL_INC_SHIFT) |
+		(mem->ctrl_dll_on << PHY_CON12_CTRL_DLL_ON_SHIFT) |
+		(mem->ctrl_ref << PHY_CON12_CTRL_REF_SHIFT);
 	writel(val, &phy0_ctrl->phy_con12);
 	writel(val, &phy1_ctrl->phy_con12);
 
 	/* Start DLL locking */
-	writel(val | mem->ctrl_start, &phy0_ctrl->phy_con12);
-	writel(val | mem->ctrl_start, &phy1_ctrl->phy_con12);
+	writel(val | (mem->ctrl_start << PHY_CON12_CTRL_START_SHIFT),
+		&phy0_ctrl->phy_con12);
+	writel(val | (mem->ctrl_start << PHY_CON12_CTRL_START_SHIFT),
+		&phy1_ctrl->phy_con12);
 
 	update_reset_dll(dmc, DDR_MODE_DDR3);
 
-	writel(mem->concontrol | mem->rd_fetch, &dmc->concontrol);
+	writel(mem->concontrol | (mem->rd_fetch << CONCONTROL_RD_FETCH_SHIFT),
+		&dmc->concontrol);
 
 	/* Memory Channel Inteleaving Size */
 	writel(mem->iv_size, &dmc->ivcontrol);
@@ -114,10 +118,13 @@ int ddr3_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size)
 	writel(mem->membaseconfig1, &dmc->membaseconfig1);
 
 	/* Precharge Configuration */
-	writel(mem->prechconfig, &dmc->prechconfig);
+	writel(mem->prechconfig_tp_cnt << PRECHCONFIG_TP_CNT_SHIFT,
+		&dmc->prechconfig);
 
 	/* Power Down mode Configuration */
-	writel(mem->pwrdnconfig, &dmc->pwrdnconfig);
+	writel(mem->dpwrdn_cyc << PWRDNCONFIG_DPWRDN_CYC_SHIFT |
+		mem->dsref_cyc << PWRDNCONFIG_DSREF_CYC_SHIFT,
+		&dmc->pwrdnconfig);
 
 	/* TimingRow, TimingData, TimingPower and Timingaref
 	 * values as per Memory AC parameters
@@ -150,11 +157,12 @@ int ddr3_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size)
 		writel(val, &phy0_ctrl->phy_con0);
 		writel(val, &phy1_ctrl->phy_con0);
 
-		val = mem->ctrl_start_point |
-			mem->ctrl_inc |
-			mem->ctrl_force |
-			mem->ctrl_start |
-			mem->ctrl_ref;
+		val = (mem->ctrl_start_point <<
+				PHY_CON12_CTRL_START_POINT_SHIFT) |
+			(mem->ctrl_inc << PHY_CON12_CTRL_INC_SHIFT) |
+			(mem->ctrl_force << PHY_CON12_CTRL_FORCE_SHIFT) |
+			(mem->ctrl_start << PHY_CON12_CTRL_START_SHIFT) |
+			(mem->ctrl_ref << PHY_CON12_CTRL_REF_SHIFT);
 		writel(val, &phy0_ctrl->phy_con12);
 		writel(val, &phy1_ctrl->phy_con12);
 
@@ -195,12 +203,13 @@ int ddr3_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size)
 		writel(0, &phy0_ctrl->phy_con14);
 		writel(0, &phy1_ctrl->phy_con14);
 
-		val = mem->ctrl_start_point |
-			mem->ctrl_inc |
-			mem->ctrl_force |
-			mem->ctrl_start |
-			mem->ctrl_ddl_on |
-			mem->ctrl_ref;
+		val = (mem->ctrl_start_point <<
+				PHY_CON12_CTRL_START_POINT_SHIFT) |
+			(mem->ctrl_inc << PHY_CON12_CTRL_INC_SHIFT) |
+			(mem->ctrl_force << PHY_CON12_CTRL_FORCE_SHIFT) |
+			(mem->ctrl_start << PHY_CON12_CTRL_START_SHIFT) |
+			(mem->ctrl_dll_on << PHY_CON12_CTRL_DLL_ON_SHIFT) |
+			(mem->ctrl_ref << PHY_CON12_CTRL_REF_SHIFT);
 		writel(val, &phy0_ctrl->phy_con12);
 		writel(val, &phy1_ctrl->phy_con12);
 
@@ -213,8 +222,7 @@ int ddr3_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size)
 	writel(mem->memcontrol, &dmc->memcontrol);
 
 	/* Set DMC Concontrol and enable auto-refresh counter */
-	writel(mem->concontrol | mem->rd_fetch
-		| mem->aref_en, &dmc->concontrol);
-
+	writel(mem->concontrol | (mem->rd_fetch << CONCONTROL_RD_FETCH_SHIFT)
+		| (mem->aref_en << CONCONTROL_AREF_EN_SHIFT), &dmc->concontrol);
 	return 0;
 }

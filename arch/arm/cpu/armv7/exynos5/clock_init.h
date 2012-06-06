@@ -97,7 +97,7 @@ struct mem_timings {
 	unsigned ctrl_start_point;
 	unsigned ctrl_inc;
 	unsigned ctrl_start;
-	unsigned ctrl_ddl_on;
+	unsigned ctrl_dll_on;
 	unsigned ctrl_ref;
 
 	unsigned ctrl_force;
@@ -129,8 +129,9 @@ struct mem_timings {
 
 	unsigned membaseconfig0;
 	unsigned membaseconfig1;
-	unsigned prechconfig;
-	unsigned pwrdnconfig;
+	unsigned prechconfig_tp_cnt;
+	unsigned dpwrdn_cyc;
+	unsigned dsref_cyc;
 	unsigned concontrol;
 	/* Channel and Chip Selection */
 	uint8_t dmc_channels;		/* number of memory channels */
