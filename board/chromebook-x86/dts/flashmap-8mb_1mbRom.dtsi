@@ -64,16 +64,16 @@
 		 */
 		coreboot-extra@0 {
 			label = "coreboot-extra";
-			reg = <0x00200000 0x0017f000>;
+			reg = <0x00200000 0x00170000>;
 			type = "wiped";
 			wipe-value = [ff];
 		};
 
-		/* ---- Section: Rewritable MRC cache 4KB ---- */
+		/* ---- Section: Rewritable MRC cache 64KB ---- */
 		rw-mrc-cache@0 {
 			label = "rw-mrc-cache";
 			/* Alignment: 4k (for updating) */
-			reg = <0x0037f000 0x00001000>;
+			reg = <0x00370000 0x00010000>;
 			type = "wiped";
 			wipe-value = [ff];
 		};
