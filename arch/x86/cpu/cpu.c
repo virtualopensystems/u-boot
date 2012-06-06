@@ -164,3 +164,12 @@ void __reset_cpu(ulong addr)
 	generate_gpf();			/* start the show */
 }
 void reset_cpu(ulong addr) __attribute__((weak, alias("__reset_cpu")));
+
+/* Define these functions to allow ehch-hcd to function */
+void flush_dcache_range(unsigned long start, unsigned long stop)
+{
+}
+
+void invalidate_dcache_range(unsigned long start, unsigned long stop)
+{
+}
