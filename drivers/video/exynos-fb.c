@@ -44,6 +44,28 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+/* To help debug any init errors here, define a list of possible errors */
+enum {
+	ERR_PLL_NOT_UNLOCKED = 2,
+	ERR_VIDEO_CLOCK_BAD,
+	ERR_VIDEO_STREAM_BAD,
+	ERR_DPCD_READ_ERROR1,		/* 5 */
+
+	ERR_DPCD_WRITE_ERROR1,
+	ERR_DPCD_READ_ERROR2,
+	ERR_DPCD_WRITE_ERROR2,
+	ERR_INVALID_LANE,
+	ERR_PLL_NOT_LOCKED,		/* 10 */
+
+	ERR_PRE_EMPHASIS_LEVELS,
+	ERR_LINK_RATE_ABNORMAL,
+	ERR_MAX_LANE_COUNT_ABNORMAL,
+	ERR_LINK_TRAINING_FAILURE,
+	ERR_MISSING_DP_BASE,		/* 15 */
+
+	ERR_NO_FDT_NODE,
+};
+
 /* MIPI DSI Processor-to-Peripheral transaction types */
 enum {
 	/* Add other types here as and when required */
@@ -116,17 +138,14 @@ static struct video_info smdk5250_dp_config = {
 
 void lcd_show_board_info()
 {
-	return;
 }
 
 void lcd_enable()
 {
-	return;
 }
 
 void lcd_setcolreg(ushort regno, ushort red, ushort green, ushort blue)
 {
-	return;
 }
 
 /* Bypass FIMD of DISP1_BLK */
@@ -491,7 +510,7 @@ static int s5p_dp_config_video(struct s5p_dp_device *dp,
 
 	if (s5p_dp_get_pll_lock_status(dp) == PLL_UNLOCKED) {
 		debug("PLL is not locked yet.\n");
-		return -EINVAL;
+		return -ERR_PLL_NOT_UNLOCKED;
 	}
 
 	start = get_timer(0);
@@ -504,7 +523,7 @@ static int s5p_dp_config_video(struct s5p_dp_device *dp,
 
 	if (!timeout) {
 		debug("Video Clock Not ok\n");
-		return -1;
+		return -ERR_VIDEO_CLOCK_BAD;
 	}
 
 	/* Set to use the register calculated M/N video */
@@ -524,7 +543,7 @@ static int s5p_dp_config_video(struct s5p_dp_device *dp,
 
 	if (timeout) {
 		debug("Video Stream Not on\n");
-		return -1;
+		return -ERR_VIDEO_STREAM_BAD;
 	}
 
 	return 0;
@@ -541,14 +560,14 @@ static int s5p_dp_enable_rx_to_enhanced_mode(struct s5p_dp_device *dp)
 
 	if (s5p_dp_read_byte_from_dpcd(dp, DPCD_ADDR_LANE_COUNT_SET, &data)) {
 		debug("DPCD read error\n");
-		return -1;
+		return -ERR_DPCD_READ_ERROR1;
 	}
 
 	if (s5p_dp_write_byte_to_dpcd(dp, DPCD_ADDR_LANE_COUNT_SET,
 					DPCD_ENHANCED_FRAME_EN |
 					(data & DPCD_LANE_COUNT_SET_MASK))) {
 		debug("DPCD write error\n");
-		return -1;
+		return -ERR_DPCD_WRITE_ERROR1;
 	}
 
 	return 0;
@@ -569,13 +588,13 @@ static int s5p_dp_enable_scramble(struct s5p_dp_device *dp)
 	if (s5p_dp_read_byte_from_dpcd(dp, DPCD_ADDR_TRAINING_PATTERN_SET,
 								&data)) {
 		debug("DPCD read error\n");
-		return -1;
+		return -ERR_DPCD_READ_ERROR2;
 	}
 
 	if (s5p_dp_write_byte_to_dpcd(dp, DPCD_ADDR_TRAINING_PATTERN_SET,
 				(u8)(data & ~DPCD_SCRAMBLING_DISABLED))) {
 		debug("DPCD write error\n");
-		return -1;
+		return -ERR_DPCD_WRITE_ERROR2;
 	}
 
 	return 0;
@@ -638,7 +657,8 @@ static int s5p_dp_set_lane_lane_pre_emphasis(struct s5p_dp_device *dp,
 		writel(reg, &base->ln3_link_trn_ctl);
 		break;
 	default:
-		return -1;
+		debug("%s: Invalid lane %d\n", lane);
+		return -ERR_INVALID_LANE;
 	}
 	return 0;
 }
@@ -699,7 +719,7 @@ static int s5p_dp_hw_link_training(struct s5p_dp_device *dp,
 
 	if (s5p_dp_get_pll_lock_status(dp) == PLL_UNLOCKED) {
 		debug("PLL is not locked yet.\n");
-		return -1;
+		return -ERR_PLL_NOT_LOCKED;
 	}
 
 	/* Reset Macro */
@@ -715,7 +735,7 @@ static int s5p_dp_hw_link_training(struct s5p_dp_device *dp,
 		if (s5p_dp_set_lane_lane_pre_emphasis(dp,
 			PRE_EMPHASIS_LEVEL_0, lane)) {
 			debug("Unable to set pre emphasis level\n");
-			return -1;
+			return -ERR_PRE_EMPHASIS_LEVELS;
 		}
 
 	/* All DP analog module power up */
@@ -730,14 +750,14 @@ static int s5p_dp_hw_link_training(struct s5p_dp_device *dp,
 		debug("Rx Max Link Rate is abnormal :%x !\n",
 			dp->link_train.link_rate);
 		/* Not Retrying */
-		return -1;
+		return -ERR_LINK_RATE_ABNORMAL;
 	}
 
 	if (dp->link_train.lane_count == 0) {
 		debug("Rx Max Lane count is abnormal :%x !\n",
 			dp->link_train.lane_count);
 		/* Not retrying */
-		return -1;
+		return -ERR_MAX_LANE_COUNT_ABNORMAL;
 	}
 
 	/* Setup TX lane count & rate */
@@ -764,7 +784,7 @@ static int s5p_dp_hw_link_training(struct s5p_dp_device *dp,
 	data = readl(&base->dp_hw_link_training);
 	if (data != 0) {
 		debug(" H/W link training failure: 0x%x\n", data);
-		return -1;
+		return -ERR_LINK_TRAINING_FAILURE;
 	}
 
 	/* Get Link Bandwidth */
@@ -793,7 +813,7 @@ static int dp_main_init(int node)
 	addr = fdtdec_get_addr(gd->fdt_blob, node, "reg");
 	if (addr == FDT_ADDR_T_NONE) {
 		debug("%s: Missing dp-base\n", __func__);
-		return -1;
+		return -ERR_MISSING_DP_BASE;
 	}
 	dp->base = (struct exynos5_dp *)addr;
 	dp->video_info = &smdk5250_dp_config;
@@ -808,7 +828,7 @@ static int dp_main_init(int node)
 				dp->video_info->link_rate);
 	if (ret) {
 		debug("unable to do link train\n");
-		return -1;
+		return ret;
 	}
 	/* Minimum delay after H/w Link training */
 	mdelay(1);
@@ -816,13 +836,13 @@ static int dp_main_init(int node)
 	ret = s5p_dp_enable_scramble(dp);
 	if (ret) {
 		debug("unable to set scramble mode\n");
-		return -1;
+		return ret;
 	}
 
 	ret = s5p_dp_enable_rx_to_enhanced_mode(dp);
 	if (ret) {
 		debug("unable to set enhanced mode\n");
-		return -1;
+		return ret;
 	}
 
 
@@ -837,7 +857,7 @@ static int dp_main_init(int node)
 	ret = s5p_dp_config_video(dp, dp->video_info);
 	if (ret) {
 		debug("unable to config video\n");
-		return -1;
+		return ret;
 	}
 
 	return 0;
@@ -886,7 +906,7 @@ static int init_lcd_controller(void *lcdbase)
 					COMPAT_SAMSUNG_EXYNOS_DP);
 	if (node < 0) {
 		debug("EXYNOS_DP: No node for dp in device tree\n");
-		return -1;
+		return -ERR_NO_FDT_NODE;
 	}
 
 	pwm_init(0, MUX_DIV_2, 0);
@@ -900,9 +920,12 @@ static int init_lcd_controller(void *lcdbase)
 	fb_init(lcdbase, panel_data);
 
 	if (panel_data->is_dp) {
-		if (dp_main_init(node)) {
+		int err;
+
+		err = dp_main_init(node);
+		if (err) {
 			debug("DP initialization failed\n");
-			return -2;
+			return err;
 		}
 	}
 
