@@ -350,10 +350,10 @@
 /* Boot options */
 
 #define CONFIG_BOOTDELAY     0
-#define CONFIG_ZERO_BOOTDELAY_CHECK
 #define CONFIG_BOOTARGS		""
 
 #ifdef CONFIG_FACTORY_IMAGE
+#undef CONFIG_ZERO_BOOTDELAY_CHECK
 #define CONFIG_BOOTCOMMAND			"netboot_acpi; "\
 						"setenv bootargs root=/dev/ram0 rw init=/sbin/init i915.modeset=1 cros_legacy ramdisk_size=409600; "\
 						"usb start; "\
@@ -377,6 +377,7 @@
 							"zboot 3000000; "\
 							"fi; "
 #else
+#define CONFIG_ZERO_BOOTDELAY_CHECK
 #define CONFIG_BOOTCOMMAND			"run set_bootargs; "\
 						"setenv bootargs ${bootargs} console=uart8250,mmio,0xe0401000,115200n8; "\
 						"fatload ${devtype} ${devnum}:c 3000000 syslinux/vmlinuz.a; "\
