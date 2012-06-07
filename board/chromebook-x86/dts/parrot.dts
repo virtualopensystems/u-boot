@@ -1,0 +1,21 @@
+/dts-v1/;
+
+/include/ "skeleton.dtsi"
+/include/ "chromeos.dtsi"
+/include/ "flashmap-8mb.dtsi"
+
+/ {
+	model = "Google Parrot";
+	compatible = "google,parrot", "intel,celeron-sandybridge";
+
+	config {
+	       hwid = "X86 Parrot TEST 6638";
+	};
+
+	aliases {
+		console = "/serial";
+	};
+
+	serial {
+	};
+};
