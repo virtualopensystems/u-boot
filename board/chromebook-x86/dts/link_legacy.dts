@@ -13,11 +13,7 @@
 	       silent_console = <0>;
 	};
 
-	aliases {
-		console = "/serial@3f8";
-	};
-
-	serial@3f8 {
+	serial {
 		compatible = "ns16550";
 		reg = <0x3f8 8>;
 		reg-shift = <1>;
@@ -25,5 +21,4 @@
 		multiplier = <1>;
 		io-mapped = <1>;
 	};
-
 };

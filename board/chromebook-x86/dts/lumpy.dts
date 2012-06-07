@@ -11,11 +11,4 @@
 	config {
 	       hwid = "X86 LUMPY TEST 6638";
 	};
-
-	aliases {
-		console = "/serial";
-	};
-
-	serial {
-	};
 };
