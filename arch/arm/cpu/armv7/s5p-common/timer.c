@@ -54,16 +54,20 @@ static unsigned long timer_get_us_down(void)
 
 int timer_init(void)
 {
-	/* PWM Timer 4 */
-	pwm_init(4, MUX_DIV_4, 0);
-	pwm_config(4, 100000, 100000);
-	pwm_enable(4);
+	/* Timer may have been enabled in SPL */
+	if (!pwm_check_enabled(4)) {
+		/* PWM Timer 4 */
+		pwm_init(4, MUX_DIV_4, 0);
+		pwm_config(4, 100000, 100000);
+		pwm_enable(4);
 
-	/* Use this as the current monotonic time in us */
-	gd->timer_reset_value = 0;
+		/* Use this as the current monotonic time in us */
+		gd->timer_reset_value = 0;
 
-	/* Use this as the last timer value we saw */
-	gd->lastinc = timer_get_us_down();
+		/* Use this as the last timer value we saw */
+		gd->lastinc = timer_get_us_down();
+	}
+
 	return 0;
 }
 
