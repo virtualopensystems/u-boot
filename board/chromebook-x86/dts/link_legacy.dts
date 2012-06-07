@@ -1,6 +1,6 @@
 /dts-v1/;
 
-/include/ "skeleton.dtsi"
+/include/ "coreboot.dtsi"
 /include/ "chromeos.dtsi"
 /include/ "flashmap-8mb_1mbRom.dtsi"
 

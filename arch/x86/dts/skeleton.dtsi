@@ -8,6 +8,6 @@
         #address-cells = <1>;
         #size-cells = <1>;
         chosen { };
-	aliases { };
+        aliases { };
         memory { device_type = "memory"; reg = <0 0>; };
 };
