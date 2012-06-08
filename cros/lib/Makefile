@@ -22,6 +22,7 @@ COBJS-$(CONFIG_CHROMEOS) += firmware_storage_spi.o
 COBJS-$(CONFIG_CHROMEOS) += fmap.o
 COBJS-$(CONFIG_CHROMEOS) += gbb.o
 COBJS-$(CONFIG_CHROMEOS) += memory_wipe.o
+COBJS-$(CONFIG_CHROMEOS) += vboot_flag.o
 # TODO(clchiou): Work out the conflicts with coreboot/vboot_flag_sysinfo.o
 ifndef CONFIG_SYS_COREBOOT
 COBJS-$(CONFIG_CHROMEOS) += vboot_flag_gpio.o
