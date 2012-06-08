@@ -1,8 +1,8 @@
 /dts-v1/;
 
 /include/ "coreboot.dtsi"
-/include/ "chromeos.dtsi"
-/include/ "flashmap-8mb.dtsi"
+/include/ "chromeos-coreboot.dtsi"
+/include/ "flashmap-coreboot-8mb.dtsi"
 
 / {
 	model = "Google Lumpy";
