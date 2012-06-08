@@ -41,7 +41,7 @@ COBJS-$(CONFIG_SYS_COREBOOT) += timestamp.o
 COBJS-$(CONFIG_PCI) += pci.o
 
 SOBJS-$(CONFIG_SYS_COREBOOT) += start.o
-SOBJS-$(CONFIG_SYS_COREBOOT) += coreboot_car.o
+SOBJS-$(CONFIG_SYS_COREBOOT) += car.o
 
 SRCS	:= $(SOBJS-y:.o=.S) $(COBJS-y:.o=.c)
 OBJS	:= $(addprefix $(obj),$(SOBJS-y) $(COBJS-y))
