@@ -23,6 +23,7 @@
 		si-all@0 {
 			label = "si-all";
 			reg = <0x00000000 0x00180000>;
+			type = "ifd";
 		};
 
 		/*
@@ -32,8 +33,6 @@
 		si-desc@0 {
 			label = "si-desc";
 			reg = <0x00000000 0x00001000>;
-			type = "wiped";
-			wipe-value = [ff];
 		};
 
 		/*
@@ -43,8 +42,6 @@
 		si-me@0 {
 			label = "si-me";
 			reg = <0x00001000 0x0017f000>;
-			type = "wiped";
-			wipe-value = [ff];
 		};
 
 		/*
