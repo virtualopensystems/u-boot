@@ -185,7 +185,7 @@ static int do_vboot_test_gpio(cmd_tbl_t *cmdtp,
 	cros_gpio_t gpio;
 	int i, ret = 0;
 
-	for (i = 0; i < CROS_GPIO_MAX_GPIO; i++) {
+	for (i = 0; i < VBOOT_FLAG_MAX_FLAGS; i++) {
 		if (cros_gpio_fetch(i, &gpio)) {
 			VbExDebug("Failed to fetch GPIO, %d!\n", i);
 			ret = 1;

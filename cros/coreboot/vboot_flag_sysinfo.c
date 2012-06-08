@@ -24,9 +24,9 @@ int cros_gpio_init(void)
 	return 0;
 }
 
-int cros_gpio_fetch(enum cros_gpio_index index, cros_gpio_t *gpio)
+int cros_gpio_fetch(enum vboot_flag_id id, cros_gpio_t *gpio)
 {
-	const char const *name[CROS_GPIO_MAX_GPIO] = {
+	const char const *name[VBOOT_FLAG_MAX_FLAGS] = {
 		"write protect",
 		"recovery",
 		"developer",
@@ -36,20 +36,20 @@ int cros_gpio_fetch(enum cros_gpio_index index, cros_gpio_t *gpio)
 
 	int i;
 
-	if (index < 0 || index >= CROS_GPIO_MAX_GPIO) {
-		VBDEBUG("index out of range: %d\n", index);
+	if (id < 0 || id >= VBOOT_FLAG_MAX_FLAGS) {
+		VBDEBUG("id out of range: %d\n", id);
 		return -1;
 	}
 
 	for (i = 0; i < lib_sysinfo.num_gpios; i++) {
 		int p;
 
-		if (strncmp((char *)lib_sysinfo.gpios[i].name, name[index],
+		if (strncmp((char *)lib_sysinfo.gpios[i].name, name[id],
 						GPIO_MAX_NAME_LENGTH))
 			continue;
 
 		/* Entry found */
-		gpio->index = index;
+		gpio->id = id;
 		gpio->port = lib_sysinfo.gpios[i].port;
 		gpio->polarity = lib_sysinfo.gpios[i].polarity;
 		gpio->value = lib_sysinfo.gpios[i].value;

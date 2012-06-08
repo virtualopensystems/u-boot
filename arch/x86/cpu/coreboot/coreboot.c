@@ -267,7 +267,7 @@ int board_i8042_skip(void)
 {
 	cros_gpio_t devsw;
 
-	cros_gpio_fetch(CROS_GPIO_DEVSW, &devsw);
+	cros_gpio_fetch(VBOOT_FLAG_DEVELOPER, &devsw);
 	if (devsw.value)
 		return 0;
 	return fdtdec_get_config_int(gd->fdt_blob, "skip-i8042", 0);
@@ -278,7 +278,7 @@ int board_use_usb_keyboard(int boot_mode)
 	cros_gpio_t devsw;
 
 	/* the keyboard is needed only in developer mode and recovery mode */
-	cros_gpio_fetch(CROS_GPIO_DEVSW, &devsw);
+	cros_gpio_fetch(VBOOT_FLAG_DEVELOPER, &devsw);
 	if (!devsw.value && (boot_mode != FIRMWARE_TYPE_RECOVERY))
 		return 0;
 

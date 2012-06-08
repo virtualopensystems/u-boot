@@ -13,14 +13,14 @@
 #ifndef __VBOOT_FLAG_H__
 #define __VBOOT_FLAG_H__
 
-enum cros_gpio_index {
-	CROS_GPIO_WPSW = 0,
-	CROS_GPIO_RECSW,
-	CROS_GPIO_DEVSW,
-	CROS_GPIO_LIDSW,
-	CROS_GPIO_PWRSW,
+enum vboot_flag_id {
+	VBOOT_FLAG_WRITE_PROTECT = 0,
+	VBOOT_FLAG_RECOVERY,
+	VBOOT_FLAG_DEVELOPER,
+	VBOOT_FLAG_LID_OPEN,
+	VBOOT_FLAG_POWER_OFF,
 
-	CROS_GPIO_MAX_GPIO
+	VBOOT_FLAG_MAX_FLAGS
 };
 
 enum cros_gpio_polarity {
@@ -29,7 +29,7 @@ enum cros_gpio_polarity {
 };
 
 typedef struct {
-	enum cros_gpio_index index;
+	enum vboot_flag_id id;
 	int port;
 	int polarity;
 	int value;
@@ -46,13 +46,13 @@ int cros_gpio_init(void);
  * Board-specific setup of GPIO ports that is called from the generic
  * cros_gpio_init.
  *
- * @param index		CrOS input type of GPIO port
+ * @param id		ID of VBoot flag
  * @param port		GPIO port
  * @return zero on success and non-zero on failures
  */
-int cros_gpio_setup(enum cros_gpio_index index, int port);
+int cros_gpio_setup(enum vboot_flag_id id, int port);
 
-int cros_gpio_fetch(enum cros_gpio_index index, cros_gpio_t *gpio);
+int cros_gpio_fetch(enum vboot_flag_id id, cros_gpio_t *gpio);
 
 int cros_gpio_dump(cros_gpio_t *gpio);
 

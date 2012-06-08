@@ -583,9 +583,9 @@ twostop_init(struct twostop_fmap *fmap, firmware_storage_t *file,
 	void *gbb;
 
 	bootstage_mark_name(BOOTSTAGE_VBOOT_TWOSTOP_INIT, "twostop_init");
-	if (cros_gpio_fetch(CROS_GPIO_WPSW, &wpsw) ||
-			cros_gpio_fetch(CROS_GPIO_RECSW, &recsw) ||
-			cros_gpio_fetch(CROS_GPIO_DEVSW, &devsw)) {
+	if (cros_gpio_fetch(VBOOT_FLAG_WRITE_PROTECT, &wpsw) ||
+			cros_gpio_fetch(VBOOT_FLAG_RECOVERY, &recsw) ||
+			cros_gpio_fetch(VBOOT_FLAG_DEVELOPER, &devsw)) {
 		VBDEBUG("failed to fetch gpio\n");
 		return -1;
 	}

@@ -19,7 +19,7 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-static char *gpio_name[CROS_GPIO_MAX_GPIO] = {
+static char *gpio_name[VBOOT_FLAG_MAX_FLAGS] = {
 	"write-protect-switch",
 	"recovery-switch",
 	"developer-switch",
@@ -31,12 +31,12 @@ static int config = -1;
 static unsigned long valid_time;
 
 /* Default empty implementation */
-static int __cros_gpio_setup(enum cros_gpio_index index, int port)
+static int __cros_gpio_setup(enum vboot_flag_id id, int port)
 {
 	return 0;
 }
 
-int cros_gpio_setup(enum cros_gpio_index index, int port)
+int cros_gpio_setup(enum vboot_flag_id id, int port)
 	__attribute__((weak, alias("__cros_gpio_setup")));
 
 int cros_gpio_init(void)
@@ -50,7 +50,7 @@ int cros_gpio_init(void)
 	if (config < 0)
 		return -1;
 
-	for (i = 0; i < CROS_GPIO_MAX_GPIO; i++) {
+	for (i = 0; i < VBOOT_FLAG_MAX_FLAGS; i++) {
 		if (fdtdec_decode_gpio(blob, config, gpio_name[i], &gs)) {
 			VBDEBUG("decoding GPIO failed: %s\n", gpio_name[i]);
 			continue;
@@ -86,20 +86,20 @@ int cros_gpio_init(void)
 	return 0;
 }
 
-int cros_gpio_fetch(enum cros_gpio_index index, cros_gpio_t *gpio)
+int cros_gpio_fetch(enum vboot_flag_id id, cros_gpio_t *gpio)
 {
 	struct fdt_gpio_state gs;
 	int p;
 
 	assert(config >= 0);
-	assert(index >= 0 && index < CROS_GPIO_MAX_GPIO);
+	assert(id >= 0 && id < VBOOT_FLAG_MAX_FLAGS);
 
-	if (fdtdec_decode_gpio(gd->fdt_blob, config, gpio_name[index], &gs)) {
-		VBDEBUG("fail to decode gpio: %d\n", index);
+	if (fdtdec_decode_gpio(gd->fdt_blob, config, gpio_name[id], &gs)) {
+		VBDEBUG("fail to decode gpio: %d\n", id);
 		return -1;
 	}
 
-	gpio->index = index;
+	gpio->id = id;
 	gpio->port = gs.gpio;
 	gpio->polarity = (gs.flags & FDT_GPIO_ACTIVE_LOW) ?
 		CROS_GPIO_ACTIVE_LOW : CROS_GPIO_ACTIVE_HIGH;

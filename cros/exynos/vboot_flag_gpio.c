@@ -15,7 +15,7 @@
 #include <cros/common.h>
 #include <cros/vboot_flag.h>
 
-int cros_gpio_setup(enum cros_gpio_index index, int port)
+int cros_gpio_setup(enum vboot_flag_id id, int port)
 {
 	gpio_set_pull(port, GPIO_PULL_NONE);
 	return 0;

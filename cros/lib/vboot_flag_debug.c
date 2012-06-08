@@ -15,18 +15,18 @@
 #ifdef VBOOT_DEBUG
 int cros_gpio_dump(cros_gpio_t *gpio)
 {
-	const char const *name[CROS_GPIO_MAX_GPIO] = {
+	const char const *name[VBOOT_FLAG_MAX_FLAGS] = {
 		"wpsw", "recsw", "devsw", "lidsw", "pwrsw"
 	};
-	int index = gpio->index;
+	int id = gpio->id;
 
-	if (index < 0 || index >= CROS_GPIO_MAX_GPIO) {
-		VBDEBUG("index out of range: %d\n", index);
+	if (id < 0 || id >= VBOOT_FLAG_MAX_FLAGS) {
+		VBDEBUG("id out of range: %d\n", id);
 		return -1;
 	}
 
 	VBDEBUG("%-6s: port=%3d, polarity=%d, value=%d\n",
-			name[gpio->index],
+			name[gpio->id],
 			gpio->port, gpio->polarity, gpio->value);
 	return 0;
 }
