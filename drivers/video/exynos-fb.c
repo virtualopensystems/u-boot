@@ -657,7 +657,7 @@ static int s5p_dp_set_lane_lane_pre_emphasis(struct s5p_dp_device *dp,
 		writel(reg, &base->ln3_link_trn_ctl);
 		break;
 	default:
-		debug("%s: Invalid lane %d\n", lane);
+		debug("%s: Invalid lane %d\n", __func__, lane);
 		return -ERR_INVALID_LANE;
 	}
 	return 0;
