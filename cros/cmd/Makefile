@@ -12,7 +12,6 @@ include $(TOPDIR)/config.mk
 
 LIB	= $(obj)libcros_cmd.o
 
-COBJS-$(CONFIG_CMD_CBFS)	+= cmd_cbfs.o
 COBJS-$(CONFIG_CHROMEOS_TEST)	+= cmd_cros_tpm_test.o
 COBJS-$(CONFIG_CHROMEOS_TEST)	+= cmd_vbexport_test.o
 COBJS-$(CONFIG_CHROMEOS_TEST)	+= cmd_vboot_test.o
