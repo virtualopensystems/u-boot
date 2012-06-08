@@ -26,8 +26,8 @@ int cros_init(void)
 		return -1;
 	}
 
-	if (cros_gpio_init()) {
-		VBDEBUG("cros_gpio_init failed\n");
+	if (vboot_flag_init()) {
+		VBDEBUG("vboot_flag_init failed\n");
 		return -1;
 	}
 

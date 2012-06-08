@@ -265,9 +265,9 @@ int misc_init_r(void)
 
 int board_i8042_skip(void)
 {
-	cros_gpio_t devsw;
+	struct vboot_flag_details devsw;
 
-	cros_gpio_fetch(VBOOT_FLAG_DEVELOPER, &devsw);
+	vboot_flag_fetch(VBOOT_FLAG_DEVELOPER, &devsw);
 	if (devsw.value)
 		return 0;
 	return fdtdec_get_config_int(gd->fdt_blob, "skip-i8042", 0);
@@ -275,10 +275,10 @@ int board_i8042_skip(void)
 
 int board_use_usb_keyboard(int boot_mode)
 {
-	cros_gpio_t devsw;
+	struct vboot_flag_details devsw;
 
 	/* the keyboard is needed only in developer mode and recovery mode */
-	cros_gpio_fetch(VBOOT_FLAG_DEVELOPER, &devsw);
+	vboot_flag_fetch(VBOOT_FLAG_DEVELOPER, &devsw);
 	if (!devsw.value && (boot_mode != FIRMWARE_TYPE_RECOVERY))
 		return 0;
 

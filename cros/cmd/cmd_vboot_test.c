@@ -182,15 +182,10 @@ static int do_vboot_test_memwipe(cmd_tbl_t *cmdtp,
 static int do_vboot_test_gpio(cmd_tbl_t *cmdtp,
 		int flag, int argc, char * const argv[])
 {
-	cros_gpio_t gpio;
 	int i, ret = 0;
 
 	for (i = 0; i < VBOOT_FLAG_MAX_FLAGS; i++) {
-		if (cros_gpio_fetch(i, &gpio)) {
-			VbExDebug("Failed to fetch GPIO, %d!\n", i);
-			ret = 1;
-		}
-		if (cros_gpio_dump(&gpio)) {
+		if (vboot_flag_dump(i, NULL)) {
 			VbExDebug("Failed to dump GPIO, %d!\n", i);
 			ret = 1;
 		}

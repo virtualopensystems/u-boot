@@ -46,9 +46,9 @@ enum BinfFwIndex {
 DECLARE_GLOBAL_DATA_PTR;
 
 int crossystem_data_init(crossystem_data_t *cdata,
-		cros_gpio_t *write_protect_switch,
-		cros_gpio_t *recovery_switch,
-		cros_gpio_t *developer_switch,
+		struct vboot_flag_details *write_protect_switch,
+		struct vboot_flag_details *recovery_switch,
+		struct vboot_flag_details *developer_switch,
 		uint32_t fmap_offset,
 		uint8_t active_ec_firmware,
 		uint8_t *hardware_id,
@@ -67,9 +67,10 @@ int crossystem_data_init(crossystem_data_t *cdata,
 	cdata->boot_recovery_switch = recovery_switch->value;
 	cdata->boot_developer_switch = developer_switch->value;
 
-	cdata->polarity_write_protect_switch = write_protect_switch->polarity;
-	cdata->polarity_recovery_switch = recovery_switch->polarity;
-	cdata->polarity_developer_switch = developer_switch->polarity;
+	cdata->polarity_write_protect_switch =
+			write_protect_switch->active_high;
+	cdata->polarity_recovery_switch = recovery_switch->active_high;
+	cdata->polarity_developer_switch = developer_switch->active_high;
 
 	cdata->gpio_port_write_protect_switch = write_protect_switch->port;
 	cdata->gpio_port_recovery_switch = recovery_switch->port;

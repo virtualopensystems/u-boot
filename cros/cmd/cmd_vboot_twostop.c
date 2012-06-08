@@ -571,7 +571,7 @@ twostop_init(struct twostop_fmap *fmap, firmware_storage_t *file,
 	     void **gbbp, size_t gbb_size, crossystem_data_t *cdata,
 	     void *vb_shared_data)
 {
-	cros_gpio_t wpsw, recsw, devsw;
+	struct vboot_flag_details wpsw, recsw, devsw;
 	GoogleBinaryBlockHeader *gbbh;
 	uint8_t hardware_id[ID_LEN];
 #ifndef CONFIG_HARDWARE_MAPPED_SPI
@@ -583,15 +583,15 @@ twostop_init(struct twostop_fmap *fmap, firmware_storage_t *file,
 	void *gbb;
 
 	bootstage_mark_name(BOOTSTAGE_VBOOT_TWOSTOP_INIT, "twostop_init");
-	if (cros_gpio_fetch(VBOOT_FLAG_WRITE_PROTECT, &wpsw) ||
-			cros_gpio_fetch(VBOOT_FLAG_RECOVERY, &recsw) ||
-			cros_gpio_fetch(VBOOT_FLAG_DEVELOPER, &devsw)) {
+	if (vboot_flag_fetch(VBOOT_FLAG_WRITE_PROTECT, &wpsw) ||
+			vboot_flag_fetch(VBOOT_FLAG_RECOVERY, &recsw) ||
+			vboot_flag_fetch(VBOOT_FLAG_DEVELOPER, &devsw)) {
 		VBDEBUG("failed to fetch gpio\n");
 		return -1;
 	}
-	cros_gpio_dump(&wpsw);
-	cros_gpio_dump(&recsw);
-	cros_gpio_dump(&devsw);
+	vboot_flag_dump(VBOOT_FLAG_WRITE_PROTECT, &wpsw);
+	vboot_flag_dump(VBOOT_FLAG_RECOVERY, &recsw);
+	vboot_flag_dump(VBOOT_FLAG_DEVELOPER, &devsw);
 
 	if (cros_fdtdec_flashmap(gd->fdt_blob, fmap)) {
 		VBDEBUG("failed to decode fmap\n");

@@ -190,9 +190,9 @@ assert_offset(vb_shared_data,			0x0400);
  * @return 0 if it succeeds; non-zero if it fails
  */
 int crossystem_data_init(crossystem_data_t *cdata,
-		cros_gpio_t *write_protect_switch,
-		cros_gpio_t *recovery_switch,
-		cros_gpio_t *developer_switch,
+		struct vboot_flag_details *write_protect_switch,
+		struct vboot_flag_details *recovery_switch,
+		struct vboot_flag_details *developer_switch,
 		uint32_t fmap_offset,
 		uint8_t active_ec_firmware,
 		uint8_t *hardware_id,

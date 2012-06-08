@@ -15,15 +15,15 @@
 
 uint32_t VbExIsShutdownRequested(void)
 {
-	cros_gpio_t lidsw, pwrsw;
+	struct vboot_flag_details lidsw, pwrsw;
 
 	/* if lid is NOT OPEN */
-	if (!cros_gpio_fetch(VBOOT_FLAG_LID_OPEN, &lidsw) && !lidsw.value) {
+	if (!vboot_flag_fetch(VBOOT_FLAG_LID_OPEN, &lidsw) && !lidsw.value) {
 		VBDEBUG("Lid-closed is detected.\n");
 		return 1;
 	}
 	/* if power switch is pressed */
-	if (!cros_gpio_fetch(VBOOT_FLAG_POWER_OFF, &pwrsw) && pwrsw.value) {
+	if (!vboot_flag_fetch(VBOOT_FLAG_POWER_OFF, &pwrsw) && pwrsw.value) {
 		VBDEBUG("Power-key-pressed is detected.\n");
 		return 1;
 	}
