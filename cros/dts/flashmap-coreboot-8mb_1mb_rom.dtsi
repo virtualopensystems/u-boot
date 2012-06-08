@@ -256,7 +256,8 @@
 			label = "boot-stub";
 			reg = <0x00700000 0x00100000>; /* 1 MB */
 			read-only;
-			type = "blob signed";
+			type = "blob coreboot";
+			required;
 		};
 	};
 };
