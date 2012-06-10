@@ -178,7 +178,7 @@ struct qTD {
 	uint32_t qt_token;		/* see EHCI 3.5.3 */
 	uint32_t qt_buffer[5];		/* see EHCI 3.5.4 */
 	uint32_t qt_buffer_hi[5];	/* Appendix B */
-	/* pad struct for 32 byte alignment */
+	/* pad struct for 64 byte alignment */
 	uint32_t unused[3];
 };
 
@@ -196,9 +196,9 @@ struct QH {
 	struct qTD qh_overlay;
 	/*
 	 * Add dummy fill value to make the size of this struct
-	 * aligned to 32 bytes
+	 * aligned to 64 bytes
 	 */
-	uint32_t fill[4];
+	uint32_t fill[12];
 };
 
 /* Low level init functions */

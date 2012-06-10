@@ -251,7 +251,6 @@ ehci_submit_async(struct usb_device *dev, unsigned long pipe, void *buffer,
 {
 	struct QH *qh;
 	struct qTD *td;
-	volatile struct qTD *vtd;
 	unsigned long ts;
 	uint32_t *tdp;
 	uint32_t endpt, token, usbsts;
@@ -317,9 +316,18 @@ ehci_submit_async(struct usb_device *dev, unsigned long pipe, void *buffer,
 			ehci_free(td, sizeof(*td));
 			goto fail;
 		}
-		*tdp = cpu_to_hc32((uint32_t) td);
+		writel(cpu_to_hc32((uint32_t)td), tdp);
+		/* Flush the pointer which points at this new descriptor. */
+		flush_dcache_range((uint32_t)tdp, (uint32_t)tdp + sizeof(*tdp));
 		tdp = &td->qt_next;
 		toggle = 1;
+		/*
+		 * Make sure all the accesses to the td are finished, and then
+		 * flush it out to memory.
+		 */
+		dmb();
+		flush_dcache_range((uint32_t)td,
+			(uint32_t)td + sizeof(struct qTD));
 	}
 
 	if (length > 0 || req == NULL) {
@@ -342,8 +350,12 @@ ehci_submit_async(struct usb_device *dev, unsigned long pipe, void *buffer,
 			ehci_free(td, sizeof(*td));
 			goto fail;
 		}
-		*tdp = cpu_to_hc32((uint32_t) td);
+		writel(cpu_to_hc32((uint32_t)td), tdp);
+		flush_dcache_range((uint32_t)tdp, (uint32_t)tdp + sizeof(*tdp));
 		tdp = &td->qt_next;
+		dmb();
+		flush_dcache_range((uint32_t)td,
+			(uint32_t)td + sizeof(struct qTD));
 	}
 
 	if (req != NULL) {
@@ -361,17 +373,21 @@ ehci_submit_async(struct usb_device *dev, unsigned long pipe, void *buffer,
 		    (3 << 10) |
 		    ((usb_pipein(pipe) ? 0 : 1) << 8) | (0x80 << 0);
 		td->qt_token = cpu_to_hc32(token);
-		*tdp = cpu_to_hc32((uint32_t) td);
+		writel(cpu_to_hc32((uint32_t)td), tdp);
+		flush_dcache_range((uint32_t)tdp, (uint32_t)tdp + sizeof(*tdp));
 		tdp = &td->qt_next;
+		dmb();
+		flush_dcache_range((uint32_t)td,
+			(uint32_t)td + sizeof(struct qTD));
 	}
 
 	ctrl->qh_list.qh_link = cpu_to_hc32((uint32_t) qh | QH_LINK_TYPE_QH);
 
-	/* Flush dcache */
+	/* Ensure our writes have happened, and then flush the dcache. */
+	dmb();
 	flush_dcache_range((uint32_t)(&ctrl->qh_list),
 		(uint32_t)(&ctrl->qh_list) + sizeof(struct QH));
 	flush_dcache_range((uint32_t)qh, (uint32_t)qh + sizeof(struct QH));
-	flush_dcache_range((uint32_t)td, (uint32_t)td + sizeof(struct qTD));
 
 	usbsts = ehci_readl(&hcor->or_usbsts);
 	ehci_writel(&hcor->or_usbsts, (usbsts & 0x3f));
@@ -390,22 +406,24 @@ ehci_submit_async(struct usb_device *dev, unsigned long pipe, void *buffer,
 
 	/* Wait for TDs to be processed. */
 	ts = get_timer(0);
-	vtd = td;
 	timeout = USB_TIMEOUT_MS(pipe);
 	do {
 		/* Invalidate dcache */
-		invalidate_dcache_range((uint32_t)(&ctrl->qh_list),
-			(uint32_t)(&ctrl->qh_list) + sizeof(struct QH));
-		invalidate_dcache_range((uint32_t)qh,
-			(uint32_t)qh + sizeof(struct QH));
+		dmb();
 		invalidate_dcache_range((uint32_t)td,
 			(uint32_t)td + sizeof(struct qTD));
 
-		token = hc32_to_cpu(vtd->qt_token);
+		token = hc32_to_cpu(readl(&td->qt_token));
 		if (!(token & 0x80))
 			break;
 		WATCHDOG_RESET();
 	} while (get_timer(ts) < timeout);
+
+	dmb();
+	invalidate_dcache_range((uint32_t)(&ctrl->qh_list),
+		(uint32_t)(&ctrl->qh_list) + sizeof(struct QH));
+	invalidate_dcache_range((uint32_t)qh,
+		(uint32_t)qh + sizeof(struct QH));
 
 	/* Invalidate the memory area occupied by buffer */
 	invalidate_dcache_range(((uint32_t)buffer & ~(ARCH_DMA_MINALIGN - 1)),
