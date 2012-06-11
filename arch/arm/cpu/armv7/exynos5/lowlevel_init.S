@@ -107,7 +107,7 @@ lowlevel_init:
 
 #if defined(CONFIG_SPL_BUILD)
 	/* Serial initialize only for SPL */
-	bl	early_serial_init
+	bl	spl_early_init
 	/* Memory initialize */
 	bl	mem_ctrl_init
 #endif
@@ -119,7 +119,7 @@ lowlevel_init:
 wakeup_reset:
 	bl	system_clock_init
 #if defined(CONFIG_SPL_BUILD)
-	bl	early_serial_init
+	bl	spl_early_init
 	bl	mem_ctrl_init
 #endif
 	bl	tzpc_init

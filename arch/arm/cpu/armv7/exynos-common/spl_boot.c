@@ -142,11 +142,11 @@ void memzero(void *s, size_t n)
 }
 
 /*
- * Initialize the serial driver in SPL u-boot.
+ * Initialize the timer and serial driver in SPL u-boot.
  * Besides the serial driver, it also setup the minimal set of its dependency,
  * like gd struct, pinmux, and serial.
  */
-void early_serial_init(void)
+void spl_early_init(void)
 {
 	/*
 	 * The gd struct is only needed for serial initialization. Since this
