@@ -108,5 +108,15 @@ VbError_t nvstorage_write_disk(const uint8_t *buf)
 	}
 
 	VbExFree(block_buf);
+
+#ifdef CONFIG_EXYNOS5
+	/*
+	 * XXX(chrome-os-partner:10415): On Exynos, reliable write operations
+	 * need write busy time; so add a delay here.  In the long run, we
+	 * should avoid using eMMC as VbNvContext storage media.
+	 */
+	mdelay(1);
+#endif
+
 	return VBERROR_SUCCESS;
 }
