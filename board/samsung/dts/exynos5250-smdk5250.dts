@@ -11,6 +11,10 @@
 
 /dts-v1/;
 /include/ "exynos5250.dtsi"
+/include/ "flashmap-exynos-ro.dtsi"
+/include/ "flashmap-4mb-rw.dtsi"
+/include/ "chromeos-exynos.dtsi"
+/include/ "cros5250-common.dtsi"
 
 / {
 	model = "SAMSUNG SMDK5250 board based on EXYNOS5250";
@@ -77,6 +81,7 @@
 	dmc@10C00000 {
 		mem-interleave-size = <0x1f>;
 		mem-type = "ddr3";
+		mem-manuf = "samsung";
 		clock-frequency = <800000000>;
 	};
 
