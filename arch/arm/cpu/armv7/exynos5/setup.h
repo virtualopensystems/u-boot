@@ -386,7 +386,7 @@
 				| (UART1_RATIO << 4)    \
 				| (UART0_RATIO))
 /* CLK_DIV_PERIC1 */
-#define SPI1_RATIO		0xf
+#define SPI1_RATIO		0x7
 #define SPI0_RATIO		0xf
 #define SPI1_SUB_RATIO		0x0
 #define SPI0_SUB_RATIO		0x0
