@@ -10,7 +10,7 @@
 
 / {
 	chromeos-config {
-		twostop;                /* Two-stop boot */
+		twostop;		/* Two-stop boot */
 		twostop-optional;       /* One-stop optimization enabled */
 
 		/* Memory addresses for kernel, cros-system and gbb */
@@ -36,11 +36,11 @@
 		bootargs = "";
 	};
 
-        /* Use default values */
-        spi {
-                firmware_storage_spi: flash@0 {
+	/* Use default values */
+	spi {
+		firmware_storage_spi: flash@0 {
 		      spi-cpol;
 		      spi-cpha;
-                };
-        };
+		};
+	};
 };

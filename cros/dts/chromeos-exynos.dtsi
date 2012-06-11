@@ -11,7 +11,7 @@
 
 / {
 	chromeos-config {
-		twostop;                /* Two-stop boot */
+		twostop;		/* Two-stop boot */
 		twostop-optional;       /* One-stop optimization enabled */
 		textbase = <0x43e00000>;/* Address where U-Boot loads */
 		twostop-device = "emmc";/* Place for second stage firmware */

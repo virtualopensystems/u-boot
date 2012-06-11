@@ -210,7 +210,7 @@
 			wipe-value = [ff];
 		};
 
-                /* ---- Section: Vital-product data (VPD) ---- */
+		/* ---- Section: Vital-product data (VPD) ---- */
 		ro-vpd@0 {
 			label = "ro-vpd";
 
@@ -233,7 +233,7 @@
 			wipe-value = [ff];
 		};
 
-                /* ---- Section: Read-only ---- */
+		/* ---- Section: Read-only ---- */
 		ro-section@0 {
 			label = "ro-section";
 			reg = <0x00670000 0x00190000>;

@@ -23,9 +23,9 @@
 	 * cros_bundle_firmware.
 	 */
 	flash@0 {
-                /* ---- Section: Read-only ---- */
+		/* ---- Section: Read-only ---- */
 		ro-section@0 {
-                        label = "ro-section";
+			label = "ro-section";
 			reg = <0x00000000 0x000f0000>;
 			read-only;
 		};
@@ -71,13 +71,13 @@
 			type = "blob gbb";
 		};
 		ro-data@f0000 {
-		        /* Currently unused, simply for padding */
+			/* Currently unused, simply for padding */
 			label = "ro-data";
 			reg = <0x000f0000 0x00000000>;
 			read-only;
 		};
 
-                /* ---- Section: Vital-product data (VPD) ---- */
+		/* ---- Section: Vital-product data (VPD) ---- */
 		ro-vpd@f0000 {
 			label = "ro-vpd";
 

@@ -10,7 +10,7 @@
 
 / {
 	chromeos-config {
-		twostop;                /* Two-stop boot */
+		twostop;		/* Two-stop boot */
 		twostop-optional;       /* One-stop optimization enabled */
 		textbase = <0xe08000>;  /* Address where U-Boot loads */
 

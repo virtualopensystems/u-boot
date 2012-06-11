@@ -21,7 +21,7 @@
 	 * seems a bit too brave at present.
 	 */
 	flash@0 {
-                /* ---- Section: Read-only ---- */
+		/* ---- Section: Read-only ---- */
 		ro-section {
 			label = "ro-section";
 			reg = <0x00000000 0x00100000>;
@@ -69,7 +69,7 @@
 			ver-minor = <0>;
 		};
 
-                /* ---- Section: Vital-product data (VPD) ---- */
+		/* ---- Section: Vital-product data (VPD) ---- */
 		ro-vpd {
 			label = "ro-vpd";
 

@@ -193,7 +193,7 @@
 			type = "blobstring fwid";
 		};
 
-                /* ---- Section: Vital-product data (VPD) ---- */
+		/* ---- Section: Vital-product data (VPD) ---- */
 		ro-vpd@0 {
 			label = "ro-vpd";
 
@@ -204,9 +204,9 @@
 			wipe-value = [ff];
 		};
 
-                /* ---- Section: Read-only ---- */
+		/* ---- Section: Read-only ---- */
 		ro-section@0 {
-                        label = "ro-section";
+			label = "ro-section";
 			reg = <0x005a0000 0x001e0000>;
 			read-only;
 		};
@@ -239,7 +239,7 @@
 			read-only;
 		};
 		ro-data@0 {
-		        /* Currently unused, simply for padding */
+			/* Currently unused, simply for padding */
 			label = "ro-data";
 			reg = <0x00680000 0x00040000>;
 			read-only;
