@@ -35,6 +35,10 @@
 			compatible = "google,gpio-flag";
 			gpio = <&gpio 168 0>;
 		};
+		vboot-flag-lid-open {
+			compatible = "google,const-flag";
+			value = <1>;
+		};
 		vboot-flag-power-off {
 			compatible = "google,gpio-flag";
 			gpio = <&gpio 170 1>;
