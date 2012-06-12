@@ -49,8 +49,7 @@
 			gpio = <&gpio 102 1>;
 		};
 		vboot-flag-recovery {
-			compatible = "google,gpio-flag";
-			gpio = <&gpio 112 1>;
+			compatible = "google,mkbp-flag";
 		};
 		vboot-flag-developer {
 			compatible = "google,gpio-flag";
