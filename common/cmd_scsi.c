@@ -135,6 +135,10 @@ void scsi_scan(int mode)
 					debug ("Selection timeout ID %d\n",pccb->target);
 					continue; /* selection timeout => assuming no device present */
 				}
+
+				/* Device present at this target/lun
+				 * but may not be ready yet.
+				 */
 				scsi_print_error(pccb);
 				continue;
 			}
