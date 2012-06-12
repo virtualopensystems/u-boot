@@ -34,6 +34,14 @@ struct mbkp_keyscan {
 	uint8_t data[MSG_KEYSCAN_BYTES];
 };
 
+/* Switch flags at mkbp_info response */
+#define MKBP_SWITCH_LID_OPEN			0x01
+#define MKBP_SWITCH_POWER_BUTTON_PRESSED	0x02
+#define MKBP_SWITCH_WRITE_PROTECT_DISABLED	0x04
+#define MKBP_SWITCH_KEYBOARD_RECOVERY		0x08
+#define MKBP_SWITCH_DEDICATED_RECOVERY		0x10
+#define MKBP_SWITCH_FAKE_DEVELOPER		0x20
+
 /* Information about the matrix */
 struct mbkp_info {
 	uint32_t rows;
