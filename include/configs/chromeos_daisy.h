@@ -22,6 +22,12 @@
 
 #define CONFIG_CHROMEOS_USB
 
+/* Support vboot flag reading from GPIO hardwrae */
+#define CONFIG_CHROMEOS_GPIO_FLAG
+
+/* Support vboot flag reading from EC */
+#define CONFIG_CHROMEOS_MKBP_FLAG
+
 /* Use the default arch_phys_memset implementation */
 #define CONFIG_PHYSMEM
 
