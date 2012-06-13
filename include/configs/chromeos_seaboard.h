@@ -16,6 +16,9 @@
 /* Support USB booting */
 #define CONFIG_CHROMEOS_USB
 
+/* Support vboot flag reading from GPIO hardware */
+#define CONFIG_CHROMEOS_GPIO_FLAG
+
 #define CONFIG_INITRD_ADDRESS 0x12008000
 
 #include "chromeos.h"
