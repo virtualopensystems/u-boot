@@ -269,22 +269,9 @@ static int crossystem_fw_index_vdat_to_binf(int index)
 
 int crossystem_data_update_acpi(crossystem_data_t *cdata)
 {
-	const void *fdt = gd->fdt_blob;
-	int node_offset, len;
-	const uint32_t *cell;
-	chromeos_acpi_t *acpi_table;
-	VbSharedDataHeader *vdat = (VbSharedDataHeader *)lib_sysinfo.vdat_addr;
-
-	node_offset = cros_fdtdec_config_node(fdt);
-	if (node_offset < 0)
-		return 1;
-	cell = fdt_getprop(fdt, node_offset, "gnvs-vboot-table", NULL);
-	if (!cell) {
-		VBDEBUG("crossystem_data_update_acpi: Couldn't access "
-			"gnvs-vboot-table.\n");
-		return 1;
-	}
-	acpi_table = (chromeos_acpi_t *)(uintptr_t)ntohl(*cell);
+	int len;
+	chromeos_acpi_t *acpi_table = (chromeos_acpi_t *)lib_sysinfo.vdat_addr;
+	VbSharedDataHeader *vdat = (VbSharedDataHeader *)&acpi_table->vdat;
 
 	acpi_table->vbt0 = BOOT_REASON_OTHER;
 	acpi_table->vbt1 =

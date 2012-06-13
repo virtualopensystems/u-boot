@@ -46,7 +46,6 @@
 #ifdef CONFIG_HW_WATCHDOG
 #include <watchdog.h>
 #endif
-#include "chromeos.h"
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -221,8 +220,6 @@ int board_early_init_r(void)
 		goto cbfs_failed;
 	}
 	gd->fdt_blob = dtb;
-
-	chromeos_set_vboot_data_ptr();
 
 	if (map_coreboot_serial_to_fdt())
 		printf("Couldn't add serial port to FDT.\n");

@@ -174,8 +174,10 @@ twostop_init_cparams(struct twostop_fmap *fmap, void *gbb,
 	cparams->gbb_data = gbb;
 	cparams->gbb_size = fmap->readonly.gbb.length;
 #ifdef CONFIG_SYS_COREBOOT
-	cparams->shared_data_blob = lib_sysinfo.vdat_addr;
-	cparams->shared_data_size = lib_sysinfo.vdat_size;
+	cparams->shared_data_blob =
+		&((chromeos_acpi_t *)lib_sysinfo.vdat_addr)->vdat;
+	cparams->shared_data_size =
+		sizeof(((chromeos_acpi_t *)lib_sysinfo.vdat_addr)->vdat);
 #else
 	cparams->shared_data_blob = vb_shared_data;
 	cparams->shared_data_size = VB_SHARED_DATA_REC_SIZE;
