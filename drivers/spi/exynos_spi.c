@@ -161,46 +161,15 @@ void spi_free_slave(struct spi_slave *slave)
  *
  * @param slave	Pointer to spi_slave to which controller has to
  *		communicate with
- * @return zero on success else a negative value
  */
-int spi_flush_fifo(struct spi_slave *slave)
+void spi_flush_fifo(struct spi_slave *slave)
 {
 	struct exynos_spi_slave *spi_slave = to_exynos_spi(slave);
 	struct exynos_spi *regs = spi_slave->regs;
-	unsigned int fifo_lvl_mask, fifo_lvl_offset;
-	u32 sts;
-	ulong start;
 
-	writel(0, &regs->pkt_cnt);
 	clrsetbits_le32(&regs->ch_cfg, SPI_CH_HS_EN, SPI_CH_RST);
-
-	/* Flush TxFIFO and the RxFIFO */
-	fifo_lvl_mask = spi_slave->slave.bus ?
-		SPI_FIFO_LVL_MASK_CH_1_2 : SPI_FIFO_LVL_MASK_CH_0;
-	fifo_lvl_offset = SPI_TX_LVL_OFFSET;
-	start = get_timer(0);
-	for (;;) {
-		sts = readl(&regs->spi_sts);
-		if ((sts >> fifo_lvl_offset) & fifo_lvl_mask) {
-			if (fifo_lvl_offset == SPI_RX_LVL_OFFSET)
-				readl(&regs->rx_data);
-		} else {
-			if (fifo_lvl_offset == SPI_RX_LVL_OFFSET)
-				break;
-			/* Reset timeout and move on to rx fifo */
-			fifo_lvl_offset = SPI_RX_LVL_OFFSET;
-			start = get_timer(0);
-		}
-		if (get_timer(start) > SPI_TIMEOUT_MS) {
-			debug("Timeout in flushing tx/rx fifo\n");
-			return -1;
-		}
-	}
-
 	clrbits_le32(&regs->ch_cfg, SPI_CH_RST);
-	clrbits_le32(&regs->ch_cfg, SPI_TX_CH_ON | SPI_RX_CH_ON);
-
-	return 0;
+	setbits_le32(&regs->ch_cfg, SPI_TX_CH_ON | SPI_RX_CH_ON);
 }
 
 /**
@@ -216,12 +185,11 @@ int spi_claim_bus(struct spi_slave *slave)
 	struct exynos_spi_slave *spi_slave = to_exynos_spi(slave);
 	struct exynos_spi *regs = spi_slave->regs;
 	u32 reg = 0;
-	int ret;
 
 	spi_set_clk(spi_slave);
 	spi_pinmux_init(spi_slave);
 
-	ret = spi_flush_fifo(slave);
+	spi_flush_fifo(slave);
 
 	reg = readl(&regs->ch_cfg);
 	reg &= ~(SPI_CH_CPHA_B | SPI_CH_CPOL_L | SPI_SLAVE_MODE);
@@ -238,7 +206,7 @@ int spi_claim_bus(struct spi_slave *slave)
 	writel(reg, &regs->ch_cfg);
 	writel(SPI_FB_DELAY_180, &regs->fb_clk);
 
-	return ret;
+	return 0;
 }
 
 /**
@@ -250,6 +218,15 @@ int spi_claim_bus(struct spi_slave *slave)
 void spi_release_bus(struct spi_slave *slave)
 {
 	spi_flush_fifo(slave);
+}
+
+static void spi_get_fifo_levels(struct exynos_spi *regs,
+	int *rx_lvl, int *tx_lvl)
+{
+	uint32_t spi_sts = readl(&regs->spi_sts);
+
+	*rx_lvl = (spi_sts >> SPI_RX_LVL_OFFSET) & SPI_FIFO_LVL_MASK;
+	*tx_lvl = (spi_sts >> SPI_TX_LVL_OFFSET) & SPI_FIFO_LVL_MASK;
 }
 
 /**
@@ -269,91 +246,59 @@ int spi_xfer(struct spi_slave *slave, unsigned int bitlen, const void *dout,
 	struct exynos_spi_slave *spi_slave = to_exynos_spi(slave);
 	struct exynos_spi *regs = spi_slave->regs;
 	/* spi core configured to do 8 bit transfers */
-	uint bytes = bitlen / 8;
 	const uchar *txp = dout;
 	uchar *rxp = din;
-	unsigned int fifo_lvl_mask;
-	u32 sts;
-	uint i;
-	uint fifo_lvl, fifo_shift_amount = 6;
-
-	debug("%s: bus:%i cs:%i bitlen:%i bytes:%i flags:%lx\n", __func__,
-			slave->bus, slave->cs, bitlen, bytes, flags);
-
-	if (bitlen == 0)
-		return -1;
+	uint out_bytes, in_bytes;
+	int rx_lvl, tx_lvl;
+	const uint fifo_size = (spi_slave->slave.bus == 0) ? 256 : 64;
 
 	if (bitlen % 8) {
-		flags |= SPI_XFER_END;
+		debug("Non byte aligned SPI transfer.\n");
+		return -1;
+	}
+	out_bytes = in_bytes = bitlen / 8;
+	if (in_bytes > (1 << 16) - 1) {
+		debug("Transfer is too long.\n");
 		return -1;
 	}
 
-	fifo_lvl_mask = spi_slave->slave.bus ?
-		SPI_FIFO_LVL_MASK_CH_1_2 : SPI_FIFO_LVL_MASK_CH_0;
+	/*
+	 * If there's something to send, do a software reset and set a
+	 * transaction size.
+	 */
+	if (bitlen) {
+		setbits_le32(&regs->ch_cfg, SPI_CH_RST);
+		clrbits_le32(&regs->ch_cfg, SPI_CH_RST);
+		writel(in_bytes | SPI_PACKET_CNT_EN, &regs->pkt_cnt);
+	}
 
-	fifo_lvl = (fifo_lvl_mask >> 1) + 1;
-	if (!slave->bus)
-		fifo_shift_amount = 8;
-
-	writel(bytes | SPI_PACKET_CNT_EN, &regs->pkt_cnt);
-
+	/* Start the transaction, if necessary. */
 	if ((flags & SPI_XFER_BEGIN) && !(spi_slave->mode & SPI_SLAVE))
 		spi_cs_activate(slave);
 
-	clrbits_le32(&regs->cs_reg, SPI_SLAVE_SIG_INACT);
+	/*
+	 * Bytes are transmitted/received in pairs. Wait to receive all the
+	 * data because then transmission will be done as well.
+	 */
+	while (in_bytes) {
+		char temp;
 
-	if (dout) {
-		setbits_le32(&regs->ch_cfg, SPI_TX_CH_ON | SPI_RX_CH_ON);
-		for (i = 0; i < bytes; i++) {
-			uchar data;
-
-			writel(txp[i], &regs->tx_data);
-			debug("txp:0x%x", txp[i]);
-			do {
-				sts = readl(&regs->spi_sts);
-			} while (!((sts >> SPI_RX_LVL_OFFSET) &
-				fifo_lvl_mask));
-			data = readl(&regs->rx_data);
-			if (din) {
-				*rxp++ = data;
-				debug(", rxp:0x%x", data);
-			}
-			debug("\n");
+		/* Keep the fifos full/empty. */
+		spi_get_fifo_levels(regs, &rx_lvl, &tx_lvl);
+		if (tx_lvl < fifo_size && out_bytes) {
+			temp = txp ? *txp++ : 0xff;
+			writel(temp, &regs->tx_data);
+			out_bytes--;
 		}
-		clrbits_le32(&regs->ch_cfg, SPI_TX_CH_ON);
-	}
-
-	if (din && !dout) {
-		int no_loops = 1, no_pkts = fifo_lvl, j;
-
-		if (bytes > fifo_lvl) {
-			no_loops = bytes >> fifo_shift_amount;
-			if (bytes & (fifo_lvl - 1))
-				++no_loops;
-		}
-
-		for (i = 1; i <= no_loops; i++) {
-			if ((i << fifo_shift_amount) > bytes)
-				no_pkts = bytes & (fifo_lvl - 1);
-			writel(no_pkts | SPI_PACKET_CNT_EN,
-				&regs->pkt_cnt);
-			setbits_le32(&regs->ch_cfg, SPI_RX_CH_ON);
-
-			do {
-				sts = readl(&regs->spi_sts);
-			} while (((sts >> SPI_RX_LVL_OFFSET) & fifo_lvl_mask) <
-					no_pkts);
-
-			for (j = 0; j < no_pkts; j++)
-				*rxp++ = readl(&regs->rx_data);
-
-			spi_flush_fifo(slave);
+		if (rx_lvl > 0 && in_bytes) {
+			temp = readl(&regs->rx_data);
+			if (rxp)
+				*rxp++ = temp;
+			in_bytes--;
 		}
 	}
 
-	setbits_le32(&regs->cs_reg, SPI_SLAVE_SIG_INACT);
-	spi_flush_fifo(slave);
-
+	/* Stop the transaction, if necessary. */
 	if ((flags & SPI_XFER_END) && !(spi_slave->mode & SPI_SLAVE))
 		spi_cs_deactivate(slave);
 
@@ -382,8 +327,7 @@ void spi_cs_activate(struct spi_slave *slave)
 {
 	struct exynos_spi_slave *spi_slave = to_exynos_spi(slave);
 
-	exynos_pinmux_config(spi_slave->periph_id,
-			     PINMUX_FLAG_CS | PINMUX_FLAG_ACTIVATE);
+	clrbits_le32(&spi_slave->regs->cs_reg, SPI_SLAVE_SIG_INACT);
 	debug("Activate CS, bus %d\n", spi_slave->slave.bus);
 }
 
@@ -397,7 +341,7 @@ void spi_cs_deactivate(struct spi_slave *slave)
 {
 	struct exynos_spi_slave *spi_slave = to_exynos_spi(slave);
 
-	exynos_pinmux_config(spi_slave->periph_id, PINMUX_FLAG_CS);
+	setbits_le32(&spi_slave->regs->cs_reg, SPI_SLAVE_SIG_INACT);
 	debug("Deactivate CS, bus %d\n", spi_slave->slave.bus);
 }
 
