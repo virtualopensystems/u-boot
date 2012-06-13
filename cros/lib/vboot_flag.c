@@ -26,6 +26,9 @@ static struct vboot_flag_driver vboot_flag_driver_unknown = {
 	.fetch	= NULL,
 };
 
+#ifdef CONFIG_CHROMEOS_CONST_FLAG
+extern struct vboot_flag_driver vboot_flag_driver_const;
+#endif
 #ifdef CONFIG_CHROMEOS_GPIO_FLAG
 extern struct vboot_flag_driver vboot_flag_driver_gpio;
 #endif
@@ -113,6 +116,11 @@ int vboot_flag_init(void)
 
 		/* TODO(waihong) Assign the correct drivers when implemented */
 		switch (fdtdec_lookup(blob, child)) {
+#ifdef CONFIG_CHROMEOS_CONST_FLAG
+		case COMPAT_GOOGLE_CONST_FLAG:
+			context->driver = &vboot_flag_driver_const;
+			break;
+#endif
 #ifdef CONFIG_CHROMEOS_GPIO_FLAG
 		case COMPAT_GOOGLE_GPIO_FLAG:
 			context->driver = &vboot_flag_driver_gpio;
