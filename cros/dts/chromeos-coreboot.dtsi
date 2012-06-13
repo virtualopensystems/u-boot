@@ -18,9 +18,6 @@
 		cros-system-data = <0x00900000 0x8000>;
 		google-binary-block = <0x00908000 0x80000>;
 
-		/* This value will be filled in by coreboot at runtime */
-		gnvs-vboot-table = <0>;
-
 		firmware-storage = <&firmware_storage_spi>;
 		nvstorage-media = "nvram";
 
