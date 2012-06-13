@@ -34,4 +34,29 @@
  */
 int clock_set_mshci(enum periph_id peripheral);
 
+/*
+ * Sets the epll clockrate
+ *
+ * @param rate	Required clock rate to the presacaler in Hz
+ *
+ * Return	0 if ok else -1
+ */
+int clock_epll_set_rate(unsigned long rate);
+
+/*
+ * selects the clk source for I2S MCLK
+ */
+void clock_select_i2s_clk_source(void);
+
+/*
+ * Set prescaler division based on input and output frequency
+ * for i2s audio clock
+ *
+ * @param src_frq	Source frequency in Hz
+ * @param dst_frq	Required MCLK frequency in Hz
+ *
+ * Return	0 if ok else -1
+ */
+int clock_set_i2s_clk_prescaler(unsigned int src_frq, unsigned int dst_frq);
+
 #endif  /* __ASM_ARM_ARCH_EXYNOS5_CLK_H__ */
