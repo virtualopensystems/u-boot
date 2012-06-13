@@ -29,6 +29,9 @@ static struct vboot_flag_driver vboot_flag_driver_unknown = {
 #ifdef CONFIG_CHROMEOS_GPIO_FLAG
 extern struct vboot_flag_driver vboot_flag_driver_gpio;
 #endif
+#ifdef CONFIG_CHROMEOS_SYSINFO_FLAG
+extern struct vboot_flag_driver vboot_flag_driver_sysinfo;
+#endif
 
 static const char *node_name[VBOOT_FLAG_MAX_FLAGS] = {
 	"vboot-flag-write-protect",
@@ -113,6 +116,11 @@ int vboot_flag_init(void)
 #ifdef CONFIG_CHROMEOS_GPIO_FLAG
 		case COMPAT_GOOGLE_GPIO_FLAG:
 			context->driver = &vboot_flag_driver_gpio;
+			break;
+#endif
+#ifdef CONFIG_CHROMEOS_SYSINFO_FLAG
+		case COMPAT_GOOGLE_SYSINFO_FLAG:
+			context->driver = &vboot_flag_driver_sysinfo;
 			break;
 #endif
 		default:
