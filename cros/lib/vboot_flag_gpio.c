@@ -8,7 +8,7 @@
  * Software Foundation.
  */
 
-/* Implementation of per-board GPIO accessor functions */
+/* Implementation of vboot flag accessor from GPIO hardware */
 
 #include <common.h>
 #include <fdtdec.h>
@@ -19,50 +19,37 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-static char *gpio_name[VBOOT_FLAG_MAX_FLAGS] = {
-	"write-protect-switch",
-	"recovery-switch",
-	"developer-switch",
-	"lid-switch",
-	"power-switch",
-};
-
-static int config = -1;
-static unsigned long valid_time;
-
 /* Default empty implementation */
-static int __cros_gpio_setup(enum vboot_flag_id id, int port)
+static int __vboot_flag_setup_gpio_arch(enum vboot_flag_id id,
+					struct vboot_flag_context *context)
 {
 	return 0;
 }
 
-int cros_gpio_setup(enum vboot_flag_id id, int port)
-	__attribute__((weak, alias("__cros_gpio_setup")));
+int vboot_flag_setup_gpio_arch(enum vboot_flag_id id,
+			       struct vboot_flag_context *context)
+	__attribute__((weak, alias("__vboot_flag_setup_gpio_arch")));
 
-int cros_gpio_init(void)
+static int vboot_flag_setup_gpio(enum vboot_flag_id id,
+				 struct vboot_flag_context *context)
 {
 	const void *blob = gd->fdt_blob;
-	struct fdt_gpio_state gs;
 	unsigned long delay_time;
-	int i;
 
-	config = fdt_path_offset(blob, "/chromeos-config");
-	if (config < 0)
+	if (fdtdec_decode_gpio(blob, context->node, "gpio",
+			&context->gpio_state)) {
+		VBDEBUG("failed to decode GPIO state: %s\n",
+			vboot_flag_node_name(id));
 		return -1;
-
-	for (i = 0; i < VBOOT_FLAG_MAX_FLAGS; i++) {
-		if (fdtdec_decode_gpio(blob, config, gpio_name[i], &gs)) {
-			VBDEBUG("decoding GPIO failed: %s\n", gpio_name[i]);
-			continue;
+	}
+	fdtdec_setup_gpio(&context->gpio_state);
+	if (fdt_gpio_isvalid(&context->gpio_state)) {
+		if (vboot_flag_setup_gpio_arch(id, context)) {
+			VBDEBUG("arch specific setup failed: %s\n",
+				vboot_flag_node_name(id));
+			return -1;
 		}
-		fdtdec_setup_gpio(&gs);
-		if (fdt_gpio_isvalid(&gs)) {
-			if (cros_gpio_setup(i, gs.gpio)) {
-				VBDEBUG("setup failed: %s\n", gpio_name[i]);
-				continue;
-			}
-			gpio_direction_input(gs.gpio);
-		}
+		gpio_direction_input(context->gpio_state.gpio);
 	}
 
 	/*
@@ -78,40 +65,44 @@ int cros_gpio_init(void)
 	 *
 	 * Thus, 10 microseconds gives us a 50% margin.
 	 */
-	delay_time = fdtdec_get_int(blob, config,
+	delay_time = fdtdec_get_int(blob, context->config_node,
 			"cros-gpio-input-charging-delay", 0);
 	if (delay_time)
-		valid_time = timer_get_us() + delay_time;
+		context->gpio_valid_time = timer_get_us() + delay_time;
+
+	context->initialized = 1;
 
 	return 0;
 }
 
-int cros_gpio_fetch(enum vboot_flag_id id, cros_gpio_t *gpio)
+static int vboot_flag_fetch_gpio(enum vboot_flag_id id,
+				 struct vboot_flag_context *context,
+				 struct vboot_flag_details *details)
 {
-	struct fdt_gpio_state gs;
-	int p;
+	int p, valid_time;
 
-	assert(config >= 0);
-	assert(id >= 0 && id < VBOOT_FLAG_MAX_FLAGS);
-
-	if (fdtdec_decode_gpio(gd->fdt_blob, config, gpio_name[id], &gs)) {
-		VBDEBUG("fail to decode gpio: %d\n", id);
+	if (!context->initialized) {
+		VBDEBUG("gpio state is not initialized\n");
 		return -1;
 	}
+	details->port = context->gpio_state.gpio;
+	details->active_high = (context->gpio_state.flags &
+			FDT_GPIO_ACTIVE_LOW) ? 0 : 1;
+	p = details->active_high ? 0 : 1;
 
-	gpio->id = id;
-	gpio->port = gs.gpio;
-	gpio->polarity = (gs.flags & FDT_GPIO_ACTIVE_LOW) ?
-		CROS_GPIO_ACTIVE_LOW : CROS_GPIO_ACTIVE_HIGH;
-	p = (gpio->polarity == CROS_GPIO_ACTIVE_HIGH) ? 0 : 1;
-
+	valid_time = context->gpio_valid_time;
 	if (valid_time) {
 		/* We can only read GPIO after valid_time */
 		while (timer_get_us() < valid_time)
 			udelay(10);
 	}
-
-	gpio->value = p ^ gpio_get_value(gpio->port);
+	details->value = p ^ gpio_get_value(details->port);
 
 	return 0;
 }
+
+struct vboot_flag_driver vboot_flag_driver_gpio = {
+	.type	= COMPAT_GOOGLE_GPIO_FLAG,
+	.setup	= vboot_flag_setup_gpio,
+	.fetch	= vboot_flag_fetch_gpio,
+};

@@ -26,6 +26,10 @@ static struct vboot_flag_driver vboot_flag_driver_unknown = {
 	.fetch	= NULL,
 };
 
+#ifdef CONFIG_CHROMEOS_GPIO_FLAG
+extern struct vboot_flag_driver vboot_flag_driver_gpio;
+#endif
+
 static const char *node_name[VBOOT_FLAG_MAX_FLAGS] = {
 	"vboot-flag-write-protect",
 	"vboot-flag-recovery",
@@ -106,6 +110,11 @@ int vboot_flag_init(void)
 
 		/* TODO(waihong) Assign the correct drivers when implemented */
 		switch (fdtdec_lookup(blob, child)) {
+#ifdef CONFIG_CHROMEOS_GPIO_FLAG
+		case COMPAT_GOOGLE_GPIO_FLAG:
+			context->driver = &vboot_flag_driver_gpio;
+			break;
+#endif
 		default:
 			VBDEBUG("can't find any compatiable driver %s\n",
 				node_name[i]);

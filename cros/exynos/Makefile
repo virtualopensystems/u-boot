@@ -14,7 +14,7 @@ LIB	= $(obj)libcros_board.o
 
 COBJS-$(CONFIG_CHROMEOS) += power_management.o
 COBJS-$(CONFIG_CHROMEOS) += utility.o
-COBJS-$(CONFIG_CHROMEOS) += vboot_flag_gpio.o
+COBJS-$(CONFIG_CHROMEOS_GPIO_FLAG) += vboot_flag_gpio_arch.o
 
 COBJS	:= $(COBJS-y)
 OBJS	:= $(addprefix $(obj),$(COBJS))

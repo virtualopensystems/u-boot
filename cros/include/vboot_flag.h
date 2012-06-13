@@ -30,6 +30,9 @@ struct vboot_flag_context {
 	struct vboot_flag_driver *driver;	/* the driver for ths eflag */
 	int config_node;	/* offset of the config node in fdt */
 	int node;		/* offset of the vboot flag node in fdt */
+	int initialized;	/* 1 if the driver is initialized; 0 if not */
+	struct fdt_gpio_state gpio_state;	/* the gpio state of fdt */
+	int gpio_valid_time;	/* time of delay when gpio value is valid */
 };
 
 /* GPIO details required in the crossystem data structure */
