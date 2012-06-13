@@ -32,6 +32,9 @@ extern struct vboot_flag_driver vboot_flag_driver_const;
 #ifdef CONFIG_CHROMEOS_GPIO_FLAG
 extern struct vboot_flag_driver vboot_flag_driver_gpio;
 #endif
+#ifdef CONFIG_CHROMEOS_MKBP_FLAG
+extern struct vboot_flag_driver vboot_flag_driver_mkbp;
+#endif
 #ifdef CONFIG_CHROMEOS_SYSINFO_FLAG
 extern struct vboot_flag_driver vboot_flag_driver_sysinfo;
 #endif
@@ -114,7 +117,6 @@ int vboot_flag_init(void)
 		context->config_node = config;
 		context->driver = &vboot_flag_driver_unknown;
 
-		/* TODO(waihong) Assign the correct drivers when implemented */
 		switch (fdtdec_lookup(blob, child)) {
 #ifdef CONFIG_CHROMEOS_CONST_FLAG
 		case COMPAT_GOOGLE_CONST_FLAG:
@@ -124,6 +126,11 @@ int vboot_flag_init(void)
 #ifdef CONFIG_CHROMEOS_GPIO_FLAG
 		case COMPAT_GOOGLE_GPIO_FLAG:
 			context->driver = &vboot_flag_driver_gpio;
+			break;
+#endif
+#ifdef CONFIG_CHROMEOS_MKBP_FLAG
+		case COMPAT_GOOGLE_MKBP_FLAG:
+			context->driver = &vboot_flag_driver_mkbp;
 			break;
 #endif
 #ifdef CONFIG_CHROMEOS_SYSINFO_FLAG

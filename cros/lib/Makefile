@@ -25,6 +25,7 @@ COBJS-$(CONFIG_CHROMEOS) += memory_wipe.o
 COBJS-$(CONFIG_CHROMEOS) += vboot_flag.o
 COBJS-$(CONFIG_CHROMEOS_CONST_FLAG) += vboot_flag_const.o
 COBJS-$(CONFIG_CHROMEOS_GPIO_FLAG) += vboot_flag_gpio.o
+COBJS-$(CONFIG_CHROMEOS_MKBP_FLAG) += vboot_flag_mkbp.o
 COBJS-$(CONFIG_CHROMEOS) += vboot_flag_debug.o
 
 # TODO(sjg): This MMC code is not needed as yet, and needs slight changes
