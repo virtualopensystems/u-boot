@@ -29,6 +29,9 @@
 #define CONFIG_LZMA
 #define CONFIG_SPLASH_SCREEN
 
+/* Support constant vboot flag from fdt */
+#define CONFIG_CHROMEOS_CONST_FLAG
+
 /*
  * Use the fdt to decide whether to load the environment early in start-up
  * (even before we decide if we're entering developer mode).
