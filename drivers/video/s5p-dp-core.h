@@ -133,8 +133,9 @@ unsigned int s5p_dp_get_pll_lock_status(struct s5p_dp_device *dp);
  * Initialize analog functions of DP
  *
  * param dp	pointer to main s5p-dp structure
+ * return	0 on success
  */
-void s5p_dp_init_analog_func(struct s5p_dp_device *dp);
+int s5p_dp_init_analog_func(struct s5p_dp_device *dp);
 /*
  * Initialize DP for AUX transaction
  *

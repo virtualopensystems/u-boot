@@ -102,10 +102,9 @@ unsigned int s5p_dp_get_pll_lock_status(struct s5p_dp_device *dp)
 		return PLL_UNLOCKED;
 }
 
-void s5p_dp_init_analog_func(struct s5p_dp_device *dp)
+int s5p_dp_init_analog_func(struct s5p_dp_device *dp)
 {
 	u32 reg;
-	int timeout;
 	ulong start;
 	struct exynos5_dp *base = dp->base;
 
@@ -122,19 +121,18 @@ void s5p_dp_init_analog_func(struct s5p_dp_device *dp)
 		clrbits_le32(&base->dp_pll_ctl, DP_PLL_PD);
 
 		start = get_timer(0);
-		do {
-			if (!(s5p_dp_get_pll_lock_status(dp) == PLL_UNLOCKED)) {
-				timeout++;
-				break;
+		while (s5p_dp_get_pll_lock_status(dp) == PLL_UNLOCKED) {
+			if (get_timer(start) > PLL_LOCK_TIMEOUT) {
+				debug("%s: PLL is not locked yet\n", __func__);
+				return -1;
 			}
-		} while (get_timer(start) <= PLL_LOCK_TIMEOUT);
-		if (!timeout)
-			debug("PLL is not locked yet\n");
+		}
 	}
 
 	/* Enable Serdes FIFO function and Link symbol clock domain module */
 	clrbits_le32(&base->func_en_2, (SERDES_FIFO_FUNC_EN_N |
 				LS_CLK_DOMAIN_FUNC_EN_N | AUX_FUNC_EN_N));
+	return 0;
 }
 
 void s5p_dp_init_aux(struct s5p_dp_device *dp)

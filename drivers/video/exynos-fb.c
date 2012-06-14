@@ -619,8 +619,9 @@ static int s5p_dp_enable_scramble(struct s5p_dp_device *dp)
  * Reset DP and prepare DP for init training
  * param dp	pointer to main s5p-dp structure
  */
-static void s5p_dp_init_dp(struct s5p_dp_device *dp)
+static int s5p_dp_init_dp(struct s5p_dp_device *dp)
 {
+	int ret;
 	u32 reg;
 	struct exynos5_dp *base = dp->base;
 
@@ -629,7 +630,9 @@ static void s5p_dp_init_dp(struct s5p_dp_device *dp)
 	/* SW defined function Normal operation */
 	clrbits_le32(&base->func_en_1, SW_FUNC_EN_N);
 
-	s5p_dp_init_analog_func(dp);
+	ret = s5p_dp_init_analog_func(dp);
+	if (ret)
+		return ret;
 
 	/* Init HPD */
 	reg = HOTPLUG_CHG | HPD_LOST | PLUG;
@@ -640,6 +643,8 @@ static void s5p_dp_init_dp(struct s5p_dp_device *dp)
 	clrbits_le32(&base->func_en_1, F_HPD | HPD_CTRL);
 
 	s5p_dp_init_aux(dp);
+
+	return ret;
 }
 
 /*
@@ -913,7 +918,11 @@ static int dp_main_init(int node)
 		return ret;
 
 	power_enable_dp_phy();
-	s5p_dp_init_dp(dp);
+	ret = s5p_dp_init_dp(dp);
+	if (ret) {
+		debug("%s: Could not initialize dp\n", __func__);
+		return ret;
+	}
 
 	ret = s5p_dp_hw_link_training(dp, dp->video_info->lane_count,
 				dp->video_info->link_rate);
