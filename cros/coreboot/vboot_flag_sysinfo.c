@@ -27,7 +27,7 @@ int vboot_flag_fetch_sysinfo(enum vboot_flag_id id,
 	const struct fdt_property *prop;
 	int len, i, p;
 
-	prop = fdt_get_property(blob, context->node, "name", &len);
+	prop = fdt_get_property(blob, context->node, "google,name", &len);
 	if (!prop) {
 		VBDEBUG("failed to read name of %s\n",
 			vboot_flag_node_name(id));
