@@ -9,7 +9,7 @@
 	compatible = "google,parrot", "intel,celeron-sandybridge";
 
 	config {
-	       hwid = "X86 Parrot TEST 6638";
+	       hwid = "X86 PARROT TEST 8762";
 	};
 
 	aliases {
