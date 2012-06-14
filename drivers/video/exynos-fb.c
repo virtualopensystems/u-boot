@@ -640,7 +640,7 @@ static int s5p_dp_init_dp(struct s5p_dp_device *dp)
 
 	writel(INT_HPD, &base->int_sta_mask);
 
-	clrbits_le32(&base->func_en_1, F_HPD | HPD_CTRL);
+	clrbits_le32(&base->sys_ctl_3, F_HPD | HPD_CTRL);
 
 	s5p_dp_init_aux(dp);
 
