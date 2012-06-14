@@ -51,6 +51,7 @@ struct exynos_spi_slave {
 	unsigned int freq;		/* Default frequency */
 	unsigned int mode;
 	enum periph_id periph_id;	/* Peripheral ID for this device */
+	unsigned int fifo_size;
 };
 
 static struct spi_bus *spi_get_bus(unsigned dev_index)
@@ -135,6 +136,10 @@ struct spi_slave *spi_setup_slave(unsigned int busnum, unsigned int cs,
 	spi_slave->regs = bus->regs;
 	spi_slave->mode = mode;
 	spi_slave->periph_id = bus->periph_id;
+	if (bus->periph_id == PERIPH_ID_SPI0)
+		spi_slave->fifo_size = 256;
+	else
+		spi_slave->fifo_size = 64;
 
 	spi_slave->freq = bus->frequency;
 	if (max_hz)
@@ -250,7 +255,6 @@ int spi_xfer(struct spi_slave *slave, unsigned int bitlen, const void *dout,
 	uchar *rxp = din;
 	uint out_bytes, in_bytes;
 	int rx_lvl, tx_lvl;
-	const uint fifo_size = (spi_slave->slave.bus == 0) ? 256 : 64;
 
 	if (bitlen % 8) {
 		debug("Non byte aligned SPI transfer.\n");
@@ -285,7 +289,7 @@ int spi_xfer(struct spi_slave *slave, unsigned int bitlen, const void *dout,
 
 		/* Keep the fifos full/empty. */
 		spi_get_fifo_levels(regs, &rx_lvl, &tx_lvl);
-		if (tx_lvl < fifo_size && out_bytes) {
+		if (tx_lvl < spi_slave->fifo_size && out_bytes) {
 			temp = txp ? *txp++ : 0xff;
 			writel(temp, &regs->tx_data);
 			out_bytes--;
