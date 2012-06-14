@@ -247,7 +247,7 @@ int spi_flash_cmd_write_multi(struct spi_flash *flash, u32 offset,
 	int ret;
 	u8 cmd[4];
 
-	page_size = min(1 << flash->page_size, CONTROLLER_PAGE_LIMIT);
+	page_size = min(flash->page_size, CONTROLLER_PAGE_LIMIT);
 	byte_addr = offset % page_size;
 
 	ret = spi_claim_bus(flash->spi);
