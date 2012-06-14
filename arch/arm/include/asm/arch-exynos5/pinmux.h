@@ -32,13 +32,9 @@ enum {
 	PINMUX_FLAG_8BIT_MODE	= 1 << 0,	/* SDMMC 8-bit mode */
 
 	/*
-	 * Flags for SPI. We can set up general pinmux, or if _CS is set,
-	 * we either activate or de-activate the CS line, based on the
-	 * _ACTIVATE flag.
+	 * Flags for SPI.
 	 */
 	PINMUX_FLAG_SLAVE_MODE	= 1 << 0,	/* Slave mode */
-	PINMUX_FLAG_CS		= 1 << 1,	/* Adjust chip select */
-	PINMUX_FLAG_ACTIVATE	= 1 << 2,	/* Activate chip select */
 
 	/* Flags for SROM controller */
 	PINMUX_FLAG_BANK	= 3 << 0,	/* bank number (0-3) */

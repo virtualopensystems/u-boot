@@ -186,59 +186,39 @@ int exynos_pinmux_config(enum periph_id peripheral, int flags)
 	case PERIPH_ID_SPI0:
 	case PERIPH_ID_SPI1:
 	case PERIPH_ID_SPI2:
-	case PERIPH_ID_SPI3:
-	case PERIPH_ID_SPI4: {
-		int cs_line, cfg;
+	case PERIPH_ID_SPI3: {
+		int cfg;
 
 		switch (peripheral) {
 		default:
 		case PERIPH_ID_SPI0:
-			start = GPIO_A20; count = 4; cfg = 0x2;
+			start = GPIO_A20;
+			cfg = 0x2;
 			break;
 		case PERIPH_ID_SPI1:
-			start = GPIO_A24; count = 4; cfg = 0x2;
+			start = GPIO_A24;
+			cfg = 0x2;
 			break;
 		case PERIPH_ID_SPI2:
-			start = GPIO_B11; count = 4; cfg = 0x5;
+			start = GPIO_B11;
+			cfg = 0x5;
 			break;
 		case PERIPH_ID_SPI3:
-			start = GPIO_E00; count = 4; cfg = 0x2;
-			break;
-		case PERIPH_ID_SPI4:
-			start = GPIO_F02; count = 2; cfg = 0x4;
+			start = GPIO_E00;
+			cfg = 0x2;
 			break;
 		}
-		cs_line = start + 1;
 
-		if (flags & PINMUX_FLAG_CS) {
-			gpio_direction_output(cs_line, 1);
-			gpio_cfg_pin(cs_line, GPIO_FUNC(0x1));
-			gpio_set_pull(cs_line, GPIO_PULL_UP);
-			gpio_set_value(cs_line,
-					flags & PINMUX_FLAG_ACTIVATE ? 0 : 1);
-		} else {
-			int mode = (flags & PINMUX_FLAG_SLAVE_MODE) ?
-					GPIO_PULL_DOWN : GPIO_PULL_UP;
-
-			for (i = start; i < start + count; i++) {
-				gpio_cfg_pin(i, GPIO_FUNC(cfg));
-				if (i != cs_line)
-					gpio_set_pull(i, mode);
-				else if (flags & PINMUX_FLAG_SLAVE_MODE) {
-					gpio_set_pull(i, GPIO_PULL_NONE);
-				}
-			}
-			if (peripheral == PERIPH_ID_SPI4) {
-				/* Some irregularity here */
-				for (i = 4; i < 6; i++) {
-					gpio_cfg_pin(GPIO_E00 + i,
-							GPIO_FUNC(4));
-					gpio_set_pull(GPIO_E00 + i, mode);
-				}
-			}
-		}
+		for (i = 0; i < 4; i++)
+			gpio_cfg_pin(start + i, GPIO_FUNC(cfg));
 		break;
 	}
+	case PERIPH_ID_SPI4:
+		for (i = 0; i < 2; i++)
+			gpio_cfg_pin(GPIO_F02 + i, GPIO_FUNC(0x4));
+		for (i = 2; i < 4; i++)
+			gpio_cfg_pin(GPIO_E02 + i, GPIO_FUNC(0x4));
+		break;
 	case PERIPH_ID_BACKLIGHT:
 		gpio_cfg_pin(GPIO_B20, GPIO_OUTPUT);
 		gpio_set_value(GPIO_B20, 1);
