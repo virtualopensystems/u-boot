@@ -24,6 +24,7 @@
 #include <fdtdec.h>
 #include <i2c.h>
 #include <max77686.h>
+#include <mkbp.h>
 #include <netdev.h>
 #include <tps65090.h>
 #include <asm/gpio.h>
@@ -41,6 +42,8 @@
 #include "board.h"
 
 DECLARE_GLOBAL_DATA_PTR;
+
+static struct mkbp_dev *mkbp_dev;	/* Pointer to mkbp device */
 
 /*
  * Polling various devices on board for details and status monitoring purposes
@@ -198,6 +201,22 @@ int board_usb_vbus_init(void)
 	return 0;
 }
 
+struct mkbp_dev *board_get_mkbp_dev(void)
+{
+	return mkbp_dev;
+}
+
+static int board_init_mkbp_devices(const void *blob)
+{
+	mkbp_dev = mkbp_init(blob);
+	if (!mkbp_dev) {
+		debug("%s: cannot init mkbp device\n", __func__);
+		return -1;
+	}
+
+	return 0;
+}
+
 int board_init(void)
 {
 	struct fdt_memory mem_config;
@@ -254,6 +273,9 @@ int board_init(void)
 	 */
 	gpio_cfg_pin(GPIO_X30, GPIO_OUTPUT);
 	gpio_set_value(GPIO_X30, 1);
+
+	if (board_init_mkbp_devices(gd->fdt_blob))
+		return -1;
 
 	return 0;
 }
