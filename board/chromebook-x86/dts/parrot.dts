@@ -2,20 +2,17 @@
 
 /include/ "coreboot.dtsi"
 /include/ "chromeos-coreboot.dtsi"
-/include/ "flashmap-coreboot-8mb.dtsi"
+/include/ "flashmap-coreboot-8mb_1mb_rom.dtsi"
 
 / {
 	model = "Google Parrot";
-	compatible = "google,parrot", "intel,celeron-sandybridge";
+	compatible = "google,parrot", "intel,celeron-ivybridge";
 
 	config {
 	       hwid = "X86 PARROT TEST 8762";
 	};
 
-	aliases {
-		console = "/serial";
-	};
-
-	serial {
+	chromeos-config {
+		virtual_dev_switch;
 	};
 };
