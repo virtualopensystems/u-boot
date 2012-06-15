@@ -186,9 +186,9 @@ static int mkbp_init_keyboard(void)
 	const void *blob = gd->fdt_blob;
 	int node;
 
-	config.dev = mkbp_init(blob);
+	config.dev = board_get_mkbp_dev();
 	if (!config.dev) {
-		debug("%s: cannot init mkbp device\n", __func__);
+		debug("%s: no mkbp device: cannot init keyboard\n", __func__);
 		return -1;
 	}
 	node = fdtdec_next_compatible(blob, 0, COMPAT_GOOGLE_MKBP_KEYB);
