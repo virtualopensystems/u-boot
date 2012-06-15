@@ -99,4 +99,13 @@ struct mkbp_dev *mkbp_init(const void *blob);
  */
 int mkbp_info(struct mkbp_dev *dev, struct mbkp_info *info);
 
+/**
+ * Return a pointer to the board's MKBP device
+ *
+ * This should be implemented by board files.
+ *
+ * @return pointer to MKBP device, or NULL if none is available
+ */
+struct mkbp_dev *board_get_mkbp_dev(void);
+
 #endif
