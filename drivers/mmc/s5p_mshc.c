@@ -124,6 +124,14 @@ static void mshci_set_mdma_desc(u8 *desc_vir, u8 *desc_phy,
 	desc->des3 = (unsigned int)desc_phy + sizeof(struct mshci_idmac);
 }
 
+/*
+ * Prepare the data to be transfer
+ *
+ * @param host		pointer to mshci_host
+ * @param data		pointer to mmc_data
+ *
+ * Return		0 if success else -1
+ */
 static int mshci_prepare_data(struct mshci_host *host, struct mmc_data *data)
 {
 	unsigned int i;
@@ -240,12 +248,10 @@ static int s5p_mshci_send_command(struct mmc *mmc, struct mmc_cmd *cmd,
 		}
 	}
 
-	if (readl(&host->reg->rintsts)) {
-		if ((readl(&host->reg->rintsts) &
-				(INTMSK_CDONE | INTMSK_ACD)) == 0)
-			debug("there are pending interrupts 0x%x\n",
-				readl(&host->reg->rintsts));
-	}
+	if ((readl(&host->reg->rintsts) & (INTMSK_CDONE | INTMSK_ACD)) == 0)
+		debug("there are pending interrupts 0x%x\n",
+			readl(&host->reg->rintsts));
+
 	/* It clears all pending interrupts before sending a command*/
 	writel(INTMSK_ALL, &host->reg->rintsts);
 
@@ -261,9 +267,12 @@ static int s5p_mshci_send_command(struct mmc *mmc, struct mmc_cmd *cmd,
 	if (data)
 		flags = mshci_set_transfer_mode(host, data);
 
-	if ((cmd->resp_type & MMC_RSP_136) && (cmd->resp_type & MMC_RSP_BUSY))
+	if ((cmd->resp_type & MMC_RSP_136) && (cmd->resp_type & MMC_RSP_BUSY)) {
 		/* this is out of SD spec */
+		debug("wrong response type or response busy for cmd %d\n",
+				cmd->cmdidx);
 		return -1;
+	}
 
 	if (cmd->resp_type & MMC_RSP_PRESENT) {
 		flags |= CMD_RESP_EXP_BIT;
@@ -277,8 +286,10 @@ static int s5p_mshci_send_command(struct mmc *mmc, struct mmc_cmd *cmd,
 			CMD_WAIT_PRV_DAT_BIT);
 
 	mask = readl(&host->reg->cmd);
-	if (mask & CMD_STRT_BIT)
+	if (mask & CMD_STRT_BIT) {
 		debug("cmd busy, current cmd: %d", cmd->cmdidx);
+		return -1;
+	}
 
 	writel(flags, &host->reg->cmd);
 	/* wait for command complete by busy waiting. */
@@ -296,24 +307,19 @@ static int s5p_mshci_send_command(struct mmc *mmc, struct mmc_cmd *cmd,
 		return TIMEOUT;
 	}
 
-	if (mask & INTMSK_RTO) {
-		if (((cmd->cmdidx == 8 || cmd->cmdidx == 41 ||
-			cmd->cmdidx == 55)) == 0) {
-			debug("response timeout error: 0x%x cmd: %d\n",
-				mask, cmd->cmdidx);
-		}
-			return TIMEOUT;
-	} else if (mask & INTMSK_RE) {
+	if (mask & INTMSK_RTO)
+		return TIMEOUT;
+	else if (mask & INTMSK_RE) {
 		debug("response error: 0x%x cmd: %d\n", mask, cmd->cmdidx);
 		return -1;
 	}
 	if (cmd->resp_type & MMC_RSP_PRESENT) {
 		if (cmd->resp_type & MMC_RSP_136) {
 			/* CRC is stripped so we need to do some shifting. */
-				cmd->response[0] = readl(&host->reg->resp3);
-				cmd->response[1] = readl(&host->reg->resp2);
-				cmd->response[2] = readl(&host->reg->resp1);
-				cmd->response[3] = readl(&host->reg->resp0);
+			cmd->response[0] = readl(&host->reg->resp3);
+			cmd->response[1] = readl(&host->reg->resp2);
+			cmd->response[2] = readl(&host->reg->resp1);
+			cmd->response[3] = readl(&host->reg->resp0);
 		} else {
 			cmd->response[0] = readl(&host->reg->resp0);
 			debug("\tcmd->response[0]: 0x%08x\n", cmd->response[0]);
@@ -321,8 +327,14 @@ static int s5p_mshci_send_command(struct mmc *mmc, struct mmc_cmd *cmd,
 	}
 
 	if (data) {
-		while (!(mask & (DATA_ERR | DATA_TOUT | INTMSK_DTO)))
+		start = get_timer(0);
+		while (!(mask & (DATA_ERR | DATA_TOUT | INTMSK_DTO))) {
 			mask = readl(&host->reg->rintsts);
+			if (get_timer(start) > COMMAND_TIMEOUT) {
+				debug("timeout on data error\n");
+				return -1;
+		}
+	}
 		writel(mask, &host->reg->rintsts);
 		if (data->flags & MMC_DATA_READ) {
 			data_start = (ulong)data->dest;
@@ -330,11 +342,10 @@ static int s5p_mshci_send_command(struct mmc *mmc, struct mmc_cmd *cmd,
 					data->blocks * data->blocksize;
 			invalidate_dcache_range(data_start, data_end);
 		}
+		/* make sure disable IDMAC and IDMAC_Interrupts */
+		clrbits_le32(&host->reg->ctrl, DMA_ENABLE | ENABLE_IDMAC);
 		if (mask & (DATA_ERR | DATA_TOUT)) {
 			debug("error during transfer: 0x%x\n", mask);
-			/* make sure disable IDMAC and IDMAC_Interrupts */
-			writel((readl(&host->reg->ctrl) &
-			~(DMA_ENABLE | ENABLE_IDMAC)), &host->reg->ctrl);
 			/* mask all interrupt source of IDMAC */
 			writel(0, &host->reg->idinten);
 			return -1;
@@ -342,10 +353,9 @@ static int s5p_mshci_send_command(struct mmc *mmc, struct mmc_cmd *cmd,
 			debug("mshci dma interrupt end\n");
 		} else {
 			debug("unexpected condition 0x%x\n", mask);
+			return -1;
 		}
-		/* make sure disable IDMAC and IDMAC_Interrupts */
-		writel((readl(&host->reg->ctrl) & ~(DMA_ENABLE | ENABLE_IDMAC)),
-				&host->reg->ctrl);
+		clrbits_le32(&host->reg->ctrl, DMA_ENABLE | ENABLE_IDMAC);
 		/* mask all interrupt source of IDMAC */
 		writel(0, &host->reg->idinten);
 	}
@@ -361,19 +371,34 @@ static int s5p_mshci_send_command(struct mmc *mmc, struct mmc_cmd *cmd,
  *
  * @param host		pointer to mshci_host
  * @param val		to enable/disable clock
+ *
+ * Return	0 if ok else -1
  */
-static void mshci_clock_onoff(struct mshci_host *host, int val)
+static int mshci_clock_onoff(struct mshci_host *host, int val)
 {
+	ulong start;
 
-	if (val) {
+	if (val)
 		writel(CLK_ENABLE, &host->reg->clkena);
-		writel(0, &host->reg->cmd);
-		writel(CMD_ONLY_CLK, &host->reg->cmd);
-	} else {
+	else
 		writel(CLK_DISABLE, &host->reg->clkena);
-		writel(0, &host->reg->cmd);
-		writel(CMD_ONLY_CLK, &host->reg->cmd);
+
+	writel(0, &host->reg->cmd);
+	writel(CMD_ONLY_CLK, &host->reg->cmd);
+
+	/*
+	 * wait till command is taken by CIU, when this bit is set
+	 * host should not attempted to write to any command registers.
+	 */
+	start = get_timer(0);
+	while (readl(&host->reg->cmd) & CMD_STRT_BIT) {
+		if (get_timer(start) > COMMAND_TIMEOUT) {
+			debug("Clock %s has failed.\n ", val ? "ON" : "OFF");
+			return -1;
+		}
 	}
+
+	return 0;
 }
 
 /*
@@ -388,6 +413,7 @@ static int mshci_change_clock(struct mshci_host *host, uint clock)
 {
 	int div;
 	u32 sclk_mshc;
+	ulong start;
 
 	if (clock == host->clock)
 		return 0;
@@ -399,7 +425,10 @@ static int mshci_change_clock(struct mshci_host *host, uint clock)
 	}
 
 	/* disable the clock before changing it */
-	mshci_clock_onoff(host, CLK_DISABLE);
+	if (mshci_clock_onoff(host, CLK_DISABLE)) {
+		debug("failed to DISABLE clock\n");
+		return -1;
+	}
 
 	/* get the clock division */
 	sclk_mshc = clock_get_periph_rate(host->peripheral);
@@ -417,10 +446,25 @@ static int mshci_change_clock(struct mshci_host *host, uint clock)
 	writel(0, &host->reg->cmd);
 	writel(CMD_ONLY_CLK, &host->reg->cmd);
 
-	writel(readl(&host->reg->cmd) & (~CMD_SEND_CLK_ONLY),
-					&host->reg->cmd);
+	/*
+	 * wait till command is taken by CIU, when this bit is set
+	 * host should not attempted to write to any command registers.
+	 */
+	start = get_timer(0);
+	while (readl(&host->reg->cmd) & CMD_STRT_BIT) {
+		if (get_timer(start) > COMMAND_TIMEOUT) {
+			debug("Changing clock has timed out.\n");
+			return -1;
+		}
+	}
 
-	mshci_clock_onoff(host, CLK_ENABLE);
+	clrbits_le32(&host->reg->cmd, CMD_SEND_CLK_ONLY);
+
+	if (mshci_clock_onoff(host, CLK_ENABLE)) {
+		debug("failed to ENABLE clock\n");
+		return -1;
+	}
+
 	host->clock = clock;
 
 	return 0;
@@ -470,13 +514,23 @@ static void mshci_fifo_init(struct mshci_host *host)
 	writel(fifo_val, &host->reg->fifoth);
 }
 
-
-static void mshci_init(struct mshci_host *host)
+/*
+ * MSHCI host controller initiallization
+ *
+ * @param host		pointer to mshci_host
+ *
+ * Return	0 if ok else -1
+ */
+static int mshci_init(struct mshci_host *host)
 {
 	/* power on the card */
 	writel(POWER_ENABLE, &host->reg->pwren);
 
-	mshci_reset_all(host);
+	if (mshci_reset_all(host)) {
+		debug("mshci_reset_all() failed\n");
+		return -1;
+	}
+
 	mshci_fifo_init(host);
 
 	/* clear all pending interrupts */
@@ -484,6 +538,8 @@ static void mshci_init(struct mshci_host *host)
 
 	/* interrupts are not used, disable all */
 	writel(0, &host->reg->intmask);
+
+	return 0;
 }
 
 static int s5p_mphci_init(struct mmc *mmc)
@@ -491,7 +547,10 @@ static int s5p_mphci_init(struct mmc *mmc)
 	struct mshci_host *host = (struct mshci_host *)mmc->priv;
 	unsigned int ier;
 
-	mshci_init(host);
+	if (mshci_init(host)) {
+		debug("mshci_init() failed\n");
+		return -1;
+	}
 
 	/* enumerate at 400KHz */
 	if (mshci_change_clock(host, 400000)) {
