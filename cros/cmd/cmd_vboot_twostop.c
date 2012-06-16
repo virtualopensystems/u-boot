@@ -28,7 +28,7 @@
 
 #ifdef CONFIG_VIDEO_TEGRA
 /* for tegra_lcd_check_next_stage() */
-#include <asm/arch-tegra/dc.h>
+#include <asm/arch/display.h>
 #endif
 
 #include <gbb_header.h> /* for GoogleBinaryBlockHeader */
