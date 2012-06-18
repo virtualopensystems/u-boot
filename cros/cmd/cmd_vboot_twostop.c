@@ -780,7 +780,7 @@ twostop_boot(void)
 {
 	struct twostop_fmap fmap;
 	firmware_storage_t file;
-	crossystem_data_t *cdata;
+	crossystem_data_t *cdata = NULL;
 	void *gbb;
 	size_t gbb_size = 0;
 	void *vb_shared_data;
