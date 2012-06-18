@@ -935,3 +935,13 @@ on_error:
 
 U_BOOT_CMD(vboot_twostop, 1, 1, do_vboot_twostop,
 		"verified boot twostop firmware", NULL);
+
+
+int VbExTrustEC(void)
+{
+	/* FIXME (crosbug.com/p/9953): Do the right thing here, not this.
+	 * We need to actually test the EC state on a per-platform basis. */
+	if (board_uses_virtual_dev_switch())
+		return 1;
+	return 0;
+}
