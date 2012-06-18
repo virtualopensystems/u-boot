@@ -6,7 +6,7 @@
 
 / {
 	model = "Google Parrot";
-	compatible = "google,parrot", "intel,celeron-ivybridge";
+	compatible = "google,parrot", "intel,celeron-sandybridge";
 
 	config {
 	       hwid = "X86 PARROT TEST 8762";
