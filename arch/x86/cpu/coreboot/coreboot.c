@@ -36,11 +36,6 @@
 #include <asm/arch-coreboot/tables.h>
 #include <asm/arch-coreboot/sysinfo.h>
 #include <asm/arch-coreboot/timestamp.h>
-#include <cros/common.h>
-#include <cros/crossystem_data.h>
-#include <cros/cros_fdtdec.h>
-#include <cros/firmware_storage.h>
-#include <cros/power_management.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -245,32 +240,6 @@ int board_eth_init(bd_t *bis)
 
 int misc_init_r(void)
 {
-	return 0;
-}
-
-int board_i8042_skip(void)
-{
-	struct vboot_flag_details devsw;
-
-	vboot_flag_fetch(VBOOT_FLAG_DEVELOPER, &devsw);
-	if (devsw.value)
-		return 0;
-	return fdtdec_get_config_int(gd->fdt_blob, "skip-i8042", 0);
-}
-
-int board_use_usb_keyboard(int boot_mode)
-{
-	struct vboot_flag_details devsw;
-
-	/* the keyboard is needed only in developer mode and recovery mode */
-	vboot_flag_fetch(VBOOT_FLAG_DEVELOPER, &devsw);
-	if (!devsw.value && (boot_mode != FIRMWARE_TYPE_RECOVERY))
-		return 0;
-
-	/* does this machine have a USB keyboard as primary input ? */
-	if (fdtdec_get_config_bool(gd->fdt_blob, "usb-keyboard"))
-		return 1;
-
 	return 0;
 }
 

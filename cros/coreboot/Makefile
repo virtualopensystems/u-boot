@@ -42,6 +42,7 @@ COBJS-$(CONFIG_CHROMEOS) += power_management.o
 COBJS-$(CONFIG_CHROMEOS) += hda_codec.o
 COBJS-$(CONFIG_CHROMEOS) += nvstorage_nvram.o
 COBJS-$(CONFIG_CHROMEOS) += utility.o
+COBJS-$(CONFIG_CHROMEOS) += keyboard.o
 COBJS-$(CONFIG_CHROMEOS_SYSINFO_FLAG) += vboot_flag_sysinfo.o
 
 COBJS	:= $(COBJS-y)
