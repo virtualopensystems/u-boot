@@ -25,7 +25,7 @@
 #define __ASM_REALMODE_H_
 
 #include <config.h>
-#if !defined CONFIG_NO_REALMODE_CODE
+#if defined CONFIG_SYS_X86_REALMODE
 
 #include <asm/ptrace.h>
 

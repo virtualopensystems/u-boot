@@ -67,7 +67,7 @@ board_init16:
 
 #endif
 
-#if !defined CONFIG_NO_REALMODE_CODE
+#if defined CONFIG_SYS_X86_REALMODE
 
 .section .bios, "ax"
 .code16

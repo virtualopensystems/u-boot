@@ -224,7 +224,7 @@ static int video_init(void)
 int drv_video_init(void)
 {
 #if CONFIG_VGA_CONSOLE
-#if !defined CONFIG_NO_REALMODE_CODE
+#if defined CONFIG_SYS_X86_REALMODE
 	if (video_bios_init())
 		return 1;
 #endif

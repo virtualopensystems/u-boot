@@ -21,10 +21,6 @@
  * MA 02111-1307 USA
  */
 
-#include <config.h>
-
-#if !defined CONFIG_NO_REALMODE_CODE
-
 #include <common.h>
 #include <asm/io.h>
 #include <asm/ptrace.h>
@@ -95,5 +91,3 @@ int enter_realmode_int(u8 lvl, struct pt_regs *in, struct pt_regs *out)
 
 	return out->eflags & 0x00000001;
 }
-
-#endif
