@@ -11,6 +11,7 @@
 
 / {
 	aliases {
+		console = "/serial@12C30000";
 		serial0 = "/serial@12C30000";
 		sdmmc0 = "/mshci@12200000";
 		sdmmc1 = "/mshci@12220000";
