@@ -89,31 +89,26 @@ static int map_coreboot_serial_to_fdt(void)
 	void *fdt = (void *)gd->fdt_blob;
 	struct cb_serial *serial = lib_sysinfo.serial;
 	uint32_t reg[2];
-	int serial_offset = fdt_path_offset(fdt, "/serial");
+	int serial_offset;
 	int ret = 0;
 	unsigned long clock_frequency;
 
+	serial_offset = fdt_path_offset(fdt, "/serial");
 	if (serial_offset < 0) {
 		/* No aliases node found. Bail out. */
 		printf("Couldn't find fdt \"serial\" node.\n");
 		return 1;
 	}
 
-	/*
-	 * If we don't have the a serial console, we don't need to fill
-	 * in any properties, so just return.
-	 */
+	/* If coreboot has serial data, use it, otherwise we are done */
 	if (!serial)
 		return 0;
 
 	/* If there's a serial node and device, populate the node. */
-	ret |= fdt_setprop_string(fdt, serial_offset, "compatible", "ns16550");
 	reg[0] = cpu_to_fdt32(serial->baseaddr);
 	reg[1] = cpu_to_fdt32(0x8);
 
 	ret |= fdt_setprop(fdt, serial_offset, "reg", reg, sizeof(reg));
-	ret |= fdt_setprop_cell(fdt, serial_offset, "id", 1);
-	ret |= fdt_setprop_cell(fdt, serial_offset, "reg-shift", 1);
 	ret |= fdt_setprop_cell(fdt, serial_offset, "baudrate", serial->baud);
 	/*
 	 * For now, assume an OXPCIE serial adapter
@@ -128,12 +123,10 @@ static int map_coreboot_serial_to_fdt(void)
 	ret |= fdt_setprop_cell(fdt, serial_offset,
 			"clock-frequency", clock_frequency);
 
-	ret |= fdt_setprop_cell(fdt, serial_offset, "multiplier", 1);
+	ret |= fdt_setprop_cell(fdt, serial_offset, "io-mapped",
+			serial->type == CB_SERIAL_TYPE_IO_MAPPED);
 
-	if (serial->type == CB_SERIAL_TYPE_IO_MAPPED)
-		ret |= fdt_setprop_cell(fdt, serial_offset, "io-mapped", 1);
-
-	ret |= fdt_setprop_string(fdt, serial_offset, "status", "ok");
+	ret |= fdt_setprop_string(fdt, serial_offset, "status", "okay");
 
 	return !!ret;
 }
