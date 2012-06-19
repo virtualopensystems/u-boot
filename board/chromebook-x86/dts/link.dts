@@ -15,4 +15,9 @@
 	chromeos-config {
 		virtual-dev-switch;
 	};
+
+	serial {
+		reg = <0x3f8 8>;
+		clock-frequency = <115200>;
+	};
 };
