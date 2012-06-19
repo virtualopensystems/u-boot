@@ -33,7 +33,6 @@
 #include <asm/msr.h>
 #include <asm/cache.h>
 #include <asm/io.h>
-#include <asm/arch-coreboot/gpio.h>
 #include <asm/arch-coreboot/tables.h>
 #include <asm/arch-coreboot/sysinfo.h>
 #include <asm/arch-coreboot/timestamp.h>
@@ -42,14 +41,8 @@
 #include <cros/cros_fdtdec.h>
 #include <cros/firmware_storage.h>
 #include <cros/power_management.h>
-#include <spi_flash.h>
-#ifdef CONFIG_HW_WATCHDOG
-#include <watchdog.h>
-#endif
 
 DECLARE_GLOBAL_DATA_PTR;
-
-unsigned long monitor_flash_len = CONFIG_SYS_MONITOR_LEN;
 
 /*
  * Miscellaneous platform dependent initializations
@@ -233,7 +226,6 @@ void show_boot_progress(int val)
 	outb(val, 0x80);
 }
 
-
 int last_stage_init(void)
 {
 	return 0;
@@ -249,10 +241,6 @@ ulong board_flash_get_legacy(ulong base, int banknum, flash_info_t *info)
 int board_eth_init(bd_t *bis)
 {
 	return pci_eth_init(bis);
-}
-
-void setup_pcat_compatibility()
-{
 }
 
 int misc_init_r(void)
