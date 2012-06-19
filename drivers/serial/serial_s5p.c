@@ -38,8 +38,9 @@ DECLARE_GLOBAL_DATA_PTR;
 
 /* Information about a serial port */
 struct fdt_serial {
-	u32 base_addr;   /* address of registers in physical memory */
-	u8 port_id;	 /* uart port number */
+	u32 base_addr;	/* address of registers in physical memory */
+	u8 port_id;	/* uart port number */
+	u8 enabled;	/* 1 if enabled, 0 if disabled */
 } config = {
 	-1U
 };
@@ -87,6 +88,8 @@ void serial_setbrg_dev(const int dev_index)
 	u32 baudrate = gd->baudrate;
 	u32 val;
 
+	if (!config.enabled)
+		return;
 	val = uclk / baudrate;
 
 	writel(val / 16 - 1, &uart->ubrdiv);
@@ -105,6 +108,8 @@ int serial_init_dev(const int dev_index)
 {
 	struct s5p_uart *const uart = s5p_get_base_uart(dev_index);
 
+	if (!config.enabled)
+		return 0;
 	/* enable FIFOs */
 	writel(0x1, &uart->ufcon);
 	writel(0, &uart->umcon);
@@ -147,6 +152,8 @@ int serial_getc_dev(const int dev_index)
 {
 	struct s5p_uart *const uart = s5p_get_base_uart(dev_index);
 
+	if (!config.enabled)
+		return 0;
 	/* wait for character to arrive */
 	while (!(readl(&uart->ufstat) & (RX_FIFO_COUNT_MASK |
 					 RX_FIFO_FULL_MASK))) {
@@ -164,6 +171,8 @@ void serial_putc_dev(const char c, const int dev_index)
 {
 	struct s5p_uart *const uart = s5p_get_base_uart(dev_index);
 
+	if (!config.enabled)
+		return;
 	/* wait for room in the tx FIFO */
 	while ((readl(&uart->ufstat) & TX_FIFO_FULL_MASK)) {
 		if (serial_err_check(dev_index, 1))
@@ -184,6 +193,8 @@ int serial_tstc_dev(const int dev_index)
 {
 	struct s5p_uart *const uart = s5p_get_base_uart(dev_index);
 
+	if (!config.enabled)
+		return 0;
 	return (int)(readl(&uart->utrstat) & 0x1);
 }
 
@@ -234,13 +245,13 @@ int fdtdec_decode_console(int *index, struct fdt_serial *uart)
 	uart->base_addr = params->serial_base;
 	/* The base_addr pointed to the right port, so ignore the port_id. */
 	uart->port_id = 0;
+	uart->enabled = 1;	/* Assume enabled for now */
 	return 0;
 #else
 	const void *blob = gd->fdt_blob;
 	int node;
 
-	node = fdtdec_next_alias(blob, "serial", COMPAT_SAMSUNG_EXYNOS5_SERIAL,
-			index);
+	node = fdtdec_find_alias_node(blob, "console");
 	if (node < 0)
 		return node;
 
@@ -249,6 +260,7 @@ int fdtdec_decode_console(int *index, struct fdt_serial *uart)
 		return -FDT_ERR_NOTFOUND;
 
 	uart->port_id = fdtdec_get_int(blob, node, "id", -1);
+	uart->enabled = fdtdec_get_is_enabled(blob, node);
 
 	return 0;
 #endif
