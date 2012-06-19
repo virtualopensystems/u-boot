@@ -36,7 +36,7 @@
 #include <asm/arch-coreboot/gpio.h>
 #include <asm/arch-coreboot/tables.h>
 #include <asm/arch-coreboot/sysinfo.h>
-#include <coreboot_timestamp.h>
+#include <asm/arch-coreboot/timestamp.h>
 #include <cros/common.h>
 #include <cros/crossystem_data.h>
 #include <cros/cros_fdtdec.h>
