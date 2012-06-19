@@ -225,6 +225,8 @@ static struct serial_device *get_console(void)
 	if (decode_uart_console(gd->fdt_blob, &console_uart,
 			gd->baudrate))
 		return NULL;
+	if (!console_uart.enabled)
+		return NULL;
 	strcpy(console.name, "serial");
 	console.init = fserial_init;
 	console.uninit = NULL;
