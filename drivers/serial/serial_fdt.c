@@ -93,7 +93,8 @@ static int decode_uart_console(const void *blob, struct fdt_uart *uart,
 	uart->interrupt = fdtdec_get_int(blob, node, "interrupts", -1);
 	uart->silent = fdtdec_get_config_int(blob, "silent_console", 0);
 	uart->io_mapped = fdtdec_get_int(blob, node, "io-mapped", 0);
-	uart->compat = fdtdec_lookup(blob, node);
+	if (uart->enabled)
+		uart->compat = fdtdec_lookup(blob, node);
 
 	/* Calculate divisor if required */
 	if ((uart->divisor == -1) && (uart->clock_freq != -1))
