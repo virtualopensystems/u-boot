@@ -30,6 +30,8 @@
 
 include $(TOPDIR)/config.mk
 
+COBJS-$(CONFIG_SYS_COREBOOT) += chromebook-x86.o
+
 LIB	= $(obj)lib$(BOARD).o
 
 SRCS	:= $(SOBJS-y:.o=.S) $(COBJS-y:.o=.c)
