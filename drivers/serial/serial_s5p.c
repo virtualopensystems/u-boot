@@ -84,7 +84,7 @@ static const int udivslot[] = {
 void serial_setbrg_dev(const int dev_index)
 {
 	struct s5p_uart *const uart = s5p_get_base_uart(dev_index);
-	u32 uclk = get_uart_clk(dev_index);
+	u32 uclk = clock_get_periph_rate(PERIPH_ID_UART0 + dev_index);
 	u32 baudrate = gd->baudrate;
 	u32 val;
 
