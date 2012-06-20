@@ -27,6 +27,39 @@
 #include <asm/arch/clock.h>
 #include <asm/arch/clk.h>
 
+/* src_bit div_bit prediv_bit */
+static struct clk_bit_info clk_bit_info[PERIPH_ID_COUNT] = {
+	{0,	0,	-1},
+	{4,	4,	-1},
+	{8,	8,	-1},
+	{12,	12,	-1},
+	{0,	0,	8},
+	{4,	16,	24},
+	{8,	0,	8},
+	{12,	16,	24},
+	{-1,	-1,	-1},
+	{16,	0,	8},
+	{20,	16,	24},
+	{24,	0,	8},
+	{0,	0,	4},
+	{4,	12,	16},
+	{-1,	-1,	-1},
+	{-1,	-1,	-1},
+	{-1,	24,	0},
+	{-1,	24,	0},
+	{-1,	24,	0},
+	{-1,	24,	0},
+	{-1,	24,	0},
+	{-1,	24,	0},
+	{-1,	24,	0},
+	{-1,	24,	0},
+	{24,	0,	-1},
+	{24,	0,	-1},
+	{24,	0,	-1},
+	{24,	0,	-1},
+	{24,	0,	-1},
+};
+
 /* exynos5: return pll clock frequency */
 unsigned long get_pll_clk(int pllreg)
 {
@@ -97,6 +130,89 @@ unsigned long get_pll_clk(int pllreg)
 	}
 
 	return fout;
+}
+
+unsigned long clock_get_periph_rate(enum periph_id peripheral)
+{
+	struct exynos5_clock *clk =
+		(struct exynos5_clock *)samsung_get_base_clock();
+	struct clk_bit_info *bit_info = &clk_bit_info[peripheral];
+	unsigned long sclk, sub_clk;
+	unsigned int src, div, sub_div;
+
+	switch (peripheral) {
+	case PERIPH_ID_UART0:
+	case PERIPH_ID_UART1:
+	case PERIPH_ID_UART2:
+	case PERIPH_ID_UART3:
+		src = readl(&clk->src_peric0);
+		div = readl(&clk->div_peric0);
+		break;
+	case PERIPH_ID_PWM0:
+	case PERIPH_ID_PWM1:
+	case PERIPH_ID_PWM2:
+	case PERIPH_ID_PWM3:
+	case PERIPH_ID_PWM4:
+		src = readl(&clk->src_peric0);
+		div = readl(&clk->div_peric3);
+		break;
+	case PERIPH_ID_SPI0:
+	case PERIPH_ID_SPI1:
+		src = readl(&clk->src_peric1);
+		div = readl(&clk->div_peric1);
+		break;
+	case PERIPH_ID_SPI2:
+		src = readl(&clk->src_peric1);
+		div = readl(&clk->div_peric2);
+		break;
+	case PERIPH_ID_SPI3:
+	case PERIPH_ID_SPI4:
+		src = readl(&clk->sclk_src_isp);
+		div = readl(&clk->sclk_div_isp);
+		break;
+	case PERIPH_ID_SDMMC0:
+	case PERIPH_ID_SDMMC1:
+	case PERIPH_ID_SDMMC2:
+	case PERIPH_ID_SDMMC3:
+		src = readl(&clk->src_fsys);
+		div = readl(&clk->div_fsys1);
+		break;
+	case PERIPH_ID_I2C0:
+	case PERIPH_ID_I2C1:
+	case PERIPH_ID_I2C2:
+	case PERIPH_ID_I2C3:
+	case PERIPH_ID_I2C4:
+	case PERIPH_ID_I2C5:
+	case PERIPH_ID_I2C6:
+	case PERIPH_ID_I2C7:
+		sclk = get_pll_clk(MPLL);
+		sub_div = ((readl(&clk->div_top1) >> bit_info->div_bit) & 0x7) + 1;
+		div = ((readl(&clk->div_top0) >> bit_info->prediv_bit) & 0x7) + 1;
+		return (sclk / sub_div) / div;
+	default:
+		debug("%s: invalid peripheral %d", __func__, peripheral);
+		return -1;
+	};
+
+	src = (src >> bit_info->src_bit) & 0xf;
+	if (src == SRC_MPLL)
+		sclk = get_pll_clk(MPLL);
+	else if (src == SRC_EPLL)
+		sclk = get_pll_clk(EPLL);
+	else if (src == SRC_VPLL)
+		sclk = get_pll_clk(VPLL);
+	else
+		return 0;
+
+	sub_div = (div >> bit_info->div_bit) & 0xf;
+	sub_clk = sclk / (sub_div + 1);
+
+	if (peripheral == PERIPH_ID_SDMMC0 || peripheral == PERIPH_ID_SDMMC2) {
+		div = (div >> bit_info->prediv_bit) & 0xff;
+		return sub_clk / (div + 1);
+	}
+
+	return sub_clk;
 }
 
 /* exynos5: return ARM clock frequency */
