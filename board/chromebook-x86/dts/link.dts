@@ -20,4 +20,14 @@
 		reg = <0x3f8 8>;
 		clock-frequency = <115200>;
 	};
+
+	lpc {
+		compatible = "intel,lpc";
+		#address-cells = <1>;
+		#size-cells = <1>;
+		mkbp@200 {
+			compatible = "google,mkbp";
+			reg = <0x204 1 0x200 1 0x880 0x80>;
+		};
+	};
 };
