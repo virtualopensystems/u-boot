@@ -38,6 +38,19 @@ static void reset_phy_ctrl(void)
 
 	writel(LPDDR3PHY_CTRL_PHY_RESET_OFF, &clk->lpddr3phy_ctrl);
 	writel(LPDDR3PHY_CTRL_PHY_RESET, &clk->lpddr3phy_ctrl);
+
+	/*
+	 * For proper memory initialization there should be a minimum delay of
+	 * 500us after the LPDDR3PHY_CTRL_PHY_RESET signal.
+	 * The below value is an approximate value whose calculation in done
+	 * considering that sdelay takes 2 instruction for every 1 delay cycle.
+	 * And assuming each instruction takes 1 clock cycle i.e 1/(1.7 Ghz)sec
+	 * So for 500 usec, the number of delay cycle should be
+	 * (500 * 10^-6) * (1.7 * 10^9) / 2 = 425000
+	 *
+	 * TODO(hatim.rv@samsung.com): Implement the delay using timer/counter
+	 */
+	sdelay(425000);
 }
 
 int ddr3_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size)
@@ -111,6 +124,10 @@ int ddr3_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size)
 
 	/* Memory Channel Inteleaving Size */
 	writel(mem->iv_size, &dmc->ivcontrol);
+
+	/* Set DMC MEMCONTROL register */
+	val = mem->memcontrol & ~DMC_MEMCONTROL_DSREF_ENABLE;
+	writel(val, &dmc->memcontrol);
 
 	writel(mem->memconfig, &dmc->memconfig0);
 	writel(mem->memconfig, &dmc->memconfig1);
