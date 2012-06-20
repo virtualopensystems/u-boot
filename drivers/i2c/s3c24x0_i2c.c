@@ -131,7 +131,7 @@ static void i2c_ch_init(struct s3c24x0_i2c *i2c, int speed, int slaveadd)
 {
 	ulong freq, pres = 16, div;
 
-	freq = get_i2c_clk();
+	freq = clock_get_periph_rate(PERIPH_ID_I2C0);
 	/* calculate prescaler and divisor values */
 	if ((freq / pres / (16 + 1)) > speed)
 		/* set prescaler to 512 */
