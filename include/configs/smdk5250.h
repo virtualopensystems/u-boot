@@ -187,6 +187,8 @@
 
 /* Enable keyboard */
 #define CONFIG_MKBP		/* MKBP protocol */
+#define CONFIG_MKBP_SPI		/* Support MKBP over SPI */
+#define CONFIG_MKBP_I2C		/* Support MKBP over I2C */
 #define CONFIG_MKBP_KEYB	/* MKBP keyboard input */
 #define CONFIG_CMD_MKBP
 #define CONFIG_KEYBOARD
