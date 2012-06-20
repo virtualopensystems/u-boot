@@ -62,6 +62,7 @@ struct mkbp_dev {
 
 static struct mkbp_dev static_dev, *last_dev;
 
+#ifdef CONFIG_MKBP_I2C
 static int mkbp_i2c_message(struct mkbp_dev *dev, uint8_t din[], int din_len,
 			     uint8_t dout[])
 {
@@ -103,6 +104,7 @@ static int mkbp_i2c_message(struct mkbp_dev *dev, uint8_t din[], int din_len,
 
 	return 0;
 }
+#endif
 
 /**
  * Send a MKBP message and receive a reply.
@@ -123,6 +125,7 @@ static int mkbp_send_message(struct mkbp_dev *dev, uint8_t din[], int din_len,
 	memset(din, '\0', din_len);
 
 	switch (dev->interface) {
+#ifdef CONFIG_MKBP_SPI
 	case MKBPIF_SPI:
 		if (spi_claim_bus(dev->spi)) {
 			debug("%s: Cannot claim SPI bus\n", __func__);
@@ -139,13 +142,17 @@ static int mkbp_send_message(struct mkbp_dev *dev, uint8_t din[], int din_len,
 		}
 		spi_release_bus(dev->spi);
 		break;
+#endif
+#ifdef CONFIG_MKBP_I2C
 	case MKBPIF_I2C:
 		din_len += 2; /* Add space for checksum and return code */
 		if (mkbp_i2c_message(dev, din, din_len, dout))
 			return -1;
 		*replyp = &din[1]; /* skip return code */
 		return din_len - 2; /* ignore checksum/return code */
+#endif
 	case MKBPIF_NONE:
+	default:
 		return -1;
 	}
 
@@ -276,20 +283,24 @@ static int mkbp_decode_fdt(const void *blob, int node, struct mkbp_dev **devp)
 
 	compat = fdtdec_lookup(blob, parent);
 	switch (compat) {
+#ifdef CONFIG_MKBP_SPI
 	case COMPAT_SAMSUNG_EXYNOS_SPI:
 		interface = MKBPIF_SPI;
 		dev->max_frequency = fdtdec_get_int(blob, node,
 						"spi-max-frequency", 500000);
 		dev->cs = fdtdec_get_int(blob, node, "reg", 0);
 		break;
+#endif
+#ifdef CONFIG_MKBP_I2C
 	case COMPAT_SAMSUNG_S3C2440_I2C:
 		interface = MKBPIF_I2C;
 		dev->max_frequency = fdtdec_get_int(blob, node,
 						    "i2c-max-frequency",
-						    CONFIG_SYS_I2C_SPEED);
+						    100000);
 		dev->bus_num = i2c_get_bus_num_fdt(blob, parent);
 		dev->addr = fdtdec_get_int(blob, node, "reg", 0);
 		break;
+#endif
 	default:
 		debug("%s: Unknown compat id %d\n", __func__, compat);
 		return -1;
@@ -323,8 +334,7 @@ struct mkbp_dev *mkbp_init(const void *blob)
 	last_dev = dev;
 
 	switch (dev->interface) {
-	case MKBPIF_NONE:
-		return NULL;
+#ifdef CONFIG_MKBP_SPI
 	case MKBPIF_SPI:
 		dev->spi = spi_setup_slave_fdt(blob, dev->parent_node,
 					dev->cs, dev->max_frequency, 0);
@@ -333,15 +343,24 @@ struct mkbp_dev *mkbp_init(const void *blob)
 			return NULL;
 		}
 		break;
+#endif
+#ifdef CONFIG_MKBP_I2C
 	case MKBPIF_I2C:
 		i2c_init(dev->max_frequency, dev->addr);
 		break;
+#endif
+	case MKBPIF_NONE:
+	default:
+		return NULL;
 	}
+
+	/* TODO(sjg@chromium.org): Wait for Bill's x86 GPIO patch */
+#if defined(CONFIG_MKBP_SPI) || defined(CONFIG_MKBP_I2C)
 	/* we will poll the EC interrupt line */
 	fdtdec_setup_gpio(&dev->ec_int);
 	if (fdt_gpio_isvalid(&dev->ec_int))
-		gpio_cfg_pin(dev->ec_int.gpio, GPIO_INPUT);
-
+		gpio_direction_input(dev->ec_int.gpio);
+#endif
 	if (mkbp_read_id(dev, id, sizeof(id))) {
 		debug("%s: Could not read KBC ID\n", __func__);
 		return NULL;
