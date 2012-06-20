@@ -476,7 +476,7 @@ struct mkbp_dev *mkbp_init(const void *blob)
 		debug("%s: Could not read KBC ID\n", __func__);
 		return NULL;
 	}
-	debug("Google Matrix Keyboard ready, id '%s'\n", id);
+	debug("Google Chrome EC MKBP driver ready, id '%s'\n", id);
 
 	return dev;
 }
