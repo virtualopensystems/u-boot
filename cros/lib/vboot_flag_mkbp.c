@@ -21,26 +21,29 @@ static int vboot_flag_fetch_mkbp(enum vboot_flag_id id,
 				 struct vboot_flag_context *context,
 				 struct vboot_flag_details *details)
 {
-	const void *blob = gd->fdt_blob;
 	struct mkbp_dev *dev;
 	struct mbkp_info info;
 
-	/* TODO(waihong): So far only support recovery flag */
-	if (id != VBOOT_FLAG_RECOVERY) {
-		VBDEBUG("the flag is not supported reading from ec: %s\n",
-			vboot_flag_node_name(id));
-		return -1;
-	}
-
-	dev = mkbp_init(blob);
+	dev = mkbp_init(gd->fdt_blob);
 	if (mkbp_info(dev, &info)) {
 		VBDEBUG("%s: Could not read KBC info\n", __func__);
 		return -1;
 	}
+
+	/* TODO(waihong): So far only support recovery flag */
+	switch (id) {
+	case VBOOT_FLAG_RECOVERY:
+		details->value = (info.switches &
+				  MKBP_SWITCH_KEYBOARD_RECOVERY) ? 1 : 0;
+		break;
+	default:
+		VBDEBUG("the flag is not supported reading from ec: %s\n",
+			vboot_flag_node_name(id));
+		return -1;
+	}
 	details->port = 0;
 	details->active_high = 0;
-	details->value = (info.switches &
-			  MKBP_SWITCH_KEYBOARD_RECOVERY) ? 1 : 0;
+
 	return 0;
 }
 
