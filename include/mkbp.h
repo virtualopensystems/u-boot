@@ -49,6 +49,30 @@ struct mbkp_info {
 	uint8_t switches;
 } __packed;
 
+/* LPC command status byte masks */
+/* EC has written a byte in the data register and host hasn't read it yet */
+#define EC_LPC_STATUS_TO_HOST     0x01
+/* Host has written a command/data byte and the EC hasn't read it yet */
+#define EC_LPC_STATUS_FROM_HOST   0x02
+/* EC is processing a command */
+#define EC_LPC_STATUS_PROCESSING  0x04
+/* Last write to EC was a command, not data */
+#define EC_LPC_STATUS_LAST_CMD    0x08
+/* EC is in burst mode.  Chrome EC doesn't support this, so this bit is never
+ * set. */
+#define EC_LPC_STATUS_BURST_MODE  0x10
+/* SCI event is pending (requesting SCI query) */
+#define EC_LPC_STATUS_SCI_PENDING 0x20
+/* SMI event is pending (requesting SMI query) */
+#define EC_LPC_STATUS_SMI_PENDING 0x40
+/* (reserved) */
+#define EC_LPC_STATUS_RESERVED    0x80
+
+/* EC is busy.  This covers both the EC processing a command, and the host has
+ * written a new command but the EC hasn't picked it up yet. */
+#define EC_LPC_STATUS_BUSY_MASK \
+	(EC_LPC_STATUS_FROM_HOST | EC_LPC_STATUS_PROCESSING)
+
 /**
  * Read the ID of the MKBP device
  *
