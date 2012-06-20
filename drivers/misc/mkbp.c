@@ -30,13 +30,13 @@
 
 #include <common.h>
 #include <command.h>
+#include <i2c.h>
 #include <mkbp.h>
 #include <fdtdec.h>
 #include <malloc.h>
 #include <spi.h>
-#include <asm/arch-exynos/spi.h>
-#include <asm/gpio.h>
-#include <i2c.h>
+#include <asm/io.h>
+#include <asm-generic/gpio.h>
 
 
 /* Which interface is the device on? */
