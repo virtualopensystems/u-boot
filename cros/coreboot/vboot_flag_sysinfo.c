@@ -19,9 +19,9 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-int vboot_flag_fetch_sysinfo(enum vboot_flag_id id,
-			     struct vboot_flag_context *context,
-			     struct vboot_flag_details *details)
+static int vboot_flag_fetch_sysinfo(enum vboot_flag_id id,
+				    struct vboot_flag_context *context,
+				    struct vboot_flag_details *details)
 {
 	const void *blob = gd->fdt_blob;
 	const struct fdt_property *prop;
