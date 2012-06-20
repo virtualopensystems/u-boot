@@ -26,17 +26,6 @@
 #include <asm/arch/pinmux.h>
 
 /*
- * Get the clock divider for mshci controller
- * its a divisor for the Card Interface Unit of the controller
- * and it is used to set the desired bus speed.
- *
- * @param enum periph_id	instance of the mshci controller
- *
- * Return	0 if ok else -1
- */
-int get_mshci_clk_div(enum periph_id peripheral);
-
-/*
  * Set mshci controller instances clock drivder
  *
  * @param enum periph_id instance of the mshci controller

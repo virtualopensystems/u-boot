@@ -237,74 +237,6 @@ unsigned long get_arm_clk(void)
 	return armclk;
 }
 
-/* exynos5: return pwm clock frequency */
-unsigned long get_pwm_clk(void)
-{
-	struct exynos5_clock *clk =
-		(struct exynos5_clock *)samsung_get_base_clock();
-	unsigned long pclk, sclk;
-	unsigned int ratio;
-
-	/*
-	 * CLK_DIV_PERIC3
-	 * PWM_RATIO [3:0]
-	 */
-	ratio = readl(&clk->div_peric3);
-	ratio = ratio & 0xf;
-	sclk = get_pll_clk(MPLL);
-
-	pclk = sclk / (ratio + 1);
-
-	return pclk;
-}
-
-/* exynos5: return uart clock frequency */
-unsigned long get_uart_clk(int dev_index)
-{
-	struct exynos5_clock *clk =
-		(struct exynos5_clock *)samsung_get_base_clock();
-	unsigned long uclk, sclk;
-	unsigned int sel;
-	unsigned int ratio;
-
-	/*
-	 * CLK_SRC_PERIC0
-	 * UART0_SEL [3:0]
-	 * UART1_SEL [7:4]
-	 * UART2_SEL [8:11]
-	 * UART3_SEL [12:15]
-	 * UART4_SEL [16:19]
-	 * UART5_SEL [23:20]
-	 */
-	sel = readl(&clk->src_peric0);
-	sel = (sel >> (dev_index << 2)) & 0xf;
-
-	if (sel == 0x6)
-		sclk = get_pll_clk(MPLL);
-	else if (sel == 0x7)
-		sclk = get_pll_clk(EPLL);
-	else if (sel == 0x8)
-		sclk = get_pll_clk(VPLL);
-	else
-		return 0;
-
-	/*
-	 * CLK_DIV_PERIC0
-	 * UART0_RATIO [3:0]
-	 * UART1_RATIO [7:4]
-	 * UART2_RATIO [8:11]
-	 * UART3_RATIO [12:15]
-	 * UART4_RATIO [16:19]
-	 * UART5_RATIO [23:20]
-	 */
-	ratio = readl(&clk->div_peric0);
-	ratio = (ratio >> (dev_index << 2)) & 0xf;
-
-	uclk = sclk / (ratio + 1);
-
-	return uclk;
-}
-
 /* exynos5: set the mmc clock */
 void set_mmc_clk(int dev_index, unsigned int div)
 {
@@ -330,63 +262,6 @@ void set_mmc_clk(int dev_index, unsigned int div)
 	val &= ~(0xff << ((dev_index << 4) + 8));
 	val |= (div & 0xff) << ((dev_index << 4) + 8);
 	writel(val, addr);
-}
-
-int get_mshci_clk_div(enum periph_id peripheral)
-{
-	struct exynos5_clock *clk =
-		(struct exynos5_clock *)samsung_get_base_clock();
-	u32 *addr;
-	unsigned int div_mmc, div_mmc_pre;
-	unsigned int mpll_clock, sclk_mmc;
-
-	mpll_clock = get_pll_clk(MPLL);
-
-	/*
-	 * CLK_DIV_FSYS1
-	 * MMC0_PRE_RATIO [15:8]
-	 * MMC0_RATIO [3:0]
-	 * CLK_DIV_FSYS2
-	 * MMC2_PRE_RATIO [15:8]
-	 * MMC2_RATIO [3:0]
-	 */
-	switch (peripheral) {
-	case PERIPH_ID_SDMMC0:
-		addr = &clk->div_fsys1;
-		break;
-	case PERIPH_ID_SDMMC2:
-		addr = &clk->div_fsys2;
-		break;
-	default:
-		debug("invalid peripheral\n");
-		return -1;
-	}
-
-	div_mmc = (readl(addr) & 0xf) + 1;
-	div_mmc_pre = ((readl(addr) & 0xff00) >> 8) + 1;
-
-	sclk_mmc = (mpll_clock / div_mmc) / div_mmc_pre;
-
-	return sclk_mmc;
-}
-
-/* exynos5: obtaining the I2C clock */
-unsigned long get_i2c_clk(void)
-{
-	struct exynos5_clock *clk =
-		(struct exynos5_clock *)samsung_get_base_clock();
-	unsigned long aclk_66, aclk_66_pre, sclk;
-	unsigned int ratio;
-
-	sclk = get_pll_clk(MPLL);
-
-	ratio = ((readl(&clk->div_top1)) >> 24);
-	ratio &= (0x7);
-	aclk_66_pre = sclk/(ratio+1);
-	ratio = readl(&clk->div_top0);
-	ratio &= (0x7);
-	aclk_66 = aclk_66_pre/(ratio+1);
-	return aclk_66;
 }
 
 void clock_ll_set_pre_ratio(enum periph_id periph_id, unsigned divisor)
