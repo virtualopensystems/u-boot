@@ -241,15 +241,17 @@ int board_init(void)
 	}
 #endif
 
-	/* TODO(hatim.rv@samsung.com): Move to FDT */
-	/* Configure GPIO for backlight */
+	/*
+	 * Configure backlight PWM as a simple output high (100% brightness)
+	 * TODO(hatim.rv@samsung.com): Move to FDT
+	 */
 	gpio_cfg_pin(GPIO_B20, GPIO_OUTPUT);
 	gpio_set_value(GPIO_B20, 1);
 
-	/* TODO(hatim.rv@samsung.com): Move to FDT */
-	/* Configure GPIO for LCD */
-	gpio_cfg_pin(GPIO_X15, GPIO_OUTPUT);
-	gpio_set_value(GPIO_X15, 1);
+	/*
+	 * Configure GPIO for LCD_BL_EN
+	 * TODO(hatim.rv@samsung.com): Move to FDT
+	 */
 	gpio_cfg_pin(GPIO_X30, GPIO_OUTPUT);
 	gpio_set_value(GPIO_X30, 1);
 

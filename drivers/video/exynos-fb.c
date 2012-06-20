@@ -26,8 +26,9 @@
 #include <fdtdec.h>
 #include <lcd.h>
 #include <pwm.h>
-#include <asm/io.h>
 #include <asm/errno.h>
+#include <asm/gpio.h>
+#include <asm/io.h>
 #include <asm/unaligned.h>
 #include <asm/arch/clk.h>
 #include <asm/arch/dsim.h>
@@ -64,6 +65,7 @@ enum {
 	ERR_MISSING_DP_BASE,		/* 15 */
 
 	ERR_NO_FDT_NODE,
+	ERR_BRIDGE_FAILED,
 };
 
 /* MIPI DSI Processor-to-Peripheral transaction types */
@@ -340,6 +342,19 @@ static void mipi_init(void)
 		(struct exynos5_power *)samsung_get_base_power();
 	struct exynos5_dsim *dsim =
 		(struct exynos5_dsim *)samsung_get_base_dsim();
+
+	/*
+	 * De-assert LVDS_RESET_L
+	 *
+	 * TODO(dianders): This need to move to the device tree.
+	 * TODO(dianders): If we get MIPI working in U-Boot again, need to
+	 * test that this actually works properly.  Kernel code indicates
+	 * that maybe we should be pulsing this line rather than driving it?
+	 * ...and maybe we need a delay after doing this?
+	 */
+	gpio_set_value(GPIO_X15, 1);
+	gpio_cfg_pin(GPIO_X15, GPIO_OUTPUT);
+	gpio_set_pull(GPIO_X15, GPIO_PULL_NONE);
 
 	/* Reset DSIM and enable MIPI_PHY1 */
 	val = MIPI_PHY1_CONTROL_ENABLE | MIPI_PHY1_CONTROL_M_RESETN;
@@ -798,6 +813,78 @@ static int s5p_dp_hw_link_training(struct s5p_dp_device *dp,
 	return 0;
 }
 
+/**
+ * Enable the eDP to LVDS bridge.
+ *
+ * TODO(dianders): This whole function needs to be moved to device-
+ * tree if we decide we can't find better solutions to some of the
+ * problems here.
+ *
+ * @return 0 if ok, non-zero if error
+ */
+static int s5p_dp_enable_bridge(void)
+{
+	const int NUM_TRIES = 10;
+	int i;
+
+	/* De-assert PD_N to power up the bridge */
+	gpio_set_value(GPIO_X15, 1);
+	gpio_cfg_pin(GPIO_X15, GPIO_OUTPUT);
+	gpio_set_pull(GPIO_X15, GPIO_PULL_NONE);
+
+	/*
+	 * We'll wait for the bridge to come up here and retry if it didn't.
+	 *
+	 * Sometimes the retry works and sometimes things are really wedged
+	 * and retry doesn't work.
+	 *
+	 * We really want to do better in the long term.  Ideally we should
+	 * set the PD_N pin high very early at boot and then probe the HPD pin
+	 * to see when the chip has powered up.
+	 *
+	 * Right now we don't do the "ideal" solution for a few reasons:
+	 * - There is a phantom "high" on the HPD chip during its bootup.  The
+	 *   phantom high comes within 7ms of de-asserting PD_N and persists
+	 *   for at least 15ms.  The real high comes roughly 50ms after
+	 *   PD_N is de-asserted.  The phantom high makes it hard for us to
+	 *   know when the NXP chip is up.
+	 * - We're trying to figure out how to make it so that the retry isn't
+	 *   needed, so we don't want to architect things too much until we
+	 *   get a more final solution.
+	 */
+	for (i = 0; i < NUM_TRIES; i++) {
+		/* Hardcode 90ms (max powerup) so we know HPD is valid. */
+		mdelay(90);
+
+		/*
+		 * Check HPD.  If it's high, we're all good.
+		 *
+		 * NOTE: This assumes exynos_pinmux_config(PERIPH_ID_DPHPD, 0)
+		 * has been called which sets the HPD pin to the HPD special
+		 * function (and disables internal pulls).  Here we have to
+		 * hardcode that HPD is GPIO_X07 since the pinmux stuff hasn't
+		 * been device-tree enabled yet.
+		 */
+		if (gpio_get_value(GPIO_X07))
+			return 0;
+
+		/*
+		 * If we're here, the bridge chip failed to initialize.
+		 * Drive DP_N low in an attempt to reset.
+		 *
+		 * Arbitrarily wait 300ms here with DP_N low.  Don't know for
+		 * sure how long we should wait, but we're being paranoid.
+		 */
+		debug("%s: eDP bridge failed to come up; try %d of %d\n",
+		       __func__, i+1, NUM_TRIES);
+		gpio_set_value(GPIO_X15, 0);
+		mdelay(300);
+		gpio_set_value(GPIO_X15, 1);
+	}
+	debug("%s: eDP bridge failed to come up; giving up\n", __func__);
+	return -ERR_BRIDGE_FAILED;
+}
+
 /*
  * Initialize DP display
  * param node		DP node
@@ -820,6 +907,10 @@ static int dp_main_init(int node)
 
 	clock_init_dp_clock();
 	exynos_pinmux_config(PERIPH_ID_DPHPD, 0);
+
+	ret = s5p_dp_enable_bridge();
+	if (ret)
+		return ret;
 
 	power_enable_dp_phy();
 	s5p_dp_init_dp(dp);
