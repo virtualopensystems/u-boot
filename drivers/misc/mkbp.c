@@ -38,12 +38,18 @@
 #include <asm/io.h>
 #include <asm-generic/gpio.h>
 
+#ifdef DEBUG_TRACE
+#define debug_trace(fmt, b...)	debug(fmt, #b)
+#else
+#define debug_trace(fmt, b...)
+#endif
 
 /* Which interface is the device on? */
 enum mkbp_interface_t {
 	MKBPIF_NONE,
 	MKBPIF_SPI,
 	MKBPIF_I2C,
+	MKBPIF_LPC,	/* Intel Low Pin Count interface */
 };
 
 /* Our configuration information */
@@ -56,6 +62,10 @@ struct mkbp_dev {
 	unsigned int bus_num;		/* Bus number (for I2C) */
 	unsigned int max_frequency;	/* Maximum interface frequency */
 	struct fdt_gpio_state ec_int;	/* GPIO used as EC interrupt line */
+	int lpc_cmd;			/* LPC command IO port */
+	int lpc_data;			/* LPC command IO port */
+	int lpc_param;			/* LPC param IO port */
+	int lpc_param_len;		/* Length of LPC param space */
 	uint8_t din[MSG_BYTES];		/* Input data buffer */
 	uint8_t dout[MSG_BYTES];	/* Output data buffer */
 };
@@ -106,6 +116,68 @@ static int mkbp_i2c_message(struct mkbp_dev *dev, uint8_t din[], int din_len,
 }
 #endif
 
+#ifdef CONFIG_MKBP_LPC
+static int wait_for_sync(struct mkbp_dev *dev)
+{
+	unsigned long start;
+
+	start = get_timer(0);
+	while (inb(dev->lpc_cmd) & EC_LPC_STATUS_BUSY_MASK) {
+		if (get_timer(start) > 1000) {
+			debug("%s: Timeout waiting for MKBP sync\n", __func__);
+			return -1;
+		}
+	}
+
+	return 0;
+}
+
+static int mkbp_lpc_message(struct mkbp_dev *dev, uint8_t din[], int din_len,
+			     uint8_t dout[])
+{
+	int ret, i;
+
+	if (din_len > dev->lpc_param_len) {
+		debug("%s: Cannot send %d bytes\n", __func__, din_len);
+		return -1;
+	}
+
+	if (wait_for_sync(dev)) {
+		debug("%s: Timeout waiting ready\n", __func__);
+		return 01;
+	}
+
+	debug_trace("cmd: %02x ", dout[0]);
+	for (i = 1; i < din_len; i++) {
+		debug_trace("%02x ", dout[i]);
+		outb(dout[i], dev->lpc_param - 1 + i);
+	}
+	outb(dout[0], dev->lpc_cmd);
+	debug_trace("\n");
+
+	if (wait_for_sync(dev)) {
+		debug("%s: Timeout waiting ready\n", __func__);
+		return 01;
+	}
+
+	ret = inb(dev->lpc_data);
+	if (ret) {
+		debug("%s: MKBP result code %d\n", __func__, ret);
+		return -1;
+	}
+
+	din[0] = ret;
+	debug_trace("resp: %02x ", din[0]);
+	for (i = 1; i < din_len; i++) {
+		din[i] = inb(dev->lpc_param - 1 + i);
+		debug_trace("%02x ", din[i]);
+	}
+	debug_trace("\n");
+
+	return 0;
+}
+#endif
+
 /**
  * Send a MKBP message and receive a reply.
  *
@@ -150,6 +222,13 @@ static int mkbp_send_message(struct mkbp_dev *dev, uint8_t din[], int din_len,
 			return -1;
 		*replyp = &din[1]; /* skip return code */
 		return din_len - 2; /* ignore checksum/return code */
+#endif
+#ifdef CONFIG_MKBP_LPC
+	case MKBPIF_LPC:
+		if (mkbp_lpc_message(dev, din, din_len, dout))
+			return -1;
+		*replyp = &din[1]; /* skip return code */
+		return din_len;
 #endif
 	case MKBPIF_NONE:
 	default:
@@ -301,6 +380,34 @@ static int mkbp_decode_fdt(const void *blob, int node, struct mkbp_dev **devp)
 		dev->addr = fdtdec_get_int(blob, node, "reg", 0);
 		break;
 #endif
+#ifdef CONFIG_MKBP_LPC
+	case COMPAT_INTEL_LPC: {
+		int len, byte, i;
+		const u32 *reg;
+
+		interface = MKBPIF_LPC;
+		reg = fdt_getprop(blob, node, "reg", &len);
+		if (len < sizeof(u32) * 6) {
+			debug("%s: LPC reg property is too small\n", __func__);
+			return -1;
+		}
+		byte = 0xff;
+		dev->lpc_cmd = fdt32_to_cpu(reg[0]);
+		dev->lpc_data = fdt32_to_cpu(reg[2]);
+		dev->lpc_param = fdt32_to_cpu(reg[4]);
+		dev->lpc_param_len = fdt32_to_cpu(reg[5]);
+		byte &= inb(dev->lpc_cmd);
+		byte &= inb(dev->lpc_data);
+		for (i = 0; i < dev->lpc_param_len; i++)
+			byte &= inb(dev->lpc_param + i);
+		if (byte == 0xff) {
+			debug("%s: MKBP device not found on LPC bus\n",
+			      __func__);
+			return -1;
+		}
+		break;
+	}
+#endif
 	default:
 		debug("%s: Unknown compat id %d\n", __func__, compat);
 		return -1;
@@ -347,6 +454,10 @@ struct mkbp_dev *mkbp_init(const void *blob)
 #ifdef CONFIG_MKBP_I2C
 	case MKBPIF_I2C:
 		i2c_init(dev->max_frequency, dev->addr);
+		break;
+#endif
+#ifdef CONFIG_MKBP_LPC
+	case MKBPIF_LPC:
 		break;
 #endif
 	case MKBPIF_NONE:
