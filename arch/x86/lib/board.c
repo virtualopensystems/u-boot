@@ -348,6 +348,8 @@ void board_init_r(gd_t *id, ulong dest_addr)
 			hang();
 	}
 	bootstage_mark(BOOTSTAGE_ID_BOARD_INIT_SEQ);
+	if (board_init())
+		printf("Warning: board_init() failed\n");
 
 #ifdef CONFIG_SERIAL_MULTI
 	serial_initialize();

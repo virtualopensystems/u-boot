@@ -46,6 +46,14 @@ int cpu_init_interrupts(void);
 /* board/.../... */
 int dram_init(void);
 
+/**
+ * Do board-specific initialisation. This is called after relocation but
+ * before most other init.
+ *
+ * @return 0 if ok, -1 on error
+ */
+int board_init(void);
+
 void setup_pcat_compatibility(void);
 
 void isa_unmap_rom(u32 addr);
