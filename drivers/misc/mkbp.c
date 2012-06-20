@@ -226,10 +226,10 @@ int mkbp_read_id(struct mkbp_dev *dev, char *id, int maxlen)
 
 	/* Allow room for our \0 terminator */
 	len = mkbp_send_command(dev, CMDC_ID, maxlen - 1, &p);
-	if (len >= 0) {
-		memcpy(id, p, len);
-		id[len] = '\0';
-	}
+	if (len < 0)
+		return -1;
+	memcpy(id, p, len);
+	id[len] = '\0';
 
 	return 0;
 }
