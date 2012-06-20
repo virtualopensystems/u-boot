@@ -89,6 +89,7 @@ enum fdt_compat_id {
 	COMPAT_GOOGLE_MKBP_FLAG,	/* Google EC Flag-Input */
 	COMPAT_GOOGLE_SYSINFO_FLAG,	/* Google Sysinfo Flag-Input */
 	COMPAT_NVIDIA_TEGRA20_DISPLAY,	/* Tegra 2 Display controller */
+	COMPAT_INTEL_LPC,		/* Intel Low Pin Count I/F */
 
 	COMPAT_COUNT,
 };
