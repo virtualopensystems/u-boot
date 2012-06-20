@@ -393,7 +393,7 @@ static int mshci_change_clock(struct mshci_host *host, uint clock)
 	mshci_clock_onoff(host, CLK_DISABLE);
 
 	/* get the clock division */
-	sclk_mshc = get_mshci_clk_div(host->peripheral);
+	sclk_mshc = clock_get_periph_rate(host->peripheral);
 
 	/* CLKDIV */
 	for (div = 1 ; div <= 0xff; div++) {
