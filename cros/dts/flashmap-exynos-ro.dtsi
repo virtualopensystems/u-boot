@@ -42,7 +42,7 @@
 			size = <0x4000>;
 			read-only;
 			filename = "bl2.bin";
-			type = "blob exynos-bl2";
+			type = "blob exynos-bl2 boot,dtb";
 			required;
 		};
 
@@ -50,7 +50,7 @@
 			label = "u-boot";
 			size = <0x7a000>;
 			read-only;
-			type = "blob boot+dtb";
+			type = "blob boot,dtb,ecbin";
 			required;
 		};
 
