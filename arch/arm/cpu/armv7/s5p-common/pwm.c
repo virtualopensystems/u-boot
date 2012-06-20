@@ -28,6 +28,7 @@
 #include <asm/io.h>
 #include <asm/arch/pwm.h>
 #include <asm/arch/clk.h>
+#include <asm/arch/periph.h>
 
 int pwm_enable(int pwm_id)
 {
@@ -69,7 +70,7 @@ static unsigned long pwm_calc_tin(int pwm_id, unsigned long freq)
 	unsigned long tin_parent_rate;
 	unsigned int div;
 
-	tin_parent_rate = get_pwm_clk();
+	tin_parent_rate = clock_get_periph_rate(PERIPH_ID_PWM0);
 
 	for (div = 2; div <= 16; div *= 2) {
 		if ((tin_parent_rate / (div << 16)) < freq)
@@ -175,8 +176,8 @@ int pwm_init(int pwm_id, int div, int invert)
 		ticks_per_period = -1UL;
 	} else {
 		const unsigned long pwm_hz = 1000;
-		unsigned long timer_rate_hz = get_pwm_clk() /
-			((prescaler + 1) * (1 << div));
+		unsigned long timer_rate_hz = clock_get_periph_rate(
+			PERIPH_ID_PWM0) / ((prescaler + 1) * (1 << div));
 
 		ticks_per_period = timer_rate_hz / pwm_hz;
 	}
