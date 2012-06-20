@@ -123,6 +123,11 @@
 #define CONFIG_AUTOCOMPLETE
 #endif
 
+/* Enable keyboard */
+#define CONFIG_MKBP		/* MKBP protocol */
+#define CONFIG_MKBP_LPC		/* MKBP over LPC */
+#define CONFIG_CMD_MKBP
+
 #define CONFIG_SYS_CONSOLE_IS_IN_ENV
 #define CONFIG_SYS_STDIO_DEREGISTER
 
