@@ -287,7 +287,7 @@ static void set_beep_divisor(uint8_t divider)
 		       HDA_VERB(beep_nid, HDA_VERB_SET_BEEP, divider));
 }
 
-void enable_beep(uint32_t frequency)
+void enable_beep_hda(uint32_t frequency)
 {
 	uint8_t divider_val;
 
@@ -303,7 +303,7 @@ void enable_beep(uint32_t frequency)
 	set_beep_divisor(divider_val);
 }
 
-void disable_beep(void)
+void disable_beep_hda(void)
 {
 	set_beep_divisor(0);
 }

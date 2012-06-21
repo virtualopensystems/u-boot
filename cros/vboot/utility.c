@@ -18,7 +18,7 @@
 #include <malloc.h>
 #include <cros/common.h>
 #include <cros/cros_init.h>
-#include <cros/hda_codec.h>
+#include <cros/pcbeep.h>
 #include <cros/power_management.h>
 #include <sound.h>
 

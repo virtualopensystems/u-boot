@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
+ * Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -8,23 +8,23 @@
  * Software Foundation.
  */
 
-/* HDA codec interface for Chrome OS verified boot */
+/* PCBEEP interface for Chrome OS verified boot */
 
-#ifndef CHROMEOS_HDA_CODEC_H_
-#define CHROMEOS_HDA_CODEC_H_
+#ifndef CHROMEOS_PCBEEP_H_
+#define CHROMEOS_PCBEEP_H_
 
 /* Beep control */
 
 /*
- * Start the beep using the HDA codec.
+ * Start the beep
  *
  * @param frequency	The frequency of the beep in Hz
  */
-void enable_beep_hda(uint32_t frequency);
+void enable_beep(uint32_t frequency);
 
 /*
- * Stop the beep using the HDA codec
+ * Stop the beep
  */
-void disable_beep_hda(void);
+void disable_beep(void);
 
-#endif /* CHROMEOS_PHDA_CODEC_H_ */
+#endif /* CHROMEOS_PCBEEP_H_ */

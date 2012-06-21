@@ -40,6 +40,7 @@ LIB     = $(obj)libcros_board.o
 
 COBJS-$(CONFIG_CHROMEOS) += power_management.o
 COBJS-$(CONFIG_CHROMEOS) += hda_codec.o
+COBJS-$(CONFIG_CHROMEOS) += pcbeep.o
 COBJS-$(CONFIG_CHROMEOS) += nvstorage_nvram.o
 COBJS-$(CONFIG_CHROMEOS) += utility.o
 COBJS-$(CONFIG_CHROMEOS) += keyboard.o
