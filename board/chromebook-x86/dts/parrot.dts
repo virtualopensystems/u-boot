@@ -9,7 +9,8 @@
 	compatible = "google,parrot", "intel,celeron-sandybridge";
 
 	config {
-	       hwid = "X86 PARROT TEST 8762";
+		hwid = "X86 PARROT TEST 8762";
+		hda_codec_beep = <1>;
 	};
 
 	chromeos-config {

@@ -9,8 +9,9 @@
 	compatible = "google,link", "intel,celeron-ivybridge";
 
 	config {
-	       hwid = "X86 LINK TEST 6638";
-	       silent_console = <0>;
+		hwid = "X86 LINK TEST 6638";
+		silent_console = <0>;
+		hda_codec_beep = <1>;
 	};
 
 	serial {

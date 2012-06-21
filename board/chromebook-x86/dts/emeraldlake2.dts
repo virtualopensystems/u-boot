@@ -10,6 +10,7 @@
 
 	config {
 		hwid = "X86 EMERALD LAKE 2 TEST 6638";
+		hda_codec_beep = <1>;
 		usb-keyboard;
 	};
 };

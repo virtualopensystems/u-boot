@@ -9,7 +9,8 @@
 	compatible = "google,link", "intel,celeron-ivybridge";
 
 	config {
-	       hwid = "X86 LINK TEST 6638";
+		hwid = "X86 LINK TEST 6638";
+		hda_codec_beep = <1>;
 	};
 
         gpio: gpio {};
