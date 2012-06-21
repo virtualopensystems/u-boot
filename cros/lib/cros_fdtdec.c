@@ -115,9 +115,15 @@ static int process_fmap_node(const void *blob, int node, int depth,
 	const char *name, *subname;
 	int len;
 
+	/* At depth 2, we are looking for our ecbin subnode */
 	name = fdt_get_name(blob, node, &len);
-	if (depth != 1)
+	if (depth == 2) {
+		if (!rw || strcmp(name, "ecbin"))
+			return 0;
+		if (read_entry(blob, node, name, &rw->ec_bin))
+			return -FDT_ERR_MISSING;
 		return 0;
+	}
 
 	/* We are looking only for ro-, ro-a- and ro-b- */
 	if (len < 4 || *name != 'r' || name[2] != '-')

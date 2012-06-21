@@ -27,6 +27,9 @@ struct fmap_firmware_entry {
 
 	/* The offset of the first block of R/W firmware when stored on disk */
 	uint64_t block_offset;
+
+	/* Sub-entry for EC binary, if present */
+	struct fmap_entry ec_bin;
 };
 
 /*

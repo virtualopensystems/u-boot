@@ -209,6 +209,22 @@ static int do_vboot_poweroff(cmd_tbl_t *cmdtp,
 	return 1; /* It should never reach here */
 }
 
+static void show_ec_bin(const char *name, struct fmap_entry *entry)
+{
+	u32 *data;
+	int i;
+
+	printf("EC binary %s at %#x, length %#x\n", name, entry->offset,
+	       entry->length);
+	if (entry->length) {
+		data = (u32 *)(CONFIG_SYS_TEXT_BASE + entry->offset);
+		printf("%p: ", data);
+		for (i = 0; i < 4; i++)
+			printf("%08x ", data[i]);
+		putc('\n');
+	}
+}
+
 static void show_entry(const char *name, struct fmap_entry *entry)
 {
 	printf("   %s: offset=%#x, length=%#x\n", name, entry->offset,
@@ -223,6 +239,7 @@ static void show_firmware_entry(const char *name,
 	show_entry("vblock", &fw_entry->vblock);
 	show_entry("firmware_id", &fw_entry->firmware_id);
 	printf("block_offset: %llx\n", fw_entry->block_offset);
+	show_ec_bin(name, &fw_entry->ec_bin);
 	puts("\n");
 }
 
