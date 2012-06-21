@@ -47,7 +47,13 @@ int boot_device_matches(const block_dev_desc_t *dev,
 {
 	*flags = dev->removable ? VB_DISK_FLAG_REMOVABLE :
 			VB_DISK_FLAG_FIXED;
-	return (*flags & disk_flags) == disk_flags && dev->lba;
+	return (*flags & disk_flags) == disk_flags;
+}
+
+int boot_device_present_and_matches(const block_dev_desc_t *dev,
+		uint32_t disk_flags, uint32_t *flags)
+{
+	return dev->lba && boot_device_matches(dev, disk_flags, flags);
 }
 
 /**
@@ -75,7 +81,7 @@ static int add_matching_devices(const char *name, block_dev_desc_t **devs,
 		* Only add this storage device if the properties of
 		* disk_flags is a subset of the properties of flags.
 		*/
-		if (boot_device_matches(dev, disk_flags, &flags)) {
+		if (boot_device_present_and_matches(dev, disk_flags, &flags)) {
 			info->handle = (VbExDiskHandle_t)dev;
 			info->bytes_per_lba = dev->blksz;
 			info->lba_count = dev->lba;

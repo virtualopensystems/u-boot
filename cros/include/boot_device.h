@@ -62,6 +62,17 @@ int boot_device_matches(const block_dev_desc_t *dev, uint32_t disk_flags,
 			uint32_t *flags);
 
 /**
+ * Checks if a given device is presented and matches the provided disk_flags.
+ *
+ * @param dev		Device to check
+ * @param disk_flags	Disk flags which must be present for this device
+ * @param flags		Returns calculated flags for this device
+ * @return 1 if the device matches, 0 if not
+ */
+int boot_device_present_and_matches(const block_dev_desc_t *dev,
+		uint32_t disk_flags, uint32_t *flags);
+
+/**
  * Probe functions for available interfaces
  *
  * @return 0 if ok, -1 on error

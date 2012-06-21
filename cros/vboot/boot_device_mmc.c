@@ -32,18 +32,26 @@ static int boot_device_mmc_scan(block_dev_desc_t **desc, int max_devs,
 		if (!mmc)
 			break;
 
-		/* Set has_init to false so that we can rescan it. */
-		mmc->has_init = 0;
+		/*
+		 * If device flags do not match, we do not even care whether
+		 * the device is presented or not, and simply skip it.
+		 */
+		if (!boot_device_matches(&mmc->block_dev, disk_flags, &flags))
+			continue;
 
-		/* Skip device that don't match or cannot be initialized */
-		if (mmc_init(mmc)) {
+		/* Rescan removable device only */
+		if (mmc->block_dev.removable)
+			mmc->has_init = 0;
+
+		/* Skip device that cannot be initialized */
+		if (!mmc->has_init && mmc_init(mmc)) {
 			VBDEBUG("mmc_init fail\n");
 			continue;
 		}
-		if (!boot_device_matches(&mmc->block_dev, disk_flags, &flags)) {
-			VBDEBUG("device does not match\n");
+
+		/* Skip not-presented device */
+		if (!mmc->block_dev.lba)
 			continue;
-		}
 
 		/*
 		 * find_mmc_device() returns a pointer from a global
@@ -52,6 +60,7 @@ static int boot_device_mmc_scan(block_dev_desc_t **desc, int max_devs,
 		 */
 		desc[found++] = &mmc->block_dev;
 	}
+
 	return found;
 }
 
