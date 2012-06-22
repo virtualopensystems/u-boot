@@ -37,4 +37,7 @@ VbError_t nvstorage_write_nvram(const uint8_t *buf);
 VbError_t nvstorage_read_disk(uint8_t *buf);
 VbError_t nvstorage_write_disk(const uint8_t *buf);
 
+VbError_t nvstorage_read_mkbp(uint8_t *buf);
+VbError_t nvstorage_write_mkbp(const uint8_t *buf);
+
 #endif /* CHROMEOS_NVSTORAGE_H_ */

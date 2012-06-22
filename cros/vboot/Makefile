@@ -24,6 +24,7 @@ COBJS-$(CONFIG_CHROMEOS) += load_firmware.o
 COBJS-$(CONFIG_CHROMEOS) += misc.o
 COBJS-$(CONFIG_CHROMEOS) += nvstorage.o
 COBJS-$(CONFIG_CHROMEOS) += nvstorage_disk.o
+COBJS-$(CONFIG_CHROMEOS) += nvstorage_mkbp.o
 COBJS-$(CONFIG_CHROMEOS) += tlcl_stub.o
 COBJS-$(CONFIG_CHROMEOS) += utility.o
 

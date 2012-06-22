@@ -44,6 +44,13 @@ int nvstorage_init(void)
 		return 0;
 	}
 #endif
+#ifdef CONFIG_MKBP
+	if (!strcmp(media, "mkbp")) {
+		nv_read = nvstorage_read_mkbp;
+		nv_write = nvstorage_write_mkbp;
+		return 0;
+	}
+#endif
 	if (!strcmp(media, "disk")) {
 		nv_read = nvstorage_read_disk;
 		nv_write = nvstorage_write_disk;
