@@ -93,6 +93,7 @@ extern int cmd_auto_complete(const char *const prompt, char *buf, int *np, int *
     || defined(CONFIG_CMD_I2C)		\
     || defined(CONFIG_CMD_ITEST)	\
     || defined(CONFIG_CMD_PCI)		\
+    || defined(CONFIG_CMD_IO)		\
     || defined(CONFIG_CMD_PORTIO)
 #define CMD_DATA_SIZE
 extern int cmd_get_data_size(char* arg, int default_size);
