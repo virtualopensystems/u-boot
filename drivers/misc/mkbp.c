@@ -60,7 +60,7 @@ struct mkbp_dev {
 	uint8_t dout[MSG_BYTES];	/* Output data buffer */
 };
 
-static struct mkbp_dev *last_dev;
+static struct mkbp_dev static_dev, *last_dev;
 
 static int mkbp_i2c_message(struct mkbp_dev *dev, uint8_t din[], int din_len,
 			     uint8_t dout[])
@@ -272,11 +272,7 @@ static int mkbp_decode_fdt(const void *blob, int node, struct mkbp_dev **devp)
 		return -1;
 	}
 
-	dev = (struct mkbp_dev *)calloc(1, sizeof(*dev));
-	if (!dev) {
-		debug("%s: Cannot allocate memory\n", __func__);
-		return -1;
-	}
+	dev = &static_dev;
 
 	compat = fdtdec_lookup(blob, parent);
 	switch (compat) {
