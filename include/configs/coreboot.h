@@ -272,6 +272,8 @@
  * PCI configuration
  */
 #define CONFIG_PCI
+/* x86 GPIOs are accessed through a PCI device */
+#define CONFIG_INTEL_ICH6_GPIO
 
 /*-----------------------------------------------------------------------
  * USB configuration
