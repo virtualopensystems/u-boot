@@ -144,7 +144,7 @@ int board_use_usb_keyboard(int boot_mode)
 
 static inline int board_uses_virtual_dev_switch(void)
 {
-	return cros_fdtdec_config_has_prop(gd->fdt_blob, "virtual_dev_switch");
+	return cros_fdtdec_config_has_prop(gd->fdt_blob, "virtual-dev-switch");
 }
 
 /*

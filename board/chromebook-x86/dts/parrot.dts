@@ -13,6 +13,6 @@
 	};
 
 	chromeos-config {
-		virtual_dev_switch;
+		virtual-dev-switch;
 	};
 };
