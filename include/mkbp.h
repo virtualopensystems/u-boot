@@ -382,6 +382,16 @@ int mkbp_flash_offset(struct mkbp_dev *dev, enum ec_flash_region region,
 		      uint32_t *offset, uint32_t *size);
 
 /**
+ * Read/write VbNvContext from/to a MKBP device.
+ *
+ * @param dev		MKBP device
+ * @param block		Buffer of VbNvContext to be read/write
+ * @return 0 if ok, -1 on error
+ */
+int mkbp_read_vbnvcontext(struct mkbp_dev *dev, uint8_t *block);
+int mkbp_write_vbnvcontext(struct mkbp_dev *dev, const uint8_t *block);
+
+/**
  * Read the version information for the EC images
  *
  * @param dev		MKBP device

@@ -652,6 +652,37 @@ int mkbp_flash_update_rw(struct mkbp_dev *dev,
 	return 0;
 }
 
+int mkbp_read_vbnvcontext(struct mkbp_dev *dev, uint8_t *block)
+{
+	struct ec_params_vbnvcontext p;
+	int len;
+
+	p.op = EC_VBNV_CONTEXT_OP_READ;
+
+	len = ec_command(dev, EC_CMD_VBNV_CONTEXT, EC_VER_VBNV_CONTEXT,
+			&p, sizeof(p), &block, EC_VBNV_BLOCK_SIZE);
+	if (len < EC_VBNV_BLOCK_SIZE)
+		return -1;
+
+	return 0;
+}
+
+int mkbp_write_vbnvcontext(struct mkbp_dev *dev, const uint8_t *block)
+{
+	struct ec_params_vbnvcontext p;
+	int len;
+
+	p.op = EC_VBNV_CONTEXT_OP_WRITE;
+	memcpy(p.block, block, sizeof(p.block));
+
+	len = ec_command(dev, EC_CMD_VBNV_CONTEXT, EC_VER_VBNV_CONTEXT,
+			&p, sizeof(p), NULL, 0);
+	if (len < 0)
+		return -1;
+
+	return 0;
+}
+
 /**
  * Decode MBKP details from the device tree and allocate a suitable device.
  *
@@ -995,6 +1026,45 @@ static int do_mkbp(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 			printf("Offset: %x\n", offset);
 			printf("Size:   %x\n", size);
 		}
+	} else if (0 == strcmp("vbnvcontext", cmd)) {
+		uint8_t block[EC_VBNV_BLOCK_SIZE];
+		char buf[3];
+		int i, len;
+		unsigned long result;
+
+		if (argc <= 2) {
+			ret = mkbp_read_vbnvcontext(dev, block);
+			if (!ret) {
+				printf("vbnv_block: ");
+				for (i = 0; i < EC_VBNV_BLOCK_SIZE; i++)
+					printf("%02x", block[i]);
+				putc('\n');
+			}
+		} else {
+			/*
+			 * TODO(clchiou): Move this to a utility function as
+			 * cmd_spi might want to call it.
+			 */
+			memset(block, 0, EC_VBNV_BLOCK_SIZE);
+			len = strlen(argv[2]);
+			buf[2] = '\0';
+			for (i = 0; i < EC_VBNV_BLOCK_SIZE; i++) {
+				if (i * 2 >= len)
+					break;
+				buf[0] = argv[2][i * 2];
+				if (i * 2 + 1 >= len)
+					buf[1] = '0';
+				else
+					buf[1] = argv[2][i * 2 + 1];
+				strict_strtoul(buf, 16, &result);
+				block[i] = result;
+			}
+			ret = mkbp_write_vbnvcontext(dev, block);
+		}
+		if (ret) {
+			debug("%s: Could not %s VbNvContext\n", __func__,
+					argc <= 2 ?  "read" : "write");
+		}
 	} else if (0 == strcmp("test", cmd)) {
 		int result = mkbp_test(dev);
 
@@ -1051,6 +1121,7 @@ U_BOOT_CMD(
 	"mkbp erase <ro|rw>       Erase EC image\n"
 	"mkbp read <ro|rw> <addr> [<size>]   Read EC image\n"
 	"mkbp write <ro|rw> <addr> [<size>]  Write EC image\n"
+	"mkbp vbnvcontext [hexstring]        Read [write] VbNvContext from EC\n"
 	"mkbp test                run tests on mkbp\n"
 	"mkbp version             Read MKBP version"
 );
