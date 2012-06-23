@@ -33,6 +33,9 @@
 
 #include <asm/arch/cpu.h>		/* get chip and board defs */
 
+/* Align LCD to 1MB boundary */
+#define CONFIG_LCD_ALIGNMENT	MMU_SECTION_SIZE
+
 #define CONFIG_DISPLAY_CPUINFO
 #define CONFIG_DISPLAY_BOARDINFO
 
