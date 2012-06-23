@@ -1040,4 +1040,7 @@ void lcd_ctrl_init(void *lcdbase)
 	ret = init_lcd_controller(lcdbase);
 	if (ret)
 		printf("LCD init error %d\n", ret);
+
+	/* Enable flushing after LCD writes if requested */
+	lcd_set_flush_dcache(1);
 }
