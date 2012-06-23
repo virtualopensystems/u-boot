@@ -939,9 +939,21 @@ U_BOOT_CMD(vboot_twostop, 1, 1, do_vboot_twostop,
 
 int VbExTrustEC(void)
 {
-	/* FIXME (crosbug.com/p/9953): Do the right thing here, not this.
-	 * We need to actually test the EC state on a per-platform basis. */
-	if (board_uses_virtual_dev_switch())
-		return 1;
-	return 0;
+	struct vboot_flag_details gpio_ec_in_rw;
+	int okay;
+
+	/* If we don't have a valid GPIO to read, we can't trust it. */
+	if (vboot_flag_fetch(VBOOT_FLAG_EC_IN_RW, &gpio_ec_in_rw)) {
+		VBDEBUG("can't find GPIO to read, returning 0\n");
+		return 0;
+	}
+
+	/* We only trust it if it's NOT in its RW firmware. */
+	okay = (gpio_ec_in_rw.value != gpio_ec_in_rw.active_high);
+
+	VBDEBUG("port=%d value=%d active_high=%d, returning %d\n",
+		gpio_ec_in_rw.port, gpio_ec_in_rw.value,
+		gpio_ec_in_rw.active_high, okay);
+
+	return okay;
 }
