@@ -119,7 +119,6 @@ lowlevel_init:
 wakeup_reset:
 	bl	system_clock_init
 #if defined(CONFIG_SPL_BUILD)
-	bl	spl_early_init
 	bl	mem_ctrl_init
 #endif
 	bl	tzpc_init
