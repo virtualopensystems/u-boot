@@ -61,7 +61,16 @@
 		 */
 		coreboot-extra@0 {
 			label = "coreboot-extra";
-			reg = <0x00200000 0x00170000>;
+			reg = <0x00200000 0x0016c000>;
+			type = "wiped";
+			wipe-value = [ff];
+		};
+
+		/* ---- Section: Rewritable Event Log 16KB ---- */
+		rw-elog@0 {
+			label = "rw-elog";
+			/* Alignment: 4k (for updating) */
+			reg = <0x0036c000 0x00004000>;
 			type = "wiped";
 			wipe-value = [ff];
 		};
