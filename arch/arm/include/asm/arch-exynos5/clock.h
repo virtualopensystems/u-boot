@@ -388,6 +388,25 @@ struct exynos5_clock {
 void clock_ll_set_pre_ratio(enum periph_id periph_id, unsigned divisor);
 
 /**
+ * Low-level function to set the clock ratio for a peripheral
+ *
+ * @param periph_id	Peripheral ID of peripheral to change
+ * @param divisor	New divisor for this peripheral's clock
+ */
+void clock_ll_set_ratio(enum periph_id periph_id, unsigned divisor);
+
+/**
+ * Low-level function that selects the best clock scalars for a given rate and
+ * sets up the given peripheral's clock accordingly.
+ *
+ * @param periph_id	Peripheral ID of peripheral to change
+ * @param rate		Desired clock rate in Hz
+ *
+ * @return zero on success, negative on error
+ */
+int clock_set_rate(enum periph_id periph_id, unsigned int rate);
+
+/**
  * Decode a peripheral ID from a device node.
  *
  * Drivers should always use this function since the actual means of

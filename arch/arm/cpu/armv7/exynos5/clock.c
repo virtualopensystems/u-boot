@@ -434,6 +434,131 @@ void clock_ll_set_pre_ratio(enum periph_id periph_id, unsigned divisor)
 	clrsetbits_le32(reg, mask << shift, (divisor & mask) << shift);
 }
 
+void clock_ll_set_ratio(enum periph_id periph_id, unsigned divisor)
+{
+	struct exynos5_clock *clk =
+		(struct exynos5_clock *)samsung_get_base_clock();
+	unsigned shift;
+	unsigned mask = 0xff;
+	u32 *reg;
+
+	switch (periph_id) {
+	case PERIPH_ID_SPI0:
+		reg = &clk->div_peric1;
+		shift = 0;
+		break;
+	case PERIPH_ID_SPI1:
+		reg = &clk->div_peric1;
+		shift = 16;
+		break;
+	case PERIPH_ID_SPI2:
+		reg = &clk->div_peric2;
+		shift = 0;
+		break;
+	case PERIPH_ID_SPI3:
+		reg = &clk->sclk_div_isp;
+		shift = 0;
+		break;
+	case PERIPH_ID_SPI4:
+		reg = &clk->sclk_div_isp;
+		shift = 12;
+		break;
+	default:
+		debug("%s: Unsupported peripheral ID %d\n", __func__,
+		      periph_id);
+		return;
+	}
+	clrsetbits_le32(reg, mask << shift, (divisor & mask) << shift);
+}
+
+/**
+ * Linearly searches for the most accurate main and fine stage clock scalars
+ * (divisors) for a specified target frequency and scalar bit sizes by checking
+ * all multiples of main_scalar_bits values. Will always return scalars up to or
+ * slower than target.
+ *
+ * @param main_scalar_bits	Number of main scalar bits, must be > 0 and < 32
+ * @param fine_scalar_bits	Number of fine scalar bits, must be > 0 and < 32
+ * @param input_freq		Clock frequency to be scaled in Hz
+ * @param target_freq		Desired clock frequency in Hz
+ * @param best_fine_scalar	Pointer to store the fine stage divisor
+ *
+ * @return best_main_scalar	Main scalar for desired frequency or -1 if none
+ * found
+ */
+static int clock_calc_best_scalar(unsigned int main_scaler_bits,
+	unsigned int fine_scalar_bits, unsigned int input_rate,
+	unsigned int target_rate, unsigned int *best_fine_scalar)
+{
+	int i;
+	int best_main_scalar = -1;
+	unsigned int best_error = target_rate;
+	const unsigned int cap = (1 << fine_scalar_bits) - 1;
+	const unsigned int loops = 1 << main_scaler_bits;
+
+	debug("Input Rate is %u, Target is %u, Cap is %u\n", input_rate,
+			target_rate, cap);
+
+	assert(best_fine_scalar != NULL);
+	assert(main_scaler_bits <= fine_scalar_bits);
+
+	*best_fine_scalar = 1;
+
+	if (input_rate == 0 || target_rate == 0)
+		return -1;
+
+	if (target_rate >= input_rate)
+		return 1;
+
+	for (i = 1; i <= loops; i++) {
+		const unsigned int effective_div = max(min(input_rate / i /
+							target_rate, cap), 1);
+		const unsigned int effective_rate = input_rate / i /
+							effective_div;
+		const int error = target_rate - effective_rate;
+
+		debug("%d|effdiv:%u, effrate:%u, error:%d\n", i, effective_div,
+				effective_rate, error);
+
+		if (error >= 0 && error <= best_error) {
+			best_error = error;
+			best_main_scalar = i;
+			*best_fine_scalar = effective_div;
+		}
+	}
+
+	return best_main_scalar;
+}
+
+int clock_set_rate(enum periph_id periph_id, unsigned int rate)
+{
+	int main;
+	unsigned int fine;
+
+	switch (periph_id) {
+	case PERIPH_ID_SPI0:
+	case PERIPH_ID_SPI1:
+	case PERIPH_ID_SPI2:
+	case PERIPH_ID_SPI3:
+	case PERIPH_ID_SPI4:
+		main = clock_calc_best_scalar(4, 8, 400000000, rate, &fine);
+		if (main < 0) {
+			debug("%s: Cannot set clock rate for periph %d",
+					__func__, periph_id);
+			return -1;
+		}
+		clock_ll_set_ratio(periph_id, main - 1);
+		clock_ll_set_pre_ratio(periph_id, fine - 1);
+		break;
+	default:
+		debug("%s: Unsupported peripheral ID %d\n", __func__,
+		      periph_id);
+		return -1;
+	}
+
+	return 0;
+}
+
 int clock_set_mshci(enum periph_id peripheral)
 {
 	struct exynos5_clock *clk =
