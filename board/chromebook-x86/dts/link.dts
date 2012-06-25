@@ -12,8 +12,15 @@
 	       hwid = "X86 LINK TEST 6638";
 	};
 
+        gpio: gpio {};
+
 	chromeos-config {
 		virtual-dev-switch;
+		vboot-flag-ec-in-rw {
+			compatible = "google,gpio-flag";
+			gpio = <&gpio 21 0>;
+		};
+
 	};
 
 	serial {
