@@ -43,6 +43,14 @@ enum {
 	BOOTSTAGE_VBOOT_LAST
 };
 
+/**
+ * Allocate a memory space aligned to cache line size.
+ *
+ * @param n	Size to be allocated
+ * @return pointer to the allocated space or NULL on error.
+ */
+void *cros_memalign_cache(size_t n);
+
 /* this function is implemented along with vboot_api */
 int display_clear(void);
 

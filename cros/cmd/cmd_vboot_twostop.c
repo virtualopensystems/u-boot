@@ -38,9 +38,6 @@
 #ifdef CONFIG_SYS_COREBOOT
 #include <asm/arch/sysinfo.h>
 #endif
-#ifndef CACHE_LINE_SIZE
-#define CACHE_LINE_SIZE __BIGGEST_ALIGNMENT__
-#endif
 
 /*
  * The current design of twostop firmware, if we use x86 firmware design as a
@@ -384,12 +381,12 @@ twostop_make_selection(struct twostop_fmap *fmap, firmware_storage_t *file,
 	fparams.verification_size_A = fparams.verification_size_B = vlength;
 
 #ifndef CONFIG_HARDWARE_MAPPED_SPI
-	fparams.verification_block_A = memalign(CACHE_LINE_SIZE, vlength);
+	fparams.verification_block_A = cros_memalign_cache(vlength);
 	if (!fparams.verification_block_A) {
 		VBDEBUG("failed to allocate vblock A\n");
 		goto out;
 	}
-	fparams.verification_block_B = memalign(CACHE_LINE_SIZE, vlength);
+	fparams.verification_block_B = cros_memalign_cache(vlength);
 	if (!fparams.verification_block_B) {
 		VBDEBUG("failed to allocate vblock B\n");
 		goto out;
@@ -416,12 +413,12 @@ twostop_make_selection(struct twostop_fmap *fmap, firmware_storage_t *file,
 	s.fw[1].size = fmap->readwrite_b.boot.length;
 
 #ifndef CONFIG_HARDWARE_MAPPED_SPI
-	s.fw[0].cache = memalign(CACHE_LINE_SIZE, s.fw[0].size);
+	s.fw[0].cache = cros_memalign_cache(s.fw[0].size);
 	if (!s.fw[0].cache) {
 		VBDEBUG("failed to allocate cache A\n");
 		goto out;
 	}
-	s.fw[1].cache = memalign(CACHE_LINE_SIZE, s.fw[1].size);
+	s.fw[1].cache = cros_memalign_cache(s.fw[1].size);
 	if (!s.fw[1].cache) {
 		VBDEBUG("failed to allocate cache B\n");
 		goto out;

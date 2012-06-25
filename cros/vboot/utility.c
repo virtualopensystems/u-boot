@@ -16,6 +16,7 @@
 #include <common.h>
 #include <malloc.h>
 #include <cros/common.h>
+#include <cros/cros_init.h>
 #include <cros/hda_codec.h>
 #include <cros/power_management.h>
 
@@ -26,15 +27,29 @@
 #define TICKS_PER_MSEC		(CONFIG_SYS_HZ / 1000)
 #define MAX_MSEC_PER_LOOP	((uint32_t)((UINT32_MAX / TICKS_PER_MSEC) / 2))
 
-#ifndef CACHE_LINE_SIZE
-#define CACHE_LINE_SIZE __BIGGEST_ALIGNMENT__
-#endif
-
 static void system_abort(void)
 {
 	/* Wait for 3 seconds to let users see error messages and reboot. */
 	VbExSleepMs(3000);
 	cold_reboot();
+}
+
+void *cros_memalign_cache(size_t n)
+{
+	static unsigned int dcache_line_size;
+
+	if (!dcache_line_size) {
+		/* Select cache line size based on available information */
+#ifdef CONFIG_ARM
+		dcache_line_size = dcache_get_line_size();
+#elif defined CACHE_LINE_SIZE
+		dcache_line_size = CACHE_LINE_SIZE;
+#else
+		dcache_line_size = __BIGGEST_ALIGNMENT__;
+#endif
+	}
+
+	return memalign(dcache_line_size, n);
 }
 
 void VbExError(const char *format, ...)
@@ -56,7 +71,7 @@ void VbExDebug(const char *format, ...)
 
 void *VbExMalloc(size_t size)
 {
-	void *ptr = memalign(CACHE_LINE_SIZE, size);
+	void *ptr = cros_memalign_cache(size);
 	if (!ptr) {
 		VbExError("Internal malloc error.");
 	}

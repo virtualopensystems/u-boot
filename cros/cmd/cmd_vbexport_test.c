@@ -25,10 +25,6 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-#ifndef CACHE_LINE_SIZE
-#define CACHE_LINE_SIZE __BIGGEST_ALIGNMENT__
-#endif
-
 #define TEST_LBA_START		0
 #define DEFAULT_TEST_LBA_COUNT	2
 
@@ -66,9 +62,18 @@ static int do_vbexport_test_debug(cmd_tbl_t *cmdtp, int flag,
 static int do_vbexport_test_malloc_size(uint32_t size)
 {
 	char *mem = VbExMalloc(size);
-	int i;
+	int i, line_size;
+
+#if CONFIG_ARM
+	line_size = dcache_get_line_size();
+#elif defined CACHE_LINE_SIZE
+	line_size = CACHE_LINE_SIZE;
+#else
+	line_size = __BIGGEST_ALIGNMENT__;
+#endif
+
 	VbExDebug("Trying to malloc a memory block for %lu bytes...", size);
-	if ((uintptr_t)mem % CACHE_LINE_SIZE != 0) {
+	if ((uintptr_t)mem % line_size != 0) {
 		VbExDebug("\nMemory not algined with a cache line!\n");
 		VbExFree(mem);
 		return 1;
