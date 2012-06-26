@@ -946,11 +946,10 @@ int VbExTrustEC(void)
 	}
 
 	/* We only trust it if it's NOT in its RW firmware. */
-	okay = (gpio_ec_in_rw.value != gpio_ec_in_rw.active_high);
+	okay = !gpio_ec_in_rw.value;
 
-	VBDEBUG("port=%d value=%d active_high=%d, returning %d\n",
-		gpio_ec_in_rw.port, gpio_ec_in_rw.value,
-		gpio_ec_in_rw.active_high, okay);
+	VBDEBUG("port=%d value=%d, returning %d\n",
+		gpio_ec_in_rw.port, gpio_ec_in_rw.value, okay);
 
 	return okay;
 }
