@@ -10,8 +10,9 @@ Required properties :
  - samsung,mux : mux Address for the TMU to enable TMU core:
  - samsung,min-temp : Minimum temperature, default is 25:
  - samsung,max-temp : Maximum temperature, defalut set to 125:
- - samsung,start-warning : temp at which TMU start giving warning:
- - samsung,start-tripping : temp at which system will trip and shutdown:
+ - samsung,start-warning : temp in C at which TMU start giving warning:
+ - samsung,start-tripping : temp in C at which system will trip and shutdown:
+ - samsung,hw-tripping : temp in C at which HW thermal trip causes poweroff:
  - samsung,efuse-min-value : SOC efuse min value:
  - samsung,efuse-value : SOC actual efuse value:
  - samsung,efuse-max-value : SoC max efuse value:
