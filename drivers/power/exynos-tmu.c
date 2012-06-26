@@ -288,8 +288,8 @@ void tmu_setup_parameters(struct tmu_info *info)
 	/* Enable HW thermal trip */
 	power_enable_hw_thermal_trip();
 
-	/* LEV0 LEV1 LEV2 interrupt enable */
-	writel(INTEN_RISE0 | INTEN_RISE1 | INTEN_RISE2,	&reg->inten);
+	/* LEV1 LEV2 interrupt enable */
+	writel(INTEN_RISE1 | INTEN_RISE2, &reg->inten);
 }
 
 /*
