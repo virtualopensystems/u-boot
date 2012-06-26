@@ -93,6 +93,15 @@ void power_disable_usb_phy(void)
 	clrbits_le32(&power->usb_host_phy_ctrl, POWER_USB_HOST_PHY_CTRL_EN);
 }
 
+void power_enable_hw_thermal_trip(void)
+{
+	struct exynos5_power *power =
+		(struct exynos5_power *)samsung_get_base_power();
+
+	/* Enable HW thermal trip */
+	setbits_le32(&power->ps_hold_ctrl, POWER_ENABLE_HW_TRIP);
+}
+
 /**
  * Initialize the pmic voltages to power up the system
  * This also calls i2c_init so that we can program the pmic

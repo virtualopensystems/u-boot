@@ -26,6 +26,7 @@
 
 #define POWER_USB_HOST_PHY_CTRL_EN		(1 << 0)
 #define POWER_PS_HOLD_CONTROL_DATA_HIGH		(1 << 8)
+#define POWER_ENABLE_HW_TRIP			(1UL << 31)
 
 #define DPTX_PHY_ENABLE		(1 << 0)
 
@@ -59,5 +60,8 @@ void power_enable_dp_phy(void);
 
 void power_enable_usb_phy(void);
 void power_disable_usb_phy(void);
+
+/* Enable HW thermal trip with PS_HOLD_CONTROL register ENABLE_HW_TRIP bit */
+void power_enable_hw_thermal_trip(void);
 
 #endif
