@@ -161,7 +161,7 @@ struct mem_timings mem_timings[] = {
 			0x00020018, 0x00030000, 0x00010042, 0x00000d70
 		},
 		.timing_ref = 0x000000bb,
-		.timing_row = 0x8c36650e,
+		.timing_row = 0x8c36660f,
 		.timing_data = 0x3630580b,
 		.timing_power = 0x41000a44,
 		.phy0_dqs = 0x08080808,
@@ -264,7 +264,7 @@ struct mem_timings mem_timings[] = {
 			0x00020018, 0x00030000, 0x00010000, 0x00000d70
 		},
 		.timing_ref = 0x000000bb,
-		.timing_row = 0x8c36650e,
+		.timing_row = 0x8c36660f,
 		.timing_data = 0x3630580b,
 		.timing_power = 0x41000a44,
 		.phy0_dqs = 0x08080808,
