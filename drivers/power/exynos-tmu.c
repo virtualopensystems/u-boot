@@ -21,9 +21,11 @@
 #include <errno.h>
 #include <fdtdec.h>
 #include <asm/arch/exynos-tmu.h>
+#include <asm/arch/power.h>
 
 #define TRIMINFO_RELOAD		1
 #define CORE_EN			1
+#define THERM_TRIP_EN		(1 << 12)
 
 #define INTEN_RISE0		1
 #define INTEN_RISE1		(1 << 4)
@@ -54,6 +56,8 @@ struct temperature_params {
 	unsigned int start_warning;
 	/* temperature threshold CPU tripping */
 	unsigned int start_tripping;
+	/* temperature threshold for HW tripping */
+	unsigned int hardware_tripping;
 };
 
 /* Pre-defined values and thresholds for calibration of current temperature */
@@ -195,6 +199,9 @@ int get_tmu_fdt_values(struct tmu_info *info, const void *blob)
 	info->data.ts.start_tripping = fdtdec_get_int(blob,
 				node, "samsung,start-tripping", -1);
 	error |= info->data.ts.start_tripping;
+	info->data.ts.hardware_tripping = fdtdec_get_int(blob,
+				node, "samsung,hw-tripping", -1);
+	error |= info->data.ts.hardware_tripping;
 	info->data.efuse_min_value = fdtdec_get_int(blob,
 				node, "samsung,efuse-min-value", -1);
 	error |= info->data.efuse_min_value;
@@ -228,7 +235,7 @@ int get_tmu_fdt_values(struct tmu_info *info, const void *blob)
 void tmu_setup_parameters(struct tmu_info *info)
 {
 	unsigned int te_temp, con;
-	unsigned int warning_temp, trip_temp;
+	unsigned int warning_temp, trip_temp, hwtrip_temp;
 	unsigned int cooling_temp;
 	unsigned int rising_value;
 	struct tmu_data *data = &info->data;
@@ -252,9 +259,14 @@ void tmu_setup_parameters(struct tmu_info *info)
 			+ info->te1 - info->dc_value;
 	trip_temp = data->ts.start_tripping
 			+ info->te1 - info->dc_value;
+	hwtrip_temp = data->ts.hardware_tripping
+			+ info->te1 - info->dc_value;
+
 	cooling_temp = 0;
 
-	rising_value = ((warning_temp << 8) | (trip_temp << 16));
+	rising_value = ((warning_temp << 8) |
+			(trip_temp << 16) |
+			(hwtrip_temp << 24));
 
 	/* Set interrupt level */
 	writel(rising_value, &reg->threshold_temp_rise);
@@ -269,9 +281,12 @@ void tmu_setup_parameters(struct tmu_info *info)
 	writel(INTCLEARALL, &reg->intclear);
 	/* TMU core enable */
 	con = readl(&reg->tmu_control);
-	con |= (info->tmu_mux << 20) | CORE_EN;
+	con |= (info->tmu_mux << 20) | THERM_TRIP_EN | CORE_EN;
 
 	writel(con, &reg->tmu_control);
+
+	/* Enable HW thermal trip */
+	power_enable_hw_thermal_trip();
 
 	/* LEV0 LEV1 LEV2 interrupt enable */
 	writel(INTEN_RISE0 | INTEN_RISE1 | INTEN_RISE2,	&reg->inten);
