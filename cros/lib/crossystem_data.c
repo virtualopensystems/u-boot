@@ -49,6 +49,7 @@ int crossystem_data_init(crossystem_data_t *cdata,
 		struct vboot_flag_details *write_protect_switch,
 		struct vboot_flag_details *recovery_switch,
 		struct vboot_flag_details *developer_switch,
+		struct vboot_flag_details *oprom_loaded,
 		uint32_t fmap_offset,
 		uint8_t active_ec_firmware,
 		uint8_t *hardware_id,
@@ -66,15 +67,18 @@ int crossystem_data_init(crossystem_data_t *cdata,
 	cdata->boot_write_protect_switch = write_protect_switch->value;
 	cdata->boot_recovery_switch = recovery_switch->value;
 	cdata->boot_developer_switch = developer_switch->value;
+	cdata->boot_oprom_loaded = oprom_loaded->value;
 
 	cdata->polarity_write_protect_switch =
 			write_protect_switch->active_high;
 	cdata->polarity_recovery_switch = recovery_switch->active_high;
 	cdata->polarity_developer_switch = developer_switch->active_high;
+	cdata->polarity_oprom_loaded = oprom_loaded->active_high;
 
 	cdata->gpio_port_write_protect_switch = write_protect_switch->port;
 	cdata->gpio_port_recovery_switch = recovery_switch->port;
 	cdata->gpio_port_developer_switch = developer_switch->port;
+	cdata->gpio_port_oprom_loaded = oprom_loaded->port;
 
 	cdata->fmap_offset = fmap_offset;
 
@@ -205,6 +209,11 @@ int crossystem_data_embed_into_fdt(crossystem_data_t *cdata, void *fdt,
 	err |= fdt_setprop(fdt, nodeoffset, "developer-switch",
 			   gpio_prop, sizeof(gpio_prop));
 
+	gpio_prop[1] = cpu_to_fdt32(cdata->gpio_port_oprom_loaded);
+	gpio_prop[2] = cpu_to_fdt32(cdata->polarity_oprom_loaded);
+	err |= fdt_setprop(fdt, nodeoffset, "oprom-loaded",
+			   gpio_prop, sizeof(gpio_prop));
+
 	err |= set_scalar_prop("fmap-offset", fmap_offset);
 
 	switch (cdata->active_ec_firmware) {
@@ -321,6 +330,7 @@ void crossystem_data_dump(crossystem_data_t *cdata)
 	_p("%d",	gpio_port_write_protect_switch);
 	_p("%d",	gpio_port_recovery_switch);
 	_p("%d",	gpio_port_developer_switch);
+	_p("%d",	gpio_port_oprom_loaded);
 
 	_p("%08x",	fmap_offset);
 

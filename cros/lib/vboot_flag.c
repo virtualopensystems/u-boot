@@ -46,6 +46,7 @@ static const char *node_name[VBOOT_FLAG_MAX_FLAGS] = {
 	"vboot-flag-lid-open",
 	"vboot-flag-power-off",
 	"vboot-flag-ec-in-rw",
+	"vboot-flag-oprom-loaded",
 };
 
 const char *vboot_flag_node_name(enum vboot_flag_id id)

@@ -332,6 +332,8 @@ twostop_init_vboot_library(firmware_storage_t *file, void *gbb,
 		iparams.flags |= VB_INIT_FLAG_REC_BUTTON_PRESSED;
 	if (cdata->boot_developer_switch)
 		iparams.flags |= VB_INIT_FLAG_DEV_SWITCH_ON;
+	if (cdata->boot_oprom_loaded)
+		iparams.flags |= VB_INIT_FLAG_OPROM_LOADED;
 	if (board_uses_virtual_dev_switch())
 		iparams.flags |= VB_INIT_FLAG_VIRTUAL_DEV_SWITCH;
 	VBDEBUG("iparams.flags: %08x\n", iparams.flags);
@@ -570,7 +572,7 @@ twostop_init(struct twostop_fmap *fmap, firmware_storage_t *file,
 	     void **gbbp, size_t gbb_size, crossystem_data_t *cdata,
 	     void *vb_shared_data)
 {
-	struct vboot_flag_details wpsw, recsw, devsw;
+	struct vboot_flag_details wpsw, recsw, devsw, oprom;
 	GoogleBinaryBlockHeader *gbbh;
 	uint8_t hardware_id[ID_LEN];
 #ifndef CONFIG_HARDWARE_MAPPED_SPI
@@ -583,14 +585,16 @@ twostop_init(struct twostop_fmap *fmap, firmware_storage_t *file,
 
 	bootstage_mark_name(BOOTSTAGE_VBOOT_TWOSTOP_INIT, "twostop_init");
 	if (vboot_flag_fetch(VBOOT_FLAG_WRITE_PROTECT, &wpsw) ||
-			vboot_flag_fetch(VBOOT_FLAG_RECOVERY, &recsw) ||
-			vboot_flag_fetch(VBOOT_FLAG_DEVELOPER, &devsw)) {
+	    vboot_flag_fetch(VBOOT_FLAG_RECOVERY, &recsw) ||
+	    vboot_flag_fetch(VBOOT_FLAG_DEVELOPER, &devsw) ||
+	    vboot_flag_fetch(VBOOT_FLAG_OPROM_LOADED, &oprom)) {
 		VBDEBUG("failed to fetch gpio\n");
 		return -1;
 	}
 	vboot_flag_dump(VBOOT_FLAG_WRITE_PROTECT, &wpsw);
 	vboot_flag_dump(VBOOT_FLAG_RECOVERY, &recsw);
 	vboot_flag_dump(VBOOT_FLAG_DEVELOPER, &devsw);
+	vboot_flag_dump(VBOOT_FLAG_OPROM_LOADED, &oprom);
 
 	if (cros_fdtdec_flashmap(gd->fdt_blob, fmap)) {
 		VBDEBUG("failed to decode fmap\n");
@@ -606,15 +610,15 @@ twostop_init(struct twostop_fmap *fmap, firmware_storage_t *file,
 
 	/* Read read-only firmware ID */
 	if (file->read(file, fmap->readonly.firmware_id.offset,
-				MIN(sizeof(readonly_firmware_id),
-					fmap->readonly.firmware_id.length),
-				BT_EXTRA readonly_firmware_id)) {
+		       MIN(sizeof(readonly_firmware_id),
+			   fmap->readonly.firmware_id.length),
+		       BT_EXTRA readonly_firmware_id)) {
 		VBDEBUG("failed to read firmware ID\n");
 		readonly_firmware_id[0] = '\0';
 	}
 	VBDEBUG("read-only firmware id: \"%s\"\n", readonly_firmware_id);
 
-	/* Load basic parts of gbb blob */
+					/* Load basic parts of gbb blob */
 #ifdef CONFIG_HARDWARE_MAPPED_SPI
 	if (gbb_init(gbbp, file, fmap->readonly.gbb.offset, gbb_size)) {
 		VBDEBUG("failed to read gbb\n");
@@ -631,7 +635,7 @@ twostop_init(struct twostop_fmap *fmap, firmware_storage_t *file,
 
 	gbbh = (GoogleBinaryBlockHeader *)gbb;
 	memcpy(hardware_id, gbb + gbbh->hwid_offset,
-			MIN(sizeof(hardware_id), gbbh->hwid_size));
+	       MIN(sizeof(hardware_id), gbbh->hwid_size));
 	VBDEBUG("hardware id: \"%s\"\n", hardware_id);
 
 	/* Initialize crossystem data */
@@ -641,11 +645,11 @@ twostop_init(struct twostop_fmap *fmap, firmware_storage_t *file,
 	 * the device tree) whether the active EC firmware is R/O or R/W.
 	 */
 	if (crossystem_data_init(cdata,
-				&wpsw, &recsw, &devsw,
-				fmap->readonly.fmap.offset,
-				ACTIVE_EC_FIRMWARE_RO,
-				hardware_id,
-				readonly_firmware_id)) {
+				 &wpsw, &recsw, &devsw, &oprom,
+				 fmap->readonly.fmap.offset,
+				 ACTIVE_EC_FIRMWARE_RO,
+				 hardware_id,
+				 readonly_firmware_id)) {
 		VBDEBUG("failed to init crossystem data\n");
 		goto out;
 	}

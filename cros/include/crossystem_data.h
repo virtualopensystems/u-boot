@@ -68,15 +68,15 @@ typedef struct {
 	uint8_t		boot_write_protect_switch;
 	uint8_t		boot_recovery_switch;
 	uint8_t		boot_developer_switch;
-	uint8_t		pad1[1];
+	uint8_t		boot_oprom_loaded;
 	uint8_t		polarity_write_protect_switch;
 	uint8_t		polarity_recovery_switch;
 	uint8_t		polarity_developer_switch;
-	uint8_t		pad2[1];
+	uint8_t		polarity_oprom_loaded;
 	uint32_t	gpio_port_write_protect_switch;
 	uint32_t	gpio_port_recovery_switch;
 	uint32_t	gpio_port_developer_switch;
-	uint8_t		pad3[4];
+	uint32_t	gpio_port_oprom_loaded;
 
 	/* Offset of FMAP on flashrom */
 	uint32_t	fmap_offset;
@@ -150,12 +150,15 @@ assert_offset(version,				0x000e);
 assert_offset(boot_write_protect_switch,	0x0010);
 assert_offset(boot_recovery_switch,		0x0011);
 assert_offset(boot_developer_switch,		0x0012);
+assert_offset(boot_oprom_loaded,		0x0013);
 assert_offset(polarity_write_protect_switch,	0x0014);
 assert_offset(polarity_recovery_switch,		0x0015);
 assert_offset(polarity_developer_switch,	0x0016);
+assert_offset(polarity_oprom_loaded,		0x0017);
 assert_offset(gpio_port_write_protect_switch,	0x0018);
 assert_offset(gpio_port_recovery_switch,	0x001c);
 assert_offset(gpio_port_developer_switch,	0x0020);
+assert_offset(gpio_port_oprom_loaded,		0x0024);
 
 assert_offset(fmap_offset,			0x0028);
 
@@ -193,6 +196,7 @@ int crossystem_data_init(crossystem_data_t *cdata,
 		struct vboot_flag_details *write_protect_switch,
 		struct vboot_flag_details *recovery_switch,
 		struct vboot_flag_details *developer_switch,
+		struct vboot_flag_details *oprom_loaded,
 		uint32_t fmap_offset,
 		uint8_t active_ec_firmware,
 		uint8_t *hardware_id,
