@@ -88,4 +88,15 @@
 	dp@145b0000 {
 		samsung,interface = "mipi";
 	};
+
+	sound@12d60000 {
+		samsung,codec-type = "wm8994";
+	};
+
+	i2c@12c70000 {
+		soundcodec@34 {
+			reg = <0x34>;
+			compatible = "wolfson,wm8994-codec";
+		};
+	};
 };
