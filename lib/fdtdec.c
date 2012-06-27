@@ -65,6 +65,7 @@ static const char * const compat_names[COMPAT_COUNT] = {
 	COMPAT(GOOGLE_SYSINFO_FLAG, "google,sysinfo-flag"),
 	COMPAT(NVIDIA_TEGRA20_DISPLAY, "nvidia,tegra20-display"),
 	COMPAT(INTEL_LPC, "intel,lpc"),
+	COMPAT(GOOGLE_ARBITRATOR, "google,arbitrator"),
 };
 
 const char *fdtdec_get_compatible(enum fdt_compat_id id)
