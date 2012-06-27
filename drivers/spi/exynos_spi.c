@@ -235,57 +235,43 @@ static void spi_get_fifo_levels(struct exynos_spi *regs,
 }
 
 /**
- * Transfer and receive data
+ * If there's something to transfer, do a software reset and set a
+ * transaction size.
  *
- * @param slave		Pointer to spi_slave to which controller has to
- *			communicate with
- * @param bitlen	No of bits to tranfer or receive
- * @param dout		Pointer to transfer buffer
- * @param din		Pointer to receive buffer
- * @param flags		Flags for transfer begin and end
- * @return zero on success else a negative value
+ * @param regs	SPI peripheral registers
+ * @param count	Number of bytes to transfer
  */
-int spi_xfer(struct spi_slave *slave, unsigned int bitlen, const void *dout,
-	     void *din, unsigned long flags)
+static void spi_request_bytes(struct exynos_spi *regs, int count)
 {
-	struct exynos_spi_slave *spi_slave = to_exynos_spi(slave);
-	struct exynos_spi *regs = spi_slave->regs;
-	/* spi core configured to do 8 bit transfers */
-	const uchar *txp = dout;
-	uchar *rxp = din;
-	uint out_bytes, in_bytes;
-	int rx_lvl, tx_lvl;
+	assert(count && count < (1 << 16));
+	setbits_le32(&regs->ch_cfg, SPI_CH_RST);
+	clrbits_le32(&regs->ch_cfg, SPI_CH_RST);
+	writel(count | SPI_PACKET_CNT_EN, &regs->pkt_cnt);
+}
 
-	if (bitlen % 8) {
-		debug("Non byte aligned SPI transfer.\n");
-		return -1;
-	}
-	out_bytes = in_bytes = bitlen / 8;
-	if (in_bytes > (1 << 16) - 1) {
-		debug("Transfer is too long.\n");
-		return -1;
-	}
+static void spi_rx_tx(struct exynos_spi_slave *spi_slave, int todo,
+		      void **dinp, void const **doutp)
+{
+	struct exynos_spi *regs = spi_slave->regs;
+	uchar *rxp = *dinp;
+	const uchar *txp = *doutp;
+	int rx_lvl, tx_lvl;
+	uint out_bytes, in_bytes;
+
+	out_bytes = in_bytes = todo;
 
 	/*
 	 * If there's something to send, do a software reset and set a
 	 * transaction size.
 	 */
-	if (bitlen) {
-		setbits_le32(&regs->ch_cfg, SPI_CH_RST);
-		clrbits_le32(&regs->ch_cfg, SPI_CH_RST);
-		writel(in_bytes | SPI_PACKET_CNT_EN, &regs->pkt_cnt);
-	}
-
-	/* Start the transaction, if necessary. */
-	if ((flags & SPI_XFER_BEGIN) && !(spi_slave->mode & SPI_SLAVE))
-		spi_cs_activate(slave);
+	spi_request_bytes(regs, todo);
 
 	/*
 	 * Bytes are transmitted/received in pairs. Wait to receive all the
 	 * data because then transmission will be done as well.
 	 */
 	while (in_bytes) {
-		char temp;
+		int temp;
 
 		/* Keep the fifos full/empty. */
 		spi_get_fifo_levels(regs, &rx_lvl, &tx_lvl);
@@ -300,6 +286,44 @@ int spi_xfer(struct spi_slave *slave, unsigned int bitlen, const void *dout,
 				*rxp++ = temp;
 			in_bytes--;
 		}
+	}
+	*dinp = rxp;
+	*doutp = txp;
+}
+
+/**
+ * Transfer and receive data
+ *
+ * @param slave		Pointer to spi_slave to which controller has to
+ *			communicate with
+ * @param bitlen	No of bits to tranfer or receive
+ * @param dout		Pointer to transfer buffer
+ * @param din		Pointer to receive buffer
+ * @param flags		Flags for transfer begin and end
+ * @return zero on success else a negative value
+ */
+int spi_xfer(struct spi_slave *slave, unsigned int bitlen, const void *dout,
+	     void *din, unsigned long flags)
+{
+	struct exynos_spi_slave *spi_slave = to_exynos_spi(slave);
+	int upto, todo;
+	int bytelen;
+
+	/* spi core configured to do 8 bit transfers */
+	if (bitlen % 8) {
+		debug("Non byte aligned SPI transfer.\n");
+		return -1;
+	}
+
+	/* Start the transaction, if necessary. */
+	if ((flags & SPI_XFER_BEGIN) && !(spi_slave->mode & SPI_SLAVE))
+		spi_cs_activate(slave);
+
+	/* Exynos SPI limits each transfer to 65535 bytes */
+	bytelen =  bitlen / 8;
+	for (upto = 0; upto < bytelen; upto += todo) {
+		todo = min(bytelen - upto, (1 << 16) - 1);
+		spi_rx_tx(spi_slave, todo, &din, &dout);
 	}
 
 	/* Stop the transaction, if necessary. */
