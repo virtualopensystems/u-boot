@@ -72,19 +72,16 @@ static inline struct exynos_spi_slave *to_exynos_spi(struct spi_slave *slave)
  * Set the required clock frequency to SPI controller
  *
  * @param spi_slave	SPI controller
+ *
+ * @return zero on success, negative value on error
  */
-static void spi_set_clk(struct exynos_spi_slave *spi_slave)
+static int spi_set_clk(struct exynos_spi_slave *spi_slave)
 {
-	uint div = 0;
-
 	if (!(spi_slave->mode & SPI_SLAVE)) {
-		if (spi_slave->freq > EXYNOS_SPI_MAX_FREQ)
-			spi_slave->freq = EXYNOS_SPI_MAX_FREQ;
-
-		div = EXYNOS_SPI_MAX_FREQ / spi_slave->freq - 1;
+		return clock_set_rate(spi_slave->periph_id, spi_slave->freq);
 	}
 
-	clock_ll_set_pre_ratio(spi_slave->periph_id, div);
+	return 0;
 }
 
 /**
@@ -190,8 +187,13 @@ int spi_claim_bus(struct spi_slave *slave)
 	struct exynos_spi_slave *spi_slave = to_exynos_spi(slave);
 	struct exynos_spi *regs = spi_slave->regs;
 	u32 reg = 0;
+	int ret;
 
-	spi_set_clk(spi_slave);
+	ret = spi_set_clk(spi_slave);
+	if (ret < 0) {
+		debug("%s: Failed to setup spi clock\n", __func__);
+		return ret;
+	}
 	spi_pinmux_init(spi_slave);
 
 	spi_flush_fifo(slave);
