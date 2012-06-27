@@ -561,8 +561,8 @@ static int s5p_mshci_initialize(struct fdt_mshci *config)
 			debug("%s: Unable to power on MSHCI\n", __func__);
 			return -1;
 		}
-		gpio_set_pull(pin, GPIO_PULL_NONE);
-		gpio_set_drv(pin, GPIO_DRV_4X);
+		gpio_set_pull(pin, EXYNOS_GPIO_PULL_NONE);
+		gpio_set_drv(pin, EXYNOS_GPIO_DRV_4X);
 	}
 	mmc_host->clock = 0;
 	mmc_host->reg =  config->reg;

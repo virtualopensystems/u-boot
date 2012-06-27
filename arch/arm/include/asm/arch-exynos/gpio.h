@@ -48,21 +48,21 @@ void s5p_gpio_set_rate(struct s5p_gpio_bank *bank, int gpio, int mode);
 #endif
 
 /* Pin configurations */
-#define GPIO_INPUT	0x0
-#define GPIO_OUTPUT	0x1
-#define GPIO_IRQ	0xf
-#define GPIO_FUNC(x)	(x)
+#define EXYNOS_GPIO_INPUT	0x0
+#define EXYNOS_GPIO_OUTPUT	0x1
+#define EXYNOS_GPIO_IRQ	0xf
+#define EXYNOS_GPIO_FUNC(x)	(x)
 
 /* Pull mode */
-#define GPIO_PULL_NONE	0x0
-#define GPIO_PULL_DOWN	0x1
-#define GPIO_PULL_UP	0x3
+#define EXYNOS_GPIO_PULL_NONE	0x0
+#define EXYNOS_GPIO_PULL_DOWN	0x1
+#define EXYNOS_GPIO_PULL_UP	0x3
 
 /* Drive Strength level */
-#define GPIO_DRV_1X	0x0
-#define GPIO_DRV_3X	0x1
-#define GPIO_DRV_2X	0x2
-#define GPIO_DRV_4X	0x3
-#define GPIO_DRV_FAST	0x0
-#define GPIO_DRV_SLOW	0x1
+#define EXYNOS_GPIO_DRV_1X	0x0
+#define EXYNOS_GPIO_DRV_3X	0x1
+#define EXYNOS_GPIO_DRV_2X	0x2
+#define EXYNOS_GPIO_DRV_4X	0x3
+#define EXYNOS_GPIO_DRV_FAST	0x0
+#define EXYNOS_GPIO_DRV_SLOW	0x1
 #endif

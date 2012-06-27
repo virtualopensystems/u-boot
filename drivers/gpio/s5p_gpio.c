@@ -109,7 +109,7 @@ void s5p_gpio_direction_output(struct s5p_gpio_bank *bank, int gpio, int en)
 {
 	unsigned int value;
 
-	s5p_gpio_cfg_pin(bank, gpio, GPIO_OUTPUT);
+	s5p_gpio_cfg_pin(bank, gpio, EXYNOS_GPIO_OUTPUT);
 
 	value = readl(&bank->dat);
 	value &= ~DAT_MASK(gpio);
@@ -120,7 +120,7 @@ void s5p_gpio_direction_output(struct s5p_gpio_bank *bank, int gpio, int en)
 
 void s5p_gpio_direction_input(struct s5p_gpio_bank *bank, int gpio)
 {
-	s5p_gpio_cfg_pin(bank, gpio, GPIO_INPUT);
+	s5p_gpio_cfg_pin(bank, gpio, EXYNOS_GPIO_INPUT);
 }
 
 void s5p_gpio_set_value(struct s5p_gpio_bank *bank, int gpio, int en)
@@ -150,8 +150,8 @@ void s5p_gpio_set_pull(struct s5p_gpio_bank *bank, int gpio, int mode)
 	value &= ~PULL_MASK(gpio);
 
 	switch (mode) {
-	case GPIO_PULL_DOWN:
-	case GPIO_PULL_UP:
+	case EXYNOS_GPIO_PULL_DOWN:
+	case EXYNOS_GPIO_PULL_UP:
 		value |= PULL_MODE(gpio, mode);
 		break;
 	default:
@@ -169,10 +169,10 @@ void s5p_gpio_set_drv(struct s5p_gpio_bank *bank, int gpio, int mode)
 	value &= ~DRV_MASK(gpio);
 
 	switch (mode) {
-	case GPIO_DRV_1X:
-	case GPIO_DRV_2X:
-	case GPIO_DRV_3X:
-	case GPIO_DRV_4X:
+	case EXYNOS_GPIO_DRV_1X:
+	case EXYNOS_GPIO_DRV_2X:
+	case EXYNOS_GPIO_DRV_3X:
+	case EXYNOS_GPIO_DRV_4X:
 		value |= DRV_SET(gpio, mode);
 		break;
 	default:
@@ -190,8 +190,8 @@ void s5p_gpio_set_rate(struct s5p_gpio_bank *bank, int gpio, int mode)
 	value &= ~RATE_MASK(gpio);
 
 	switch (mode) {
-	case GPIO_DRV_FAST:
-	case GPIO_DRV_SLOW:
+	case EXYNOS_GPIO_DRV_FAST:
+	case EXYNOS_GPIO_DRV_SLOW:
 		value |= RATE_SET(gpio);
 		break;
 	default:
@@ -229,8 +229,8 @@ void gpio_set_pull(int gpio, int mode)
 	value &= ~PULL_MASK(GPIO_BIT(gpio));
 
 	switch (mode) {
-	case GPIO_PULL_DOWN:
-	case GPIO_PULL_UP:
+	case EXYNOS_GPIO_PULL_DOWN:
+	case EXYNOS_GPIO_PULL_UP:
 		value |= PULL_MODE(GPIO_BIT(gpio), mode);
 		break;
 	default:
@@ -249,10 +249,10 @@ void gpio_set_drv(int gpio, int mode)
 	value &= ~DRV_MASK(GPIO_BIT(gpio));
 
 	switch (mode) {
-	case GPIO_DRV_1X:
-	case GPIO_DRV_2X:
-	case GPIO_DRV_3X:
-	case GPIO_DRV_4X:
+	case EXYNOS_GPIO_DRV_1X:
+	case EXYNOS_GPIO_DRV_2X:
+	case EXYNOS_GPIO_DRV_3X:
+	case EXYNOS_GPIO_DRV_4X:
 		value |= DRV_SET(GPIO_BIT(gpio), mode);
 		break;
 	default:
@@ -271,8 +271,8 @@ void gpio_set_rate(int gpio, int mode)
 	value &= ~RATE_MASK(GPIO_BIT(gpio));
 
 	switch (mode) {
-	case GPIO_DRV_FAST:
-	case GPIO_DRV_SLOW:
+	case EXYNOS_GPIO_DRV_FAST:
+	case EXYNOS_GPIO_DRV_SLOW:
 		value |= RATE_SET(GPIO_BIT(gpio));
 		break;
 	default:
@@ -294,7 +294,7 @@ int gpio_free(unsigned gpio)
 
 int gpio_direction_input(unsigned gpio)
 {
-	gpio_cfg_pin(gpio, GPIO_INPUT);
+	gpio_cfg_pin(gpio, EXYNOS_GPIO_INPUT);
 
 	return 0;
 }
@@ -304,7 +304,7 @@ int gpio_direction_output(unsigned gpio, int value)
 	unsigned int val;
 	struct s5p_gpio_bank *bank = gpio_get_bank(gpio);
 
-	gpio_cfg_pin(gpio, GPIO_OUTPUT);
+	gpio_cfg_pin(gpio, EXYNOS_GPIO_OUTPUT);
 
 	val = readl(&bank->dat);
 	val &= ~DAT_MASK(GPIO_BIT(gpio));
@@ -410,10 +410,10 @@ int gpio_decode_number(unsigned gpio_list[], int count)
 		if (gpio >= GPIO_MAX_PORT)
 			return -1;
 		gpio_direction_input(gpio);
-		gpio_set_pull(gpio, GPIO_PULL_UP);
+		gpio_set_pull(gpio, EXYNOS_GPIO_PULL_UP);
 		udelay(GPIO_DELAY_US);
 		high = gpio_get_value(gpio);
-		gpio_set_pull(gpio, GPIO_PULL_DOWN);
+		gpio_set_pull(gpio, EXYNOS_GPIO_PULL_DOWN);
 		udelay(GPIO_DELAY_US);
 		low = gpio_get_value(gpio);
 

@@ -329,15 +329,13 @@ int board_init(void)
 	 * Configure backlight PWM as a simple output high (100% brightness)
 	 * TODO(hatim.rv@samsung.com): Move to FDT
 	 */
-	gpio_cfg_pin(GPIO_B20, GPIO_OUTPUT);
-	gpio_set_value(GPIO_B20, 1);
+	gpio_direction_output(GPIO_B20, 1);
 
 	/*
 	 * Configure GPIO for LCD_BL_EN
 	 * TODO(hatim.rv@samsung.com): Move to FDT
 	 */
-	gpio_cfg_pin(GPIO_X30, GPIO_OUTPUT);
-	gpio_set_value(GPIO_X30, 1);
+	gpio_direction_output(GPIO_X30, 1);
 
 	if (board_init_mkbp_devices(gd->fdt_blob))
 		return -1;

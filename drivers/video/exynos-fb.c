@@ -353,8 +353,8 @@ static void mipi_init(void)
 	 * ...and maybe we need a delay after doing this?
 	 */
 	gpio_set_value(GPIO_X15, 1);
-	gpio_cfg_pin(GPIO_X15, GPIO_OUTPUT);
-	gpio_set_pull(GPIO_X15, GPIO_PULL_NONE);
+	gpio_cfg_pin(GPIO_X15, EXYNOS_GPIO_OUTPUT);
+	gpio_set_pull(GPIO_X15, EXYNOS_GPIO_PULL_NONE);
 
 	/* Reset DSIM and enable MIPI_PHY1 */
 	val = MIPI_PHY1_CONTROL_ENABLE | MIPI_PHY1_CONTROL_M_RESETN;
@@ -834,8 +834,8 @@ static int s5p_dp_enable_bridge(void)
 
 	/* De-assert PD_N to power up the bridge */
 	gpio_set_value(GPIO_X15, 1);
-	gpio_cfg_pin(GPIO_X15, GPIO_OUTPUT);
-	gpio_set_pull(GPIO_X15, GPIO_PULL_NONE);
+	gpio_cfg_pin(GPIO_X15, EXYNOS_GPIO_OUTPUT);
+	gpio_set_pull(GPIO_X15, EXYNOS_GPIO_PULL_NONE);
 
 	/*
 	 * We'll wait for the bridge to come up here and retry if it didn't.
