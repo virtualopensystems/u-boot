@@ -91,6 +91,8 @@ enum fdt_compat_id {
 	COMPAT_NVIDIA_TEGRA20_DISPLAY,	/* Tegra 2 Display controller */
 	COMPAT_INTEL_LPC,		/* Intel Low Pin Count I/F */
 	COMPAT_GOOGLE_ARBITRATOR,	/* Arbitrator a device between EC/AP */
+	COMPAT_SAMSUNG_EXYNOS_SOUND,	/* Exynos Sound */
+	COMPAT_WOLFSON_WM8994_CODEC,	/* Wolfson WM8994 Sound Codec */
 
 	COMPAT_COUNT,
 };
