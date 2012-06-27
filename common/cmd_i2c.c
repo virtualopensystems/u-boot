@@ -159,6 +159,21 @@ int __def_i2c_set_bus_speed(unsigned int speed)
 int i2c_set_bus_speed(unsigned int)
 	__attribute__((weak, alias("__def_i2c_set_bus_speed")));
 
+void __def_board_i2c_release_bus(int node)
+{
+}
+
+void board_i2c_release_bus(int node)
+	__attribute__((weak, alias("__def_board_i2c_release_bus")));
+
+int __def_board_i2c_claim_bus(int node)
+{
+	return 0;
+}
+
+int board_i2c_claim_bus(int node)
+	__attribute__((weak, alias("__def_board_i2c_claim_bus")));
+
 /*
  * get_alen: small parser helper function to get address length
  * returns the address length

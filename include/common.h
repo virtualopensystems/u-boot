@@ -328,6 +328,8 @@ extern ulong monitor_flash_len;
 int mac_read_from_eeprom(void);
 extern u8 _binary_dt_dtb_start[];	/* embedded device tree blob */
 int set_cpu_clk_info(void);
+void board_i2c_release_bus(int node);
+int board_i2c_claim_bus(int node);
 
 #ifdef CONFIG_SYS_GENERIC_BOARD
 /*
