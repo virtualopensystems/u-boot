@@ -168,16 +168,18 @@ void board_i2c_init(const void *blob)
 		EXYNOS_I2C_MAX_CONTROLLERS);
 
 	for (i = 0; i < count; i++) {
+		struct s3c24x0_i2c_bus *bus;
 		int node = node_list[i];
-		int bus_idx;
 
 		if (node < 0)
 			continue;
-		bus_idx = i2c_busses++;
-		i2c_bus[bus_idx].regs = (struct s3c24x0_i2c *)
+		bus = &i2c_bus[i2c_busses];
+		bus->regs = (struct s3c24x0_i2c *)
 			fdtdec_get_addr(blob, node, "reg");
-		i2c_bus[bus_idx].id = (enum periph_id)
+		bus->id = (enum periph_id)
 			fdtdec_get_int(blob, node, "samsung,periph-id", -1);
+		bus->node = node;
+		bus->bus_num = i2c_busses++;
 	}
 #else
 	int i;
