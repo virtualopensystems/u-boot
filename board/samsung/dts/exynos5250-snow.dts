@@ -25,10 +25,20 @@
 		google,board-rev-gpios = <&gpio 88 0>, <&gpio 89 0>;
 	};
 
+	i2c-arbitrator {
+		compatible = "google,arbitrator";
+		google,ap-claim-gpios = <&gpio 0xd3 0>;	/* F03 */
+		google,ec-claim-gpios = <&gpio 0xc4 0>;	/* E04 */
+		google,slew-delay-us = <10>;
+		google,wait-retry-us = <2000>;
+		google,wait-free-us = <50000>;
+		google,arbitrate-bus = <&i2c4>;
+	};
+
 	dmc@10C00000 {
 		mem-manuf = "elpida";
 	};
-	i2c@12ca0000 {
+	i2c4: i2c@12ca0000 {
 		mkbp@1e {
 			reg = <0x1e>;
 			compatible = "google,mkbp";
