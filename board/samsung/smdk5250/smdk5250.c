@@ -286,6 +286,7 @@ static int board_i2c_arb_init(const void *blob)
 	/* We are currently not claiming the bus */
 	gpio_direction_output(local.ap_claim.gpio, 1);
 	gpio_direction_input(local.ec_claim.gpio);
+	gpio_set_pull(local.ec_claim.gpio, EXYNOS_GPIO_PULL_UP);
 
 	local.arbitrate_node = fdtdec_lookup_phandle(blob, node,
 						     "google,arbitrate-bus");
