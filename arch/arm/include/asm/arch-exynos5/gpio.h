@@ -418,6 +418,8 @@ enum exynos5_gpio_pin {
 	GPIO_MAX_PORT
 };
 
+#define gpio_status		gpio_info
+
 /**
  * Set GPIO pin configuration.
  *
