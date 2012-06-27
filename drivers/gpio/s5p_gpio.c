@@ -220,6 +220,14 @@ void gpio_cfg_pin(int gpio, int cfg)
 	writel(value, &bank->con);
 }
 
+static int gpio_get_cfg(int gpio)
+{
+	struct s5p_gpio_bank *bank = gpio_get_bank(gpio);
+	int shift = GPIO_BIT(gpio) << 2;
+
+	return (readl(&bank->con) & CON_MASK(GPIO_BIT(gpio))) >> shift;
+}
+
 void gpio_set_pull(int gpio, int mode)
 {
 	unsigned int value;
@@ -428,4 +436,34 @@ int gpio_decode_number(unsigned gpio_list[], int count)
 	}
 
 	return result;
+}
+
+static const char *get_cfg_name(int cfg)
+{
+	static char name[8];
+
+	if (cfg == EXYNOS_GPIO_INPUT)
+		return "input";
+	else if (cfg == EXYNOS_GPIO_OUTPUT)
+		return "output";
+	sprintf(name, "func %d", cfg);
+
+	return name;
+}
+
+/*
+ * Display Exynos GPIO information
+ */
+void gpio_info(void)
+{
+	unsigned gpio;
+
+	for (gpio = 0; gpio < GPIO_MAX_PORT; gpio++) {
+		int cfg = gpio_get_cfg(gpio);
+
+		printf("GPIO_%-3d: %s", gpio, get_cfg_name(cfg));
+		if (cfg == EXYNOS_GPIO_INPUT || cfg == EXYNOS_GPIO_OUTPUT)
+			printf(", value = %d", gpio_get_value(gpio));
+		printf("\n");
+	}
 }

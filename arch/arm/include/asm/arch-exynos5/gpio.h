@@ -476,5 +476,7 @@ int gpio_direction_output(unsigned gpio, int value);
 
 int gpio_decode_number(unsigned gpio_list[], int count);
 
+void gpio_info(void);
+
 #endif
 #endif
