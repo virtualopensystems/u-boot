@@ -81,6 +81,7 @@
 #define CONFIG_CMD_NET
 #define CONFIG_CMD_TIME
 #define CONFIG_CMD_GPIO
+#define CONFIG_CMD_SOUND
 
 #define CONFIG_CMD_DHCP
 
@@ -117,6 +118,12 @@
 
 /* TPM */
 #define CONFIG_CMD_TPM
+
+/* Sound */
+#define CONFIG_SOUND
+#define CONFIG_I2S
+#define CONFIG_SOUND_WM8994
+
 
 /* DSIM */
 #define DSIM_PHYACCHR_AFC_CTL_VAL	0x3
