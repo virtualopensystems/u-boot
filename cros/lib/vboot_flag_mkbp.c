@@ -15,8 +15,6 @@
 #include <cros/common.h>
 #include <cros/vboot_flag.h>
 
-DECLARE_GLOBAL_DATA_PTR;
-
 static int vboot_flag_fetch_mkbp(enum vboot_flag_id id,
 				 struct vboot_flag_context *context,
 				 struct vboot_flag_details *details)
@@ -24,9 +22,9 @@ static int vboot_flag_fetch_mkbp(enum vboot_flag_id id,
 	struct mkbp_dev *dev;
 	struct mbkp_info info;
 
-	dev = mkbp_init(gd->fdt_blob);
+	dev = board_get_mkbp_dev();
 	if (mkbp_info(dev, &info)) {
-		VBDEBUG("%s: Could not read KBC info\n", __func__);
+		VBDEBUG("Could not read KBC info\n");
 		return -1;
 	}
 
