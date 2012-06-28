@@ -27,6 +27,7 @@
 #include <i2c.h>
 #include <max77686.h>
 #include <mkbp.h>
+#include <mmc.h>
 #include <netdev.h>
 #include <tps65090.h>
 #include <asm/gpio.h>
@@ -423,6 +424,17 @@ int checkboard(void)
 #endif
 
 #ifdef CONFIG_GENERIC_MMC
+int board_mmc_getcd(struct mmc *mmc)
+{
+	struct mshci_host *host = mmc->priv;
+	int present = 1; /* for ch0 (eMMC) card is always present */
+
+	if (host->peripheral == PERIPH_ID_SDMMC2)
+		present = !readl(&host->reg->cdetect);
+
+	return present;
+}
+
 int board_mmc_init(bd_t *bis)
 {
 #ifdef CONFIG_S5P_MSHCI
