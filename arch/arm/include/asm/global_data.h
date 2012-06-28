@@ -80,6 +80,7 @@ typedef	struct	global_data {
 	unsigned long	reloc_off;
 #if !(defined(CONFIG_SYS_ICACHE_OFF) && defined(CONFIG_SYS_DCACHE_OFF))
 	unsigned long	tlb_addr;
+	unsigned long	tlb_size;
 #endif
 	const void	*fdt_blob;	/* Our device tree, NULL if none */
 #ifdef CONFIG_SYS_SKIP_ARM_RELOCATION
