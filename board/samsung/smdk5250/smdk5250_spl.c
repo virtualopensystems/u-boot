@@ -79,3 +79,18 @@ int board_get_revision(void)
 	gpio[1] = params->board_rev_gpios >> 16;
 	return gpio_decode_number(gpio, CONFIG_BOARD_REV_GPIO_COUNT);
 }
+
+/*
+ * TODO(sjg@chromium.org):
+ * Declared there here for SPL, since there is no core i2c subsystem and
+ * cmd_i2c.c is not included.
+ */
+void board_i2c_release_bus(int node)
+{
+}
+
+int board_i2c_claim_bus(int node)
+{
+	/* EC is not allowed to touch the bus until we enter U-Boot */
+	return 0;
+}
