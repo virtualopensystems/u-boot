@@ -216,6 +216,11 @@ static void setup_arch_unused_memory(memory_wipe_t *wipe,
 
 	memory_wipe_add(wipe, config.start, config.end);
 
+#if !(defined(CONFIG_SYS_ICACHE_OFF) && defined(CONFIG_SYS_DCACHE_OFF))
+	/* Exclude the TLB */
+	memory_wipe_sub(wipe, gd->tlb_addr, gd->tlb_addr + gd->tlb_size);
+#endif
+
 	/* Excludes kcrashmem if in FDT */
 	if (cros_fdtdec_memory(gd->fdt_blob, "/ramoops", &ramoops))
 		VBDEBUG("RAMOOPS not contained within FDT\n");
