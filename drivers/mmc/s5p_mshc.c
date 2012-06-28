@@ -567,7 +567,6 @@ static int s5p_mshci_initialize(struct fdt_mshci *config)
 	mmc_host->clock = 0;
 	mmc_host->reg =  config->reg;
 	mmc_host->peripheral =  config->periph_id;
-	mmc->b_max = 1;
 	mmc_register(mmc);
 	mmc->block_dev.removable = config->removable;
 	debug("s5p_mshci: periph_id=%d, width=%d, reg=%p, enable=%d\n",
