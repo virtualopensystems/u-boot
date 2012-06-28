@@ -66,6 +66,10 @@
 			compatible = "google,const-flag";
 			value = <0>;
 		};
+		vboot-flag-oprom-loaded {
+			compatible = "google,const-flag";
+			value = <0>;
+		};
 	};
 
 	memory {
