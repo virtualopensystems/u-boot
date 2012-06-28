@@ -164,7 +164,6 @@ void spl_early_init(void)
 
 	exynos_pinmux_config(EXYNOS_UART, PINMUX_FLAG_NONE);
 	serial_init();
-	timer_init();
 }
 
 void board_init_f(unsigned long bootflag)
