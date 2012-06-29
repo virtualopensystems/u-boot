@@ -61,10 +61,9 @@
 			compatible = "google,gpio-flag";
 			gpio = <&gpio 189 0>;
 		};
-		/* TODO(clchiou): Remove this when we have the real thing */
 		vboot-flag-power-off {
-			compatible = "google,const-flag";
-			value = <0>;
+			compatible = "google,gpio-flag";
+			gpio = <&gpio 171 1>;
 		};
 		vboot-flag-oprom-loaded {
 			compatible = "google,const-flag";
