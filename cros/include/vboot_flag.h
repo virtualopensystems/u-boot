@@ -84,6 +84,14 @@ const char *vboot_flag_node_name(enum vboot_flag_id id);
 int vboot_flag_init(void);
 
 /**
+ * Return the type of the required vboot flag
+ *
+ * @param id		ID of VBoot flag
+ * @return COMPAT_GOOGLE_*_FLAG on success and COMPAT_UNKNOWN on failures
+ */
+enum fdt_compat_id vboot_flag_type(enum vboot_flag_id id);
+
+/**
  * Fetch the details of the required vboot flag
  *
  * @param id		ID of VBoot flag

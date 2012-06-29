@@ -81,6 +81,33 @@ static int vboot_flag_setup(enum vboot_flag_id id)
 	return -1;
 }
 
+enum fdt_compat_id vboot_flag_type(enum vboot_flag_id id)
+{
+	struct vboot_flag_context *context = vboot_flag_get_context(id);
+
+	if (!context || !context->driver)
+		return COMPAT_UNKNOWN;
+
+#ifdef CONFIG_CHROMEOS_CONST_FLAG
+	if (context->driver == &vboot_flag_driver_const)
+		return COMPAT_GOOGLE_CONST_FLAG;
+#endif
+#ifdef CONFIG_CHROMEOS_GPIO_FLAG
+	if (context->driver == &vboot_flag_driver_gpio)
+		return COMPAT_GOOGLE_GPIO_FLAG;
+#endif
+#ifdef CONFIG_CHROMEOS_MKBP_FLAG
+	if (context->driver == &vboot_flag_driver_mkbp)
+		return COMPAT_GOOGLE_MKBP_FLAG;
+#endif
+#ifdef CONFIG_CHROMEOS_SYSINFO_FLAG
+	if (context->driver == &vboot_flag_driver_sysinfo)
+		return COMPAT_GOOGLE_SYSINFO_FLAG;
+#endif
+
+	return COMPAT_UNKNOWN;
+}
+
 int vboot_flag_fetch(enum vboot_flag_id id, struct vboot_flag_details *details)
 {
 	struct vboot_flag_context *context = vboot_flag_get_context(id);
