@@ -266,12 +266,12 @@ static int mkbp_send_message(struct mkbp_dev *dev, uint8_t din[], int din_len,
  * The device's internal input/output buffers are used.
  *
  * @param dev		MKBP device
- * @param cmd		Command to send (CMDC_...)
+ * @param cmd		Command to send (EC_CMD_...)
  * @param maxlen	Maximum number of bytes in response
  * @param responsep	Set to point to the response on success
  * @return number of bytes in response, or -1 on error
  */
-static int mkbp_send_command(struct mkbp_dev *dev, enum message_cmd_t cmd,
+static int mkbp_send_command(struct mkbp_dev *dev, uint8_t cmd,
 			     int maxlen, const uint8_t **responsep)
 {
 	int len;
@@ -291,7 +291,8 @@ int mkbp_scan_keyboard(struct mkbp_dev *dev, struct mbkp_keyscan *scan)
 	const uint8_t *p;
 	int len;
 
-	len = mkbp_send_command(dev, CMDC_KEY_STATE, sizeof(scan->data), &p);
+	len = mkbp_send_command(dev, EC_CMD_MKBP_STATE,
+				sizeof(scan->data), &p);
 	if (len > 0)
 		memcpy(scan->data, p, len);
 
@@ -304,7 +305,7 @@ int mkbp_read_id(struct mkbp_dev *dev, char *id, int maxlen)
 	int len;
 
 	/* Allow room for our \0 terminator */
-	len = mkbp_send_command(dev, CMDC_ID, maxlen - 1, &p);
+	len = mkbp_send_command(dev, EC_CMD_GET_VERSION, maxlen - 1, &p);
 	if (len < 0)
 		return -1;
 	memcpy(id, p, len);
@@ -322,12 +323,12 @@ int mkbp_interrupt_pending(struct mkbp_dev *dev)
 	return !gpio_get_value(dev->ec_int.gpio);
 }
 
-int mkbp_info(struct mkbp_dev *dev, struct mbkp_info *info)
+int mkbp_info(struct mkbp_dev *dev, struct ec_response_mkbp_info *info)
 {
 	const uint8_t *p;
 	int len;
 
-	len = mkbp_send_command(dev, CMDC_INFO, sizeof(*info), &p);
+	len = mkbp_send_command(dev, EC_CMD_MKBP_INFO, sizeof(*info), &p);
 	if (len >= 0)
 		memcpy(info, p, len);
 	else
@@ -505,7 +506,7 @@ static int do_mkbp(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		}
 		printf("%s\n", id);
 	} else if (0 == strcmp("info", cmd)) {
-		struct mbkp_info info;
+		struct ec_response_mkbp_info info;
 
 		if (mkbp_info(dev, &info)) {
 			debug("%s: Could not read KBC info\n", __func__);

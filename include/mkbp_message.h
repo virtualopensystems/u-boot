@@ -25,43 +25,24 @@
 #define _CROS_MESSAGE_H
 
 /*
- * Command interface between KBC and AP.
+ * Command interface between KBC and AP, for I2C and SPI interfaces.
  *
- * This is copied from the Chromium OS Open Source Embedded Controller
- * code in src/platform/ec/include/message.h
+ * This is copied from the Chromium OS Open Source Embedded Controller code.
  */
 enum {
-	/* Mask to convert a command byte into a command */
-	MSG_CMD_MASK	= 0x7f,
-
-	/* The bytes which appear before the header in a message */
-	MSG_PREAMBLE	= 0xff,
-
 	/* The header byte, which follows the preamble */
 	MSG_HEADER	= 0xec,
 
 	MSG_HEADER_BYTES	= 3,
 	MSG_TRAILER_BYTES	= 2,
 	MSG_PROTO_BYTES		= MSG_HEADER_BYTES + MSG_TRAILER_BYTES,
-};
 
-
-/* The command codes that we understand */
-enum message_cmd_t {
-	/* EC control/status messages */
-	CMDC_PROTO_VER	= 0x00,		/* Protocol version */
-	CMDC_NOP,			/* No operation / ping */
-	CMDC_ID,			/* Read EC ID */
-
-	/* Functional messages */
-	CMDC_KEY_STATE	= 0x60,		/* Read key state */
-	CMDC_INFO	= 0x61,		/* Get information about the matrix */
-};
-
-/* Some useful constants */
-enum {
-	MSG_BYTES		= 32,	/* Max length of messages */
-	MSG_KEYSCAN_BYTES	= 13,	/* Max bytes in a key scan */
+	/* Max length of messages */
+	/*
+	 * TODO: this should really be EC_PARAM_SIZE + MSG_PROTO_BYTES, but
+	 * that breaks the LPC interface.
+	 */
+	MSG_BYTES		= EC_PARAM_SIZE,
 };
 
 #endif

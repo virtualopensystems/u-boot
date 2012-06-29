@@ -20,7 +20,7 @@ static int vboot_flag_fetch_mkbp(enum vboot_flag_id id,
 				 struct vboot_flag_details *details)
 {
 	struct mkbp_dev *dev;
-	struct mbkp_info info;
+	struct ec_response_mkbp_info info;
 
 	dev = board_get_mkbp_dev();
 	if (mkbp_info(dev, &info)) {
@@ -32,7 +32,7 @@ static int vboot_flag_fetch_mkbp(enum vboot_flag_id id,
 	switch (id) {
 	case VBOOT_FLAG_RECOVERY:
 		details->value = (info.switches &
-				  MKBP_SWITCH_KEYBOARD_RECOVERY) ? 1 : 0;
+				  EC_SWITCH_KEYBOARD_RECOVERY) ? 1 : 0;
 		break;
 	default:
 		VBDEBUG("the flag is not supported reading from ec: %s\n",

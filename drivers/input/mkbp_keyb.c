@@ -159,7 +159,7 @@ static int mkbp_keyb_decode_fdt(const void *blob, int node,
 	config->key_cols = fdtdec_get_int(blob, node, "google,key-columns", 0);
 	if (!config->key_rows || !config->key_cols ||
 			config->key_rows * config->key_cols / 8
-				> MSG_KEYSCAN_BYTES) {
+				> MKBP_KEYSCAN_COLS) {
 		debug("%s: Invalid key matrix size %d x %d\n", __func__,
 		      config->key_rows, config->key_cols);
 		return -1;
