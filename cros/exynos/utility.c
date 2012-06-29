@@ -9,11 +9,26 @@
  */
 
 #include <common.h>
+#include <fdtdec.h>
 #include <cros/common.h>
 
 #include <vboot_api.h>
 
+DECLARE_GLOBAL_DATA_PTR;
+
 uint64_t VbExGetTimer(void)
 {
 	return timer_get_us();
+}
+
+const char *cros_fdt_get_mem_type(void)
+{
+	const void *blob = gd->fdt_blob;
+	int nodeoffset;
+
+	nodeoffset = fdt_path_offset(blob, "/dmc");
+	if (nodeoffset > 0)
+		return fdt_getprop(blob, nodeoffset, "mem-type", NULL);
+
+	return NULL;
 }

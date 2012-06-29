@@ -43,7 +43,13 @@ enum BinfFwIndex {
 	BINF_RW_B = 2
 };
 
-DECLARE_GLOBAL_DATA_PTR;
+static const char *__cros_fdt_get_mem_type(void)
+{
+	return NULL;
+}
+
+const char *cros_fdt_get_mem_type(void)
+	__attribute__((weak, alias("__cros_fdt_get_mem_type")));
 
 int crossystem_data_init(crossystem_data_t *cdata,
 		struct vboot_flag_details *write_protect_switch,
@@ -137,6 +143,7 @@ int crossystem_data_embed_into_fdt(crossystem_data_t *cdata, void *fdt,
 	int nodeoffset, err;
 	int gpio_phandle;
 	int gpio_prop[3];
+	const char *ddr_type;
 
 	err = fdt_open_into(fdt, fdt,
 			fdt_totalsize(fdt) + sizeof(*cdata) + 4096);
@@ -252,6 +259,12 @@ int crossystem_data_embed_into_fdt(crossystem_data_t *cdata, void *fdt,
 #endif
 
 	err |= set_array_prop("vboot-shared-data", vb_shared_data);
+
+	ddr_type = cros_fdt_get_mem_type();
+	if (ddr_type) {
+		err |= fdt_setprop(fdt, nodeoffset, "ddr-type", ddr_type,
+				   strlen(ddr_type));
+	}
 
 #undef set_scalar_prop
 #undef set_array_prop
