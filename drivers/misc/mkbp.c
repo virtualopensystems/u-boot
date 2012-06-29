@@ -144,7 +144,7 @@ static int mkbp_lpc_message(struct mkbp_dev *dev, uint8_t din[], int din_len,
 
 	if (wait_for_sync(dev)) {
 		debug("%s: Timeout waiting ready\n", __func__);
-		return 01;
+		return -1;
 	}
 
 	debug_trace("cmd: %02x ", dout[0]);
@@ -157,7 +157,7 @@ static int mkbp_lpc_message(struct mkbp_dev *dev, uint8_t din[], int din_len,
 
 	if (wait_for_sync(dev)) {
 		debug("%s: Timeout waiting ready\n", __func__);
-		return 01;
+		return -1;
 	}
 
 	ret = inb(dev->lpc_data);
