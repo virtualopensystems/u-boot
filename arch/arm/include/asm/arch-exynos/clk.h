@@ -22,6 +22,7 @@
 #ifndef __ASM_ARM_ARCH_COMMON_CLK_H_
 #define __ASM_ARM_ARCH_COMMON_CLK_H_
 
+#include <asm/types.h>
 #include <asm/arch/periph.h>
 
 #define APLL	0
@@ -29,6 +30,7 @@
 #define EPLL	2
 #define HPLL	3
 #define VPLL	4
+#define BPLL	5
 
 enum pll_src_bit {
 	SRC_MPLL = 6,
@@ -41,9 +43,10 @@ enum pll_src_bit {
  * positions of the peripheral clocks of the src and div registers
  */
 struct clk_bit_info {
-	int src_bit;
-	int div_bit;
-	int prediv_bit;
+	s8 src_bit;    /* offset in register to clock source field */
+	s8 n_src_bits; /* number of bits in 'src_bit' field */
+	s8 div_bit;
+	s8 prediv_bit;
 };
 
 unsigned long get_pll_clk(int pllreg);

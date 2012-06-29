@@ -29,35 +29,39 @@
 
 /* src_bit div_bit prediv_bit */
 static struct clk_bit_info clk_bit_info[PERIPH_ID_COUNT] = {
-	{0,	0,	-1},
-	{4,	4,	-1},
-	{8,	8,	-1},
-	{12,	12,	-1},
-	{0,	0,	8},
-	{4,	16,	24},
-	{8,	0,	8},
-	{12,	16,	24},
-	{-1,	-1,	-1},
-	{16,	0,	8},
-	{20,	16,	24},
-	{24,	0,	8},
-	{0,	0,	4},
-	{4,	12,	16},
-	{-1,	-1,	-1},
-	{-1,	-1,	-1},
-	{-1,	24,	0},
-	{-1,	24,	0},
-	{-1,	24,	0},
-	{-1,	24,	0},
-	{-1,	24,	0},
-	{-1,	24,	0},
-	{-1,	24,	0},
-	{-1,	24,	0},
-	{24,	0,	-1},
-	{24,	0,	-1},
-	{24,	0,	-1},
-	{24,	0,	-1},
-	{24,	0,	-1},
+	{0,	4,	0,	-1},
+	{4,	4,	4,	-1},
+	{8,	4,	8,	-1},
+	{12,	4,	12,	-1},
+	{0,	4,	0,	8},
+	{4,	4,	16,	24},
+	{8,	4,	0,	8},
+	{12,	4,	16,	24},
+	{-1,	-1,	-1,	-1},
+	{16,	4,	0,	8}, /* PERIPH_ID_SROMC */
+	{20,	4,	16,	24},
+	{24,	4,	0,	8},
+	{0,	4,	0,	4},
+	{4,	4,	12,	16},
+	{-1,	4,	-1,	-1},
+	{-1,	4,	-1,	-1},
+	{-1,	4,	24,	0},
+	{-1,	4,	24,	0},
+	{-1,	4,	24,	0},
+	{-1,	4,	24,	0},
+	{-1,	4,	24,	0},
+	{-1,	4,	24,	0},
+	{-1,	4,	24,	0},
+	{-1,	4,	24,	0},
+	{24,	4,	0,	-1},
+	{24,	4,	0,	-1},
+	{24,	4,	0,	-1},
+	{24,	4,	0,	-1},
+	{24,	4,	0,	-1},
+	{-1,	-1,	-1,	-1},
+	{-1,	-1,	-1,	-1},
+	{-1,	-1,	-1,	-1}, /* PERIPH_ID_I2S1 */
+	{24,	1,	20,	-1}, /* PERIPH_ID_SATA */
 };
 
 /* Epll Clock division values to achive different frequency output */
@@ -83,6 +87,9 @@ unsigned long get_pll_clk(int pllreg)
 	case APLL:
 		r = readl(&clk->apll_con0);
 		break;
+	case BPLL:
+		r = readl(&clk->bpll_con0);
+		break;
 	case MPLL:
 		r = readl(&clk->mpll_con0);
 		break;
@@ -105,7 +112,7 @@ unsigned long get_pll_clk(int pllreg)
 	 * EPLL_CON: MIDV [24:16]
 	 * VPLL_CON: MIDV [24:16]
 	 */
-	if (pllreg == APLL || pllreg == MPLL)
+	if (pllreg == APLL || pllreg == BPLL || pllreg == MPLL)
 		mask = 0x3ff;
 	else
 		mask = 0x1ff;
@@ -181,6 +188,10 @@ unsigned long clock_get_periph_rate(enum periph_id peripheral)
 		src = readl(&clk->sclk_src_isp);
 		div = readl(&clk->sclk_div_isp);
 		break;
+	case PERIPH_ID_SATA:
+		src = readl(&clk->src_fsys);
+		div = readl(&clk->div_fsys0);
+		break;
 	case PERIPH_ID_SDMMC0:
 	case PERIPH_ID_SDMMC1:
 	case PERIPH_ID_SDMMC2:
@@ -205,15 +216,22 @@ unsigned long clock_get_periph_rate(enum periph_id peripheral)
 		return -1;
 	};
 
-	src = (src >> bit_info->src_bit) & 0xf;
-	if (src == SRC_MPLL)
-		sclk = get_pll_clk(MPLL);
-	else if (src == SRC_EPLL)
-		sclk = get_pll_clk(EPLL);
-	else if (src == SRC_VPLL)
-		sclk = get_pll_clk(VPLL);
-	else
-		return 0;
+	src = (src >> bit_info->src_bit) & ((1 << bit_info->n_src_bits) - 1);
+	if (peripheral == PERIPH_ID_SATA) {
+		if (src)
+			sclk = get_pll_clk(BPLL);
+		else
+			sclk = get_pll_clk(MPLL);
+	} else {
+		if (src == SRC_MPLL)
+			sclk = get_pll_clk(MPLL);
+		else if (src == SRC_EPLL)
+			sclk = get_pll_clk(EPLL);
+		else if (src == SRC_VPLL)
+			sclk = get_pll_clk(VPLL);
+		else
+			return 0;
+	}
 
 	sub_div = (div >> bit_info->div_bit) & 0xf;
 	sub_clk = sclk / (sub_div + 1);
