@@ -21,9 +21,7 @@
  */
 
 #include <common.h>
-#include <edid.h>
 #include <fdtdec.h>
-#include <fdt_support.h>
 #include <i2c.h>
 #include <max77686.h>
 #include <mkbp.h>
@@ -96,68 +94,6 @@ static int decode_sromc(const void *blob, struct fdt_sromc *config)
 		return -FDT_ERR_NOTFOUND;
 	}
 
-	return 0;
-}
-
-/**
- * Get the EDID data from the display device
- *
- * @param blob		Device tree blob
- * @param node		The display node
- * @param edid_buf	Returns the EDID data
- * @return 0 on success, or -1 on error
- */
-static int get_edid_from_lcd(const void *blob, int node,
-		struct edid1_info *edid_buf)
-{
-	int i2c_bus, slave_addr, parent;
-
-	slave_addr = fdtdec_get_addr(blob, node, "reg");
-	parent = fdt_parent_offset(blob, node);
-	if (parent < 0) {
-		debug("%s: Cannot find node parent\n", __func__);
-		return -1;
-	}
-	i2c_bus = i2c_get_bus_num_fdt(blob, parent);
-	if (i2c_bus < 0)
-		return -1;
-
-	if (i2c_set_bus_num(i2c_bus))
-		return -1;
-	if (i2c_read(slave_addr, 0, 1, (uchar *)edid_buf, sizeof(*edid_buf)))
-		return -1;
-
-	return 0;
-}
-
-/**
- * Check the EDID in the FDT valid or not. If not, get it from the real device.
- *
- * @param blob	Device tree blob
- * @return 0 on success, or -1 on error
- */
-static int fdt_check_edid(const void *blob)
-{
-	int node, len;
-	struct edid1_info *edid;
-	struct edid1_info edid_buf;
-
-	node = fdtdec_next_compatible(blob, 0, COMPAT_SAMSUNG_EXYNOS_LCD);
-	if (node < 0) {
-		debug("Could not find LCD node\n");
-		return -1;
-	}
-
-	edid = (struct edid1_info *)fdt_getprop(blob, node, "edid", &len);
-	if (edid_check_info(edid)) {
-		debug("%s: Get the EDID from the real device\n", __func__);
-		if (get_edid_from_lcd(blob, node, &edid_buf))
-			return -1;
-		edid = &edid_buf;
-	}
-#ifdef DEBUG
-	edid_print_info(edid);
-#endif
 	return 0;
 }
 #endif
@@ -339,11 +275,6 @@ int board_init(void)
 
 	if (board_init_mkbp_devices(gd->fdt_blob))
 		return -1;
-
-	if (fdt_check_edid(gd->fdt_blob)) {
-		debug("%s: Failed to get a correct EDID\n", __func__);
-		return -1;
-	}
 
 	return 0;
 }
