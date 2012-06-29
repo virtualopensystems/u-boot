@@ -46,6 +46,8 @@
 	};
 
 	chromeos-config {
+		virtual-dev-switch;
+
 		vboot-flag-write-protect {
 			compatible = "google,gpio-flag";
 			gpio = <&gpio 102 1>;
