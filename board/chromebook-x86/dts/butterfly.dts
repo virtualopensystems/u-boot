@@ -1,0 +1,18 @@
+/dts-v1/;
+
+/include/ "coreboot.dtsi"
+/include/ "chromeos-coreboot.dtsi"
+/include/ "flashmap-coreboot-8mb_1mb_rom.dtsi"
+
+/ {
+	model = "Google Butterfly";
+	compatible = "google,butterfly", "intel,celeron-sandybridge";
+
+	config {
+	       hwid = "X86 BUTTERFLY TEST XXXX";
+	};
+
+	chromeos-config {
+		virtual-dev-switch;
+	};
+};
