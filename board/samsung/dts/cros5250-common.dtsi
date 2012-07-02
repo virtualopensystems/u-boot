@@ -56,8 +56,8 @@
 			compatible = "google,mkbp-flag";
 		};
 		vboot-flag-developer {
-			compatible = "google,gpio-flag";
-			gpio = <&gpio 168 0>;
+			compatible = "google,const-flag";
+			value = <0>;
 		};
 		vboot-flag-lid-open {
 			compatible = "google,gpio-flag";
