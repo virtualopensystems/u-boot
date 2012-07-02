@@ -73,44 +73,89 @@ struct mkbp_dev {
 static struct mkbp_dev static_dev, *last_dev;
 
 #ifdef CONFIG_MKBP_I2C
-static int mkbp_i2c_message(struct mkbp_dev *dev, uint8_t din[], int din_len,
-			     uint8_t dout[])
+/**
+ * Send a command to an I2C MKBP device and return the reply.
+ *
+ * The device's internal input/output buffers are used.
+ *
+ * @param dev		MKBP device
+ * @param cmd		Command to send (EC_CMD_...)
+ * @param dout          Output data (may be NULL If dout_len=0)
+ * @param dout_len      Size of output data in bytes
+ * @param din           Response data (may be NULL If din_len=0)
+ * @param din_len       Maximum size of response in bytes
+ * @return number of bytes in response, or -1 on error
+ */
+static int i2c_command(struct mkbp_dev *dev, uint8_t cmd, const uint8_t *dout,
+		       int dout_len, uint8_t *din, int din_len)
 {
 	int old_bus = 0;
+	int out_bytes = dout_len + 1;  /* cmd8, out8[dout_len] */
+	int in_bytes = din_len + 2;  /* response8, in8[din_len], checksum8 */
 
 	old_bus = i2c_get_bus_num();
+
+	/*
+	 * Sanity-check I/O sizes given transaction overhead in internal
+	 * buffers.
+	 */
+	if (out_bytes > sizeof(dev->dout)) {
+		debug("%s: Cannot send %d bytes\n", __func__, dout_len);
+		return -1;
+	}
+	if (in_bytes > sizeof(dev->din)) {
+		debug("%s: Cannot receive %d bytes\n", __func__, din_len);
+		return -1;
+	}
+
+	/*
+	 * Copy command and data into output buffer so we can do a single I2C
+	 * burst transaction.
+	 */
+	dev->dout[0] = cmd;
+	if (dout_len > 0)
+		memcpy(dev->dout + 1, dout, dout_len);
+
 	/* Set to the proper i2c bus */
 	if (i2c_set_bus_num(dev->bus_num)) {
 		debug("%s: Cannot change to I2C bus %d\n", __func__,
 			dev->bus_num);
 		return -1;
 	}
-	/* Send read key state command */
-	if (i2c_write(dev->addr, 0, 0, dout, 1)) {
+
+	/* Send output data */
+	if (i2c_write(dev->addr, 0, 0, dev->dout, out_bytes)) {
 		debug("%s: Cannot complete I2C write to 0x%x\n",
 			__func__, dev->addr);
 		return -1;
 	}
-	/* Receive the key state */
-	if (i2c_read(dev->addr, 0, 0, din, din_len)) {
+
+	/* Receive input data */
+	if (i2c_read(dev->addr, 0, 0, dev->din, in_bytes)) {
 		debug("%s: Cannot complete I2C read from 0x%x\n",
 			__func__, dev->addr);
 		return -1;
 	}
+
 	/* Return to original bus number */
 	if (i2c_set_bus_num(old_bus)) {
 		debug("%s: Cannot change to I2C bus %d\n", __func__,
 			old_bus);
 		return -1;
 	}
+
 	/*
 	 * I2C currently uses a simpler protocol, so we don't
-	 * deal with the full header, the checksum byte on the end
+	 * deal with the full header; the checksum byte on the end
 	 * is ignored.
 	 * TODO(bhthompson): Migrate to new protocol.
 	 */
-	if (din[0] != 0x00) /* EC_RES_SUCCESS */
-		return -1;
+	if (dev->din[0] != EC_RES_SUCCESS)
+		return -(int)(dev->din[0]);
+
+	/* Copy input data, if any */
+	if (din_len)
+		memcpy(din, dev->din + 1, din_len);
 
 	return 0;
 }
@@ -132,13 +177,31 @@ static int wait_for_sync(struct mkbp_dev *dev)
 	return 0;
 }
 
-static int mkbp_lpc_message(struct mkbp_dev *dev, uint8_t din[], int din_len,
-			     uint8_t dout[])
+/**
+ * Send a command to a LPC MKBP device and return the reply.
+ *
+ * The device's internal input/output buffers are used.
+ *
+ * @param dev		MKBP device
+ * @param cmd		Command to send (EC_CMD_...)
+ * @param dout          Output data (may be NULL If dout_len=0)
+ * @param dout_len      Size of output data in bytes
+ * @param din           Response data (may be NULL If din_len=0)
+ * @param din_len       Maximum size of response in bytes
+ * @return number of bytes in response, or -1 on error
+ */
+static int lpc_command(struct mkbp_dev *dev, uint8_t cmd, const uint8_t *dout,
+		       int dout_len, uint8_t *din, int din_len)
 {
 	int ret, i;
 
+	if (dout_len > dev->lpc_param_len) {
+		debug("%s: Cannot send %d bytes\n", __func__, dout_len);
+		return -1;
+	}
+
 	if (din_len > dev->lpc_param_len) {
-		debug("%s: Cannot send %d bytes\n", __func__, din_len);
+		debug("%s: Cannot receive %d bytes\n", __func__, din_len);
 		return -1;
 	}
 
@@ -147,12 +210,12 @@ static int mkbp_lpc_message(struct mkbp_dev *dev, uint8_t din[], int din_len,
 		return -1;
 	}
 
-	debug_trace("cmd: %02x ", dout[0]);
-	for (i = 1; i < din_len; i++) {
+	debug_trace("cmd: %02x, ", command);
+	for (i = 0; i < dout_len; i++) {
 		debug_trace("%02x ", dout[i]);
-		outb(dout[i], dev->lpc_param - 1 + i);
+		outb(dout[i], dev->lpc_param + i);
 	}
-	outb(dout[0], dev->lpc_cmd);
+	outb(cmd, dev->lpc_cmd);
 	debug_trace("\n");
 
 	if (wait_for_sync(dev)) {
@@ -163,80 +226,98 @@ static int mkbp_lpc_message(struct mkbp_dev *dev, uint8_t din[], int din_len,
 	ret = inb(dev->lpc_data);
 	if (ret) {
 		debug("%s: MKBP result code %d\n", __func__, ret);
-		return -1;
+		return -ret;
 	}
 
-	din[0] = ret;
-	debug_trace("resp: %02x ", din[0]);
-	for (i = 1; i < din_len; i++) {
-		din[i] = inb(dev->lpc_param - 1 + i);
+	debug_trace("resp: %02x, ", ret);
+	for (i = 0; i < din_len; i++) {
+		din[i] = inb(dev->lpc_param + i);
 		debug_trace("%02x ", din[i]);
 	}
 	debug_trace("\n");
 
-	return 0;
+	return din_len;
 }
 #endif
 
+#ifdef CONFIG_MKBP_SPI
 /**
- * Send a MKBP message and receive a reply.
+ * Send a command to a LPC MKBP device and return the reply.
+ *
+ * The device's internal input/output buffers are used.
  *
  * @param dev		MKBP device
- * @param din		Data input, containing message to send
- * @param din_len	Length of data input
- * @param dout		Data output buffer, which will contain reply
- * @param replyp	Set to point to start of reply in dout
+ * @param cmd		Command to send (EC_CMD_...)
+ * @param dout          Output data (may be NULL If dout_len=0)
+ * @param dout_len      Size of output data in bytes
+ * @param din           Response data (may be NULL If din_len=0)
+ * @param din_len       Maximum size of response in bytes
  * @return number of bytes in response, or -1 on error
  */
-static int mkbp_send_message(struct mkbp_dev *dev, uint8_t din[], int din_len,
-			     uint8_t dout[], const uint8_t **replyp)
+static int spi_command(struct mkbp_dev *dev, uint8_t cmd, const uint8_t *dout,
+		       int dout_len, uint8_t *din, int din_len)
 {
+	int in_bytes = din_len + MSG_PROTO_BYTES;
 	const uint8_t *p, *end;
 	int len = 0;
+	int rv;
 
-	memset(din, '\0', din_len);
+	/*
+	 * Sanity-check input size to make sure it plus transaction overhead
+	 * fits in the internal device buffer.
+	 */
+	if (in_bytes > sizeof(dev->din)) {
+		debug("%s: Cannot receive %d bytes\n", __func__, din_len);
+		return -1;
+	}
 
-	switch (dev->interface) {
-#ifdef CONFIG_MKBP_SPI
-	case MKBPIF_SPI:
-		if (spi_claim_bus(dev->spi)) {
-			debug("%s: Cannot claim SPI bus\n", __func__);
-			return -1;
-		}
+	/* Clear input buffer so we don't get false hits for MSG_HEADER */
+	memset(dev->din, '\0', in_bytes);
+
+	if (spi_claim_bus(dev->spi)) {
+		debug("%s: Cannot claim SPI bus\n", __func__);
+		return -1;
+	}
+
+
+	/* Send command */
 #ifdef CONFIG_NEW_SPI_XFER
-		if (spi_xfer(dev->spi, dout, din_len * 8, din, din_len * 8)) {
+	rv = spi_xfer(dev->spi, &cmd, 8, dev->din, 8));
 #else
-		if (spi_xfer(dev->spi, din_len * 8, dout, din,
-					SPI_XFER_BEGIN | SPI_XFER_END)) {
+	rv = spi_xfer(dev->spi, 8, &cmd, dev->din,
+		      SPI_XFER_BEGIN | SPI_XFER_END);
 #endif
-			debug("%s: Cannot complete SPI transfer\n", __func__);
-			return -1;
-		}
+
+	if (rv) {
+		debug("%s: Cannot send command via SPI\n", __func__);
 		spi_release_bus(dev->spi);
-		break;
+		return -1;
+	}
+
+	/* Send output data and receive input data */
+#ifdef CONFIG_NEW_SPI_XFER
+	rv = spi_xfer(dev->spi, dout, dout_len * 8,
+		      dev->din, in_bytes * 8)) {
+#else
+	/*
+	 * TODO(sjg): Old SPI XFER doesn't support sending params before
+	 * reading response, so this will probably clock the wrong amount of
+	 * data.
+	 */
+	rv = spi_xfer(dev->spi, max(dout_len, in_bytes) * 8,
+		      dev->dout, dev->din,
+		      SPI_XFER_BEGIN | SPI_XFER_END);
 #endif
-#ifdef CONFIG_MKBP_I2C
-	case MKBPIF_I2C:
-		din_len += 2; /* Add space for checksum and return code */
-		if (mkbp_i2c_message(dev, din, din_len, dout))
-			return -1;
-		*replyp = &din[1]; /* skip return code */
-		return din_len - 2; /* ignore checksum/return code */
-#endif
-#ifdef CONFIG_MKBP_LPC
-	case MKBPIF_LPC:
-		if (mkbp_lpc_message(dev, din, din_len, dout))
-			return -1;
-		*replyp = &din[1]; /* skip return code */
-		return din_len;
-#endif
-	case MKBPIF_NONE:
-	default:
+
+	spi_release_bus(dev->spi);
+
+	if (rv) {
+		debug("%s: Cannot complete SPI transfer\n", __func__);
 		return -1;
 	}
 
 	/* Scan to start of reply */
-	for (p = din, end = p + din_len; p < end; p++) {
+	for (p = dev->din, end = p + in_bytes; p < end; p++) {
 		if (*p == MSG_HEADER)
 			break;
 	}
@@ -255,10 +336,20 @@ static int mkbp_send_message(struct mkbp_dev *dev, uint8_t din[], int din_len,
 	if (len > 0) {
 		p += MSG_HEADER_BYTES;
 		len -= MSG_PROTO_BYTES;	/* remove header, checksum, trailer */
-		*replyp = p;
+
+		/* Response code is first byte of message */
+		if (p[0] != EC_RES_SUCCESS)
+			return -(int)(p[0]);
+
+		/* Anything else is the response data */
+		len = min(len - 1, din_len);
+		if (len)
+			memcpy(din, p + 1, len);
 	}
 	return len;
 }
+#endif
+
 
 /**
  * Send a command to the MKBP device and return the reply.
@@ -267,48 +358,52 @@ static int mkbp_send_message(struct mkbp_dev *dev, uint8_t din[], int din_len,
  *
  * @param dev		MKBP device
  * @param cmd		Command to send (EC_CMD_...)
- * @param maxlen	Maximum number of bytes in response
- * @param responsep	Set to point to the response on success
+ * @param dout          Output data (may be NULL If dout_len=0)
+ * @param dout_len      Size of output data in bytes
+ * @param din           Response data (may be NULL If din_len=0)
+ * @param din_len       Maximum size of response in bytes
  * @return number of bytes in response, or -1 on error
  */
-static int mkbp_send_command(struct mkbp_dev *dev, uint8_t cmd,
-			     int maxlen, const uint8_t **responsep)
+static int ec_command(struct mkbp_dev *dev, int cmd, const void *dout,
+		      int dout_len, void *din, int din_len)
 {
-	int len;
-
-	dev->dout[0] = cmd;
-	len = mkbp_send_message(dev, dev->din, sizeof(dev->din), dev->dout,
-				responsep);
-	if (len < 0)
+	switch (dev->interface) {
+#ifdef CONFIG_MKBP_SPI
+	case MKBPIF_SPI:
+		return spi_command(dev, cmd, (const uint8_t *)dout, dout_len,
+				   (uint8_t *)din, din_len);
+		break;
+#endif
+#ifdef CONFIG_MKBP_I2C
+	case MKBPIF_I2C:
+		return i2c_command(dev, cmd, (const uint8_t *)dout, dout_len,
+				   (uint8_t *)din, din_len);
+		break;
+#endif
+#ifdef CONFIG_MKBP_LPC
+	case MKBPIF_LPC:
+		return lpc_command(dev, cmd, (const uint8_t *)dout, dout_len,
+				   (uint8_t *)din, din_len);
+		break;
+#endif
+	case MKBPIF_NONE:
+	default:
 		return -1;
-
-	len = min(len, maxlen);
-	return len;
+	}
 }
 
 int mkbp_scan_keyboard(struct mkbp_dev *dev, struct mbkp_keyscan *scan)
 {
-	const uint8_t *p;
-	int len;
-
-	len = mkbp_send_command(dev, EC_CMD_MKBP_STATE,
-				sizeof(scan->data), &p);
-	if (len > 0)
-		memcpy(scan->data, p, len);
-
-	return 0;
+	return ec_command(dev, EC_CMD_MKBP_STATE, NULL, 0, scan->data,
+			  sizeof(scan->data));
 }
 
 int mkbp_read_id(struct mkbp_dev *dev, char *id, int maxlen)
 {
 	struct ec_response_get_version r;
-	const uint8_t *p;
-	int len;
 
-	len = mkbp_send_command(dev, EC_CMD_GET_VERSION, sizeof(r), &p);
-	if (len < 0)
+	if (ec_command(dev, EC_CMD_GET_VERSION, NULL, 0, &r, sizeof(r)) < 0)
 		return -1;
-	memcpy(&r, p, len);
 
 	if (maxlen > sizeof(r.version_string_ro))
 		maxlen = sizeof(r.version_string_ro);
@@ -342,16 +437,7 @@ int mkbp_interrupt_pending(struct mkbp_dev *dev)
 
 int mkbp_info(struct mkbp_dev *dev, struct ec_response_mkbp_info *info)
 {
-	const uint8_t *p;
-	int len;
-
-	len = mkbp_send_command(dev, EC_CMD_MKBP_INFO, sizeof(*info), &p);
-	if (len >= 0)
-		memcpy(info, p, len);
-	else
-		return -1;
-
-	return 0;
+	return ec_command(dev, EC_CMD_MKBP_INFO, NULL, 0, info, sizeof(*info));
 }
 
 /**

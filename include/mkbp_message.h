@@ -25,7 +25,7 @@
 #define _CROS_MESSAGE_H
 
 /*
- * Command interface between KBC and AP, for I2C and SPI interfaces.
+ * Command interface between EC and AP, for LPC, I2C and SPI interfaces.
  *
  * This is copied from the Chromium OS Open Source Embedded Controller code.
  */
@@ -38,11 +38,7 @@ enum {
 	MSG_PROTO_BYTES		= MSG_HEADER_BYTES + MSG_TRAILER_BYTES,
 
 	/* Max length of messages */
-	/*
-	 * TODO: this should really be EC_PARAM_SIZE + MSG_PROTO_BYTES, but
-	 * that breaks the LPC interface.
-	 */
-	MSG_BYTES		= EC_PARAM_SIZE,
+	MSG_BYTES		= EC_PARAM_SIZE + MSG_PROTO_BYTES,
 };
 
 #endif
