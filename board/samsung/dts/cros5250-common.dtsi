@@ -69,6 +69,10 @@
 			compatible = "google,const-flag";
 			value = <0>;
 		};
+		vboot-flag-ec-in-rw {
+			compatible = "google,gpio-flag";
+			gpio = <&gpio 103 0>;
+		};
 	};
 
 	memory {
