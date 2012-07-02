@@ -353,6 +353,14 @@ twostop_init_vboot_library(firmware_storage_t *file, void *gbb,
 #endif
 	VBDEBUG("iparams.out_flags: %08x\n", iparams.out_flags);
 
+	if (board_uses_virtual_dev_switch()) {
+		cdata->boot_developer_switch =
+			(iparams.out_flags & VB_INIT_OUT_ENABLE_DEVELOPER) ?
+			1 : 0;
+		VBDEBUG("cdata->boot_developer_switch=%d\n",
+				cdata->boot_developer_switch);
+	}
+
 	if (iparams.out_flags & VB_INIT_OUT_CLEAR_RAM)
 		wipe_unused_memory(cdata, cparams);
 
