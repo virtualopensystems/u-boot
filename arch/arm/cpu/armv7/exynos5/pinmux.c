@@ -242,6 +242,8 @@ int exynos_pinmux_config(enum periph_id peripheral, int flags)
 	case PERIPH_ID_I2C2:
 		gpio_cfg_pin(GPIO_A06, EXYNOS_GPIO_FUNC(0x3));
 		gpio_cfg_pin(GPIO_A07, EXYNOS_GPIO_FUNC(0x3));
+		gpio_set_pull(GPIO_A06, EXYNOS_GPIO_PULL_NONE);
+		gpio_set_pull(GPIO_A07, EXYNOS_GPIO_PULL_NONE);
 		break;
 	case PERIPH_ID_I2C3:
 		gpio_cfg_pin(GPIO_A12, EXYNOS_GPIO_FUNC(0x3));
