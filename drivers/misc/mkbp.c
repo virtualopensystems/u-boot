@@ -301,16 +301,33 @@ int mkbp_scan_keyboard(struct mkbp_dev *dev, struct mbkp_keyscan *scan)
 
 int mkbp_read_id(struct mkbp_dev *dev, char *id, int maxlen)
 {
+	struct ec_response_get_version r;
 	const uint8_t *p;
 	int len;
 
-	/* Allow room for our \0 terminator */
-	len = mkbp_send_command(dev, EC_CMD_GET_VERSION, maxlen - 1, &p);
+	len = mkbp_send_command(dev, EC_CMD_GET_VERSION, sizeof(r), &p);
 	if (len < 0)
 		return -1;
-	memcpy(id, p, len);
-	id[len] = '\0';
+	memcpy(&r, p, len);
 
+	if (maxlen > sizeof(r.version_string_ro))
+		maxlen = sizeof(r.version_string_ro);
+
+	switch (r.current_image) {
+	case EC_IMAGE_RO:
+		memcpy(id, r.version_string_ro, maxlen);
+		break;
+	case EC_IMAGE_RW_A:
+		memcpy(id, r.version_string_rw_a, maxlen);
+		break;
+	case EC_IMAGE_RW_B:
+		memcpy(id, r.version_string_rw_b, maxlen);
+		break;
+	default:
+		return -1;
+	}
+
+	id[maxlen - 1] = '\0';
 	return 0;
 }
 
