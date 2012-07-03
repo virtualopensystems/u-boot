@@ -84,10 +84,13 @@ void *lcd_console_address;	/* Start of console buffer */
 short console_col;
 short console_row;
 
+static ushort cmap_buffer[1 << 16];
+
 vidinfo_t panel_info = {
 	.vl_col		= LCD_XRES,
 	.vl_row		= LCD_YRES,
 	.vl_bpix	= LCD_COLOR16,
+	.cmap		= cmap_buffer,
 };
 
 static struct exynos5_fimd_panel global_panel_data[2] = {
