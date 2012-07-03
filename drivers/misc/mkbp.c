@@ -66,6 +66,8 @@ struct mkbp_dev {
 	int lpc_data;			/* LPC command IO port */
 	int lpc_param;			/* LPC param IO port */
 	int lpc_param_len;		/* Length of LPC param space */
+	int lpc_memmap;			/* Memory mapped area */
+	int lpc_memmap_len;		/* Length of memory mapped area */
 	uint8_t din[MSG_BYTES];		/* Input data buffer */
 	uint8_t dout[MSG_BYTES];	/* Output data buffer */
 };
@@ -546,7 +548,7 @@ static int mkbp_decode_fdt(const void *blob, int node, struct mkbp_dev **devp)
 
 		interface = MKBPIF_LPC;
 		reg = fdt_getprop(blob, node, "reg", &len);
-		if (len < sizeof(u32) * 6) {
+		if (len < sizeof(u32) * 8) {
 			debug("%s: LPC reg property is too small\n", __func__);
 			return -1;
 		}
@@ -555,6 +557,8 @@ static int mkbp_decode_fdt(const void *blob, int node, struct mkbp_dev **devp)
 		dev->lpc_data = fdt32_to_cpu(reg[2]);
 		dev->lpc_param = fdt32_to_cpu(reg[4]);
 		dev->lpc_param_len = fdt32_to_cpu(reg[5]);
+		dev->lpc_memmap = fdt32_to_cpu(reg[6]);
+		dev->lpc_memmap_len = fdt32_to_cpu(reg[7]);
 		byte &= inb(dev->lpc_cmd);
 		byte &= inb(dev->lpc_data);
 		for (i = 0; i < dev->lpc_param_len; i++)
