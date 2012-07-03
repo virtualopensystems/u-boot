@@ -46,6 +46,7 @@
 #undef LCD_YRES
 #define LCD_XRES 1366
 #define LCD_YRES 768
+#define CONFIG_SYS_WHITE_ON_BLACK
 
 /*
  * Extra bootargs used for direct booting, but not for vboot.
