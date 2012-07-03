@@ -66,6 +66,36 @@ int mkbp_read_id(struct mkbp_dev *dev, char *id, int maxlen);
 int mkbp_scan_keyboard(struct mkbp_dev *dev, struct mbkp_keyscan *scan);
 
 /**
+ * Read which image is currently running on the MKBP device.
+ *
+ * @param dev		MKBP device
+ * @param image		Destination for image identifier
+ * @return 0 if ok, <0 on error
+ */
+int mkbp_read_current_image(struct mkbp_dev *dev, enum ec_current_image *image);
+
+/**
+ * Read the hash of the MKBP device firmware.
+ *
+ * @param dev		MKBP device
+ * @param hash		Destination for hash information
+ * @return 0 if ok, <0 on error
+ */
+int mkbp_read_hash(struct mkbp_dev *dev, struct ec_response_vboot_hash *hash);
+
+/**
+ * Send a reboot command to the MKBP device.
+ *
+ * Note that some reboot commands (such as EC_REBOOT_COLD) also reboot the AP.
+ *
+ * @param dev		MKBP device
+ * @param cmd		Reboot command
+ * @param flags         Flags for reboot command (EC_REBOOT_FLAG_*)
+ * @return 0 if ok, <0 on error
+ */
+int mkbp_reboot(struct mkbp_dev *dev, enum ec_reboot_cmd cmd, uint8_t flags);
+
+/**
  * Check if the MKBP device has an interrupt pending.
  *
  * Read the status of the external interrupt connected to the MKBP device.

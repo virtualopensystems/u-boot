@@ -426,6 +426,61 @@ int mkbp_read_id(struct mkbp_dev *dev, char *id, int maxlen)
 	return 0;
 }
 
+int mkbp_read_current_image(struct mkbp_dev *dev, enum ec_current_image *image)
+{
+	struct ec_response_get_version r;
+
+	if (ec_command(dev, EC_CMD_GET_VERSION, NULL, 0, &r, sizeof(r)) < 0)
+		return -1;
+
+	*image = r.current_image;
+	return 0;
+}
+
+int mkbp_read_hash(struct mkbp_dev *dev, struct ec_response_vboot_hash *hash)
+{
+	struct ec_params_vboot_hash p;
+
+	p.cmd = EC_VBOOT_HASH_GET;
+
+	if (ec_command(dev, EC_CMD_VBOOT_HASH, &p, sizeof(p),
+		       hash, sizeof(*hash)) < 0)
+		return -1;
+
+	if (hash->status != EC_VBOOT_HASH_STATUS_DONE) {
+		debug("%s: Hash status not done: %d\n", __func__,
+		      hash->status);
+		return -1;
+	}
+
+	return 0;
+}
+
+int mkbp_reboot(struct mkbp_dev *dev, enum ec_reboot_cmd cmd, uint8_t flags)
+{
+	struct ec_params_reboot_ec p;
+
+	p.cmd = cmd;
+	p.flags = flags;
+
+	if (ec_command(dev, EC_CMD_REBOOT_EC, &p, sizeof(p), NULL, 0) < 0)
+		return -1;
+
+	/*
+	 * Delay to allow EC reboot to complete.  Note that some reboot types
+	 * (EC_REBOOT_COLD) will reboot the AP as well, in which case we won't
+	 * actually get to this point.
+	 */
+	/*
+	 * TODO(rspangler@chromium.org): Would be nice if we had a better
+	 * way to determine when the reboot is complete.  Could we poll a
+	 * memory-mapped LPC value?
+	 */
+	udelay(50000);
+
+	return 0;
+}
+
 int mkbp_interrupt_pending(struct mkbp_dev *dev)
 {
 	/* no interrupt support : always poll */
@@ -618,7 +673,47 @@ static int do_mkbp(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		printf("rows     = %u\n", info.rows);
 		printf("cols     = %u\n", info.cols);
 		printf("switches = %#x\n", info.switches);
-	}
+	} else if (0 == strcmp("curimage", cmd)) {
+		enum ec_current_image image;
+
+		if (mkbp_read_current_image(dev, &image)) {
+			debug("%s: Could not read KBC image\n", __func__);
+			return 1;
+		}
+		printf("%d\n", image);
+	} else if (0 == strcmp("hash", cmd)) {
+		struct ec_response_vboot_hash hash;
+		int i;
+
+		if (mkbp_read_hash(dev, &hash)) {
+			debug("%s: Could not read KBC hash\n", __func__);
+			return 1;
+		}
+
+		if (hash.hash_type == EC_VBOOT_HASH_TYPE_SHA256)
+			printf("type:    SHA-256\n");
+		else
+			printf("type:    %d\n", hash.hash_type);
+
+		printf("offset:  0x%08x\n", hash.offset);
+		printf("size:    0x%08x\n", hash.size);
+
+		printf("digest:  ");
+		for (i = 0; i < hash.digest_size; i++)
+			printf("%02x", hash.hash_digest[i]);
+		printf("\n");
+	} else if (0 == strcmp("reboot", cmd)) {
+		enum ec_reboot_cmd cmd = EC_REBOOT_COLD;
+
+		if (argc >= 3 && !strcmp(argv[2], "rw"))
+			cmd = EC_REBOOT_JUMP_RW_A;
+
+		if (mkbp_reboot(dev, cmd, 0)) {
+			debug("%s: Could not reboot KBC\n", __func__);
+			return 1;
+		}
+	} else
+		return CMD_RET_USAGE;
 
 	return 0;
 }
@@ -626,7 +721,10 @@ static int do_mkbp(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 U_BOOT_CMD(
 	mkbp,	5,	1,	do_mkbp,
 	"MKBP utility command",
-	"id        Read MKBP ID\n"
-	"mkbp info      Read MKBP info"
+	"id                       Read MKBP ID\n"
+	"mkbp info                Read MKBP info\n"
+	"mkbp curimage            Read MKBP current image\n"
+	"mkbp hash                Read MKBP hash\n"
+	"mkbp reboot [rw | cold]  Reboot MKBP"
 );
 #endif
