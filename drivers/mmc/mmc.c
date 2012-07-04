@@ -262,6 +262,7 @@ mmc_write_blocks(struct mmc *mmc, ulong start, lbaint_t blkcnt, const void*src)
 {
 	struct mmc_cmd cmd;
 	struct mmc_data data;
+	int timeout = 1000;
 
 	if ((start + blkcnt) > mmc->block_dev.lba) {
 		printf("MMC: block number 0x%lx exceeds max(0x%lx)\n",
@@ -292,13 +293,6 @@ mmc_write_blocks(struct mmc *mmc, ulong start, lbaint_t blkcnt, const void*src)
 		return 0;
 	}
 
-	/*
-	 * TODO(chrome-os-partner:10803): This is a temporary hack of disabling
-	 * software-sent STOP command for that Exynos MSHCI would send a STOP
-	 * command for us.
-	 */
-#ifndef CONFIG_EXYNOS5
-	const int timeout = 1000;
 	/* SPI multiblock writes terminate using a special
 	 * token, not a STOP_TRANSMISSION request.
 	 */
@@ -315,7 +309,6 @@ mmc_write_blocks(struct mmc *mmc, ulong start, lbaint_t blkcnt, const void*src)
 		/* Waiting for the ready status */
 		mmc_send_status(mmc, timeout);
 	}
-#endif
 
 	return blkcnt;
 }
@@ -348,6 +341,7 @@ int mmc_read_blocks(struct mmc *mmc, void *dst, ulong start, lbaint_t blkcnt)
 {
 	struct mmc_cmd cmd;
 	struct mmc_data data;
+	int timeout = 1000;
 
 	if (blkcnt > 1)
 		cmd.cmdidx = MMC_CMD_READ_MULTIPLE_BLOCK;
@@ -370,13 +364,6 @@ int mmc_read_blocks(struct mmc *mmc, void *dst, ulong start, lbaint_t blkcnt)
 	if (mmc_send_cmd(mmc, &cmd, &data))
 		return 0;
 
-	/*
-	 * TODO(chrome-os-partner:10803): This is a temporary hack of disabling
-	 * software-sent STOP command for that Exynos MSHCI would send a STOP
-	 * command for us.
-	 */
-#ifndef CONFIG_EXYNOS5
-	const int timeout = 1000;
 	if (blkcnt > 1) {
 		cmd.cmdidx = MMC_CMD_STOP_TRANSMISSION;
 		cmd.cmdarg = 0;
@@ -390,7 +377,6 @@ int mmc_read_blocks(struct mmc *mmc, void *dst, ulong start, lbaint_t blkcnt)
 		/* Waiting for the ready status */
 		mmc_send_status(mmc, timeout);
 	}
-#endif
 
 	return blkcnt;
 }
