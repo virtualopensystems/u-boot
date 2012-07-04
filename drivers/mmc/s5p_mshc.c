@@ -220,6 +220,15 @@ static int s5p_mshci_send_command(struct mmc *mmc, struct mmc_cmd *cmd,
 	ulong start, data_start, data_end;
 
 	/*
+	 * If auto stop is enabled in the control register, ignore STOP
+	 * command, as controller will internally send a STOP command after
+	 * every block read/write
+	 */
+	if ((readl(&host->reg->ctrl) & SEND_AS_CCSD) &&
+			(cmd->cmdidx == MMC_CMD_STOP_TRANSMISSION))
+		return 0;
+
+	/*
 	* We shouldn't wait for data inihibit for stop commands, even
 	* though they might use busy signaling
 	*/
