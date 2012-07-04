@@ -295,6 +295,7 @@ LIBS += arch/powerpc/cpu/mpc8xxx/lib8xxx.o
 endif
 LIBS += drivers/rtc/librtc.o
 LIBS += drivers/serial/libserial.o
+LIBS += drivers/sound/libsound.o
 LIBS += drivers/tpm/libtpm.o
 LIBS += drivers/twserial/libtws.o
 LIBS += drivers/usb/eth/libusb_eth.o
