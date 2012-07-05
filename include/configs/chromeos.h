@@ -121,6 +121,19 @@
  * a u-boot script (as /u-boot/boot.scr.uimg).  That script is expected to
  * override "rootpart" and "cros_bootfile" as needed to select which partition
  * to boot from.
+ *
+ * USB download support:
+ *
+ * Once we have loaded the kernel from the selected device successfully,
+ * we check whether a kernel has in fact been provided through the USB
+ * download feature. In that case the kernaddr environment variable will
+ * be set. It might seem strange that we load the original kernel and
+ * then ignore it, but we try to load the kernel from a number of different
+ * places. If the USB disk fails (because there is no disk inserted or
+ * it is invalid) we don't want to pull in the kernaddr kernel and boot it
+ * with USB as the root disk. So allow the normal boot failover to occur,
+ * and only insert the kernaddr kernel when we actually have decided
+ * what to boot from.
  */
 #define CONFIG_EXT2_BOOT_HELPER_SETTINGS \
 	"rootpart=3\0" \
@@ -144,6 +157,10 @@
 		"run regen_ext2_bootargs; " \
 		"if ext2load ${devtype} ${devnum}:${rootpart} " \
 			"${loadaddr} ${cros_bootfile}; then " \
+			"if test ${kernaddr} != \"\"; then "\
+				"echo \"Using bundled kernel\"; "\
+				"bootm ${kernaddr};" \
+			"fi; "\
 			"bootm ${loadaddr};" \
 		"fi\0"
 
