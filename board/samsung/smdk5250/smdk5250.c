@@ -64,7 +64,6 @@ void board_poll_devices(void)
 		break;
 	case TMU_STATUS_INIT:
 	case TMU_STATUS_NORMAL:
-		debug("syetm is in normal temperature state\n");
 		break;
 	default:
 		debug("Unknown TMU state\n");
