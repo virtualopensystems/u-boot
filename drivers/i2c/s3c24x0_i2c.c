@@ -108,9 +108,9 @@ static int WaitForXfer(struct s3c24x0_i2c *i2c)
 {
 	int i;
 
-	i = I2C_TIMEOUT * 10;
+	i = I2C_TIMEOUT * 20;
 	while (!(readl(&i2c->iiccon) & I2CCON_IRPND) && (i > 0)) {
-		udelay(100);
+		udelay(50);
 		i--;
 	}
 
@@ -297,9 +297,9 @@ void i2c_init(int speed, int slaveadd)
 	i2c_bus_init(i2c, g_current_bus);
 
 	/* wait for some time to give previous transfer a chance to finish */
-	i = I2C_TIMEOUT * 1000;
+	i = I2C_TIMEOUT * 20000;
 	while ((readl(&i2c->regs->iicstat) & I2CSTAT_BSY) && (i > 0)) {
-		udelay(1000);
+		udelay(50);
 		i--;
 	}
 
@@ -333,9 +333,9 @@ static int i2c_transfer(struct s3c24x0_i2c *i2c,
 	}
 
 	/* Check I2C bus idle */
-	i = I2C_TIMEOUT * 10;
+	i = I2C_TIMEOUT * 200;
 	while ((readl(&i2c->iicstat) & I2CSTAT_BSY) && (i > 0)) {
-		udelay(1000);
+		udelay(50);
 		i--;
 	}
 
