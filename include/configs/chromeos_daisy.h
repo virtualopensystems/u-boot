@@ -33,8 +33,6 @@
 
 /* TPM */
 #define CONFIG_INFINEON_TPM_I2C
-/* FIXME(crosbug.com/28214): Revisit this burst limitation */
-#define CONFIG_TPM_I2C_BURST_LIMITATION		3
 
 /* Adjust the display resolution. */
 #undef MAIN_VRESOL_VAL
