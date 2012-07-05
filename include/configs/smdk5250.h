@@ -82,6 +82,8 @@
 #define CONFIG_CMD_TIME
 #define CONFIG_CMD_GPIO
 
+#define CONFIG_CMD_DHCP
+
 /* So our flasher can verify that all is well */
 #define CONFIG_CRC32_VERIFY
 
