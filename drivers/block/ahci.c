@@ -478,7 +478,7 @@ static int ahci_device_data_io(u8 port, u8 *fis, int fis_len, u8 *buf,
 	debug("Enter %s: for port %d\n", __func__, port);
 
 	if (port > probe_ent->n_ports) {
-		printf("Invaild port number %d\n", port);
+		printf("Invalid port number %d\n", port);
 		return -1;
 	}
 
@@ -839,7 +839,9 @@ int ahci_init(u32 base)
 				printf("Can not start port %d\n", i);
 				continue;
 			}
+#ifdef CONFIG_AHCI_SETFEATURES_XFER
 			ahci_set_feature((u8) i);
+#endif
 		}
 	}
 err_out:
