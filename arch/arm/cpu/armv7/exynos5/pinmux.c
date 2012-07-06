@@ -136,7 +136,7 @@ int exynos_pinmux_config(enum periph_id peripheral, int flags)
 		gpio_cfg_pin(GPIO_Y04, EXYNOS_GPIO_FUNC(2));
 		gpio_cfg_pin(GPIO_Y05, EXYNOS_GPIO_FUNC(2));
 
-		for (i = 0; i < 4; i++)
+		for (i = 2; i < 4; i++)
 			gpio_cfg_pin(GPIO_Y10 + i, EXYNOS_GPIO_FUNC(2));
 
 		/*
