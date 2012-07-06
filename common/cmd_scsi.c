@@ -60,7 +60,9 @@ struct scsi_device {
 #define SCSI_DEV_LIST {SCSI_VEND_ID, SCSI_DEV_ID}
 #endif
 
+#ifdef CONFIG_PCI
 static struct scsi_device scsi_device_list[] = { SCSI_DEV_LIST };
+#endif
 static ccb tempccb;	/* temporary scsi command buffer */
 
 static unsigned char tempbuff[512]; /* temporary data buffer */
