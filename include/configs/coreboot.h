@@ -361,57 +361,75 @@
 
 #ifdef CONFIG_FACTORY_IMAGE
 #undef CONFIG_ZERO_BOOTDELAY_CHECK
-#define CONFIG_BOOTCOMMAND			"netboot_acpi; "\
-						"setenv bootargs root=/dev/ram0 rw init=/sbin/init i915.modeset=1 cros_legacy ramdisk_size=409600; "\
-						"usb start; "\
-						"setenv autoboot n; "\
-						"dhcp; "\
-						"tftp 0x100000 uImage; "\
-						"tftp 0x12008000 rootImg; "\
-						"bootm 0x100000 0x12008000; "\
-						"setenv devtype usb; "\
-						"setenv devname sdb; "\
-						"setenv devnum 0; "\
-						"run set_bootargs; "\
-						"setenv bootargs ${bootargs} cros_factory_install; "\
-						"if fatload ${devtype} ${devnum}:c 3000000 syslinux/vmlinuz.A; then "\
-							"zboot 3000000; "\
-							"fi; "\
-						"setenv devnum 1; "\
-						"run set_bootargs; "\
-						"setenv bootargs ${bootargs} cros_factory_install; "\
-						"if fatload ${devtype} ${devnum}:c 3000000 syslinux/vmlinuz.A; then "\
-							"zboot 3000000; "\
-							"fi; "
+
+/* TODO: Remove the second 'net_boot'. See crosbug/p/11152 */
+#define CONFIG_BOOTCOMMAND \
+	"netboot_acpi; "\
+	"run set_netbootargs; "\
+	"usb start; "\
+	"setenv tftpblocksize 1408; "\
+	"run net_boot; "\
+	"setenv tftpblocksize 512; "\
+	"run net_boot; "\
+	"setenv devnum 0; "\
+	"run fallback_usb; "\
+	"setenv devnum 1; "\
+	"run fallback_usb; "
+
+#define CONFIG_NETBOOT_EXTRA_ENV \
+	"set_netbootargs=setenv bootargs "\
+		"root=/dev/ram0 "\
+		"rw "\
+		"init=/sbin/init "\
+		"i915.modeset=1 "\
+		"cros_legacy "\
+		"ramdisk_size=409600\0"\
+	"net_boot=setenv loadaddr 0x100000; "\
+		"setenv bootfile uImage; "\
+		"dhcp; "\
+		"setenv loadaddr 0x12008000; "\
+		"setenv bootfile rootImg; "\
+		"dhcp; "\
+		"bootm 0x100000 0x12008000\0"\
+	"fallback_usb=setenv devtype usb; "\
+		"setenv devname sdb; "\
+		"run set_bootargs; "\
+		"setenv bootargs ${bootargs} cros_factory_install; "\
+		"if fatload ${devtype} ${devnum}:c 3000000 syslinux/vmlinuz.A; then "\
+			"zboot 3000000; "\
+			"fi\0"
 #else
 #define CONFIG_ZERO_BOOTDELAY_CHECK
-#define CONFIG_BOOTCOMMAND			"run set_bootargs; "\
-						"setenv bootargs ${bootargs} console=uart8250,mmio,0xe0401000,115200n8; "\
-						"fatload ${devtype} ${devnum}:c 3000000 syslinux/vmlinuz.a; "\
-						"zboot 3000000; "
+#define CONFIG_BOOTCOMMAND \
+	"run set_bootargs; "\
+	"setenv bootargs ${bootargs} console=uart8250,mmio,0xe0401000,115200n8; "\
+	"fatload ${devtype} ${devnum}:c 3000000 syslinux/vmlinuz.a; "\
+	"zboot 3000000; "
+#define CONFIG_NETBOOT_EXTRA_ENV ""
 #endif
 
-#define CONFIG_EXTRA_ENV_SETTINGS		"devtype=scsi\0"\
-						"devnum=0\0"\
-						"devname=sda\0"\
-						CONFIG_STD_DEVICES_SETTINGS \
-						"set_bootargs=setenv bootargs "\
-							"root=/dev/${devname}3 "\
-							"init=/sbin/init "\
-							"i915.modeset=1 "\
-							"rootwait "\
-							"ro "\
-							"cros_legacy\0"\
-						"usb_boot=usb start;"\
-							"setenv devtype usb;"\
-							"setenv devnum 1;"\
-							"setenv devname sdb;"\
-							"run bootcmd\0" \
-						"mmc_boot=usb start;"\
-							"setenv devtype usb;"\
-							"setenv devnum 0;"\
-							"setenv devname sdb;"\
-							"run bootcmd\0" \
-						""
+#define CONFIG_EXTRA_ENV_SETTINGS \
+	"devtype=scsi\0"\
+	"devnum=0\0"\
+	"devname=sda\0"\
+	CONFIG_STD_DEVICES_SETTINGS \
+	"set_bootargs=setenv bootargs "\
+		"root=/dev/${devname}3 "\
+		"init=/sbin/init "\
+		"i915.modeset=1 "\
+		"rootwait "\
+		"ro "\
+		"cros_legacy\0"\
+	"usb_boot=usb start;"\
+		"setenv devtype usb;"\
+		"setenv devnum 1;"\
+		"setenv devname sdb;"\
+		"run bootcmd\0" \
+	"mmc_boot=usb start;"\
+		"setenv devtype usb;"\
+		"setenv devnum 0;"\
+		"setenv devname sdb;"\
+		"run bootcmd\0" \
+	CONFIG_NETBOOT_EXTRA_ENV
 
 #endif	/* __CONFIG_H */
