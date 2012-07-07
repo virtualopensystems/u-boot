@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
+ * Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -138,11 +138,6 @@ int __board_use_usb_keyboard(void)
 }
 int board_use_usb_keyboard(int boot_mode)
 	__attribute__((weak, alias("__board_use_usb_keyboard")));
-
-static inline int board_uses_virtual_dev_switch(void)
-{
-	return cros_fdtdec_config_has_prop(gd->fdt_blob, "virtual-dev-switch");
-}
 
 /*
  * Check if two stop boot sequence can be interrupted. If configured - use the
@@ -327,6 +322,9 @@ twostop_init_vboot_library(firmware_storage_t *file, void *gbb,
 {
 	VbError_t err;
 	VbInitParams iparams;
+	int virtual_dev_switch =
+		cros_fdtdec_config_has_prop(gd->fdt_blob,
+					    "virtual-dev-switch");
 
 	memset(&iparams, 0, sizeof(iparams));
 	iparams.flags = check_ro_normal_support();
@@ -339,8 +337,10 @@ twostop_init_vboot_library(firmware_storage_t *file, void *gbb,
 		iparams.flags |= VB_INIT_FLAG_DEV_SWITCH_ON;
 	if (cdata->boot_oprom_loaded)
 		iparams.flags |= VB_INIT_FLAG_OPROM_LOADED;
-	if (board_uses_virtual_dev_switch())
+	if (virtual_dev_switch)
 		iparams.flags |= VB_INIT_FLAG_VIRTUAL_DEV_SWITCH;
+	if (cros_fdtdec_config_has_prop(gd->fdt_blob, "ec-software-sync"))
+		iparams.flags |= VB_INIT_FLAG_EC_SOFTWARE_SYNC;
 	VBDEBUG("iparams.flags: %08x\n", iparams.flags);
 
 	if ((err = VbInit(cparams, &iparams))) {
@@ -353,7 +353,7 @@ twostop_init_vboot_library(firmware_storage_t *file, void *gbb,
 #endif
 	VBDEBUG("iparams.out_flags: %08x\n", iparams.out_flags);
 
-	if (board_uses_virtual_dev_switch()) {
+	if (virtual_dev_switch) {
 		cdata->boot_developer_switch =
 			(iparams.out_flags & VB_INIT_OUT_ENABLE_DEVELOPER) ?
 			1 : 0;
