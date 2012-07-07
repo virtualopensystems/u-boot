@@ -65,6 +65,19 @@
 #define EXYNOS_UART			PERIPH_ID_UART3
 #define CONFIG_SERIAL3
 
+/* Enable exynos5 SATA configuration */
+
+#ifdef CONFIG_SATA_AHCI
+#define CONFIG_SCSI_AHCI
+#define CONFIG_SCSI_AHCI_PLAT
+#define CONFIG_CMD_SCSI
+#define CONFIG_SYS_SCSI_MAX_LUN     1
+#define CONFIG_SYS_SCSI_MAX_SCSI_ID 1
+#define CONFIG_SYS_SCSI_MAX_DEVICE (CONFIG_SYS_SCSI_MAX_SCSI_ID * \
+				    CONFIG_SYS_SCSI_MAX_LUN)
+#endif
+
+
 /* SD/MMC configuration */
 #define CONFIG_GENERIC_MMC
 #define CONFIG_MMC
