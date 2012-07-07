@@ -23,7 +23,9 @@ include $(TOPDIR)/config.mk
 LIB	= $(obj)lib$(SOC).o
 
 SOBJS	:= lowlevel_init.o
-COBJS-y	:= clock.o clock_init.o exynos_cache.o pinmux.o power.o tzpc_init.o
+COBJS-y	:= clock.o clock_init.o exynos_cache.o pinmux.o power.o	\
+		tzpc_init.o
+COBJS-$(CONFIG_SATA_AHCI) +=  sata.o
 COBJS-$(CONFIG_SPL_BUILD) += dmc_common.o dmc_init_ddr3.o
 COBJS-$(CONFIG_SPL_BUILD) += spl.o
 COBJS-$(CONFIG_EXYNOS_ACE_SHA) += ace_sha.o
