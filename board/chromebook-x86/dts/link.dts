@@ -15,6 +15,7 @@
         gpio: gpio {};
 
 	chromeos-config {
+		ec-software-sync;
 		virtual-dev-switch;
 		vboot-flag-ec-in-rw {
 			compatible = "google,gpio-flag";
