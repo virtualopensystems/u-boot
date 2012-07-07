@@ -18,6 +18,7 @@ COBJS-$(CONFIG_MMC) += boot_device_mmc.o
 COBJS-$(CONFIG_CHROMEOS_USB) += boot_device_usb.o
 COBJS-$(CONFIG_SCSI_AHCI) += boot_device_scsi.o
 COBJS-$(CONFIG_CHROMEOS) += display.o
+COBJS-$(CONFIG_CHROMEOS) += ec.o
 COBJS-$(CONFIG_CHROMEOS) += keyboard.o
 COBJS-$(CONFIG_CHROMEOS) += load_firmware.o
 COBJS-$(CONFIG_CHROMEOS) += misc.o

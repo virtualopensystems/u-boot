@@ -949,24 +949,3 @@ on_error:
 
 U_BOOT_CMD(vboot_twostop, 1, 1, do_vboot_twostop,
 		"verified boot twostop firmware", NULL);
-
-
-int VbExTrustEC(void)
-{
-	struct vboot_flag_details gpio_ec_in_rw;
-	int okay;
-
-	/* If we don't have a valid GPIO to read, we can't trust it. */
-	if (vboot_flag_fetch(VBOOT_FLAG_EC_IN_RW, &gpio_ec_in_rw)) {
-		VBDEBUG("can't find GPIO to read, returning 0\n");
-		return 0;
-	}
-
-	/* We only trust it if it's NOT in its RW firmware. */
-	okay = !gpio_ec_in_rw.value;
-
-	VBDEBUG("port=%d value=%d, returning %d\n",
-		gpio_ec_in_rw.port, gpio_ec_in_rw.value, okay);
-
-	return okay;
-}
