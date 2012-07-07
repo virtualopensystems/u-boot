@@ -50,6 +50,7 @@
 #include <nand.h>
 #include <onenand_uboot.h>
 #include <mmc.h>
+#include <sata.h>
 #include <libfdt.h>
 #include <fdtdec.h>
 #include <post.h>
@@ -581,6 +582,11 @@ void board_init_r(gd_t *id, ulong dest_addr)
 
 #if defined(CONFIG_CMD_ONENAND)
 	onenand_init();
+#endif
+
+#ifdef CONFIG_SATA_AHCI
+	puts("SATA:  ");
+	sata_initialize();
 #endif
 
 #ifdef CONFIG_GENERIC_MMC

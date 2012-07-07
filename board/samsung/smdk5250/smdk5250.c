@@ -38,6 +38,7 @@
 #include <asm/arch/pinmux.h>
 #include <asm/arch/sromc.h>
 #include <asm/arch-exynos5/power.h>
+#include <asm/arch/sata.h>
 #include <asm/arch/exynos-tmu.h>
 
 #include "board.h"
@@ -499,3 +500,10 @@ int board_i2c_claim_bus(int node)
 
 	return -1;
 }
+
+#ifdef CONFIG_SATA_AHCI
+int sata_initialize(void)
+{
+	return exynos5_sata_init(gd->fdt_blob);
+}
+#endif
