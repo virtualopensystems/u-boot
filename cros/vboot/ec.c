@@ -11,6 +11,7 @@
 #include <common.h>
 #include <cros/common.h>
 #include <cros/vboot_flag.h>
+#include <mkbp.h>
 #include <vboot_api.h>
 
 int VbExTrustEC(void)
@@ -31,4 +32,148 @@ int VbExTrustEC(void)
 		gpio_ec_in_rw.port, gpio_ec_in_rw.value, okay);
 
 	return okay;
+}
+
+#ifdef CONFIG_MKBP
+
+VbError_t VbExEcRunningRW(int *in_rw)
+{
+	struct mkbp_dev *mdev = board_get_mkbp_dev();
+	enum ec_current_image image;
+
+	if (mkbp_read_current_image(mdev, &image) < 0)
+		return VBERROR_UNKNOWN;
+
+	switch (image) {
+	case EC_IMAGE_RO:
+		*in_rw = 0;
+		break;
+	case EC_IMAGE_RW_A:
+		*in_rw = 1;
+		break;
+	default:
+		return VBERROR_UNKNOWN;
+	}
+
+	return VBERROR_SUCCESS;
+}
+
+VbError_t VbExEcJumpToRW(void)
+{
+	struct mkbp_dev *mdev = board_get_mkbp_dev();
+
+	if (mkbp_reboot(mdev, EC_REBOOT_JUMP_RW_A, 0) < 0)
+		return VBERROR_UNKNOWN;
+
+	return VBERROR_SUCCESS;
+}
+
+VbError_t VbExEcRebootToRO(void)
+{
+	struct mkbp_dev *mdev = board_get_mkbp_dev();
+
+	if (mkbp_reboot(mdev, EC_REBOOT_COLD, 0) < 0)
+		return VBERROR_UNKNOWN;
+
+	/* Cold reboot should never return */
+	return VBERROR_UNKNOWN;
+}
+
+VbError_t VbExEcStayInRO(void)
+{
+	/*
+	 * TODO (rspangler@chromium.org): need new EC API for this; see
+	 * crosbug.com/p/11147.  For now, just fail.
+	 */
+	return VBERROR_UNKNOWN;
+}
+
+VbError_t VbExEcHashRW(const uint8_t **hash, int *hash_size)
+{
+	struct mkbp_dev *mdev = board_get_mkbp_dev();
+	static struct ec_response_vboot_hash resp;
+
+	if (mkbp_read_hash(mdev, &resp) < 0)
+		return VBERROR_UNKNOWN;
+
+	/*
+	 * TODO (rspangler@chromium.org): the code below isn't very tolerant
+	 * of errors.
+	 *
+	 * If the EC is busy calculating a hash, we should wait and retry
+	 * reading the hash status.
+	 *
+	 * If the hash is unavailable, the wrong type, or covers the wrong
+	 * offset/size (which we need to get from the FDT, since it's
+	 * board-specific), we should request a new hash and wait for it to
+	 * finish.
+	 */
+	if (resp.status != EC_VBOOT_HASH_STATUS_DONE)
+		return VBERROR_UNKNOWN;
+	if (resp.hash_type == EC_VBOOT_HASH_TYPE_SHA256)
+		return VBERROR_UNKNOWN;
+
+	*hash = resp.hash_digest;
+	*hash_size = resp.digest_size;
+
+	return VBERROR_SUCCESS;
+}
+
+VbError_t VbExEcUpdateRW(const uint8_t  *image, int image_size)
+{
+	/* TODO: implement me!  crosbug.com/p/11149 */
+	return VBERROR_UNKNOWN;
+}
+
+VbError_t VbExEcProtectRW(void)
+{
+	/* TODO (rspangler@chromium.org): implement me!  crosbug.com/p/11150 */
+	return VBERROR_UNKNOWN;
+}
+
+#else  /* CONFIG_MKBP */
+
+/* Stub implementation for ECs which don't support MKBP */
+
+VbError_t VbExEcRunningRW(int *in_rw)
+{
+	return VBERROR_UNKNOWN;
+}
+
+VbError_t VbExEcJumpToRW(void)
+{
+	return VBERROR_UNKNOWN;
+}
+
+VbError_t VbExEcRebootToRO(void)
+{
+	return VBERROR_UNKNOWN;
+}
+
+VbError_t VbExEcStayInRO(void)
+{
+	return VBERROR_UNKNOWN;
+}
+
+VbError_t VbExEcHashRW(const uint8_t **hash, int *hash_size)
+{
+	return VBERROR_UNKNOWN;
+}
+
+VbError_t VbExEcUpdateRW(const uint8_t  *image, int image_size)
+{
+	return VBERROR_UNKNOWN;
+}
+
+VbError_t VbExEcProtectRW(void)
+{
+	return VBERROR_UNKNOWN;
+}
+
+#endif  /* CONFIG_MKBP */
+
+VbError_t VbExEcGetExpectedRW(const uint8_t **image, int *image_size)
+{
+	/* TODO (sjg@chromium.org): implement me!  crosbug.com/p/11148 */
+	return VBERROR_UNKNOWN;
 }
