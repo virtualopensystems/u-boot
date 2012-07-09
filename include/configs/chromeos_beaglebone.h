@@ -56,6 +56,8 @@
  * Undefing CONFIG_CHROMEOS for now since it breaks the
  * build and also because we don't need VBOOT on this platform anyway
  */
+#undef CONFIG_SPL
+#undef CONFIG_CMD_XIMG
 #undef CONFIG_CHROMEOS
 #undef CONFIG_OF_LOAD_ENVIRONMENT
 #undef CONFIG_DOS_PARTITION
