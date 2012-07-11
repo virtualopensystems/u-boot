@@ -44,14 +44,6 @@ lowlevel_init:
 	stmdb	r13!, {ip,lr}
 
 	/*
-	 * It is for EVT0 silicon only and should be removed as soon as
-	 * we can deprecate EVT0.
-	 */
-	ldr    r0, =EXYNOS5_TZPC1_DECPROT1SET
-	mov    r1, #0xF        /* [DBGEN, NIDEN, SPIDEN, SPNIDEN] = [1,1,1,1] */
-	str    r1, [r0]
-
-	/*
 	 * The reason we don't write out the instructions dsb/isb/sev:
 	 * While ARM Cortex-A8 supports ARM v7 instruction set (-march=armv7a),
 	 * we compile with -march=armv5 to allow more compilers to work.
