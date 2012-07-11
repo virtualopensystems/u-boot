@@ -337,6 +337,8 @@ twostop_init_vboot_library(firmware_storage_t *file, void *gbb,
 		iparams.flags |= VB_INIT_FLAG_DEV_SWITCH_ON;
 	if (cdata->boot_oprom_loaded)
 		iparams.flags |= VB_INIT_FLAG_OPROM_LOADED;
+	if (cdata->oprom_matters)
+		iparams.flags |= VB_INIT_FLAG_OPROM_MATTERS;
 	if (virtual_dev_switch)
 		iparams.flags |= VB_INIT_FLAG_VIRTUAL_DEV_SWITCH;
 	if (cros_fdtdec_config_has_prop(gd->fdt_blob, "ec-software-sync"))
@@ -593,21 +595,30 @@ twostop_init(struct twostop_fmap *fmap, firmware_storage_t *file,
 #else
 	uint8_t *readonly_firmware_id;
 #endif
+	int oprom_matters = 0;
 	int ret = -1;
 	void *gbb;
 
 	bootstage_mark_name(BOOTSTAGE_VBOOT_TWOSTOP_INIT, "twostop_init");
 	if (vboot_flag_fetch(VBOOT_FLAG_WRITE_PROTECT, &wpsw) ||
 	    vboot_flag_fetch(VBOOT_FLAG_RECOVERY, &recsw) ||
-	    vboot_flag_fetch(VBOOT_FLAG_DEVELOPER, &devsw) ||
-	    vboot_flag_fetch(VBOOT_FLAG_OPROM_LOADED, &oprom)) {
+	    vboot_flag_fetch(VBOOT_FLAG_DEVELOPER, &devsw)) {
 		VBDEBUG("failed to fetch gpio\n");
 		return -1;
 	}
 	vboot_flag_dump(VBOOT_FLAG_WRITE_PROTECT, &wpsw);
 	vboot_flag_dump(VBOOT_FLAG_RECOVERY, &recsw);
 	vboot_flag_dump(VBOOT_FLAG_DEVELOPER, &devsw);
-	vboot_flag_dump(VBOOT_FLAG_OPROM_LOADED, &oprom);
+
+	if (cros_fdtdec_config_has_prop(gd->fdt_blob, "oprom-matters")) {
+		VBDEBUG("FDT says oprom-matters\n");
+		if (vboot_flag_fetch(VBOOT_FLAG_OPROM_LOADED, &oprom)) {
+			VBDEBUG("failed to fetch oprom-loaded gpio\n");
+			return -1;
+		}
+		vboot_flag_dump(VBOOT_FLAG_OPROM_LOADED, &oprom);
+		oprom_matters = 1;
+	}
 
 	if (cros_fdtdec_flashmap(gd->fdt_blob, fmap)) {
 		VBDEBUG("failed to decode fmap\n");
@@ -621,7 +632,7 @@ twostop_init(struct twostop_fmap *fmap, firmware_storage_t *file,
 		return -1;
 	}
 
-	/* Read read-only firmware ID */
+					/* Read read-only firmware ID */
 	if (file->read(file, fmap->readonly.firmware_id.offset,
 		       MIN(sizeof(readonly_firmware_id),
 			   fmap->readonly.firmware_id.length),
@@ -659,6 +670,7 @@ twostop_init(struct twostop_fmap *fmap, firmware_storage_t *file,
 	 */
 	if (crossystem_data_init(cdata,
 				 &wpsw, &recsw, &devsw, &oprom,
+				 oprom_matters,
 				 fmap->readonly.fmap.offset,
 				 ACTIVE_EC_FIRMWARE_RO,
 				 hardware_id,

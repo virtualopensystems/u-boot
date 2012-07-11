@@ -91,7 +91,8 @@ typedef struct {
 	 */
 	uint8_t		active_ec_firmware;
 	uint8_t		firmware_type;
-	uint8_t		pad4[2];
+	uint8_t         oprom_matters;
+	uint8_t		pad4;
 	uint8_t 	hardware_id[ID_LEN];
 	uint8_t		readonly_firmware_id[ID_LEN];
 	uint8_t		firmware_id[ID_LEN];
@@ -164,6 +165,7 @@ assert_offset(fmap_offset,			0x0028);
 
 assert_offset(active_ec_firmware,		0x002c);
 assert_offset(firmware_type,			0x002d);
+assert_offset(oprom_matters,			0x002e);
 assert_offset(hardware_id,			0x0030);
 assert_offset(readonly_firmware_id,		0x0130);
 assert_offset(firmware_id,			0x0230);
@@ -197,6 +199,7 @@ int crossystem_data_init(crossystem_data_t *cdata,
 		struct vboot_flag_details *recovery_switch,
 		struct vboot_flag_details *developer_switch,
 		struct vboot_flag_details *oprom_loaded,
+		uint8_t oprom_matters,
 		uint32_t fmap_offset,
 		uint8_t active_ec_firmware,
 		uint8_t *hardware_id,

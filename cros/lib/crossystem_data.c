@@ -52,14 +52,15 @@ const char *cros_fdt_get_mem_type(void)
 	__attribute__((weak, alias("__cros_fdt_get_mem_type")));
 
 int crossystem_data_init(crossystem_data_t *cdata,
-		struct vboot_flag_details *write_protect_switch,
-		struct vboot_flag_details *recovery_switch,
-		struct vboot_flag_details *developer_switch,
-		struct vboot_flag_details *oprom_loaded,
-		uint32_t fmap_offset,
-		uint8_t active_ec_firmware,
-		uint8_t *hardware_id,
-		uint8_t *readonly_firmware_id)
+			 struct vboot_flag_details *write_protect_switch,
+			 struct vboot_flag_details *recovery_switch,
+			 struct vboot_flag_details *developer_switch,
+			 struct vboot_flag_details *oprom_loaded,
+			 uint8_t oprom_matters,
+			 uint32_t fmap_offset,
+			 uint8_t active_ec_firmware,
+			 uint8_t *hardware_id,
+			 uint8_t *readonly_firmware_id)
 {
 	VBDEBUG("crossystem data at %p\n", cdata);
 
@@ -68,7 +69,7 @@ int crossystem_data_init(crossystem_data_t *cdata,
 	cdata->total_size = sizeof(*cdata);
 	cdata->version = CROSSYSTEM_DATA_VERSION;
 	memcpy(cdata->signature, CROSSYSTEM_DATA_SIGNATURE,
-			sizeof(CROSSYSTEM_DATA_SIGNATURE));
+	       sizeof(CROSSYSTEM_DATA_SIGNATURE));
 
 	cdata->boot_write_protect_switch = write_protect_switch->value;
 	cdata->boot_recovery_switch = recovery_switch->value;
@@ -76,7 +77,7 @@ int crossystem_data_init(crossystem_data_t *cdata,
 	cdata->boot_oprom_loaded = oprom_loaded->value;
 
 	cdata->polarity_write_protect_switch =
-			write_protect_switch->active_high;
+		write_protect_switch->active_high;
 	cdata->polarity_recovery_switch = recovery_switch->active_high;
 	cdata->polarity_developer_switch = developer_switch->active_high;
 	cdata->polarity_oprom_loaded = oprom_loaded->active_high;
@@ -86,12 +87,13 @@ int crossystem_data_init(crossystem_data_t *cdata,
 	cdata->gpio_port_developer_switch = developer_switch->port;
 	cdata->gpio_port_oprom_loaded = oprom_loaded->port;
 
+	cdata->oprom_matters = oprom_matters;
 	cdata->fmap_offset = fmap_offset;
 
 	cdata->active_ec_firmware = active_ec_firmware;
 	memcpy(cdata->hardware_id, hardware_id, sizeof(cdata->hardware_id));
 	memcpy(cdata->readonly_firmware_id, readonly_firmware_id,
-			sizeof(cdata->readonly_firmware_id));
+	       sizeof(cdata->readonly_firmware_id));
 
 #ifdef CONFIG_ARM
 	cdata->board.arm.nonvolatile_context_lba = CHROMEOS_VBNVCONTEXT_LBA;
@@ -349,6 +351,7 @@ void crossystem_data_dump(crossystem_data_t *cdata)
 
 	_p("%d",	active_ec_firmware);
 	_p("%d",	firmware_type);
+	_p("%d",	oprom_matters);
 	_p("\"%s\"",	hardware_id);
 	_p("\"%s\"",	readonly_firmware_id);
 	_p("\"%s\"",	firmware_id);
