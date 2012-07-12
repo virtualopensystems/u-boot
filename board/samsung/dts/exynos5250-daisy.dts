@@ -44,6 +44,11 @@
 		};
 	};
 
+	msata@122f0000 {
+		compatible = "google,sata";
+		enable-gpios = <&gpio 113 0>;
+	};
+
 	i2c@12cd0000 {
 		display@50 {
 			edid = /bits/ 8 <
