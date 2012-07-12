@@ -68,6 +68,7 @@ static const char * const compat_names[COMPAT_COUNT] = {
 	COMPAT(GOOGLE_ARBITRATOR, "google,arbitrator"),
 	COMPAT(SAMSUNG_EXYNOS_SOUND, "samsung,exynos-sound"),
 	COMPAT(WOLFSON_WM8994_CODEC, "wolfson,wm8994-codec"),
+	COMPAT(GOOGLE_SATA, "google,sata"),
 };
 
 const char *fdtdec_get_compatible(enum fdt_compat_id id)
