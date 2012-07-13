@@ -30,14 +30,26 @@
 /* Current version of this protocol */
 #define EC_PROTO_VERSION          0x00000002
 
-/* I/O addresses for LPC commands */
-#define EC_LPC_ADDR_KERNEL_DATA   0x62
-#define EC_LPC_ADDR_KERNEL_CMD    0x66
-#define EC_LPC_ADDR_KERNEL_PARAM 0x800
-#define EC_LPC_ADDR_USER_DATA    0x200
-#define EC_LPC_ADDR_USER_CMD     0x204
-#define EC_LPC_ADDR_USER_PARAM   0x880
-#define EC_PARAM_SIZE          128  /* Size of each param area in bytes */
+/* Command version mask */
+#define EC_VER_MASK(version) (1UL << (version))
+
+/* I/O addresses for ACPI commands */
+#define EC_LPC_ADDR_ACPI_DATA  0x62
+#define EC_LPC_ADDR_ACPI_CMD   0x66
+
+/* I/O addresses for host command */
+#define EC_LPC_ADDR_HOST_DATA  0x200
+#define EC_LPC_ADDR_HOST_CMD   0x204
+
+/* I/O addresses for host command args and params */
+#define EC_LPC_ADDR_HOST_ARGS  0x800
+#define EC_LPC_ADDR_HOST_PARAM 0x804
+#define EC_HOST_PARAM_SIZE     0x0fc  /* Size of param area in bytes */
+
+/* I/O addresses for host command params, old interface */
+#define EC_LPC_ADDR_OLD_PARAM  0x880
+#define EC_OLD_PARAM_SIZE      0x080  /* Size of param area in bytes */
+
 
 /* EC command register bit functions */
 #define EC_LPC_CMDR_DATA	(1 << 0)
@@ -53,22 +65,29 @@
 #define EC_MEMMAP_TEXT_MAX     8   /* Size of a string in the memory map */
 
 /* The offset address of each type of data in mapped memory. */
-#define EC_MEMMAP_TEMP_SENSOR 0x00
-#define EC_MEMMAP_FAN         0x10
-#define EC_MEMMAP_SWITCHES    0x30
-#define EC_MEMMAP_HOST_EVENTS 0x34
-#define EC_MEMMAP_BATT_VOLT   0x40 /* Battery Present Voltage */
-#define EC_MEMMAP_BATT_RATE   0x44 /* Battery Present Rate */
-#define EC_MEMMAP_BATT_CAP    0x48 /* Battery Remaining Capacity */
-#define EC_MEMMAP_BATT_FLAG   0x4c /* Battery State, defined below */
-#define EC_MEMMAP_BATT_DCAP   0x50 /* Battery Design Capacity */
-#define EC_MEMMAP_BATT_DVLT   0x54 /* Battery Design Voltage */
-#define EC_MEMMAP_BATT_LFCC   0x58 /* Battery Last Full Charge Capacity */
-#define EC_MEMMAP_BATT_CCNT   0x5c /* Battery Cycle Count */
-#define EC_MEMMAP_BATT_MFGR   0x60 /* Battery Manufacturer String */
-#define EC_MEMMAP_BATT_MODEL  0x68 /* Battery Model Number String */
-#define EC_MEMMAP_BATT_SERIAL 0x70 /* Battery Serial Number String */
-#define EC_MEMMAP_BATT_TYPE   0x78 /* Battery Type String */
+#define EC_MEMMAP_TEMP_SENSOR      0x00
+#define EC_MEMMAP_FAN              0x10
+#define EC_MEMMAP_ID               0x20 /* 'E' 'C' */
+#define EC_MEMMAP_ID_VERSION       0x22 /* Version of data in 0x20 - 0x2f */
+#define EC_MEMMAP_THERMAL_VERSION  0x23 /* Version of data in 0x00 - 0x1f */
+#define EC_MEMMAP_BATTERY_VERSION  0x24 /* Version of data in 0x40 - 0x7f */
+#define EC_MEMMAP_SWITCHES_VERSION 0x25 /* Version of data in 0x30 - 0x33 */
+#define EC_MEMMAP_EVENTS_VERSION   0x26 /* Version of data in 0x34 - 0x3f */
+#define EC_MEMMAP_HOST_CMD_FLAGS   0x27 /* Host command interface flags */
+#define EC_MEMMAP_SWITCHES         0x30
+#define EC_MEMMAP_HOST_EVENTS      0x34
+#define EC_MEMMAP_BATT_VOLT        0x40 /* Battery Present Voltage */
+#define EC_MEMMAP_BATT_RATE        0x44 /* Battery Present Rate */
+#define EC_MEMMAP_BATT_CAP         0x48 /* Battery Remaining Capacity */
+#define EC_MEMMAP_BATT_FLAG        0x4c /* Battery State, defined below */
+#define EC_MEMMAP_BATT_DCAP        0x50 /* Battery Design Capacity */
+#define EC_MEMMAP_BATT_DVLT        0x54 /* Battery Design Voltage */
+#define EC_MEMMAP_BATT_LFCC        0x58 /* Battery Last Full Charge Capacity */
+#define EC_MEMMAP_BATT_CCNT        0x5c /* Battery Cycle Count */
+#define EC_MEMMAP_BATT_MFGR        0x60 /* Battery Manufacturer String */
+#define EC_MEMMAP_BATT_MODEL       0x68 /* Battery Model Number String */
+#define EC_MEMMAP_BATT_SERIAL      0x70 /* Battery Serial Number String */
+#define EC_MEMMAP_BATT_TYPE        0x78 /* Battery Type String */
 
 /* Battery bit flags at EC_MEMMAP_BATT_FLAG. */
 #define EC_BATT_FLAG_AC_PRESENT   0x01
@@ -85,8 +104,12 @@
 #define EC_SWITCH_KEYBOARD_RECOVERY      0x08
 /* Recovery requested via dedicated signal (from servo board) */
 #define EC_SWITCH_DEDICATED_RECOVERY     0x10
-/* Fake developer switch (for testing) */
-#define EC_SWITCH_FAKE_DEVELOPER         0x20
+/* Was fake developer mode switch; now unused.  Remove in next refactor. */
+#define EC_SWITCH_IGNORE0                0x20
+
+/* Host command interface flags */
+/* Host command interface supports LPC args (LPC interface only) */
+#define EC_HOST_CMD_FLAG_LPC_ARGS_SUPPORTED  0x01
 
 /* Wireless switch flags */
 #define EC_WIRELESS_SWITCH_WLAN      0x01
@@ -131,13 +154,15 @@
 	(EC_LPC_STATUS_FROM_HOST | EC_LPC_STATUS_PROCESSING)
 
 /* Host command response codes */
-/* TODO: move these so they don't overlap SCI/SMI data? */
 enum ec_status {
 	EC_RES_SUCCESS = 0,
 	EC_RES_INVALID_COMMAND = 1,
 	EC_RES_ERROR = 2,
 	EC_RES_INVALID_PARAM = 3,
 	EC_RES_ACCESS_DENIED = 4,
+	EC_RES_INVALID_RESPONSE = 5,
+	EC_RES_INVALID_VERSION = 6,
+	EC_RES_INVALID_CHECKSUM = 7,
 };
 
 /*
@@ -161,9 +186,57 @@ enum host_event_code {
 	EC_HOST_EVENT_THERMAL = 11,
 	EC_HOST_EVENT_USB_CHARGER = 12,
 	EC_HOST_EVENT_KEY_PRESSED = 13,
+	/*
+	 * EC has finished initializing the host interface.  The host can check
+	 * for this event following sending a EC_CMD_REBOOT_EC command to
+	 * determine when the EC is ready to accept subsequent commands.
+	 */
+	EC_HOST_EVENT_INTERFACE_READY = 14,
+	/* Keyboard recovery combo has been pressed */
+	EC_HOST_EVENT_KEYBOARD_RECOVERY = 15,
+	/*
+	 * The high bit of the event mask is not used as a host event code.  If
+	 * it reads back as set, then the entire event mask should be
+	 * considered invalid by the host.  This can happen when reading the
+	 * raw event status via EC_MEMMAP_HOST_EVENTS but the LPC interface is
+	 * not initialized on the EC, or improperly configured on the host.
+	 */
+	EC_HOST_EVENT_INVALID = 32
 };
 /* Host event mask */
-#define EC_HOST_EVENT_MASK(event_code) (1 << ((event_code) - 1))
+#define EC_HOST_EVENT_MASK(event_code) (1UL << ((event_code) - 1))
+
+/* Arguments at EC_LPC_ADDR_HOST_ARGS */
+struct ec_lpc_host_args {
+	uint8_t flags;
+	uint8_t command_version;
+	uint8_t data_size;
+	/*
+	 * Checksum; sum of command + flags + command_version + data_size +
+	 * all params/response data bytes.
+	 */
+	uint8_t checksum;
+} __packed;
+
+/* Flags for ec_lpc_host_args.flags */
+/*
+ * Args are from host.  Data area at EC_LPC_ADDR_HOST_PARAM contains command
+ * params.
+ *
+ * If EC gets a command and this flag is not set, this is an old-style command.
+ * Command version is 0 and params from host are at EC_LPC_ADDR_OLD_PARAM with
+ * unknown length.  EC must respond with an old-style response (that is,
+ * withouth setting EC_HOST_ARGS_FLAG_TO_HOST).
+ */
+#define EC_HOST_ARGS_FLAG_FROM_HOST 0x01
+/*
+ * Args are from EC.  Data area at EC_LPC_ADDR_HOST_PARAM contains response.
+ *
+ * If EC responds to a command and this flag is not set, this is an old-style
+ * response.  Command version is 0 and response data from EC is at
+ * EC_LPC_ADDR_OLD_PARAM with unknown length.
+ */
+#define EC_HOST_ARGS_FLAG_TO_HOST   0x02
 
 /*
  * Notes on commands:
@@ -233,12 +306,12 @@ struct ec_response_read_test {
 	uint32_t data[32];
 } __packed;
 
-/* Get build information */
+/*
+ * Get build information
+ *
+ * Response is null-terminated string.
+ */
 #define EC_CMD_GET_BUILD_INFO 0x04
-
-struct ec_response_get_build_info {
-	char build_string[EC_PARAM_SIZE];
-} __packed;
 
 /* Get chip info */
 #define EC_CMD_GET_CHIP_INFO 0x05
@@ -250,13 +323,42 @@ struct ec_response_get_chip_info {
 	char revision[32];  /* Mask version */
 } __packed;
 
-/* Get board HW version. */
+/* Get board HW version */
 #define EC_CMD_GET_BOARD_VERSION 0x06
 
-struct ec_params_board_version {
+struct ec_response_board_version {
 	uint16_t board_version;  /* A monotonously incrementing number. */
 } __packed;
 
+/*
+ * Read memory-mapped data.
+ *
+ * This is an alternate interface to memory-mapped data for bus protocols
+ * which don't support direct-mapped memory - I2C, SPI, etc.
+ *
+ * Response is params.size bytes of data.
+ */
+#define EC_CMD_READ_MEMMAP 0x07
+
+struct ec_params_read_memmap {
+	uint8_t offset;   /* Offset in memmap (EC_MEMMAP_*) */
+	uint8_t size;     /* Size to read in bytes */
+} __packed;
+
+/* Read versions supported for a command */
+#define EC_CMD_GET_CMD_VERSIONS 0x08
+
+struct ec_params_get_cmd_versions {
+	uint8_t cmd;      /* Command to check */
+} __packed;
+
+struct ec_response_get_cmd_versions {
+	/*
+	 * Mask of supported versions; use EC_VER_MASK() to compare with a
+	 * desired version.
+	 */
+	uint32_t version_mask;
+} __packed;
 
 /*****************************************************************************/
 /* Flash commands */
@@ -284,16 +386,16 @@ struct ec_response_flash_info {
 	uint32_t protect_block_size;
 } __packed;
 
-/* Read flash */
+/*
+ * Read flash
+ *
+ * Response is params.size bytes of data.
+ */
 #define EC_CMD_FLASH_READ 0x11
 
 struct ec_params_flash_read {
 	uint32_t offset;   /* Byte offset to read */
 	uint32_t size;     /* Size to read in bytes */
-} __packed;
-
-struct ec_response_flash_read {
-	uint8_t data[EC_PARAM_SIZE];
 } __packed;
 
 /* Write flash */
@@ -317,7 +419,7 @@ struct ec_params_flash_erase {
 	uint32_t size;     /* Size to erase in bytes */
 } __packed;
 
-/* Flashmap offset */
+/* Get flashmap offset */
 #define EC_CMD_FLASH_GET_FLASHMAP 0x14
 
 struct ec_response_flash_flashmap {
@@ -358,6 +460,11 @@ struct ec_response_flash_wp_range {
 /* Read flash write protection GPIO pin */
 #define EC_CMD_FLASH_WP_GET_GPIO 0x19
 
+/*
+ * TODO: why does this pass in a pin number?  EC *KNOWS* what the pin is.
+ * Of course, the EC doesn't implement this message yet, so this is somewhat
+ * theoretical.
+ */
 struct ec_params_flash_wp_gpio {
 	uint32_t pin_no;
 } __packed;
@@ -369,8 +476,8 @@ struct ec_response_flash_wp_gpio {
 /*****************************************************************************/
 /* PWM commands */
 
-/* Get fan RPM */
-#define EC_CMD_PWM_GET_FAN_RPM 0x20
+/* Get fan target RPM */
+#define EC_CMD_PWM_GET_FAN_TARGET_RPM 0x20
 
 struct ec_response_pwm_get_fan_rpm {
 	uint32_t rpm;
@@ -553,16 +660,16 @@ struct ec_response_pstore_info {
 	uint32_t access_size;
 } __packed;
 
-/* Read persistent storage */
+/*
+ * Read persistent storage
+ *
+ * Response is params.size bytes of data.
+ */
 #define EC_CMD_PSTORE_READ 0x41
 
 struct ec_params_pstore_read {
 	uint32_t offset;   /* Byte offset to read */
 	uint32_t size;     /* Size to read in bytes */
-} __packed;
-
-struct ec_response_pstore_read {
-	uint8_t data[EC_PSTORE_SIZE_MAX];
 } __packed;
 
 /* Write persistent storage */
@@ -598,18 +705,19 @@ struct ec_response_thermal_get_threshold {
 	uint16_t value;
 } __packed;
 
-/* Toggling automatic fan control */
+/* Toggle automatic fan control */
 #define EC_CMD_THERMAL_AUTO_FAN_CTRL 0x52
 
 /*****************************************************************************/
 /* MKBP - Matrix KeyBoard Protocol */
 
-/* Read key state */
+/*
+ * Read key state
+ *
+ * Returns raw data for keyboard cols; see ec_response_mkbp_info.cols for
+ * expected response size.
+ */
 #define EC_CMD_MKBP_STATE 0x60
-
-struct ec_response_mkbp_state {
-	uint8_t cols[32];
-} __packed;
 
 /* Provide information about the matrix : number of rows and columns */
 #define EC_CMD_MKBP_INFO 0x61
@@ -660,6 +768,7 @@ struct ec_response_host_event_mask {
 } __packed;
 
 /* These all use ec_response_host_event_mask */
+#define EC_CMD_HOST_EVENT_GET_B         0x87
 #define EC_CMD_HOST_EVENT_GET_SMI_MASK  0x88
 #define EC_CMD_HOST_EVENT_GET_SCI_MASK  0x89
 #define EC_CMD_HOST_EVENT_GET_WAKE_MASK 0x8d
@@ -669,6 +778,7 @@ struct ec_response_host_event_mask {
 #define EC_CMD_HOST_EVENT_SET_SCI_MASK  0x8b
 #define EC_CMD_HOST_EVENT_CLEAR         0x8c
 #define EC_CMD_HOST_EVENT_SET_WAKE_MASK 0x8e
+#define EC_CMD_HOST_EVENT_CLEAR_B       0x8f
 
 /*****************************************************************************/
 /* GPIO switch commands */
@@ -688,6 +798,33 @@ struct ec_params_switch_enable_wireless {
 } __packed;
 
 /*****************************************************************************/
+/* I2C commands. Only available when flash write protect is unlocked. */
+
+/* Read I2C bus */
+#define EC_CMD_I2C_READ 0x94
+
+struct ec_params_i2c_read {
+	uint16_t addr;
+	uint8_t read_size; /* Either 8 or 16. */
+	uint8_t port;
+	uint8_t offset;
+} __packed;
+struct ec_response_i2c_read {
+	uint16_t data;
+} __packed;
+
+/* Write I2C bus */
+#define EC_CMD_I2C_WRITE 0x95
+
+struct ec_params_i2c_write {
+	uint16_t data;
+	uint16_t addr;
+	uint8_t write_size; /* Either 8 or 16. */
+	uint8_t port;
+	uint8_t offset;
+} __packed;
+
+/*****************************************************************************/
 /* System commands */
 
 /*
@@ -703,6 +840,7 @@ enum ec_reboot_cmd {
 	EC_REBOOT_JUMP_RW_A,         /* Jump to RW-A without rebooting */
 	EC_REBOOT_JUMP_RW_B,         /* Jump to RW-B without rebooting */
 	EC_REBOOT_COLD,              /* Cold-reboot */
+	EC_REBOOT_DISABLE_JUMP,      /* Disable jump until next reboot */
 };
 
 /* Flags for ec_params_reboot_ec.reboot_flags */
@@ -729,6 +867,8 @@ struct ec_params_reboot_ec {
  * This clears the lowest-order bit in the currently pending host events, and
  * sets the result code to the 1-based index of the bit (event 0x00000001 = 1,
  * event 0x80000000 = 32), or 0 if no event was pending.
+ *
+ * This command is valid ONLY on port 62/66.
  */
 #define EC_CMD_ACPI_QUERY_EVENT 0x84
 
