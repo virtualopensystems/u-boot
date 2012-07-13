@@ -123,6 +123,24 @@ struct mkbp_dev *mkbp_init(const void *blob);
 int mkbp_info(struct mkbp_dev *dev, struct ec_response_mkbp_info *info);
 
 /**
+ * Read the host event flags
+ *
+ * @param dev		MKBP device
+ * @param events_ptr	Destination for event flags.  Not changed on error.
+ * @return 0 if ok, <0 on error
+ */
+int mkbp_get_host_events(struct mkbp_dev *dev, uint32_t *events_ptr);
+
+/**
+ * Clear the specified host event flags
+ *
+ * @param dev		MKBP device
+ * @param events	Event flags to clear
+ * @return 0 if ok, <0 on error
+ */
+int mkbp_clear_host_events(struct mkbp_dev *dev, uint32_t events);
+
+/**
  * Return a pointer to the board's MKBP device
  *
  * This should be implemented by board files.

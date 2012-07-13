@@ -497,6 +497,39 @@ int mkbp_info(struct mkbp_dev *dev, struct ec_response_mkbp_info *info)
 	return ec_command(dev, EC_CMD_MKBP_INFO, NULL, 0, info, sizeof(*info));
 }
 
+int mkbp_get_host_events(struct mkbp_dev *dev, uint32_t *events_ptr)
+{
+	struct ec_response_host_event_mask resp;
+
+	/*
+	 * Use the B copy of the event flags, because the main copy is already
+	 * used by ACPI/SMI.
+	 */
+	if (ec_command(dev, EC_CMD_HOST_EVENT_GET_B, NULL, 0,
+		       &resp, sizeof(resp)) < 0)
+		return -1;
+
+	if (resp.mask & EC_HOST_EVENT_MASK(EC_HOST_EVENT_INVALID))
+		return -1;
+
+	*events_ptr = resp.mask;
+	return 0;
+}
+
+int mkbp_clear_host_events(struct mkbp_dev *dev, uint32_t events)
+{
+	struct ec_params_host_event_mask params;
+
+	params.mask = events;
+
+	/*
+	 * Use the B copy of the event flags, so it affects the data returned
+	 * by mkbp_get_host_events().
+	 */
+	return ec_command(dev, EC_CMD_HOST_EVENT_CLEAR_B,
+			  &params, sizeof(params), NULL, 0);
+}
+
 /**
  * Decode MBKP details from the device tree and allocate a suitable device.
  *
@@ -716,6 +749,24 @@ static int do_mkbp(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 			debug("%s: Could not reboot KBC\n", __func__);
 			return 1;
 		}
+	} else if (0 == strcmp("events", cmd)) {
+		uint32_t events;
+
+		if (mkbp_get_host_events(dev, &events)) {
+			debug("%s: Could not read host events\n", __func__);
+			return 1;
+		}
+		printf("0x%08x\n", events);
+	} else if (0 == strcmp("clrevents", cmd)) {
+		uint32_t events = 0x7fffffff;
+
+		if (argc >= 3)
+			events = simple_strtol(argv[2], NULL, 0);
+
+		if (mkbp_clear_host_events(dev, events)) {
+			debug("%s: Could not clear host events\n", __func__);
+			return 1;
+		}
 	} else
 		return CMD_RET_USAGE;
 
@@ -729,6 +780,8 @@ U_BOOT_CMD(
 	"mkbp info                Read MKBP info\n"
 	"mkbp curimage            Read MKBP current image\n"
 	"mkbp hash                Read MKBP hash\n"
-	"mkbp reboot [rw | cold]  Reboot MKBP"
+	"mkbp reboot [rw | cold]  Reboot MKBP\n"
+	"mkbp events              Read MKBP host events\n"
+	"mkbp clrevents [mask]    Clear MKBP host events"
 );
 #endif
