@@ -1216,6 +1216,15 @@ do_vboot_twostop(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	display_clear();
 
 	/*
+	 * TODO(sjg@chromium.org): root cause issue crosbug.com/p/11075
+	 *
+	 * Ensure there are no keys in the keyboard buffer, so that we don't
+	 * accidentally see a space key and go into recovery mode.
+	 */
+	while (tstc())
+		(void)getc();
+
+	/*
 	 * A processor reset jumps to the reset entry point (which is the
 	 * read-only firmware), otherwise we have entered U-Boot from a
 	 * software jump.
