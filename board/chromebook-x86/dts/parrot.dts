@@ -13,7 +13,13 @@
 		hda_codec_beep = <1>;
 	};
 
+	gpio: gpio {};
+
 	chromeos-config {
 		virtual-dev-switch;
+		vboot-flag-ec-in-rw {
+			compatible = "google,gpio-flag";
+			gpio = <&gpio 68 0>;
+		};
 	};
 };
