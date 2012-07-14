@@ -17,93 +17,6 @@
 #include <linux/string.h>
 #include <malloc.h>
 
-static int relpath_offset(const void *blob, int offset, const char *in_path)
-{
-	const char *path = in_path;
-	const char *sep;
-
-	/* skip leading '/' */
-	while (*path == '/')
-		path++;
-
-	for (sep = path; *sep; path = sep + 1) {
-		/* this is equivalent to strchrnul() */
-		sep = strchr(path, '/');
-		if (!sep)
-			sep = path + strlen(path);
-
-		offset = fdt_subnode_offset_namelen(blob, offset, path,
-				sep - path);
-		if (offset < 0) {
-			VBDEBUG("Node '%s' is missing\n", in_path);
-			return offset;
-		}
-	}
-
-	return offset;
-}
-
-static int decode_fmap_entry(const void *blob, int offset, const char *base,
-		const char *name, struct fmap_entry *entry)
-{
-	char path[50];
-	int length;
-	uint32_t *property;
-
-	/* Form the node to look up as <base>-<name> */
-	assert(strlen(base) + strlen(name) + 1 < sizeof(path));
-	strcpy(path, base);
-	strcat(path, "-");
-	strcat(path, name);
-
-	offset = relpath_offset(blob, offset, path);
-	if (offset < 0)
-		return offset;
-	property = (uint32_t *)fdt_getprop(blob, offset, "reg", &length);
-	if (!property) {
-		VBDEBUG("Node '%s' is missing property '%s'\n", path, "reg");
-		return -FDT_ERR_MISSING;
-	}
-	entry->offset = fdt32_to_cpu(property[0]);
-	entry->length = fdt32_to_cpu(property[1]);
-
-	return 0;
-}
-
-static int decode_block_offset(const void *blob, int offset, const char *path,
-		uint64_t *out)
-{
-	uint64_t val;
-
-	offset = relpath_offset(blob, offset, path);
-	if (offset < 0)
-		return offset;
-
-	val = fdtdec_get_uint64(blob, offset, "block-offset", ~0ULL);
-	if (val == ~0ULL) {
-		VBDEBUG("fail to decode block-offset\n");
-		return -1;
-	}
-
-	*out = val;
-	return 0;
-}
-
-static int decode_firmware_entry(const char *blob, int fmap_offset,
-		const char *name, struct fmap_firmware_entry *entry)
-{
-	int err;
-
-	err = decode_fmap_entry(blob, fmap_offset, name, "boot", &entry->boot);
-	err |= decode_fmap_entry(blob, fmap_offset, name, "vblock",
-			&entry->vblock);
-	err |= decode_fmap_entry(blob, fmap_offset, name, "firmware-id",
-			&entry->firmware_id);
-	err |= decode_block_offset(blob, fmap_offset, name,
-			&entry->block_offset);
-	return err;
-}
-
 int cros_fdtdec_config_node(const void *blob)
 {
 	int node = fdt_path_offset(blob, "/chromeos-config");
@@ -114,39 +27,199 @@ int cros_fdtdec_config_node(const void *blob)
 	return node;
 }
 
-int cros_fdtdec_flashmap(const void *blob, struct twostop_fmap *config)
+/* These are the various flashmap nodes that we are interested in */
+enum section_t {
+	SECTION_BASE,		/* group section, no name: rw-a and rw-b */
+	SECTION_FIRMWARE_ID,
+	SECTION_BOOT,
+	SECTION_GBB,
+	SECTION_VBLOCK,
+	SECTION_FMAP,
+
+	SECTION_COUNT,
+	SECTION_NONE = -1,
+};
+
+/* Names for each section, preceeded by ro-, rw-a- or rw-b- */
+static const char *section_name[SECTION_COUNT] = {
+	"",
+	"firmware-id",
+	"boot",
+	"gbb",
+	"vblock",
+	"fmap",
+};
+
+/**
+ * Look up a section name and return its type
+ *
+ * @param name		Name of section (after ro- or rw-a/b- part)
+ * @return section type section_t, or SECTION_NONE if none
+ */
+static enum section_t lookup_section(const char *name)
 {
-	int fmap_offset;
-	int err;
-	uint32_t *property;
-	int length;
+	int i;
 
-	fmap_offset = fdt_node_offset_by_compatible(blob, -1,
-			"chromeos,flashmap");
-	if (fmap_offset < 0) {
-		VBDEBUG("chromeos,flashmap node is missing\n");
-		return fmap_offset;
-	}
+	for (i = 0; i < SECTION_COUNT; i++)
+		if (0 == strcmp(name, section_name[i]))
+			return i;
 
-	property = (uint32_t *)fdt_getprop(blob, fmap_offset, "reg", &length);
-	if (!property || (length != 8)) {
-		VBDEBUG("Flashmap node missing the `reg' property\n");
+	return SECTION_NONE;
+}
+
+/**
+ * Read a flash entry from the fdt
+ *
+ * @param blob		FDT blob
+ * @param node		Offset of node to read
+ * @param name		Name of node being read
+ * @param entry		Place to put offset and size of this node
+ * @return 0 if ok, -ve on error
+ */
+static int read_entry(const void *blob, int node, const char *name,
+		      struct fmap_entry *entry)
+{
+	u32 reg[2];
+
+	if (fdtdec_get_int_array(blob, node, "reg", reg, 2)) {
+		VBDEBUG("Node '%s' has bad/missing 'reg' property\n", name);
 		return -FDT_ERR_MISSING;
 	}
+	entry->offset = reg[0];
+	entry->length = reg[1];
 
-	config->flash_base = fdt32_to_cpu(property[0]);
+	return 0;
+}
 
-	err = decode_firmware_entry(blob, fmap_offset, "rw-a",
-			&config->readwrite_a);
-	err |= decode_firmware_entry(blob, fmap_offset, "rw-b",
-			&config->readwrite_b);
+/**
+ * Process a flashmap node, storing its information in our config.
+ *
+ * @param blob		FDT blob
+ * @param node		Offset of node to read
+ * @param depth		Depth of node: 1 for a normal section, 2 for a
+ *			sub-section
+ * @param config	Place to put the information we read
+ * @param rwp		Indicates the type of data in the last depth 1 node
+ *			that we read. For example, if *rwp == NULL then we
+ *			read the ro section; if *rwp == &config->readwrite_a
+ *			then we read the rw-a section. This is used to work
+ *			out which section we are referring to at depth 2.
+ * @return 0 if ok, -ve on error
+ */
+static int process_fmap_node(const void *blob, int node, int depth,
+		struct twostop_fmap *config, struct fmap_firmware_entry **rwp)
+{
+	struct fmap_firmware_entry *rw = *rwp;
+	enum section_t section;
+	struct fmap_entry entry;
+	const char *name, *subname;
+	int len;
 
-	err |= decode_fmap_entry(blob, fmap_offset, "ro", "fmap",
-			&config->readonly.fmap); \
-	err |= decode_fmap_entry(blob, fmap_offset, "ro", "gbb",
-			&config->readonly.gbb); \
-	err |= decode_fmap_entry(blob, fmap_offset, "ro", "firmware-id",
-			&config->readonly.firmware_id);
+	name = fdt_get_name(blob, node, &len);
+	if (depth != 1)
+		return 0;
+
+	/* We are looking only for ro-, ro-a- and ro-b- */
+	if (len < 4 || *name != 'r' || name[2] != '-')
+		return 0;
+	if (name[1] == 'o') {
+		rw = NULL;
+		subname = name + 3;
+	} else if (name[1] == 'w') {
+		if (name[3] == 'a')
+			rw = &config->readwrite_a;
+		else if (name[3] == 'b')
+			rw = &config->readwrite_b;
+		else
+			return 0;
+		subname = name + 4;
+		if (*subname == '-')
+			subname++;
+	} else {
+		return 0;
+	}
+
+	/* Read in the 'reg' property */
+	if (read_entry(blob, node, name, &entry))
+		return -FDT_ERR_MISSING;
+
+	/* Figure out what section we are dealing with, either ro or rw */
+	section = lookup_section(subname);
+	if (rw) {
+		switch (section) {
+		case SECTION_BASE:
+			rw->block_offset = fdtdec_get_uint64(blob, node,
+							"block-offset", ~0ULL);
+			if (rw->block_offset == ~0ULL) {
+				VBDEBUG("Node '%s': bad block-offset\n", name);
+				return -1;
+			}
+			break;
+		case SECTION_FIRMWARE_ID:
+			rw->firmware_id = entry;
+			break;
+		case SECTION_VBLOCK:
+			rw->vblock = entry;
+			break;
+		case SECTION_BOOT:
+			rw->boot = entry;
+			break;
+		default:
+			return 0;
+		}
+	} else {
+		switch (section) {
+		case SECTION_GBB:
+			config->readonly.gbb = entry;
+			break;
+		case SECTION_FMAP:
+			config->readonly.fmap = entry;
+			break;
+		case SECTION_FIRMWARE_ID:
+			config->readonly.firmware_id = entry;
+			break;
+		default:
+			return 0;
+		}
+	}
+	*rwp = rw;
+
+	return 0;
+}
+
+int cros_fdtdec_flashmap(const void *blob, struct twostop_fmap *config)
+{
+	struct fmap_firmware_entry *rw = NULL;
+	struct fmap_entry entry;
+	int offset;
+	int depth;
+
+	offset = fdt_node_offset_by_compatible(blob, -1,
+			"chromeos,flashmap");
+	if (offset < 0) {
+		VBDEBUG("chromeos,flashmap node is missing\n");
+		return offset;
+	}
+
+	/* Read in the 'reg' property */
+	if (read_entry(blob, offset, fdt_get_name(blob, offset, NULL), &entry))
+		return -1;
+	config->flash_base = entry.offset;
+
+	depth = 0;
+	while (offset > 0 && depth >= 0) {
+		int node;
+
+		node = fdt_next_node(blob, offset, &depth);
+		if (node > 0 && depth > 0) {
+			if (process_fmap_node(blob, node, depth, config,
+						&rw)) {
+				VBDEBUG("Failed to process Flashmap\n");
+				return -1;
+			}
+		}
+		offset = node;
+	}
 
 	return 0;
 }
