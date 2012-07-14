@@ -37,7 +37,7 @@
 			label = "rw-section-a";
 			/* Alignment: 4k (for updating) */
 			reg = <0x00200000 0x000f0000>;
-			block-offset = /bits/ 64 <0x00000000 0x00004400>;
+			block-offset = /bits/ 64 <0x00004400>;
 		};
 		rw-a-vblock {
 			label = "vblock-a";
@@ -70,7 +70,7 @@
 			label = "rw-section-b";
 			/* Alignment: 4k (for updating) */
 			reg = <0x00300000 0x000f0000>;
-			block-offset = /bits/ 64 <0x00000000 0x00084400>;
+			block-offset = /bits/ 64 <0x00084400>;
 		};
 		rw-b-vblock {
 			label = "vblock-b";
