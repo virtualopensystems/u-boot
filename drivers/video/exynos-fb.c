@@ -836,6 +836,9 @@ static int s5p_dp_enable_bridge(void)
 	int i;
 
 	/* De-assert PD_N to power up the bridge */
+	gpio_set_value(GPIO_Y25, 1);
+	gpio_cfg_pin(GPIO_Y25, EXYNOS_GPIO_OUTPUT);
+
 	gpio_set_value(GPIO_X15, 1);
 	gpio_cfg_pin(GPIO_X15, EXYNOS_GPIO_OUTPUT);
 	gpio_set_pull(GPIO_X15, EXYNOS_GPIO_PULL_NONE);
