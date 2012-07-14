@@ -22,6 +22,8 @@
 #include <cros/vboot_flag.h>
 #include <vboot_api.h>
 
+DECLARE_GLOBAL_DATA_PTR;
+
 /*
  * TODO: Pick a better region for test instead of GBB.
  * We now test the region of GBB.
@@ -207,6 +209,46 @@ static int do_vboot_poweroff(cmd_tbl_t *cmdtp,
 	return 1; /* It should never reach here */
 }
 
+static void show_entry(const char *name, struct fmap_entry *entry)
+{
+	printf("   %s: offset=%#x, length=%#x\n", name, entry->offset,
+	       entry->length);
+}
+
+static void show_firmware_entry(const char *name,
+				struct fmap_firmware_entry *fw_entry)
+{
+	printf("%s:\n", name);
+	show_entry("boot", &fw_entry->boot);
+	show_entry("vblock", &fw_entry->vblock);
+	show_entry("firmware_id", &fw_entry->firmware_id);
+	printf("block_offset: %llx\n", fw_entry->block_offset);
+	puts("\n");
+}
+
+static int do_vboot_fmap(cmd_tbl_t *cmdtp, int flag,
+		int argc, char * const argv[])
+{
+	struct twostop_fmap fmap;
+
+	/* TODO(sjg@chromium.org): Best to automate thist test with sandbox */
+	if (cros_fdtdec_flashmap(gd->fdt_blob, &fmap)) {
+		VbExDebug("Failed to load fmap config from fdt!\n");
+		return 1;
+	}
+
+	puts("ro:\n");
+	show_entry("fmap", &fmap.readonly.fmap);
+	show_entry("gbb", &fmap.readonly.gbb);
+	show_entry("firmware_id", &fmap.readonly.firmware_id);
+	printf("flash_base: %u\n", fmap.flash_base);
+
+	show_firmware_entry("rw-a", &fmap.readwrite_a);
+	show_firmware_entry("rw-b", &fmap.readwrite_b);
+
+	return 0;
+}
+
 static int do_vboot_test_all(cmd_tbl_t *cmdtp,
 		int flag, int argc, char * const argv[])
 {
@@ -215,6 +257,7 @@ static int do_vboot_test_all(cmd_tbl_t *cmdtp,
 	ret |= do_vboot_test_fwrw(cmdtp, flag, argc, argv);
 	ret |= do_vboot_test_memwipe(cmdtp, flag, argc, argv);
 	ret |= do_vboot_test_gpio(cmdtp, flag, argc, argv);
+	ret |= do_vboot_fmap(cmdtp, flag, argc, argv);
 
 	return ret;
 }
@@ -226,6 +269,7 @@ static cmd_tbl_t cmd_vboot_test_sub[] = {
 	U_BOOT_CMD_MKENT(gpio, 0, 1, do_vboot_test_gpio, "", ""),
 	U_BOOT_CMD_MKENT(reboot, 0, 1, do_vboot_reboot, "", ""),
 	U_BOOT_CMD_MKENT(poweroff, 0, 1, do_vboot_poweroff, "", ""),
+	U_BOOT_CMD_MKENT(fmap, 0, 1, do_vboot_fmap, "", ""),
 };
 
 static int do_vboot_test(cmd_tbl_t *cmdtp,
@@ -254,5 +298,6 @@ U_BOOT_CMD(vboot_test, CONFIG_SYS_MAXARGS, 1, do_vboot_test,
 	"vboot_test gpio - print the status of gpio\n"
 	"vboot_test reboot - test reboot (board will be rebooted!)\n"
 	"vboot_test poweroff - test poweroff (board will be shut down!)\n"
+	"vboot_test fmap - check that flashmap can be decoded\n"
 );
 
