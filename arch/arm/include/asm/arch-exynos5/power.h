@@ -64,4 +64,7 @@ void power_disable_usb_phy(void);
 /* Enable HW thermal trip with PS_HOLD_CONTROL register ENABLE_HW_TRIP bit */
 void power_enable_hw_thermal_trip(void);
 
+/* Initialize the pmic voltages to power up the system */
+int power_init(void);
+
 #endif

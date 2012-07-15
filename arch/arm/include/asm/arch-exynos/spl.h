@@ -81,4 +81,11 @@ struct spl_machine_param {
  */
 struct spl_machine_param *spl_get_machine_params(void);
 
+/*
+ * Initialize the timer and serial driver in SPL u-boot.
+ * Besides the serial driver, it also setup the minimal set of its dependency,
+ * like gd struct, pinmux, and serial.
+ */
+void spl_early_init(void);
+
 #endif /* __ASM_ARCH_EXYNOS_SPL_H__ */
