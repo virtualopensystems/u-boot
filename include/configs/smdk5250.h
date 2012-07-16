@@ -113,6 +113,9 @@
 #define CONFIG_EXYNOS_TMU
 #define CONFIG_CMD_TMU
 
+/* CPU Frequency Scaling */
+#define CONFIG_EXYNOS_CPUFREQ
+
 /* USB */
 #define CONFIG_CMD_USB
 #define CONFIG_USB_EHCI
