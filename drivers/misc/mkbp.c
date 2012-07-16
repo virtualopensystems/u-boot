@@ -533,6 +533,25 @@ int mkbp_clear_host_events(struct mkbp_dev *dev, uint32_t events)
 			  &params, sizeof(params), NULL, 0);
 }
 
+int mkbp_test(struct mkbp_dev *dev)
+{
+	struct ec_params_hello req;
+	struct ec_response_hello *resp;
+
+	req.in_data = 0x12345678;
+	if (ec_command(dev, EC_CMD_HELLO, (uint8_t **)&req, sizeof(req),
+			(uint8_t **)&resp, sizeof(*resp)) < 0) {
+		printf("ec_command() returned error\n");
+		return -1;
+	}
+	if (resp->out_data != req.in_data + 0x01020304) {
+		printf("Received invalid handshake %x\n", resp->out_data);
+		return -1;
+	}
+
+	return 0;
+}
+
 /**
  * Decode MBKP details from the device tree and allocate a suitable device.
  *
@@ -770,6 +789,13 @@ static int do_mkbp(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 			debug("%s: Could not clear host events\n", __func__);
 			return 1;
 		}
+	} else if (0 == strcmp("test", cmd)) {
+		int result = mkbp_test(dev);
+
+		if (result)
+			printf("Test failed with error %d\n", result);
+		else
+			puts("Test passed\n");
 	} else
 		return CMD_RET_USAGE;
 
@@ -785,6 +811,7 @@ U_BOOT_CMD(
 	"mkbp hash                Read MKBP hash\n"
 	"mkbp reboot [rw | cold]  Reboot MKBP\n"
 	"mkbp events              Read MKBP host events\n"
-	"mkbp clrevents [mask]    Clear MKBP host events"
+	"mkbp clrevents [mask]    Clear MKBP host events\n"
+	"mkbp test                run tests on mkbp"
 );
 #endif

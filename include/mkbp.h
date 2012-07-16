@@ -141,6 +141,14 @@ int mkbp_get_host_events(struct mkbp_dev *dev, uint32_t *events_ptr);
 int mkbp_clear_host_events(struct mkbp_dev *dev, uint32_t events);
 
 /**
+ * Run internal tests on the mkbp interface.
+ *
+ * @param dev		MKBP device
+ * @return 0 if ok, <0 if the test failed
+ */
+int mkbp_test(struct mkbp_dev *dev);
+
+/**
  * Return a pointer to the board's MKBP device
  *
  * This should be implemented by board files.
