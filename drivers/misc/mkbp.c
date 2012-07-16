@@ -121,9 +121,9 @@ static int ec_command(struct mkbp_dev *dev, uint8_t cmd, int cmd_version,
 #endif
 #ifdef CONFIG_MKBP_LPC
 	case MKBPIF_LPC:
-		return mkbp_lpc_command(dev, cmd, cmd_version,
+		len = mkbp_lpc_command(dev, cmd, cmd_version,
 					(const uint8_t *)dout, dout_len,
-					(uint8_t *)dinp, din_len);
+					&din, din_len);
 		break;
 #endif
 	case MKBPIF_NONE:
@@ -259,6 +259,7 @@ int mkbp_get_host_events(struct mkbp_dev *dev, uint32_t *events_ptr)
 {
 	struct ec_response_host_event_mask resp;
 
+	resp.mask = 0;	/* compiler seems to need this */
 	/*
 	 * Use the B copy of the event flags, because the main copy is already
 	 * used by ACPI/SMI.
@@ -357,6 +358,7 @@ int mkbp_test(struct mkbp_dev *dev)
 	struct ec_response_hello resp;
 
 	req.in_data = 0x12345678;
+	resp.out_data = 0;	/* compiler seems to need this */
 	if (ec_command(dev, EC_CMD_HELLO, 0, (uint8_t **)&req, sizeof(req),
 		       &resp, sizeof(resp)) < sizeof(resp)) {
 		printf("ec_command() returned error\n");
