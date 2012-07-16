@@ -68,8 +68,20 @@ struct mkbp_dev {
 	int lpc_param_len;		/* Length of LPC param space */
 	int lpc_memmap;			/* Memory mapped area */
 	int lpc_memmap_len;		/* Length of memory mapped area */
-	uint8_t din[MSG_BYTES];		/* Input data buffer */
-	uint8_t dout[MSG_BYTES];	/* Output data buffer */
+
+	/*
+	 * These two buffers will always be dword-aligned and include enough
+	 * space for up to 7 word-alignment bytes also, so we can ensure that
+	 * the body of the message is always dword-aligned (64-bit).
+	 *
+	 * We use this alignment to keep ARM and x86 happy. Probably word
+	 * alignment would be OK, there might be a small performance advantage
+	 * to using dword.
+	 */
+	uint8_t din[ALIGN(MSG_BYTES + sizeof(int64_t), sizeof(int64_t))]
+		__attribute__((aligned(sizeof(int64_t))));
+	uint8_t dout[ALIGN(MSG_BYTES + sizeof(int64_t), sizeof(int64_t))]
+		__attribute__((aligned(sizeof(int64_t))));
 };
 
 static struct mkbp_dev static_dev, *last_dev;
