@@ -72,9 +72,9 @@ VbError_t VbExEcStayInRO(void)
 {
 	/*
 	 * TODO (rspangler@chromium.org): need new EC API for this; see
-	 * crosbug.com/p/11147.  For now, just fail.
+	 * crosbug.com/p/11147.  For now, pretend we succeed.
 	 */
-	return VBERROR_UNKNOWN;
+	return VBERROR_SUCCESS;
 }
 
 VbError_t VbExEcHashRW(const uint8_t **hash, int *hash_size)
@@ -117,7 +117,7 @@ VbError_t VbExEcUpdateRW(const uint8_t  *image, int image_size)
 VbError_t VbExEcProtectRW(void)
 {
 	/* TODO (rspangler@chromium.org): implement me!  crosbug.com/p/11150 */
-	return VBERROR_UNKNOWN;
+	return VBERROR_SUCCESS;
 }
 
 #else  /* CONFIG_MKBP */
