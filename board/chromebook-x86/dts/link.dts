@@ -18,7 +18,6 @@
 	chromeos-config {
 		ec-software-sync;
 		virtual-dev-switch;
-		oprom-matters;
 		vboot-flag-ec-in-rw {
 			compatible = "google,gpio-flag";
 			gpio = <&gpio 21 0>;
