@@ -40,6 +40,7 @@
 #include <asm/arch-exynos5/power.h>
 #include <asm/arch/sata.h>
 #include <asm/arch/exynos-tmu.h>
+#include <asm/arch/exynos-cpufreq.h>
 
 #include "board.h"
 
@@ -62,6 +63,22 @@ struct local_info {
 };
 
 static struct local_info local;
+static uint32_t cpufreq_loop_count;
+
+/*
+ * Called to do the needful when tstc has a character ready
+ * Meant to work in contrast to board_poll_devices
+ */
+void board_tstc_ready(void)
+{
+#ifdef CONFIG_EXYNOS_CPUFREQ
+	if (cpufreq_loop_count >= 10000000) {
+		/* Character received, increase ARM frequency */
+		exynos5250_set_frequency(CPU_FREQ_L1700);
+	}
+	cpufreq_loop_count = 0;
+#endif /* CONFIG_EXYNOS_CPUFREQ */
+}
 
 /*
  * Polling various devices on board for details and status monitoring purposes
@@ -85,7 +102,14 @@ void board_poll_devices(void)
 	default:
 		debug("Unknown TMU state\n");
 	}
-#endif
+#endif /* CONFIG_EXYNOS_TMU */
+#ifdef CONFIG_EXYNOS_CPUFREQ
+	cpufreq_loop_count++;
+	if (cpufreq_loop_count == 10000000) {
+		/* User is idle, decrease ARM frequency*/
+		exynos5250_set_frequency(CPU_FREQ_L200);
+	}
+#endif /* CONFIG_EXYNOS_CPUFREQ */
 }
 
 #ifdef CONFIG_OF_CONTROL
@@ -320,6 +344,13 @@ int board_init(void)
 				 __func__);
 		return -1;
 	}
+
+#if defined CONFIG_EXYNOS_CPUFREQ
+	if (exynos5250_cpufreq_init(gd->fdt_blob)) {
+		debug("%s: Failed to init CPU frequency scaling\n", __func__);
+		return -1;
+	}
+#endif
 
 #if defined CONFIG_EXYNOS_TMU
 	if (tmu_init(gd->fdt_blob)) {
