@@ -81,20 +81,22 @@ int mkbp_calc_checksum(const uint8_t *data, int size)
  *
  * The device's internal input/output buffers are used.
  *
- * TODO(sjg@chromium.org): Support new-style command format.
- *
  * @param dev		MKBP device
  * @param cmd		Command to send (EC_CMD_...)
  * @param cmd_version	Version of command to send (EC_VER_...)
  * @param dout          Output data (may be NULL If dout_len=0)
  * @param dout_len      Size of output data in bytes
- * @param din           Response data (may be NULL If din_len=0)
+ * @param dinp          Response data (may be NULL If din_len=0).
+ *			The value of *dinp is a place for ec_command() to put
+ *			the data (it will be copied there). If NULL on entry,
+ *			then it will be updated to point to the data (no copy)
+ *			and will always be double word aligned (64-bits)
  * @param din_len       Maximum size of response in bytes
  * @return number of bytes in response, or -1 on error
  */
 static int ec_command(struct mkbp_dev *dev, uint8_t cmd, int cmd_version,
 		      const void *dout, int dout_len,
-		      void *dinp, int din_len)
+		      uint8_t **dinp, int din_len)
 {
 	uint8_t *din;
 	int len;
@@ -131,13 +133,21 @@ static int ec_command(struct mkbp_dev *dev, uint8_t cmd, int cmd_version,
 		return -1;
 	}
 
-	debug("%s: len=%d, din=%p, dinp=%p\n", __func__, len, din, dinp);
-
-	/* If we have any data to return, it must be 64bit-aligned */
-	assert(len <= 0 || !((uintptr_t)din & 7));
-	if (len > 0) {
-		if (din)
-			memmove(dinp, din, len);
+	/*
+	 * If we were asked to put it somewhere, do so, otherwise just
+	 * return a pointer to the data in dinp.
+	 */
+	debug("%s: len=%d, din=%p, dinp=%p, *dinp=%p\n", __func__,
+		len, din, dinp, dinp ? *dinp : NULL);
+	if (dinp) {
+		/* If we have any data to return, it must be 64bit-aligned */
+		assert(len <= 0 || !((uintptr_t)din & 7));
+		if (len > 0) {
+			if (*dinp)
+				memmove(*dinp, din, len);
+			else
+				*dinp = din;
+		}
 	}
 
 	return len;
@@ -145,7 +155,7 @@ static int ec_command(struct mkbp_dev *dev, uint8_t cmd, int cmd_version,
 
 int mkbp_scan_keyboard(struct mkbp_dev *dev, struct mbkp_keyscan *scan)
 {
-	if (ec_command(dev, EC_CMD_MKBP_STATE, 0, NULL, 0, scan->data,
+	if (ec_command(dev, EC_CMD_MKBP_STATE, 0, NULL, 0, (uint8_t **)&scan,
 		       sizeof(scan->data)) < sizeof(scan->data))
 		return -1;
 
@@ -154,21 +164,21 @@ int mkbp_scan_keyboard(struct mkbp_dev *dev, struct mbkp_keyscan *scan)
 
 int mkbp_read_id(struct mkbp_dev *dev, char *id, int maxlen)
 {
-	struct ec_response_get_version r;
+	struct ec_response_get_version *r = NULL;
 
-	if (ec_command(dev, EC_CMD_GET_VERSION, 0, NULL, 0, &r,
-		       sizeof(r)) < sizeof(r))
+	if (ec_command(dev, EC_CMD_GET_VERSION, 0, NULL, 0, (uint8_t **)&r,
+		       sizeof(*r)) < sizeof(*r))
 		return -1;
 
-	if (maxlen > sizeof(r.version_string_ro))
-		maxlen = sizeof(r.version_string_ro);
+	if (maxlen > sizeof(r->version_string_ro))
+		maxlen = sizeof(r->version_string_ro);
 
-	switch (r.current_image) {
+	switch (r->current_image) {
 	case EC_IMAGE_RO:
-		memcpy(id, r.version_string_ro, maxlen);
+		memcpy(id, r->version_string_ro, maxlen);
 		break;
 	case EC_IMAGE_RW:
-		memcpy(id, r.version_string_rw, maxlen);
+		memcpy(id, r->version_string_rw, maxlen);
 		break;
 	default:
 		return -1;
@@ -180,13 +190,13 @@ int mkbp_read_id(struct mkbp_dev *dev, char *id, int maxlen)
 
 int mkbp_read_current_image(struct mkbp_dev *dev, enum ec_current_image *image)
 {
-	struct ec_response_get_version r;
+	struct ec_response_get_version *r = NULL;
 
-	if (ec_command(dev, EC_CMD_GET_VERSION, 0, NULL, 0, &r,
-		       sizeof(r)) < sizeof(r))
+	if (ec_command(dev, EC_CMD_GET_VERSION, 0, NULL, 0, (uint8_t **)&r,
+		       sizeof(*r)) < sizeof(*r))
 		return -1;
 
-	*image = r.current_image;
+	*image = r->current_image;
 	return 0;
 }
 
@@ -197,7 +207,7 @@ int mkbp_read_hash(struct mkbp_dev *dev, struct ec_response_vboot_hash *hash)
 	p.cmd = EC_VBOOT_HASH_GET;
 
 	if (ec_command(dev, EC_CMD_VBOOT_HASH, 0, &p, sizeof(p),
-		       hash, sizeof(*hash)) < 0)
+		       (uint8_t **)&hash, sizeof(*hash)) < 0)
 		return -1;
 
 	if (hash->status != EC_VBOOT_HASH_STATUS_DONE) {
@@ -249,7 +259,8 @@ int mkbp_interrupt_pending(struct mkbp_dev *dev)
 int mkbp_info(struct mkbp_dev *dev, struct ec_response_mkbp_info *info)
 {
 	if (ec_command(dev, EC_CMD_MKBP_INFO, 0,
-		       NULL, 0, info, sizeof(*info)) < sizeof(*info))
+			NULL, 0, (uint8_t **)&info, sizeof(*info))
+				< sizeof(*info))
 		return -1;
 
 	return 0;
@@ -257,21 +268,20 @@ int mkbp_info(struct mkbp_dev *dev, struct ec_response_mkbp_info *info)
 
 int mkbp_get_host_events(struct mkbp_dev *dev, uint32_t *events_ptr)
 {
-	struct ec_response_host_event_mask resp;
+	struct ec_response_host_event_mask *resp = NULL;
 
-	resp.mask = 0;	/* compiler seems to need this */
 	/*
 	 * Use the B copy of the event flags, because the main copy is already
 	 * used by ACPI/SMI.
 	 */
 	if (ec_command(dev, EC_CMD_HOST_EVENT_GET_B, 0, NULL, 0,
-		       &resp, sizeof(resp)) < sizeof(resp))
+		       (uint8_t **)&resp, sizeof(*resp)) < sizeof(*resp))
 		return -1;
 
-	if (resp.mask & EC_HOST_EVENT_MASK(EC_HOST_EVENT_INVALID))
+	if (resp->mask & EC_HOST_EVENT_MASK(EC_HOST_EVENT_INVALID))
 		return -1;
 
-	*events_ptr = resp.mask;
+	*events_ptr = resp->mask;
 	return 0;
 }
 
@@ -303,7 +313,7 @@ int mkbp_flash_protect(struct mkbp_dev *dev,
 
 	if (ec_command(dev, EC_CMD_FLASH_PROTECT, EC_VER_FLASH_PROTECT,
 		       &params, sizeof(params),
-		       resp, sizeof(*resp)) < sizeof(*resp))
+		       (uint8_t **)&resp, sizeof(*resp)) < sizeof(*resp))
 		return -1;
 
 	return 0;
@@ -334,13 +344,13 @@ static int mkbp_check_version(struct mkbp_dev *dev)
 	 * So for now, just read all the data anyway.
 	 */
 	dev->cmd_version_is_supported = 1;
-	if (ec_command(dev, EC_CMD_HELLO, 0, (uint8_t **)&req, sizeof(req),
+	if (ec_command(dev, EC_CMD_HELLO, 0, &req, sizeof(req),
 		       (uint8_t **)&resp, sizeof(*resp)) > 0) {
 		/* It appears to understand new version commands */
 		dev->cmd_version_is_supported = 1;
 	} else {
 		dev->cmd_version_is_supported = 0;
-		if (ec_command(dev, EC_CMD_HELLO, 0, (uint8_t **)&req,
+		if (ec_command(dev, EC_CMD_HELLO, 0, &req,
 			      sizeof(req), (uint8_t **)&resp,
 			      sizeof(*resp)) < 0) {
 			debug("%s: Failed both old and new command style\n",
@@ -355,17 +365,16 @@ static int mkbp_check_version(struct mkbp_dev *dev)
 int mkbp_test(struct mkbp_dev *dev)
 {
 	struct ec_params_hello req;
-	struct ec_response_hello resp;
+	struct ec_response_hello *resp = NULL;
 
 	req.in_data = 0x12345678;
-	resp.out_data = 0;	/* compiler seems to need this */
-	if (ec_command(dev, EC_CMD_HELLO, 0, (uint8_t **)&req, sizeof(req),
-		       &resp, sizeof(resp)) < sizeof(resp)) {
+	if (ec_command(dev, EC_CMD_HELLO, 0, &req, sizeof(req),
+		       (uint8_t **)&resp, sizeof(*resp)) < sizeof(*resp)) {
 		printf("ec_command() returned error\n");
 		return -1;
 	}
-	if (resp.out_data != req.in_data + 0x01020304) {
-		printf("Received invalid handshake %x\n", resp.out_data);
+	if (resp->out_data != req.in_data + 0x01020304) {
+		printf("Received invalid handshake %x\n", resp->out_data);
 		return -1;
 	}
 
@@ -376,20 +385,20 @@ static int mkbp_flash_rw_offset(struct mkbp_dev *dev,
 				uint32_t *offset, uint32_t *size)
 {
 	struct ec_params_flash_region_info p;
-	struct ec_response_flash_region_info r;
+	struct ec_response_flash_region_info *r;
 	int ret;
 
 	p.region = EC_FLASH_REGION_RW;
 	ret = ec_command(dev, EC_CMD_FLASH_REGION_INFO,
 			 EC_VER_FLASH_REGION_INFO,
-			 &p, sizeof(p), &r, sizeof(r));
-	if (ret != sizeof(r))
+			 &p, sizeof(p), (uint8_t **)&r, sizeof(*r));
+	if (ret != sizeof(*r))
 		return -1;
 
 	if (offset)
-		*offset = r.offset;
+		*offset = r->offset;
 	if (size)
-		*size = r.size;
+		*size = r->size;
 
 	return 0;
 }
