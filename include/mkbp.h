@@ -237,6 +237,11 @@ int mkbp_i2c_decode_fdt(struct mkbp_dev *dev, const void *blob);
 /**
  * Send a command to an I2C MKBP device and return the reply.
  *
+ * This rather complicated function deals with sending both old-style and
+ * new-style commands. The old ones have just a command byte and arguments.
+ * The new ones have version, command, arg-len, [args], chksum so are 3 bytes
+ * longer.
+ *
  * The device's internal input/output buffers are used.
  *
  * @param dev		MKBP device
@@ -268,4 +273,13 @@ int mkbp_spi_command(struct mkbp_dev *dev, uint8_t cmd, int cmd_version,
  * @param len	Length of data block to dump
  */
 void mkbp_dump_data(const char *name, int cmd, const uint8_t *data, int len);
+
+/**
+ * Calculate a simple 8-bit checksum of a data block
+ *
+ * @param data	Data block to checksum
+ * @param size	Size of data block in bytes
+ * @return checksum value (0 to 255)
+ */
+int mkbp_calc_checksum(const uint8_t *data, int size);
 #endif

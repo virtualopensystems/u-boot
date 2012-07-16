@@ -60,6 +60,22 @@ void mkbp_dump_data(const char *name, int cmd, const uint8_t *data, int len)
 #endif
 }
 
+/*
+ * Calculate a simple 8-bit checksum of a data block
+ *
+ * @param data	Data block to checksum
+ * @param size	Size of data block in bytes
+ * @return checksum value (0 to 255)
+ */
+int mkbp_calc_checksum(const uint8_t *data, int size)
+{
+	int csum, i;
+
+	for (i = csum = 0; i < size; i++)
+		csum += data[i];
+	return csum & 0xff;
+}
+
 /**
  * Send a command to the MKBP device and return the reply.
  *
