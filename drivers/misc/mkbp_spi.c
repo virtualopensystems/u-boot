@@ -32,10 +32,8 @@
 #include <mkbp.h>
 #include <spi.h>
 
-#ifdef DEBUG_TRACE
-#define debug_trace(fmt, b...)	debug(fmt, #b)
-#else
-#define debug_trace(fmt, b...)
+#ifdef CONFIG_NEW_SPI_XFER
+#error "CONFIG_NEW_SPI_XFER not supported in MKBP"
 #endif
 
 /**
@@ -46,19 +44,21 @@
  * @param dev		MKBP device
  * @param cmd		Command to send (EC_CMD_...)
  * @param cmd_version	Version of command to send (EC_VER_...)
- * @param dout          Output data (may be NULL If dout_len=0)
+ * @param dout		Output data (may be NULL If dout_len=0)
  * @param dout_len      Size of output data in bytes
- * @param din           Response data (may be NULL If din_len=0)
- * @param din_len       Maximum size of response in bytes
+ * @param dinp		Returns pointer to response data. This will be
+ *			untouched unless we return a value > 0.
+ * @param din_len	Maximum size of response in bytes
  * @return number of bytes in response, or -1 on error
  */
 int mkbp_spi_command(struct mkbp_dev *dev, uint8_t cmd, int cmd_version,
 		     const uint8_t *dout, int dout_len,
-		     uint8_t *din, int din_len)
+		     uint8_t **dinp, int din_len)
 {
-	int in_bytes = din_len + MSG_PROTO_BYTES;
-	const uint8_t *p, *end;
-	int len = 0;
+	int in_bytes = din_len + 4;	/* status, length, checksum, trailer */
+	uint8_t *out;
+	uint8_t *p;;
+	int csum, len;
 	int rv;
 
 	/*
@@ -70,7 +70,16 @@ int mkbp_spi_command(struct mkbp_dev *dev, uint8_t cmd, int cmd_version,
 		return -1;
 	}
 
-	/* Clear input buffer so we don't get false hits for MSG_HEADER */
+	/* We represent message length as a byte */
+	if (dout_len > 0xff) {
+		debug("%s: Cannot send %d bytes\n", __func__, dout_len);
+		return -1;
+	}
+
+	/*
+	 * TODO(sjg@chromium.org): Clear input buffer so we don't get false
+	 * hits for MSG_HEADER
+	 */
 	memset(dev->din, '\0', in_bytes);
 
 	if (spi_claim_bus(dev->spi)) {
@@ -78,35 +87,23 @@ int mkbp_spi_command(struct mkbp_dev *dev, uint8_t cmd, int cmd_version,
 		return -1;
 	}
 
+	out = dev->dout;
+	out[0] = cmd_version;
+	out[1] = cmd;
+	out[2] = (uint8_t)dout_len;
+	memcpy(out + 3, dout, dout_len * 8);
+	csum = mkbp_calc_checksum(out, 3) + mkbp_calc_checksum(dout, dout_len);
+	out[3 + dout_len] = (uint8_t)csum;
 
-	/* Send command */
-#ifdef CONFIG_NEW_SPI_XFER
-	rv = spi_xfer(dev->spi, &cmd, 8, dev->din, 8));
-#else
-	rv = spi_xfer(dev->spi, 8, &cmd, dev->din,
-		      SPI_XFER_BEGIN | SPI_XFER_END);
-#endif
-
-	if (rv) {
-		debug("%s: Cannot send command via SPI\n", __func__);
-		spi_release_bus(dev->spi);
-		return -1;
-	}
-
-	/* Send output data and receive input data */
-#ifdef CONFIG_NEW_SPI_XFER
-	rv = spi_xfer(dev->spi, dout, dout_len * 8,
-		      dev->din, in_bytes * 8)) {
-#else
 	/*
-	 * TODO(sjg): Old SPI XFER doesn't support sending params before
-	 * reading response, so this will probably clock the wrong amount of
-	 * data.
+	 * Send output data and receive input data starting such that the
+	 * message body will be dword aligned.
 	 */
-	rv = spi_xfer(dev->spi, max(dout_len, in_bytes) * 8,
-		      dev->dout, dev->din,
+	p = dev->din + sizeof(int64_t) - 2;
+	len = dout_len + 4;
+	mkbp_dump_data("out", cmd, out, len);
+	rv = spi_xfer(dev->spi, max(len, in_bytes) * 8, out, p,
 		      SPI_XFER_BEGIN | SPI_XFER_END);
-#endif
 
 	spi_release_bus(dev->spi);
 
@@ -115,37 +112,37 @@ int mkbp_spi_command(struct mkbp_dev *dev, uint8_t cmd, int cmd_version,
 		return -1;
 	}
 
-	/* Scan to start of reply */
-	for (p = dev->din, end = p + in_bytes; p < end; p++) {
-		if (*p == MSG_HEADER)
-			break;
+	len = min(p[1], din_len);
+	mkbp_dump_data("in", -1, p, len + 3);
+
+	/* Response code is first byte of message */
+	if (p[0] != EC_RES_SUCCESS) {
+		printf("%s: Returned status %d\n", __func__, p[0]);
+		return -(int)(p[0]);
 	}
 
-	if (end - p > 2)
-		len = p[1] + (p[2] << 8);
-	else
-		debug("%s: Message header not found\n", __func__);
-
-	if (!len || len > end - p) {
-		debug("%s: Message received is too short, len=%d, bytes=%d\n",
-		      __func__, len, end - p);
-		len = -1;
+	/* Check checksum */
+	csum = mkbp_calc_checksum(p, len + 2);
+	if (csum != p[len + 2]) {
+		debug("%s: Invalid checksum rx %#02x, calced %#02x\n", __func__,
+		      p[2 + len], csum);
+		return -1;
 	}
 
-	if (len > 0) {
-		p += MSG_HEADER_BYTES;
-		len -= MSG_PROTO_BYTES;	/* remove header, checksum, trailer */
+	/* Anything else is the response data */
+	*dinp = p + 2;
 
-		/* Response code is first byte of message */
-		if (p[0] != EC_RES_SUCCESS)
-			return -(int)(p[0]);
-
-		/* Anything else is the response data */
-		len = min(len - 1, din_len);
-		if (len)
-			memcpy(din, p + 1, len);
-	}
 	return len;
+}
+
+int mkbp_spi_decode_fdt(struct mkbp_dev *dev, const void *blob)
+{
+	/* Decode interface-specific FDT params */
+	dev->max_frequency = fdtdec_get_int(blob, dev->node,
+					    "spi-max-frequency", 500000);
+	dev->cs = fdtdec_get_int(blob, dev->node, "reg", 0);
+
+	return 0;
 }
 
 /**
@@ -157,19 +154,12 @@ int mkbp_spi_command(struct mkbp_dev *dev, uint8_t cmd, int cmd_version,
  */
 int mkbp_spi_init(struct mkbp_dev *dev, const void *blob)
 {
-	/* Decode interface-specific FDT params */
-	dev->max_frequency = fdtdec_get_int(blob, dev->node,
-					    "spi-max-frequency", 500000);
-	dev->cs = fdtdec_get_int(blob, dev->node, "reg", 0);
-
 	dev->spi = spi_setup_slave_fdt(blob, dev->parent_node,
 				       dev->cs, dev->max_frequency, 0);
 	if (!dev->spi) {
 		debug("%s: Could not setup SPI slave\n", __func__);
 		return -1;
 	}
-
-	dev->cmd_version_is_supported = 0;
 
 	return 0;
 }

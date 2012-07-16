@@ -81,6 +81,8 @@ int mkbp_calc_checksum(const uint8_t *data, int size)
  *
  * The device's internal input/output buffers are used.
  *
+ * TODO(sjg@chromium.org): Support new-style command format.
+ *
  * @param dev		MKBP device
  * @param cmd		Command to send (EC_CMD_...)
  * @param cmd_version	Version of command to send (EC_VER_...)
@@ -95,7 +97,7 @@ static int ec_command(struct mkbp_dev *dev, uint8_t cmd, int cmd_version,
 		      void *dinp, int din_len)
 {
 	uint8_t *din;
-	int len = 0;
+	int len;
 
 	if (cmd_version != 0 && !dev->cmd_version_is_supported) {
 		debug("%s: Command version >0 unsupported\n", __func__);
@@ -105,9 +107,9 @@ static int ec_command(struct mkbp_dev *dev, uint8_t cmd, int cmd_version,
 	switch (dev->interface) {
 #ifdef CONFIG_MKBP_SPI
 	case MKBPIF_SPI:
-		return mkbp_spi_command(dev, cmd, cmd_version,
+		len = mkbp_spi_command(dev, cmd, cmd_version,
 					(const uint8_t *)dout, dout_len,
-					(uint8_t *)dinp, din_len);
+					&din, din_len);
 		break;
 #endif
 #ifdef CONFIG_MKBP_I2C
@@ -520,6 +522,8 @@ static int mkbp_decode_fdt(const void *blob, int node, struct mkbp_dev **devp)
 #ifdef CONFIG_MKBP_SPI
 	case COMPAT_SAMSUNG_EXYNOS_SPI:
 		dev->interface = MKBPIF_SPI;
+		if (mkbp_spi_decode_fdt(dev, blob))
+			return -1;
 		break;
 #endif
 #ifdef CONFIG_MKBP_I2C
@@ -567,8 +571,10 @@ struct mkbp_dev *mkbp_init(const void *blob)
 	switch (dev->interface) {
 #ifdef CONFIG_MKBP_SPI
 	case MKBPIF_SPI:
-		if (mkbp_spi_init(dev, blob))
+		if (mkbp_spi_init(dev, blob)) {
+			debug("%s: Could not setup SPI interface\n", __func__);
 			return NULL;
+		}
 		break;
 #endif
 #ifdef CONFIG_MKBP_I2C
