@@ -94,6 +94,9 @@
 /* We don't have networking support yet */
 #undef CONFIG_CMD_NET
 #undef CONFIG_CMD_NFS
+#define CONFIG_CMD_GPIO
+#define CONFIG_SANDBOX_GPIO
+#define CONFIG_SANDBOX_GPIO_COUNT 256
 
 #define CONFIG_BOOTARGS ""
 
