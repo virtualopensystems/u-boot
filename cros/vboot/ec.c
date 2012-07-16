@@ -68,17 +68,6 @@ VbError_t VbExEcJumpToRW(void)
 	return VBERROR_SUCCESS;
 }
 
-VbError_t VbExEcRebootToRO(void)
-{
-	struct mkbp_dev *mdev = board_get_mkbp_dev();
-
-	if (mkbp_reboot(mdev, EC_REBOOT_COLD, 0) < 0)
-		return VBERROR_UNKNOWN;
-
-	/* Cold reboot should never return */
-	return VBERROR_UNKNOWN;
-}
-
 VbError_t VbExEcStayInRO(void)
 {
 	/*
@@ -141,11 +130,6 @@ VbError_t VbExEcRunningRW(int *in_rw)
 }
 
 VbError_t VbExEcJumpToRW(void)
-{
-	return VBERROR_UNKNOWN;
-}
-
-VbError_t VbExEcRebootToRO(void)
 {
 	return VBERROR_UNKNOWN;
 }

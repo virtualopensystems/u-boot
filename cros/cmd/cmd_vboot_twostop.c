@@ -316,6 +316,19 @@ static void wipe_unused_memory(crossystem_data_t *cdata,
 	memory_wipe_execute(&wipe);
 }
 
+/* Request the EC reboot to RO when the AP shuts down. */
+static int request_ec_reboot_to_ro(void)
+{
+#ifdef CONFIG_MKBP
+	struct mkbp_dev *mdev = board_get_mkbp_dev();
+
+	return mkbp_reboot(mdev, EC_REBOOT_COLD,
+			   EC_REBOOT_FLAG_ON_AP_SHUTDOWN);
+#else
+	return 0;
+#endif
+}
+
 static VbError_t
 twostop_init_vboot_library(firmware_storage_t *file, void *gbb,
 			   uint32_t gbb_offset, size_t gbb_size,
@@ -374,6 +387,15 @@ twostop_init_vboot_library(firmware_storage_t *file, void *gbb,
 
 	if ((err = VbInit(cparams, &iparams))) {
 		VBDEBUG("VbInit: %u\n", err);
+
+		/*
+		 * If vboot wants EC to reboot to RO, make request now,
+		 * because there isn't a clear path to pass this request
+		 * through to do_vboot_twostop().
+		 */
+		if (err == VBERROR_EC_REBOOT_TO_RO_REQUIRED)
+			request_ec_reboot_to_ro();
+
 		return err;
 	}
 
@@ -474,6 +496,15 @@ twostop_make_selection(struct twostop_fmap *fmap, firmware_storage_t *file,
 
 	if ((err = VbSelectFirmware(cparams, &fparams))) {
 		VBDEBUG("VbSelectFirmware: %d\n", err);
+
+		/*
+		 * If vboot wants EC to reboot to RO, make request now,
+		 * because there isn't a clear path to pass this request
+		 * through to do_vboot_twostop().
+		 */
+		if (err == VBERROR_EC_REBOOT_TO_RO_REQUIRED)
+			request_ec_reboot_to_ro();
+
 		goto out;
 	}
 
@@ -748,9 +779,11 @@ twostop_main_firmware(struct twostop_fmap *fmap, void *gbb,
 		switch (err) {
 		case VBERROR_SHUTDOWN_REQUESTED:
 			return TWOSTOP_SELECT_POWER_OFF;
-			break;
 		case VBERROR_BIOS_SHELL_REQUESTED:
 			return TWOSTOP_SELECT_COMMAND_LINE;
+		case VBERROR_EC_REBOOT_TO_RO_REQUIRED:
+			request_ec_reboot_to_ro();
+			break;
 		}
 		return TWOSTOP_SELECT_ERROR;
 	}
