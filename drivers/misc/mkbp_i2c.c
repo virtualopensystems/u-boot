@@ -38,27 +38,17 @@
 #define debug_trace(fmt, b...)
 #endif
 
-/**
- * Send a command to an I2C MKBP device and return the reply.
- *
- * The device's internal input/output buffers are used.
- *
- * @param dev		MKBP device
- * @param cmd		Command to send (EC_CMD_...)
- * @param cmd_version	Version of command to send (EC_VER_...)
- * @param dout          Output data (may be NULL If dout_len=0)
- * @param dout_len      Size of output data in bytes
- * @param din           Response data (may be NULL If din_len=0)
- * @param din_len       Maximum size of response in bytes
- * @return number of bytes in response, or -1 on error
- */
 int mkbp_i2c_command(struct mkbp_dev *dev, uint8_t cmd, int cmd_version,
 		     const uint8_t *dout, int dout_len,
-		     uint8_t *din, int din_len)
+		     uint8_t **dinp, int din_len)
 {
 	int old_bus = 0;
 	int out_bytes = dout_len + 1;  /* cmd8, out8[dout_len] */
 	int in_bytes = din_len + 2;  /* response8, in8[din_len], checksum8 */
+	uint8_t *ptr;
+	/* Receive input data, so that args will be dword aligned */
+	uint8_t *in_ptr;
+	int ret;
 
 	old_bus = i2c_get_bus_num();
 
@@ -74,14 +64,26 @@ int mkbp_i2c_command(struct mkbp_dev *dev, uint8_t cmd, int cmd_version,
 		debug("%s: Cannot receive %d bytes\n", __func__, din_len);
 		return -1;
 	}
+	assert(dout_len >= 0);
+	assert(dinp);
 
 	/*
 	 * Copy command and data into output buffer so we can do a single I2C
 	 * burst transaction.
 	 */
-	dev->dout[0] = cmd;
-	if (dout_len > 0)
-		memcpy(dev->dout + 1, dout, dout_len);
+	ptr = dev->dout;
+
+	/*
+	 * in_ptr points to a status byte right before a dword-aligned
+	 * input data buffer. That means that the first parameter of the
+	 * resulting input data will be dword aligned.
+	 */
+	in_ptr = dev->din + sizeof(int64_t) - 1;
+	*ptr++ = cmd;
+	out_bytes = dout_len + 1;
+	in_bytes = din_len + 2;
+	memcpy(ptr, dout, dout_len);
+	ptr += dout_len;
 
 	/* Set to the proper i2c bus */
 	if (i2c_set_bus_num(dev->bus_num)) {
@@ -91,38 +93,33 @@ int mkbp_i2c_command(struct mkbp_dev *dev, uint8_t cmd, int cmd_version,
 	}
 
 	/* Send output data */
-	if (i2c_write(dev->addr, 0, 0, dev->dout, out_bytes)) {
+	ret = i2c_write(dev->addr, 0, 0, dev->dout, out_bytes);
+	if (ret) {
 		debug("%s: Cannot complete I2C write to 0x%x\n",
 			__func__, dev->addr);
-		return -1;
 	}
 
 	/* Receive input data */
-	if (i2c_read(dev->addr, 0, 0, dev->din, in_bytes)) {
-		debug("%s: Cannot complete I2C read from 0x%x\n",
-			__func__, dev->addr);
-		return -1;
+	if (!ret) {
+		ret = i2c_read(dev->addr, 0, 0, in_ptr, in_bytes);
+		if (ret) {
+			debug("%s: Cannot complete I2C read from 0x%x\n",
+				__func__, dev->addr);
+		}
 	}
 
 	/* Return to original bus number */
-	if (i2c_set_bus_num(old_bus)) {
-		debug("%s: Cannot change to I2C bus %d\n", __func__,
-			old_bus);
-		return -1;
+	i2c_set_bus_num(old_bus);
+	if (ret)
+		return ret;
+
+	if (*in_ptr != EC_RES_SUCCESS) {
+		debug("%s: Received bad result code %d\n", __func__, *in_ptr);
+		return -(int)*in_ptr;
 	}
 
-	/*
-	 * I2C currently uses a simpler protocol, so we don't
-	 * deal with the full header; the checksum byte on the end
-	 * is ignored.
-	 * TODO(bhthompson): Migrate to new protocol.
-	 */
-	if (dev->din[0] != EC_RES_SUCCESS)
-		return -(int)(dev->din[0]);
-
-	/* Copy input data, if any */
-	if (din_len)
-		memcpy(din, dev->din + 1, din_len);
+	/* Return pointer to dword-aligned input data, if any */
+	*dinp = dev->din + sizeof(int64_t);
 
 	return din_len;
 }

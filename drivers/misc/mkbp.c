@@ -62,8 +62,11 @@ static struct mkbp_dev static_dev, *last_dev;
  */
 static int ec_command(struct mkbp_dev *dev, uint8_t cmd, int cmd_version,
 		      const void *dout, int dout_len,
-		      void *din, int din_len)
+		      void *dinp, int din_len)
 {
+	uint8_t *din;
+	int len = 0;
+
 	if (cmd_version != 0 && !dev->cmd_version_is_supported) {
 		debug("%s: Command version >0 unsupported\n", __func__);
 		return -1;
@@ -74,27 +77,38 @@ static int ec_command(struct mkbp_dev *dev, uint8_t cmd, int cmd_version,
 	case MKBPIF_SPI:
 		return mkbp_spi_command(dev, cmd, cmd_version,
 					(const uint8_t *)dout, dout_len,
-					(uint8_t *)din, din_len);
+					(uint8_t *)dinp, din_len);
 		break;
 #endif
 #ifdef CONFIG_MKBP_I2C
 	case MKBPIF_I2C:
-		return mkbp_i2c_command(dev, cmd, cmd_version,
+		len = mkbp_i2c_command(dev, cmd, cmd_version,
 					(const uint8_t *)dout, dout_len,
-					(uint8_t *)din, din_len);
+					&din, din_len);
 		break;
 #endif
 #ifdef CONFIG_MKBP_LPC
 	case MKBPIF_LPC:
 		return mkbp_lpc_command(dev, cmd, cmd_version,
 					(const uint8_t *)dout, dout_len,
-					(uint8_t *)din, din_len);
+					(uint8_t *)dinp, din_len);
 		break;
 #endif
 	case MKBPIF_NONE:
 	default:
 		return -1;
 	}
+
+	debug("%s: len=%d, din=%p, dinp=%p\n", __func__, len, din, dinp);
+
+	/* If we have any data to return, it must be 64bit-aligned */
+	assert(len <= 0 || !((uintptr_t)din & 7));
+	if (len > 0) {
+		if (din)
+			memmove(dinp, din, len);
+	}
+
+	return len;
 }
 
 int mkbp_scan_keyboard(struct mkbp_dev *dev, struct mbkp_keyscan *scan)
