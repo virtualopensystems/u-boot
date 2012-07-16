@@ -818,10 +818,16 @@ void	clear_ctrlc (void);	/* clear the Control-C condition */
 int	disable_ctrlc (int);	/* 1 to disable, 0 to enable Control-C detect */
 
 /*
+ * Called to do the needful when tstc has a character ready
+ * Meant to work in contrast to board_poll_devices
+ */
+void board_tstc_ready(void);
+
+/*
  * A generic polling function
  * This will be called to poll for some events,
  * In this case this will be called form console_tstc() to monitor
- * temperatur of the SOC
+ * temperature of the SOC
  */
 void board_poll_devices(void);
 

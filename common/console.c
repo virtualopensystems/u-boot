@@ -108,6 +108,10 @@ static int console_getc(int file)
 {
 	unsigned char ret;
 
+#if defined CONFIG_BOARD_POLL
+	/* Polling for tstc busy */
+	board_tstc_ready();
+#endif
 	/* This is never called with testcdev == NULL */
 	ret = tstcdev->getc();
 	tstcdev = NULL;
