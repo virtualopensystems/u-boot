@@ -70,10 +70,10 @@ VbError_t VbExEcJumpToRW(void)
 
 VbError_t VbExEcStayInRO(void)
 {
-	/*
-	 * TODO (rspangler@chromium.org): need new EC API for this; see
-	 * crosbug.com/p/11147.  For now, pretend we succeed.
-	 */
+	struct mkbp_dev *mdev = board_get_mkbp_dev();
+	if (mkbp_reboot(mdev, EC_REBOOT_DISABLE_JUMP, 0) < 0)
+		return VBERROR_UNKNOWN;
+
 	return VBERROR_SUCCESS;
 }
 
