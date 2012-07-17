@@ -331,7 +331,7 @@ int crossystem_data_update_acpi(crossystem_data_t *cdata)
 void crossystem_data_dump(crossystem_data_t *cdata)
 {
 #define _p(format, field) \
-	VBDEBUG("crossystem_data_dump: %-30s: " format "\n", #field, cdata->field)
+	VBDEBUG(" %-30s: " format "\n", #field, cdata->field)
 	_p("%08x",	total_size);
 	_p("\"%s\"",	signature);
 	_p("%d",	version);
@@ -339,9 +339,11 @@ void crossystem_data_dump(crossystem_data_t *cdata)
 	_p("%d",	boot_write_protect_switch);
 	_p("%d",	boot_recovery_switch);
 	_p("%d",	boot_developer_switch);
+	_p("%d",	boot_oprom_loaded);
 	_p("%d",	polarity_write_protect_switch);
 	_p("%d",	polarity_recovery_switch);
 	_p("%d",	polarity_developer_switch);
+	_p("%d",	polarity_oprom_loaded);
 	_p("%d",	gpio_port_write_protect_switch);
 	_p("%d",	gpio_port_recovery_switch);
 	_p("%d",	gpio_port_developer_switch);

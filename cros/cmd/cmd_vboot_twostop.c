@@ -660,21 +660,18 @@ twostop_init(struct twostop_fmap *fmap, firmware_storage_t *file,
 	bootstage_mark_name(BOOTSTAGE_VBOOT_TWOSTOP_INIT, "twostop_init");
 	if (vboot_flag_fetch(VBOOT_FLAG_WRITE_PROTECT, &wpsw) ||
 	    vboot_flag_fetch(VBOOT_FLAG_RECOVERY, &recsw) ||
-	    vboot_flag_fetch(VBOOT_FLAG_DEVELOPER, &devsw)) {
+	    vboot_flag_fetch(VBOOT_FLAG_DEVELOPER, &devsw) ||
+	    vboot_flag_fetch(VBOOT_FLAG_OPROM_LOADED, &oprom)) {
 		VBDEBUG("failed to fetch gpio\n");
 		return -1;
 	}
 	vboot_flag_dump(VBOOT_FLAG_WRITE_PROTECT, &wpsw);
 	vboot_flag_dump(VBOOT_FLAG_RECOVERY, &recsw);
 	vboot_flag_dump(VBOOT_FLAG_DEVELOPER, &devsw);
+	vboot_flag_dump(VBOOT_FLAG_OPROM_LOADED, &oprom);
 
 	if (cros_fdtdec_config_has_prop(gd->fdt_blob, "oprom-matters")) {
 		VBDEBUG("FDT says oprom-matters\n");
-		if (vboot_flag_fetch(VBOOT_FLAG_OPROM_LOADED, &oprom)) {
-			VBDEBUG("failed to fetch oprom-loaded gpio\n");
-			return -1;
-		}
-		vboot_flag_dump(VBOOT_FLAG_OPROM_LOADED, &oprom);
 		oprom_matters = 1;
 	}
 
