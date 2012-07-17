@@ -23,7 +23,24 @@
 #define __CONFIG_H
 
 #define CONFIG_NR_DRAM_BANKS	1
-#define CONFIG_DRAM_SIZE	(128 << 20)
+/*
+ * The sandbox u-boot memory configuration is 24MB - 64KB.  The
+ * entire 24MB is a shared memory region allocated by a user-space
+ * daemon that will process device I/O commands.
+ *
+ * The 64KB at the end is carved out to allow transferring data
+ * bi-directonally between u-boot and the daemon.  As it can be shown
+ * that u-boot does not guarantee that destination addresses for data
+ * will be in the shared memory region -- the MMC driver is known to
+ * use stack variables when obtaining the 'Ext CSD' register -- the
+ * 64KB block is necessary because the daemon cannot write into the
+ * u-boot address space.
+ *
+ * TODO(thutt): Should include sandbox-daemon.h for dram size.
+ * TODO(thutt): Create config option for sandbox DRAM size.
+ * TODO(thutt): Create config option for sandbox doorbell area size.
+ */
+#define CONFIG_DRAM_SIZE	((24 * 1024 * 1024) - (16 * 4096))
 
 /* Number of bits in a C 'long' on this architecture */
 #define CONFIG_SANDBOX_BITS_PER_LONG	64
@@ -60,7 +77,7 @@
 #define CONFIG_PHYS_64BIT
 
 /* Size of our emulated memory */
-#define CONFIG_SYS_SDRAM_SIZE		(128 << 20)
+#define CONFIG_SYS_SDRAM_SIZE		CONFIG_DRAM_SIZE
 
 #define CONFIG_BAUDRATE			115200
 #define CONFIG_SYS_BAUDRATE_TABLE	{4800, 9600, 19200, 38400, 57600,\
