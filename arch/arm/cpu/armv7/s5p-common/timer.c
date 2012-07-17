@@ -90,8 +90,7 @@ unsigned long timer_get_us(void)
 {
 	static unsigned long base_time_us;
 
-	struct s5p_timer *const timer =
-		(struct s5p_timer *)samsung_get_base_timer();
+	struct s5p_timer *const timer = s5p_get_base_timer();
 	unsigned long now_downward_us = readl(&timer->tcnto4);
 
 	if (!base_time_us)
