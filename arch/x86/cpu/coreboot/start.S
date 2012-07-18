@@ -25,5 +25,22 @@
 /* board early intialization */
 .globl early_board_init
 early_board_init:
-	/* No 32-bit board specific initialisation */
+	/*
+	 * This could be the second u-boot phase starting, and when under
+	 * coreboot control there have been no explicit zeroing of the bss
+	 * segment. Let's do it here.
+	 */
+
+	/* start of area to clean */
+	movl	$__bss_start, %edi
+
+	/* calculate number of words to set to zero */
+	movl	$__bss_end, %ecx
+	subl	%edi, %ecx
+	shr	$2, %ecx
+
+	/* do it */
+	cld
+	xorl	%eax, %eax
+	rep 	stosl
 	jmp	early_board_init_ret
