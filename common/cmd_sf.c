@@ -188,7 +188,7 @@ static int spi_flash_update(struct spi_flash *flash, u32 offset,
 	if (cmp_buf) {
 		for (; buf < end && !err_oper; buf += todo, offset += todo) {
 			todo = min(end - buf, flash->sector_size);
-			printf("Updating, %u%% %lu B/s\r",
+			printf("Updating, %zu%% %lu B/s\r",
 				100 - (end - buf) / scale,
 				bytes_per_second(buf - start_buf, start_time));
 			err_oper = spi_flash_update_block(flash, offset, todo,
