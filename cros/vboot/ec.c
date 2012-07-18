@@ -9,10 +9,15 @@
  */
 
 #include <common.h>
+#include <asm/global_data.h>
 #include <cros/common.h>
+#include <cros/firmware_storage.h>
 #include <cros/vboot_flag.h>
+#include <malloc.h>
 #include <mkbp.h>
 #include <vboot_api.h>
+
+DECLARE_GLOBAL_DATA_PTR;
 
 int VbExTrustEC(void)
 {
@@ -168,3 +173,43 @@ VbError_t VbExEcProtectRW(void)
 }
 
 #endif  /* CONFIG_MKBP */
+
+VbError_t VbExEcGetExpectedRW(enum VbSelectFirmware_t select, uint8_t **image,
+			      int *image_size)
+{
+	struct twostop_fmap fmap;
+	uint32_t offset;
+	firmware_storage_t *file;
+
+	cros_fdtdec_flashmap(gd->fdt_blob, &fmap);
+	switch (select) {
+	case VB_SELECT_FIRMWARE_A:
+		offset = fmap.readwrite_a.ec_bin.offset;
+		*image_size = fmap.readwrite_a.ec_bin.length;
+	case VB_SELECT_FIRMWARE_B:
+		offset = fmap.readwrite_b.ec_bin.offset;
+		*image_size = fmap.readwrite_b.ec_bin.length;
+	default:
+		VBDEBUG("Unrecognized EC firmware requested.\n");
+		return VBERROR_UNKNOWN;
+	}
+
+	if (firmware_storage_open_spi(file)) {
+		VBDEBUG("Failed to open firmware storage.\n");
+		return VBERROR_UNKNOWN;
+	}
+
+	*image = malloc(*image_size);
+	if (!*image) {
+		VBDEBUG("Failed to allocate space for the EC RW image.\n");
+		return VBERROR_UNKNOWN;
+	}
+
+	if (file->read(file, offset, *image_size, BT_EXTRA(*image))) {
+		free(*image);
+		VBDEBUG("Failed to read the EC from flash.\n");
+		return VBERROR_UNKNOWN;
+	}
+
+	return VBERROR_SUCCESS;
+}
