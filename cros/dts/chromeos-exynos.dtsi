@@ -9,6 +9,8 @@
  * chromeos-config node.
  */
 
+/include/ "factory-friendly.dtsi"
+
 / {
 	chromeos-config {
 		twostop;		/* Two-stop boot */
@@ -19,9 +21,6 @@
 		flash-method = "exynos";/* How to flash the board */
 		firmware-storage = <&firmware_storage_spi>;
 		nvstorage-media = "disk";
-
-		/* Only wait 2s in developer mode screen */
-		fast-developer-mode;
 
 		/* Memory addresses for kernel, cros-system and gbb */
 		kernel = <0x42000000 0x00800000>;

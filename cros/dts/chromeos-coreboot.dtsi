@@ -8,6 +8,8 @@
  * This file holds Chrome OS-specific options, kept within a chromeos-config
  */
 
+/include/ "factory-friendly.dtsi"
+
 / {
 	chromeos-config {
 		twostop;		/* Two-stop boot */
@@ -20,9 +22,6 @@
 
 		firmware-storage = <&firmware_storage_spi>;
 		nvstorage-media = "nvram";
-
-		/* Only wait 2s in developer mode screen */
-		fast-developer-mode;
 
 		vboot-flag-write-protect {
 			compatible = "google,sysinfo-flag";
