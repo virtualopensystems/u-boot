@@ -58,10 +58,13 @@ static const char *section_name[SECTION_COUNT] = {
  */
 static enum section_t lookup_section(const char *name)
 {
-	int i;
+	char *at;
+	int i, len;
 
+	at = strchr(name, '@');
+	len = at ? at - name : strlen(name);
 	for (i = 0; i < SECTION_COUNT; i++)
-		if (0 == strcmp(name, section_name[i]))
+		if (0 == strncmp(name, section_name[i], len))
 			return i;
 
 	return SECTION_NONE;
@@ -156,10 +159,8 @@ static int process_fmap_node(const void *blob, int node, int depth,
 		case SECTION_BASE:
 			rw->block_offset = fdtdec_get_uint64(blob, node,
 							"block-offset", ~0ULL);
-			if (rw->block_offset == ~0ULL) {
+			if (rw->block_offset == ~0ULL)
 				VBDEBUG("Node '%s': bad block-offset\n", name);
-				return -1;
-			}
 			break;
 		case SECTION_FIRMWARE_ID:
 			rw->firmware_id = entry;
