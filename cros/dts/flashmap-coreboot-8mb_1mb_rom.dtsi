@@ -20,7 +20,7 @@
 		 * This section covers the all the parts that are not shown
 		 * to the CPU right below 4G.
 		 */
-		si-all@0 {
+		si-all {
 			label = "si-all";
 			reg = <0x00000000 0x00200000>;
 			type = "ifd";
@@ -30,7 +30,7 @@
 		 * Firmware Descriptor section of the Intel Firmware Descriptor
 		 * image.
 		 */
-		si-desc@0 {
+		si-desc {
 			label = "si-desc";
 			reg = <0x00000000 0x00001000>;
 		};
@@ -39,7 +39,7 @@
 		 * Intel Management Engine section of the Intel Firmware
 		 * Descriptor image.
 		 */
-		si-me@0 {
+		si-me {
 			label = "si-me";
 			reg = <0x00001000 0x001ff000>;
 		};
@@ -49,7 +49,7 @@
 		 * This section covers the complete image as shown to the
 		 * CPU right below 4G.
 		 */
-		si-bios@0 {
+		si-bios {
 			label ="si-bios";
 			reg = <0x00200000 0x00600000>;
 		};
@@ -59,7 +59,7 @@
 		 * extensions. cros_bundle_firmware dislikes holes in the
 		 * FMAP, so we cover all empty space here.
 		 */
-		coreboot-extra@0 {
+		coreboot-extra {
 			label = "coreboot-extra";
 			reg = <0x00200000 0x0016c000>;
 			type = "wiped";
@@ -67,7 +67,7 @@
 		};
 
 		/* ---- Section: Rewritable Event Log 16KB ---- */
-		rw-elog@0 {
+		rw-elog {
 			label = "rw-elog";
 			/* Alignment: 4k (for updating) */
 			reg = <0x0036c000 0x00004000>;
@@ -76,7 +76,7 @@
 		};
 
 		/* ---- Section: Rewritable MRC cache 64KB ---- */
-		rw-mrc-cache@0 {
+		rw-mrc-cache {
 			label = "rw-mrc-cache";
 			/* Alignment: 4k (for updating) */
 			reg = <0x00370000 0x00010000>;
@@ -85,7 +85,7 @@
 		};
 
 		/* ---- Section: Rewritable VPD 4 KB ---- */
-		rw-vpd@0 {
+		rw-vpd {
 			label = "rw-vpd";
 			/* Alignment: 4k (for updating) */
 			reg = <0x00380000 0x00001000>;
@@ -94,7 +94,7 @@
 		};
 
 		/* ---- Section: Rewritable shared 16 KB---- */
-		shared-section@0 {
+		shared-section {
 			/*
 			 * Alignment: 4k (for updating).
 			 * Anything in this range may be updated in recovery.
@@ -102,7 +102,7 @@
 			label = "rw-shared";
 			reg = <0x00381000 0x0001b000>;
 		};
-		shared-data@0 {
+		shared-data {
 			label = "shared-data";
 			/*
 			 * Alignment: 4k (for random read/write).
@@ -114,7 +114,7 @@
 		};
 
 		/* ---- Section: Rewritable private 16 KB---- */
-		rw-environment@0 {
+		rw-environment {
 			label = "rw-environment";
 			/*
 			 * Alignment: 4k, and must occupy bottom of U-Boot
@@ -132,12 +132,12 @@
 		};
 
 		/* ---- Section: Rewritable slot A ---- */
-		rw-a@0 {
+		rw-a {
 			label = "rw-section-a";
 			/* Alignment: 4k (for updating) */
 			reg = <0x003a0000 0x000f0000>;
 		};
-		rw-a-vblock@0 {
+		rw-a-vblock {
 			label = "vblock-a";
 			/*
 			 * Alignment: 4k (for updating) and must be in start of
@@ -151,13 +151,13 @@
 			kernelkey = "kernel_subkey.vbpubk";
 			preamble-flags = <1>;
 		};
-		rw-a-boot@0 {
+		rw-a-boot {
 			/* Alignment: no requirement (yet). */
 			label = "fw-main-a";
 			reg = <0x003b0000 0x000dffc0>;
 			type = "blob boot";
 		};
-		rw-a-firmware-id@0 {
+		rw-a-firmware-id {
 			/* Alignment: no requirement. */
 			label = "rw-fwid-a";
 			reg = <0x0048ffc0 0x00000040>;
@@ -166,12 +166,12 @@
 		};
 
 		/* ---- Section: Rewritable slot B ---- */
-		rw-b@0 {
+		rw-b {
 			label = "rw-section-b";
 			/* Alignment: 4k (for updating) */
 			reg = <0x00490000 0x000f0000>;
 		};
-		rw-b-vblock@0 {
+		rw-b-vblock {
 			label = "vblock-b";
 			/*
 			 * Alignment: 4k (for updating) and must be in start of
@@ -185,13 +185,13 @@
 			kernelkey = "kernel_subkey.vbpubk";
 			preamble-flags = <1>;
 		};
-		rw-b-boot@0 {
+		rw-b-boot {
 			label = "fw-main-b";
 			/* Alignment: no requirement (yet). */
 			reg = <0x004a0000 0x000dffc0>;
 			type = "blob boot";
 		};
-		rw-b-firmware-id@0 {
+		rw-b-firmware-id {
 			label = "rw-fwid-b";
 			/* Alignment: no requirement. */
 			reg = <0x0057ffc0 0x00000040>;
@@ -200,7 +200,7 @@
 		};
 
 		/* ---- Section: Vital-product data (VPD) ---- */
-		ro-vpd@0 {
+		ro-vpd {
 			label = "ro-vpd";
 
 			/* VPD offset must be aligned to 4K bytes */
@@ -211,12 +211,12 @@
 		};
 
 		/* ---- Section: Read-only ---- */
-		ro-section@0 {
+		ro-section {
 			label = "ro-section";
 			reg = <0x005a0000 0x001e0000>;
 			read-only;
 		};
-		ro-fmap@0 {
+		ro-fmap {
 			label = "fmap";
 
 			/*
@@ -232,25 +232,25 @@
 			ver-major = <1>;
 			ver-minor = <0>;
 		};
-		ro-firmware-id@0 {
+		ro-firmware-id {
 			label = "ro-frid";
 			reg = <0x005f0800 0x00000040>;
 			read-only;
 			type = "blobstring fwid";
 		};
-		ro-recovery@0 {
+		ro-recovery {
 			/* Deprecated section */
 			label = "recovery";
 			reg = <0x00600000 0x00080000>;
 			read-only;
 		};
-		ro-data@0 {
+		ro-data {
 			/* Currently unused, simply for padding */
 			label = "ro-data";
 			reg = <0x00680000 0x00040000>;
 			read-only;
 		};
-		ro-gbb@0 {
+		ro-gbb {
 			label = "gbb";
 
 			/* GBB offset must be aligned to 4K bytes */
@@ -258,7 +258,7 @@
 			read-only;
 			type = "blob gbb";
 		};
-		ro-boot@0 {
+		ro-boot {
 			label = "boot-stub";
 			reg = <0x00700000 0x00100000>; /* 1 MB */
 			read-only;

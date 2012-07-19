@@ -20,7 +20,7 @@
 		 * This section covers the all the parts that are not shown
 		 * to the CPU right below 4G.
 		 */
-		si-all@0 {
+		si-all {
 			label = "si-all";
 			reg = <0x00000000 0x00180000>;
 			type = "ifd";
@@ -30,7 +30,7 @@
 		 * Firmware Descriptor section of the Intel Firmware Descriptor
 		 * image.
 		 */
-		si-desc@0 {
+		si-desc {
 			label = "si-desc";
 			reg = <0x00000000 0x00001000>;
 		};
@@ -39,7 +39,7 @@
 		 * Intel Management Engine section of the Intel Firmware
 		 * Descriptor image.
 		 */
-		si-me@0 {
+		si-me {
 			label = "si-me";
 			reg = <0x00001000 0x0017f000>;
 		};
@@ -49,13 +49,13 @@
 		 * This section covers the complete image as shown to the
 		 * CPU right below 4G.
 		 */
-		si-bios@0 {
+		si-bios {
 			label ="si-bios";
 			reg = <0x00180000 0x00680000>;
 		};
 
 		/* ---- Section: Rewritable VPD 4 KB ---- */
-		rw-vpd@0 {
+		rw-vpd {
 			label = "rw-vpd";
 			/* Alignment: 4k (for updating) */
 			reg = <0x00180000 0x00001000>;
@@ -68,7 +68,7 @@
 		 * extensions. cros_bundle_firmware dislikes holes in the
 		 * FMAP, so we cover all empty space here.
 		 */
-		rw-unused@0 {
+		rw-unused {
 			label = "rw-unused";
 			reg = <0x00181000 0x00067000>;
 			type = "wiped";
@@ -76,7 +76,7 @@
 		};
 
 		/* ---- Section: Rewritable shared 80 KB---- */
-		shared-section@0 {
+		shared-section {
 			/* Alignment: 4k (for updating).
 			 * Anything in this range may be updated in recovery. */
 			label = "rw-shared";
@@ -84,7 +84,7 @@
 		};
 
 		/* ---- Section: Rewritable u-boot environment 16 KB---- */
-		rw-environment@0 {
+		rw-environment {
 			label = "rw-environment";
 			/* Alignment 4k: (for updating) */
 			reg = <0x001e8000 0x00004000>;
@@ -98,7 +98,7 @@
 		};
 
 		/* ---- Section: Rewritable MRC cache 64 KB ---- */
-		rw-mrc-cache@0 {
+		rw-mrc-cache {
 			label = "rw-mrc-cache";
 			/* Alignment: 4k (for updating) */
 			reg = <0x001ec000 0x00010000>;
@@ -107,7 +107,7 @@
 		};
 
 		/* ---- Section: Rewritable private 16 KB---- */
-		dev-cfg@0 {
+		dev-cfg {
 			label = "dev-cfg";
 			/* Alignment: 4k (for updating) */
 			reg = <0x001fc000 0x00004000>;
@@ -116,12 +116,12 @@
 		};
 
 		/* ---- Section: Rewritable slot A ---- */
-		rw-a@0 {
+		rw-a {
 			label = "rw-section-a";
 			/* Alignment: 4k (for updating) */
 			reg = <0x00200000 0x00100000>;
 		};
-		rw-a-vblock@0 {
+		rw-a-vblock {
 			label = "vblock-a";
 			/*
 			 * Alignment: 4k (for updating) and must be in start of
@@ -135,20 +135,20 @@
 			kernelkey = "kernel_subkey.vbpubk";
 			preamble-flags = <1>;
 		};
-		rw-a-boot@0 {
+		rw-a-boot {
 			/* Alignment: no requirement (yet). */
 			label = "fw-main-a";
 			reg = <0x00210000 0x0007ffc0>;
 			type = "blob boot";
 		};
-		rw-a-firmware-id@0 {
+		rw-a-firmware-id {
 			/* Alignment: no requirement. */
 			label = "rw-fwid-a";
 			reg = <0x0028ffc0 0x00000040>;
 			read-only;
 			type = "blobstring fwid";
 		};
-		rw-a-unused@0 {
+		rw-a-unused {
 			label = "rw-unused-a";
 			reg = <0x00290000 0x00070000>;
 			type = "wiped";
@@ -156,12 +156,12 @@
 		};
 
 		/* ---- Section: Rewritable slot B ---- */
-		rw-b@0 {
+		rw-b {
 			label = "rw-section-b";
 			/* Alignment: 4k (for updating) */
 			reg = <0x00300000 0x00100000>;
 		};
-		rw-b-vblock@0 {
+		rw-b-vblock {
 			label = "vblock-b";
 			/*
 			 * Alignment: 4k (for updating) and must be in start of
@@ -175,20 +175,20 @@
 			kernelkey = "kernel_subkey.vbpubk";
 			preamble-flags = <1>;
 		};
-		rw-b-boot@0 {
+		rw-b-boot {
 			label = "fw-main-b";
 			/* Alignment: no requirement (yet). */
 			reg = <0x00310000 0x0007ffc0>;
 			type = "blob boot";
 		};
-		rw-b-firmware-id@0 {
+		rw-b-firmware-id {
 			label = "rw-fwid-b";
 			/* Alignment: no requirement. */
 			reg = <0x0038ffc0 0x00000040>;
 			read-only;
 			type = "blobstring fwid";
 		};
-		rw-b-unused@0 {
+		rw-b-unused {
 			label = "rw-unused-b";
 			reg = <0x00390000 0x00070000>;
 			type = "wiped";
@@ -200,7 +200,7 @@
 		 * extensions. cros_bundle_firmware dislikes holes in the
 		 * FMAP, so we cover all empty space here.
 		 */
-		ro-unused-1@0 {
+		ro-unused-1 {
 			label = "ro-unused-1";
 			reg = <0x00400000 0x00170000>;
 			type = "wiped";
@@ -208,7 +208,7 @@
 		};
 
 		/* ---- Section: Vital-product data (VPD) ---- */
-		ro-vpd@0 {
+		ro-vpd {
 			label = "ro-vpd";
 
 			/* VPD offset must be aligned to 4K bytes */
@@ -223,7 +223,7 @@
 		 * extensions. cros_bundle_firmware dislikes holes in the
 		 * FMAP, so we cover all empty space here.
 		 */
-		ro-unused-2@0 {
+		ro-unused-2 {
 			label = "ro-unused-2";
 			reg = <0x00590000 0x000e0000>;
 			type = "wiped";
@@ -231,12 +231,12 @@
 		};
 
 		/* ---- Section: Read-only ---- */
-		ro-section@0 {
+		ro-section {
 			label = "ro-section";
 			reg = <0x00670000 0x00190000>;
 			read-only;
 		};
-		ro-fmap@0 {
+		ro-fmap {
 			label = "fmap";
 
 			/*
@@ -252,20 +252,20 @@
 			ver-major = <1>;
 			ver-minor = <0>;
 		};
-		ro-firmware-id@0 {
+		ro-firmware-id {
 			label = "ro-frid";
 			reg = <0x00670800 0x00000040>;
 			read-only;
 			type = "blobstring fwid";
 		};
-		ro-padding@0 {
+		ro-padding {
 			label = "ro-padding";
 			reg = <0x00670840 0x0000f7c0>;
 			read-only;
 			type = "wiped";
 			wipe-value = [ff];
 		};
-		ro-gbb@0 {
+		ro-gbb {
 			label = "gbb";
 
 			/* GBB offset must be aligned to 4K bytes */
@@ -273,7 +273,7 @@
 			read-only;
 			type = "blob gbb";
 		};
-		ro-boot@0 {
+		ro-boot {
 			label = "boot-stub";
 			reg = <0x00700000 0x00100000>; /* 1024 KB */
 			read-only;
