@@ -26,9 +26,48 @@
 
 #include <linux/compiler.h>
 #include <ec_commands.h>
+#include <fdtdec.h>
 #include <mkbp_message.h>
 
-struct mkbp_dev;
+/* Which interface is the device on? */
+enum mkbp_interface_t {
+	MKBPIF_NONE,
+	MKBPIF_SPI,
+	MKBPIF_I2C,
+	MKBPIF_LPC,	/* Intel Low Pin Count interface */
+};
+
+/* Our configuration information */
+struct mkbp_dev {
+	enum mkbp_interface_t interface;
+	struct spi_slave *spi;		/* Our SPI slave, if using SPI */
+	int parent_node;		/* Our parent node (interface) */
+	unsigned int cs;		/* Our chip select */
+	unsigned int addr;		/* Device address (for I2C) */
+	unsigned int bus_num;		/* Bus number (for I2C) */
+	unsigned int max_frequency;	/* Maximum interface frequency */
+	struct fdt_gpio_state ec_int;	/* GPIO used as EC interrupt line */
+	int lpc_cmd;			/* LPC command IO port */
+	int lpc_data;			/* LPC command IO port */
+	int lpc_param;			/* LPC param IO port */
+	int lpc_param_len;		/* Length of LPC param space */
+	int lpc_memmap;			/* Memory mapped area */
+	int lpc_memmap_len;		/* Length of memory mapped area */
+
+	/*
+	 * These two buffers will always be dword-aligned and include enough
+	 * space for up to 7 word-alignment bytes also, so we can ensure that
+	 * the body of the message is always dword-aligned (64-bit).
+	 *
+	 * We use this alignment to keep ARM and x86 happy. Probably word
+	 * alignment would be OK, there might be a small performance advantage
+	 * to using dword.
+	 */
+	uint8_t din[ALIGN(MSG_BYTES + sizeof(int64_t), sizeof(int64_t))]
+		__attribute__((aligned(sizeof(int64_t))));
+	uint8_t dout[ALIGN(MSG_BYTES + sizeof(int64_t), sizeof(int64_t))]
+		__attribute__((aligned(sizeof(int64_t))));
+};
 
 /*
  * Hard-code the number of columns we happen to know we have right now.  It
@@ -156,5 +195,14 @@ int mkbp_test(struct mkbp_dev *dev);
  * @return pointer to MKBP device, or NULL if none is available
  */
 struct mkbp_dev *board_get_mkbp_dev(void);
+
+
+/* Internal interfaces */
+int mkbp_i2c_command(struct mkbp_dev *dev, uint8_t cmd, const uint8_t *dout,
+		     int dout_len, uint8_t *din, int din_len);
+int mkbp_lpc_command(struct mkbp_dev *dev, uint8_t cmd, const uint8_t *dout,
+		     int dout_len, uint8_t *din, int din_len);
+int mkbp_spi_command(struct mkbp_dev *dev, uint8_t cmd, const uint8_t *dout,
+		     int dout_len, uint8_t *din, int din_len);
 
 #endif
