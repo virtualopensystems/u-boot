@@ -99,15 +99,19 @@ static int ec_command(struct mkbp_dev *dev, uint8_t cmd, int cmd_version,
 
 int mkbp_scan_keyboard(struct mkbp_dev *dev, struct mbkp_keyscan *scan)
 {
-	return ec_command(dev, EC_CMD_MKBP_STATE, 0, NULL, 0, scan->data,
-			  sizeof(scan->data));
+	if (ec_command(dev, EC_CMD_MKBP_STATE, 0, NULL, 0, scan->data,
+		       sizeof(scan->data)) < sizeof(scan->data))
+		return -1;
+
+	return 0;
 }
 
 int mkbp_read_id(struct mkbp_dev *dev, char *id, int maxlen)
 {
 	struct ec_response_get_version r;
 
-	if (ec_command(dev, EC_CMD_GET_VERSION, 0, NULL, 0, &r, sizeof(r)) < 0)
+	if (ec_command(dev, EC_CMD_GET_VERSION, 0, NULL, 0, &r,
+		       sizeof(r)) < sizeof(r))
 		return -1;
 
 	if (maxlen > sizeof(r.version_string_ro))
@@ -132,7 +136,8 @@ int mkbp_read_current_image(struct mkbp_dev *dev, enum ec_current_image *image)
 {
 	struct ec_response_get_version r;
 
-	if (ec_command(dev, EC_CMD_GET_VERSION, 0, NULL, 0, &r, sizeof(r)) < 0)
+	if (ec_command(dev, EC_CMD_GET_VERSION, 0, NULL, 0, &r,
+		       sizeof(r)) < sizeof(r))
 		return -1;
 
 	*image = r.current_image;
@@ -197,8 +202,11 @@ int mkbp_interrupt_pending(struct mkbp_dev *dev)
 
 int mkbp_info(struct mkbp_dev *dev, struct ec_response_mkbp_info *info)
 {
-	return ec_command(dev, EC_CMD_MKBP_INFO, 0,
-			  NULL, 0, info, sizeof(*info));
+	if (ec_command(dev, EC_CMD_MKBP_INFO, 0,
+		       NULL, 0, info, sizeof(*info) < sizeof(*info)))
+		return -1;
+
+	return 0;
 }
 
 int mkbp_get_host_events(struct mkbp_dev *dev, uint32_t *events_ptr)
@@ -210,7 +218,7 @@ int mkbp_get_host_events(struct mkbp_dev *dev, uint32_t *events_ptr)
 	 * used by ACPI/SMI.
 	 */
 	if (ec_command(dev, EC_CMD_HOST_EVENT_GET_B, 0, NULL, 0,
-		       &resp, sizeof(resp)) < 0)
+		       &resp, sizeof(resp)) < sizeof(resp))
 		return -1;
 
 	if (resp.mask & EC_HOST_EVENT_MASK(EC_HOST_EVENT_INVALID))
@@ -230,8 +238,11 @@ int mkbp_clear_host_events(struct mkbp_dev *dev, uint32_t events)
 	 * Use the B copy of the event flags, so it affects the data returned
 	 * by mkbp_get_host_events().
 	 */
-	return ec_command(dev, EC_CMD_HOST_EVENT_CLEAR_B, 0,
-			  &params, sizeof(params), NULL, 0);
+	if (ec_command(dev, EC_CMD_HOST_EVENT_CLEAR_B, 0,
+		       &params, sizeof(params), NULL, 0) < 0)
+		return -1;
+
+	return 0;
 }
 
 int mkbp_test(struct mkbp_dev *dev)
@@ -241,7 +252,7 @@ int mkbp_test(struct mkbp_dev *dev)
 
 	req.in_data = 0x12345678;
 	if (ec_command(dev, EC_CMD_HELLO, 0, (uint8_t **)&req, sizeof(req),
-			(uint8_t **)&resp, sizeof(*resp)) < 0) {
+		       (uint8_t **)&resp, sizeof(*resp)) < sizeof(*resp)) {
 		printf("ec_command() returned error\n");
 		return -1;
 	}
