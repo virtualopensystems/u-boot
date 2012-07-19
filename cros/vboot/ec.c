@@ -155,9 +155,3 @@ VbError_t VbExEcProtectRW(void)
 }
 
 #endif  /* CONFIG_MKBP */
-
-VbError_t VbExEcGetExpectedRW(const uint8_t **image, int *image_size)
-{
-	/* TODO (sjg@chromium.org): implement me!  crosbug.com/p/11148 */
-	return VBERROR_UNKNOWN;
-}
