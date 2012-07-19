@@ -104,4 +104,7 @@
 					"stdout=serial\0" \
 					"stderr=serial\0"
 
+/* SPI */
+#define CONFIG_CMD_SF
+#define CONFIG_SANDBOX_SPI
 #endif
