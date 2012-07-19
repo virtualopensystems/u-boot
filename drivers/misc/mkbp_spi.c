@@ -157,6 +157,11 @@ int mkbp_spi_command(struct mkbp_dev *dev, uint8_t cmd, int cmd_version,
  */
 int mkbp_spi_init(struct mkbp_dev *dev, const void *blob)
 {
+	/* Decode interface-specific FDT params */
+	dev->max_frequency = fdtdec_get_int(blob, dev->node,
+					    "spi-max-frequency", 500000);
+	dev->cs = fdtdec_get_int(blob, dev->node, "reg", 0);
+
 	dev->spi = spi_setup_slave_fdt(blob, dev->parent_node,
 				       dev->cs, dev->max_frequency, 0);
 	if (!dev->spi) {

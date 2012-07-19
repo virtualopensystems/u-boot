@@ -41,6 +41,7 @@ enum mkbp_interface_t {
 struct mkbp_dev {
 	enum mkbp_interface_t interface;
 	struct spi_slave *spi;		/* Our SPI slave, if using SPI */
+	int node;                       /* Our node */
 	int parent_node;		/* Our parent node (interface) */
 	unsigned int cs;		/* Our chip select */
 	unsigned int addr;		/* Device address (for I2C) */

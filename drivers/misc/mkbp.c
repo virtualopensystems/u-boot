@@ -282,40 +282,17 @@ static int mkbp_decode_fdt(const void *blob, int node, struct mkbp_dev **devp)
 #ifdef CONFIG_MKBP_SPI
 	case COMPAT_SAMSUNG_EXYNOS_SPI:
 		interface = MKBPIF_SPI;
-		dev->max_frequency = fdtdec_get_int(blob, node,
-						"spi-max-frequency", 500000);
-		dev->cs = fdtdec_get_int(blob, node, "reg", 0);
 		break;
 #endif
 #ifdef CONFIG_MKBP_I2C
 	case COMPAT_SAMSUNG_S3C2440_I2C:
 		interface = MKBPIF_I2C;
-		dev->max_frequency = fdtdec_get_int(blob, node,
-						    "i2c-max-frequency",
-						    100000);
-		dev->bus_num = i2c_get_bus_num_fdt(blob, parent);
-		dev->addr = fdtdec_get_int(blob, node, "reg", 0);
 		break;
 #endif
 #ifdef CONFIG_MKBP_LPC
-	case COMPAT_INTEL_LPC: {
-		int len;
-		const u32 *reg;
-
+	case COMPAT_INTEL_LPC:
 		interface = MKBPIF_LPC;
-		reg = fdt_getprop(blob, node, "reg", &len);
-		if (len < sizeof(u32) * 8) {
-			debug("%s: LPC reg property is too small\n", __func__);
-			return -1;
-		}
-		dev->lpc_cmd = fdt32_to_cpu(reg[0]);
-		dev->lpc_data = fdt32_to_cpu(reg[2]);
-		dev->lpc_param = fdt32_to_cpu(reg[4]);
-		dev->lpc_param_len = fdt32_to_cpu(reg[5]);
-		dev->lpc_memmap = fdt32_to_cpu(reg[6]);
-		dev->lpc_memmap_len = fdt32_to_cpu(reg[7]);
 		break;
-	}
 #endif
 	default:
 		debug("%s: Unknown compat id %d\n", __func__, compat);
@@ -324,6 +301,7 @@ static int mkbp_decode_fdt(const void *blob, int node, struct mkbp_dev **devp)
 
 	fdtdec_decode_gpio(blob, node, "ec-interrupt", &dev->ec_int);
 	dev->interface = interface;
+	dev->node = node;
 	dev->parent_node = parent;
 	*devp = dev;
 

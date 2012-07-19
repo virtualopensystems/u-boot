@@ -136,6 +136,12 @@ int mkbp_i2c_command(struct mkbp_dev *dev, uint8_t cmd, int cmd_version,
  */
 int mkbp_i2c_init(struct mkbp_dev *dev, const void *blob)
 {
+	/* Decode interface-specific FDT params */
+	dev->max_frequency = fdtdec_get_int(blob, dev->node,
+					    "i2c-max-frequency", 100000);
+	dev->bus_num = i2c_get_bus_num_fdt(blob, dev->parent_node);
+	dev->addr = fdtdec_get_int(blob, dev->node, "reg", 0);
+
 	i2c_init(dev->max_frequency, dev->addr);
 
 	dev->cmd_version_is_supported = 0;

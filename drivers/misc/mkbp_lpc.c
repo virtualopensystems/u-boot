@@ -127,6 +127,22 @@ int mkbp_lpc_command(struct mkbp_dev *dev, uint8_t cmd, int cmd_version,
  */
 int mkbp_lpc_init(struct mkbp_dev *dev, const void *blob)
 {
+	const u32 *reg;
+	int len;
+
+	/* Decode interface-specific FDT params */
+	reg = fdt_getprop(blob, dev->node, "reg", &len);
+	if (len < sizeof(u32) * 8) {
+		debug("%s: LPC reg property is too small\n", __func__);
+		return -1;
+	}
+	dev->lpc_cmd = fdt32_to_cpu(reg[0]);
+	dev->lpc_data = fdt32_to_cpu(reg[2]);
+	dev->lpc_param = fdt32_to_cpu(reg[4]);
+	dev->lpc_param_len = fdt32_to_cpu(reg[5]);
+	dev->lpc_memmap = fdt32_to_cpu(reg[6]);
+	dev->lpc_memmap_len = fdt32_to_cpu(reg[7]);
+
 	/*
 	 * Test if LPC command args are supported.
 	 *
