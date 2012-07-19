@@ -44,7 +44,7 @@ static int wait_for_sync(struct mkbp_dev *dev)
 	unsigned long start;
 
 	start = get_timer(0);
-	while (inb(dev->lpc_cmd) & EC_LPC_STATUS_BUSY_MASK) {
+	while (inb(EC_LPC_ADDR_HOST_CMD) & EC_LPC_STATUS_BUSY_MASK) {
 		if (get_timer(start) > 1000) {
 			debug("%s: Timeout waiting for MKBP sync\n", __func__);
 			return -1;
@@ -74,12 +74,12 @@ int mkbp_lpc_command(struct mkbp_dev *dev, uint8_t cmd, int cmd_version,
 {
 	int ret, i;
 
-	if (dout_len > dev->lpc_param_len) {
+	if (dout_len > EC_OLD_PARAM_SIZE) {
 		debug("%s: Cannot send %d bytes\n", __func__, dout_len);
 		return -1;
 	}
 
-	if (din_len > dev->lpc_param_len) {
+	if (din_len > EC_OLD_PARAM_SIZE) {
 		debug("%s: Cannot receive %d bytes\n", __func__, din_len);
 		return -1;
 	}
@@ -92,9 +92,9 @@ int mkbp_lpc_command(struct mkbp_dev *dev, uint8_t cmd, int cmd_version,
 	debug_trace("cmd: %02x, ", command);
 	for (i = 0; i < dout_len; i++) {
 		debug_trace("%02x ", dout[i]);
-		outb(dout[i], dev->lpc_param + i);
+		outb(dout[i], EC_LPC_ADDR_OLD_PARAM + i);
 	}
-	outb(cmd, dev->lpc_cmd);
+	outb(cmd, EC_LPC_ADDR_HOST_CMD);
 	debug_trace("\n");
 
 	if (wait_for_sync(dev)) {
@@ -102,7 +102,7 @@ int mkbp_lpc_command(struct mkbp_dev *dev, uint8_t cmd, int cmd_version,
 		return -1;
 	}
 
-	ret = inb(dev->lpc_data);
+	ret = inb(EC_LPC_ADDR_HOST_DATA);
 	if (ret) {
 		debug("%s: MKBP result code %d\n", __func__, ret);
 		return -ret;
@@ -110,7 +110,7 @@ int mkbp_lpc_command(struct mkbp_dev *dev, uint8_t cmd, int cmd_version,
 
 	debug_trace("resp: %02x, ", ret);
 	for (i = 0; i < din_len; i++) {
-		din[i] = inb(dev->lpc_param + i);
+		din[i] = inb(EC_LPC_ADDR_OLD_PARAM + i);
 		debug_trace("%02x ", din[i]);
 	}
 	debug_trace("\n");
@@ -127,22 +127,6 @@ int mkbp_lpc_command(struct mkbp_dev *dev, uint8_t cmd, int cmd_version,
  */
 int mkbp_lpc_init(struct mkbp_dev *dev, const void *blob)
 {
-	const u32 *reg;
-	int len;
-
-	/* Decode interface-specific FDT params */
-	reg = fdt_getprop(blob, dev->node, "reg", &len);
-	if (len < sizeof(u32) * 8) {
-		debug("%s: LPC reg property is too small\n", __func__);
-		return -1;
-	}
-	dev->lpc_cmd = fdt32_to_cpu(reg[0]);
-	dev->lpc_data = fdt32_to_cpu(reg[2]);
-	dev->lpc_param = fdt32_to_cpu(reg[4]);
-	dev->lpc_param_len = fdt32_to_cpu(reg[5]);
-	dev->lpc_memmap = fdt32_to_cpu(reg[6]);
-	dev->lpc_memmap_len = fdt32_to_cpu(reg[7]);
-
 	/*
 	 * Test if LPC command args are supported.
 	 *
@@ -151,9 +135,9 @@ int mkbp_lpc_init(struct mkbp_dev *dev, const void *blob)
 	 * seeing whether the EC sets the EC_HOST_ARGS_FLAG_FROM_HOST flag
 	 * in args when it responds.
 	 */
-	if (inb(dev->lpc_memmap + EC_MEMMAP_ID) == 'E' &&
-	    inb(dev->lpc_memmap + EC_MEMMAP_ID + 1) == 'C' &&
-	    (inb(dev->lpc_memmap + EC_MEMMAP_HOST_CMD_FLAGS) &
+	if (inb(EC_LPC_ADDR_MEMMAP + EC_MEMMAP_ID) == 'E' &&
+	    inb(EC_LPC_ADDR_MEMMAP + EC_MEMMAP_ID + 1) == 'C' &&
+	    (inb(EC_LPC_ADDR_MEMMAP + EC_MEMMAP_HOST_CMD_FLAGS) &
 	     EC_HOST_CMD_FLAG_LPC_ARGS_SUPPORTED)) {
 		/* A MKBP-capable EC is present and supports command args */
 #ifdef CONFIG_MKBP_LPC_ARGS_SUPPORTED
@@ -176,10 +160,10 @@ int mkbp_lpc_init(struct mkbp_dev *dev, const void *blob)
 		 * Better make sure there's an MKBP-capable EC there at all.
 		 * If all of the I/O space is 0xff, there's not.
 		 */
-		byte &= inb(dev->lpc_cmd);
-		byte &= inb(dev->lpc_data);
-		for (i = 0; i < dev->lpc_param_len; i++)
-			byte &= inb(dev->lpc_param + i);
+		byte &= inb(EC_LPC_ADDR_HOST_CMD);
+		byte &= inb(EC_LPC_ADDR_HOST_DATA);
+		for (i = 0; i < EC_OLD_PARAM_SIZE; i++)
+			byte &= inb(EC_LPC_ADDR_OLD_PARAM + i);
 		if (byte == 0xff) {
 			debug("%s: MKBP device not found on LPC bus\n",
 			      __func__);

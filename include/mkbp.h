@@ -49,12 +49,6 @@ struct mkbp_dev {
 	unsigned int max_frequency;	/* Maximum interface frequency */
 	struct fdt_gpio_state ec_int;	/* GPIO used as EC interrupt line */
 	int cmd_version_is_supported;   /* Device supports command versions */
-	int lpc_cmd;			/* LPC command IO port */
-	int lpc_data;			/* LPC command IO port */
-	int lpc_param;			/* LPC param IO port */
-	int lpc_param_len;		/* Length of LPC param space */
-	int lpc_memmap;			/* Memory mapped area */
-	int lpc_memmap_len;		/* Length of memory mapped area */
 
 	/*
 	 * These two buffers will always be dword-aligned and include enough
