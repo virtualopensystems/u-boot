@@ -146,4 +146,19 @@ u64 os_get_nsec(void);
  */
 int os_parse_args(struct sandbox_state *state, int argc, char *argv[]);
 
+/**
+ * Attaches to the shared memory region created by the sandbox-daemon.
+ *
+ * @param addr		Pointer to pointer; shared memory address placed here.
+ * @return  0 -> success
+ *	   -1 -> unable to attach
+ *         -2 -> shared memory not found
+ */
+int os_attach_shared_memory(void **addr);
+
+/**
+ * Detaches from shared memory.  Used on exit.
+ */
+void os_detach_shared_memory(void);
+
 #endif

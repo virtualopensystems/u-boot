@@ -31,11 +31,16 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <linux/types.h>
+#include <sys/shm.h>
 
 #include <asm/getopt.h>
 #include <asm/sections.h>
 #include <asm/state.h>
 #include <os.h>
+
+#include "asm/sandbox-daemon.h"
+
+static int   shm_id;
 
 /* Operating System Interface */
 
@@ -102,6 +107,7 @@ int os_close(int fd)
 
 void os_exit(int exit_code)
 {
+	os_detach_shared_memory();
 	exit(exit_code);
 }
 
@@ -259,5 +265,26 @@ int os_parse_args(struct sandbox_state *state, int argc, char *argv[])
 		}
 	}
 
+	return 0;
+}
+
+void os_detach_shared_memory(void)
+{
+	shmctl(shm_id, IPC_RMID, NULL);
+}
+
+int os_attach_shared_memory(void **addr)
+{
+	void *shm_memory = NULL;
+
+	shm_id = shmget(SANDBOX_SHM_KEY, SANDBOX_SHM_SIZE, S_IRWXU);
+	if (shm_id != -1) {
+		shm_memory = shmat(shm_id, SANDBOX_SHM_ADDRESS, S_IRWXU);
+		if (shm_memory == (void *)-1)
+			return -1;
+	} else
+		return -2;
+
+	*addr = shm_memory;
 	return 0;
 }
