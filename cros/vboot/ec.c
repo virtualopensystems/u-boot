@@ -71,6 +71,7 @@ VbError_t VbExEcJumpToRW(void)
 VbError_t VbExEcStayInRO(void)
 {
 	struct mkbp_dev *mdev = board_get_mkbp_dev();
+
 	if (mkbp_reboot(mdev, EC_REBOOT_DISABLE_JUMP, 0) < 0)
 		return VBERROR_UNKNOWN;
 
@@ -116,7 +117,19 @@ VbError_t VbExEcUpdateRW(const uint8_t  *image, int image_size)
 
 VbError_t VbExEcProtectRW(void)
 {
-	/* TODO (rspangler@chromium.org): implement me!  crosbug.com/p/11150 */
+	struct mkbp_dev *mdev = board_get_mkbp_dev();
+	struct ec_response_flash_protect resp;
+
+	/* Protect all flash code */
+	if (mkbp_flash_protect(mdev, EC_FLASH_PROTECT_RW_NOW,
+			       EC_FLASH_PROTECT_RW_NOW, &resp) < 0)
+		return VBERROR_UNKNOWN;
+
+	/* If write protect is asserted, that should have worked. */
+	if ((resp.flags & EC_FLASH_PROTECT_GPIO_ASSERTED) &&
+	    !(resp.flags & EC_FLASH_PROTECT_RW_NOW))
+		return VBERROR_UNKNOWN;
+
 	return VBERROR_SUCCESS;
 }
 

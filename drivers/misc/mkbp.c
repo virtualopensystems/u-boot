@@ -245,6 +245,23 @@ int mkbp_clear_host_events(struct mkbp_dev *dev, uint32_t events)
 	return 0;
 }
 
+int mkbp_flash_protect(struct mkbp_dev *dev,
+		       uint32_t set_mask, uint32_t set_flags,
+		       struct ec_response_flash_protect *resp)
+{
+	struct ec_params_flash_protect params;
+
+	params.mask = set_mask;
+	params.flags = set_flags;
+
+	if (ec_command(dev, EC_CMD_FLASH_PROTECT, EC_VER_FLASH_PROTECT,
+		       &params, sizeof(params),
+		       resp, sizeof(*resp)) < sizeof(*resp))
+		return -1;
+
+	return 0;
+}
+
 int mkbp_test(struct mkbp_dev *dev)
 {
 	struct ec_params_hello req;

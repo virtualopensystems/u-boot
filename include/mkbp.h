@@ -176,6 +176,22 @@ int mkbp_get_host_events(struct mkbp_dev *dev, uint32_t *events_ptr);
 int mkbp_clear_host_events(struct mkbp_dev *dev, uint32_t events);
 
 /**
+ * Get/set flash protection
+ *
+ * @param dev		MKBP device
+ * @param set_mask	Mask of flags to set; if 0, just retrieves existing
+ *                      protection state without changing it.
+ * @param set_flags	New flag values; only bits in set_mask are applied;
+ *                      ignored if set_mask=0.
+ * @param prot          Destination for updated protection state from EC.
+ * @return 0 if ok, <0 on error
+ */
+int mkbp_flash_protect(struct mkbp_dev *dev,
+		       uint32_t set_mask, uint32_t set_flags,
+		       struct ec_response_flash_protect *resp);
+
+
+/**
  * Run internal tests on the mkbp interface.
  *
  * @param dev		MKBP device
