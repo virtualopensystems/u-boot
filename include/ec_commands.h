@@ -128,6 +128,14 @@
  */
 #ifndef __ACPI__
 
+/*
+ * Define __packed if someone hasn't beat us to it.  Linux kernel style
+ * checking prefers __packed over __attribute__((packed)).
+ */
+#ifndef __packed
+#define __packed __attribute__((packed))
+#endif
+
 /* LPC command status byte masks */
 /* EC has written a byte in the data register and host hasn't read it yet */
 #define EC_LPC_STATUS_TO_HOST     0x01
@@ -282,15 +290,14 @@ struct ec_response_hello {
 enum ec_current_image {
 	EC_IMAGE_UNKNOWN = 0,
 	EC_IMAGE_RO,
-	EC_IMAGE_RW_A,
-	EC_IMAGE_RW_B
+	EC_IMAGE_RW
 };
 
 struct ec_response_get_version {
-	/* Null-terminated version strings for RO, RW-A, RW-B */
+	/* Null-terminated version strings for RO, RW */
 	char version_string_ro[32];
-	char version_string_rw_a[32];
-	char version_string_rw_b[32];
+	char version_string_rw[32];
+	char reserved[32];       /* Was previously RW-B string */
 	uint32_t current_image;  /* One of ec_current_image */
 } __packed;
 
@@ -419,59 +426,64 @@ struct ec_params_flash_erase {
 	uint32_t size;     /* Size to erase in bytes */
 } __packed;
 
-/* Get flashmap offset */
-#define EC_CMD_FLASH_GET_FLASHMAP 0x14
+/*
+ * Get/set flash protection.
+ *
+ * If mask!=0, sets/clear the requested bits of flags.  Depending on the
+ * firmware write protect GPIO, not all flags will take effect immediately;
+ * some flags require a subsequent hard reset to take effect.  Check the
+ * returned flags bits to see what actually happened.
+ *
+ * If mask=0, simply returns the current flags state.
+ */
+#define EC_CMD_FLASH_PROTECT 0x15
+#define EC_VER_FLASH_PROTECT 1  /* Command version 1 */
 
-struct ec_response_flash_flashmap {
-	uint32_t offset;   /* Flashmap offset */
+/* Flags for flash protection */
+/* RO flash code protected when the EC boots */
+#define EC_FLASH_PROTECT_RO_AT_BOOT         (1 << 0)
+/*
+ * RO flash code protected now.  If this bit is set, at-boot status cannot
+ * be changed.
+ */
+#define EC_FLASH_PROTECT_RO_NOW             (1 << 1)
+/* RW flash code protected now, until reboot. */
+#define EC_FLASH_PROTECT_RW_NOW             (1 << 2)
+/* Flash write protect GPIO is asserted now */
+#define EC_FLASH_PROTECT_GPIO_ASSERTED      (1 << 3)
+/* Error - at least one bank of flash is stuck locked, and cannot be unlocked */
+#define EC_FLASH_PROTECT_ERROR_STUCK        (1 << 4)
+/*
+ * Error - flash protection is in inconsistent state.  At least one bank of
+ * flash which should be protected is not protected.  Usually fixed by
+ * re-requesting the desired flags, or by a hard reset if that fails.
+ */
+#define EC_FLASH_PROTECT_ERROR_INCONSISTENT (1 << 5)
+/* RW flash code protected when the EC boots */
+#define EC_FLASH_PROTECT_RW_AT_BOOT         (1 << 6)
+
+struct ec_params_flash_protect {
+	uint32_t mask;   /* Bits in flags to apply */
+	uint32_t flags;  /* New flags to apply */
 } __packed;
 
-/* Enable/disable flash write protect */
-#define EC_CMD_FLASH_WP_ENABLE 0x15
-
-struct ec_params_flash_wp_enable {
-	uint32_t enable_wp;
+struct ec_response_flash_protect {
+	/* Current value of flash protect flags */
+	uint32_t flags;
+	/*
+	 * Flags which are valid on this platform.  This allows the caller
+	 * to distinguish between flags which aren't set vs. flags which can't
+	 * be set on this platform.
+	 */
+	uint32_t valid_flags;
+	/* Flags which can be changed given the current protection state */
+	uint32_t writable_flags;
 } __packed;
-
-/* Get flash write protection commit state */
-#define EC_CMD_FLASH_WP_GET_STATE 0x16
-
-struct ec_response_flash_wp_enable {
-	uint32_t enable_wp;
-} __packed;
-
-/* Set/get flash write protection range */
-#define EC_CMD_FLASH_WP_SET_RANGE 0x17
-
-struct ec_params_flash_wp_range {
-	/* Byte offset aligned to info.protect_block_size */
-	uint32_t offset;
-	/* Size should be multiply of info.protect_block_size */
-	uint32_t size;
-} __packed;
-
-#define EC_CMD_FLASH_WP_GET_RANGE 0x18
-
-struct ec_response_flash_wp_range {
-	uint32_t offset;
-	uint32_t size;
-} __packed;
-
-/* Read flash write protection GPIO pin */
-#define EC_CMD_FLASH_WP_GET_GPIO 0x19
 
 /*
- * TODO: why does this pass in a pin number?  EC *KNOWS* what the pin is.
- * Of course, the EC doesn't implement this message yet, so this is somewhat
- * theoretical.
+ * Note: commands 0x14 - 0x19 version 0 were old commands to get/set flash
+ * write protect.  These commands may be reused with version > 0.
  */
-struct ec_params_flash_wp_gpio {
-	uint32_t pin_no;
-} __packed;
-
-struct ec_response_flash_wp_gpio {
-	uint32_t value;
-} __packed;
 
 /*****************************************************************************/
 /* PWM commands */
@@ -781,7 +793,7 @@ struct ec_response_host_event_mask {
 #define EC_CMD_HOST_EVENT_CLEAR_B       0x8f
 
 /*****************************************************************************/
-/* GPIO switch commands */
+/* Switch commands */
 
 /* Enable/disable LCD backlight */
 #define EC_CMD_SWITCH_ENABLE_BKLIGHT 0x90
@@ -795,6 +807,27 @@ struct ec_params_switch_enable_backlight {
 
 struct ec_params_switch_enable_wireless {
 	uint8_t enabled;
+} __packed;
+
+/*****************************************************************************/
+/* GPIO commands. Only available on EC if write protect has been disabled. */
+
+/* Set GPIO output value */
+#define EC_CMD_GPIO_SET 0x92
+
+struct ec_params_gpio_set {
+	char name[32];
+	uint8_t val;
+} __packed;
+
+/* Get GPIO value */
+#define EC_CMD_GPIO_GET 0x93
+
+struct ec_params_gpio_get {
+	char name[32];
+} __packed;
+struct ec_response_gpio_get {
+	uint8_t val;
 } __packed;
 
 /*****************************************************************************/
@@ -825,6 +858,12 @@ struct ec_params_i2c_write {
 } __packed;
 
 /*****************************************************************************/
+/* Charge state commands. Only available when flash write protect unlocked. */
+
+/* Force charge state machine to stop in idle mode */
+#define EC_CMD_CHARGE_FORCE_IDLE 0x96
+
+/*****************************************************************************/
 /* System commands */
 
 /*
@@ -837,9 +876,9 @@ struct ec_params_i2c_write {
 enum ec_reboot_cmd {
 	EC_REBOOT_CANCEL = 0,        /* Cancel a pending reboot */
 	EC_REBOOT_JUMP_RO,           /* Jump to RO without rebooting */
-	EC_REBOOT_JUMP_RW_A,         /* Jump to RW-A without rebooting */
-	EC_REBOOT_JUMP_RW_B,         /* Jump to RW-B without rebooting */
-	EC_REBOOT_COLD,              /* Cold-reboot */
+	EC_REBOOT_JUMP_RW,           /* Jump to RW without rebooting */
+	/* (command 3 was jump to RW-B) */
+	EC_REBOOT_COLD = 4,          /* Cold-reboot */
 	EC_REBOOT_DISABLE_JUMP,      /* Disable jump until next reboot */
 };
 

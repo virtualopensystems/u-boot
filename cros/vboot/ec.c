@@ -48,7 +48,7 @@ VbError_t VbExEcRunningRW(int *in_rw)
 	case EC_IMAGE_RO:
 		*in_rw = 0;
 		break;
-	case EC_IMAGE_RW_A:
+	case EC_IMAGE_RW:
 		*in_rw = 1;
 		break;
 	default:
@@ -62,7 +62,7 @@ VbError_t VbExEcJumpToRW(void)
 {
 	struct mkbp_dev *mdev = board_get_mkbp_dev();
 
-	if (mkbp_reboot(mdev, EC_REBOOT_JUMP_RW_A, 0) < 0)
+	if (mkbp_reboot(mdev, EC_REBOOT_JUMP_RW, 0) < 0)
 		return VBERROR_UNKNOWN;
 
 	return VBERROR_SUCCESS;

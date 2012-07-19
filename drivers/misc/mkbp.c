@@ -426,11 +426,8 @@ int mkbp_read_id(struct mkbp_dev *dev, char *id, int maxlen)
 	case EC_IMAGE_RO:
 		memcpy(id, r.version_string_ro, maxlen);
 		break;
-	case EC_IMAGE_RW_A:
-		memcpy(id, r.version_string_rw_a, maxlen);
-		break;
-	case EC_IMAGE_RW_B:
-		memcpy(id, r.version_string_rw_b, maxlen);
+	case EC_IMAGE_RW:
+		memcpy(id, r.version_string_rw, maxlen);
 		break;
 	default:
 		return -1;
@@ -777,7 +774,7 @@ static int do_mkbp(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		enum ec_reboot_cmd cmd = EC_REBOOT_COLD;
 
 		if (argc >= 3 && !strcmp(argv[2], "rw"))
-			cmd = EC_REBOOT_JUMP_RW_A;
+			cmd = EC_REBOOT_JUMP_RW;
 
 		if (mkbp_reboot(dev, cmd, 0)) {
 			debug("%s: Could not reboot KBC\n", __func__);
