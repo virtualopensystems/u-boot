@@ -116,7 +116,10 @@ typedef int (init_fnc_t) (void);
 
 void __dram_init_banksize(void)
 {
-	gd->bd->bi_dram[0].start = 0;
+/* TODO(thutt): must be able to include 'sandbox-api.h' */
+#define SANDBOX_SHM_ADDRESS 0x10000000
+	gd->bd->bi_dram[0].start = SANDBOX_SHM_ADDRESS;
+#undef SANDBOX_SHM_ADDRESS
 	gd->bd->bi_dram[0].size =  gd->ram_size;
 }
 
@@ -151,6 +154,7 @@ void board_init_f(ulong bootflag)
 	init_fnc_t **init_fnc_ptr;
 	uchar *mem;
 	unsigned long addr_sp, addr, size;
+	int attached;
 
 	gd = &gd_mem;
 	assert(gd);
@@ -171,7 +175,17 @@ void board_init_f(ulong bootflag)
 	}
 
 	size = CONFIG_SYS_SDRAM_SIZE;
-	mem = os_malloc(CONFIG_SYS_SDRAM_SIZE);
+	attached = os_attach_shared_memory((void **)&mem);
+	if (attached != 0) {
+		if (attached == -1)
+			debug("Unable to attach to shared memory region");
+		else if (attached == -2)
+			debug("Shared memory region not found");
+		else
+			debug("Unknown failure attaching shared memory\n");
+		os_exit(-attached);
+	}
+	assert(attached == 0);
 
 	assert(mem);
 	gd->ram_buf = mem;
