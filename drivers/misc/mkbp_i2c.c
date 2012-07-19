@@ -45,20 +45,27 @@
  *
  * @param dev		MKBP device
  * @param cmd		Command to send (EC_CMD_...)
+ * @param cmd_version	Version of command to send (EC_VER_...)
  * @param dout          Output data (may be NULL If dout_len=0)
  * @param dout_len      Size of output data in bytes
  * @param din           Response data (may be NULL If din_len=0)
  * @param din_len       Maximum size of response in bytes
  * @return number of bytes in response, or -1 on error
  */
-int mkbp_i2c_command(struct mkbp_dev *dev, uint8_t cmd, const uint8_t *dout,
-		     int dout_len, uint8_t *din, int din_len)
+int mkbp_i2c_command(struct mkbp_dev *dev, uint8_t cmd, int cmd_version,
+		     const uint8_t *dout, int dout_len,
+		     uint8_t *din, int din_len)
 {
 	int old_bus = 0;
 	int out_bytes = dout_len + 1;  /* cmd8, out8[dout_len] */
 	int in_bytes = din_len + 2;  /* response8, in8[din_len], checksum8 */
 
 	old_bus = i2c_get_bus_num();
+
+	if (cmd_version != 0) {
+		debug("%s: Command version >0 unsupported\n", __func__);
+		return -1;
+	}
 
 	/*
 	 * Sanity-check I/O sizes given transaction overhead in internal

@@ -198,11 +198,13 @@ struct mkbp_dev *board_get_mkbp_dev(void);
 
 
 /* Internal interfaces */
-int mkbp_i2c_command(struct mkbp_dev *dev, uint8_t cmd, const uint8_t *dout,
-		     int dout_len, uint8_t *din, int din_len);
-int mkbp_lpc_command(struct mkbp_dev *dev, uint8_t cmd, const uint8_t *dout,
-		     int dout_len, uint8_t *din, int din_len);
-int mkbp_spi_command(struct mkbp_dev *dev, uint8_t cmd, const uint8_t *dout,
-		     int dout_len, uint8_t *din, int din_len);
-
+int mkbp_i2c_command(struct mkbp_dev *dev, uint8_t cmd, int cmd_version,
+		     const uint8_t *dout, int dout_len,
+		     uint8_t *din, int din_len);
+int mkbp_lpc_command(struct mkbp_dev *dev, uint8_t cmd, int cmd_version,
+		     const uint8_t *dout, int dout_len,
+		     uint8_t *din, int din_len);
+int mkbp_spi_command(struct mkbp_dev *dev, uint8_t cmd, int cmd_version,
+		     const uint8_t *dout, int dout_len,
+		     uint8_t *din, int din_len);
 #endif

@@ -45,13 +45,14 @@
  *
  * @param dev		MKBP device
  * @param cmd		Command to send (EC_CMD_...)
+ * @param cmd_version	Version of command to send (EC_VER_...)
  * @param dout          Output data (may be NULL If dout_len=0)
  * @param dout_len      Size of output data in bytes
  * @param din           Response data (may be NULL If din_len=0)
  * @param din_len       Maximum size of response in bytes
  * @return number of bytes in response, or -1 on error
  */
-int mkbp_spi_command(struct mkbp_dev *dev, uint8_t cmd,
+int mkbp_spi_command(struct mkbp_dev *dev, uint8_t cmd, int cmd_version,
 		     const uint8_t *dout, int dout_len,
 		     uint8_t *din, int din_len)
 {
@@ -59,6 +60,11 @@ int mkbp_spi_command(struct mkbp_dev *dev, uint8_t cmd,
 	const uint8_t *p, *end;
 	int len = 0;
 	int rv;
+
+	if (cmd_version != 0) {
+		debug("%s: Command version >0 unsupported\n", __func__);
+		return -1;
+	}
 
 	/*
 	 * Sanity-check input size to make sure it plus transaction overhead

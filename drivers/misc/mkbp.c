@@ -53,33 +53,35 @@ static struct mkbp_dev static_dev, *last_dev;
  *
  * @param dev		MKBP device
  * @param cmd		Command to send (EC_CMD_...)
+ * @param cmd_version	Version of command to send (EC_VER_...)
  * @param dout          Output data (may be NULL If dout_len=0)
  * @param dout_len      Size of output data in bytes
  * @param din           Response data (may be NULL If din_len=0)
  * @param din_len       Maximum size of response in bytes
  * @return number of bytes in response, or -1 on error
  */
-static int ec_command(struct mkbp_dev *dev, int cmd, const void *dout,
-		      int dout_len, void *din, int din_len)
+static int ec_command(struct mkbp_dev *dev, uint8_t cmd, int cmd_version,
+		      const void *dout, int dout_len,
+		      void *din, int din_len)
 {
 	switch (dev->interface) {
 #ifdef CONFIG_MKBP_SPI
 	case MKBPIF_SPI:
-		return mkbp_spi_command(dev, cmd,
+		return mkbp_spi_command(dev, cmd, cmd_version,
 					(const uint8_t *)dout, dout_len,
 					(uint8_t *)din, din_len);
 		break;
 #endif
 #ifdef CONFIG_MKBP_I2C
 	case MKBPIF_I2C:
-		return mkbp_i2c_command(dev, cmd,
+		return mkbp_i2c_command(dev, cmd, cmd_version,
 					(const uint8_t *)dout, dout_len,
 					(uint8_t *)din, din_len);
 		break;
 #endif
 #ifdef CONFIG_MKBP_LPC
 	case MKBPIF_LPC:
-		return mkbp_lpc_command(dev, cmd,
+		return mkbp_lpc_command(dev, cmd, cmd_version,
 					(const uint8_t *)dout, dout_len,
 					(uint8_t *)din, din_len);
 		break;
@@ -92,7 +94,7 @@ static int ec_command(struct mkbp_dev *dev, int cmd, const void *dout,
 
 int mkbp_scan_keyboard(struct mkbp_dev *dev, struct mbkp_keyscan *scan)
 {
-	return ec_command(dev, EC_CMD_MKBP_STATE, NULL, 0, scan->data,
+	return ec_command(dev, EC_CMD_MKBP_STATE, 0, NULL, 0, scan->data,
 			  sizeof(scan->data));
 }
 
@@ -100,7 +102,7 @@ int mkbp_read_id(struct mkbp_dev *dev, char *id, int maxlen)
 {
 	struct ec_response_get_version r;
 
-	if (ec_command(dev, EC_CMD_GET_VERSION, NULL, 0, &r, sizeof(r)) < 0)
+	if (ec_command(dev, EC_CMD_GET_VERSION, 0, NULL, 0, &r, sizeof(r)) < 0)
 		return -1;
 
 	if (maxlen > sizeof(r.version_string_ro))
@@ -125,7 +127,7 @@ int mkbp_read_current_image(struct mkbp_dev *dev, enum ec_current_image *image)
 {
 	struct ec_response_get_version r;
 
-	if (ec_command(dev, EC_CMD_GET_VERSION, NULL, 0, &r, sizeof(r)) < 0)
+	if (ec_command(dev, EC_CMD_GET_VERSION, 0, NULL, 0, &r, sizeof(r)) < 0)
 		return -1;
 
 	*image = r.current_image;
@@ -138,7 +140,7 @@ int mkbp_read_hash(struct mkbp_dev *dev, struct ec_response_vboot_hash *hash)
 
 	p.cmd = EC_VBOOT_HASH_GET;
 
-	if (ec_command(dev, EC_CMD_VBOOT_HASH, &p, sizeof(p),
+	if (ec_command(dev, EC_CMD_VBOOT_HASH, 0, &p, sizeof(p),
 		       hash, sizeof(*hash)) < 0)
 		return -1;
 
@@ -158,7 +160,7 @@ int mkbp_reboot(struct mkbp_dev *dev, enum ec_reboot_cmd cmd, uint8_t flags)
 	p.cmd = cmd;
 	p.flags = flags;
 
-	if (ec_command(dev, EC_CMD_REBOOT_EC, &p, sizeof(p), NULL, 0) < 0)
+	if (ec_command(dev, EC_CMD_REBOOT_EC, 0, &p, sizeof(p), NULL, 0) < 0)
 		return -1;
 
 	if (!(flags & EC_REBOOT_FLAG_ON_AP_SHUTDOWN)) {
@@ -190,7 +192,8 @@ int mkbp_interrupt_pending(struct mkbp_dev *dev)
 
 int mkbp_info(struct mkbp_dev *dev, struct ec_response_mkbp_info *info)
 {
-	return ec_command(dev, EC_CMD_MKBP_INFO, NULL, 0, info, sizeof(*info));
+	return ec_command(dev, EC_CMD_MKBP_INFO, 0,
+			  NULL, 0, info, sizeof(*info));
 }
 
 int mkbp_get_host_events(struct mkbp_dev *dev, uint32_t *events_ptr)
@@ -201,7 +204,7 @@ int mkbp_get_host_events(struct mkbp_dev *dev, uint32_t *events_ptr)
 	 * Use the B copy of the event flags, because the main copy is already
 	 * used by ACPI/SMI.
 	 */
-	if (ec_command(dev, EC_CMD_HOST_EVENT_GET_B, NULL, 0,
+	if (ec_command(dev, EC_CMD_HOST_EVENT_GET_B, 0, NULL, 0,
 		       &resp, sizeof(resp)) < 0)
 		return -1;
 
@@ -222,7 +225,7 @@ int mkbp_clear_host_events(struct mkbp_dev *dev, uint32_t events)
 	 * Use the B copy of the event flags, so it affects the data returned
 	 * by mkbp_get_host_events().
 	 */
-	return ec_command(dev, EC_CMD_HOST_EVENT_CLEAR_B,
+	return ec_command(dev, EC_CMD_HOST_EVENT_CLEAR_B, 0,
 			  &params, sizeof(params), NULL, 0);
 }
 
@@ -232,7 +235,7 @@ int mkbp_test(struct mkbp_dev *dev)
 	struct ec_response_hello *resp;
 
 	req.in_data = 0x12345678;
-	if (ec_command(dev, EC_CMD_HELLO, (uint8_t **)&req, sizeof(req),
+	if (ec_command(dev, EC_CMD_HELLO, 0, (uint8_t **)&req, sizeof(req),
 			(uint8_t **)&resp, sizeof(*resp)) < 0) {
 		printf("ec_command() returned error\n");
 		return -1;
