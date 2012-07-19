@@ -180,10 +180,12 @@ static int spi_flash_update(struct spi_flash *flash, u32 offset,
 	size_t todo;		/* number of bytes to do in this pass */
 	size_t skipped = 0;	/* statistics */
 	const ulong start_time = get_timer(0);
-	const size_t scale = (end - buf) / 100;
+	size_t scale = 1;
 	const char *start_buf = buf;
 	ulong delta;
 
+	if (end - buf >= 200)
+		scale = (end - buf) / 100;
 	cmp_buf = malloc(flash->sector_size);
 	if (cmp_buf) {
 		for (; buf < end && !err_oper; buf += todo, offset += todo) {
