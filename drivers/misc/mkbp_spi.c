@@ -61,11 +61,6 @@ int mkbp_spi_command(struct mkbp_dev *dev, uint8_t cmd, int cmd_version,
 	int len = 0;
 	int rv;
 
-	if (cmd_version != 0) {
-		debug("%s: Command version >0 unsupported\n", __func__);
-		return -1;
-	}
-
 	/*
 	 * Sanity-check input size to make sure it plus transaction overhead
 	 * fits in the internal device buffer.
@@ -151,4 +146,25 @@ int mkbp_spi_command(struct mkbp_dev *dev, uint8_t cmd, int cmd_version,
 			memcpy(din, p + 1, len);
 	}
 	return len;
+}
+
+/**
+ * Initialize SPI protocol.
+ *
+ * @param dev		MKBP device
+ * @param blob		Device tree blob
+ * @return 0 if ok, -1 on error
+ */
+int mkbp_spi_init(struct mkbp_dev *dev, const void *blob)
+{
+	dev->spi = spi_setup_slave_fdt(blob, dev->parent_node,
+				       dev->cs, dev->max_frequency, 0);
+	if (!dev->spi) {
+		debug("%s: Could not setup SPI slave\n", __func__);
+		return -1;
+	}
+
+	dev->cmd_version_is_supported = 0;
+
+	return 0;
 }

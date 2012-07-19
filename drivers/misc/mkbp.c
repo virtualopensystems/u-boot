@@ -64,6 +64,11 @@ static int ec_command(struct mkbp_dev *dev, uint8_t cmd, int cmd_version,
 		      const void *dout, int dout_len,
 		      void *din, int din_len)
 {
+	if (cmd_version != 0 && !dev->cmd_version_is_supported) {
+		debug("%s: Command version >0 unsupported\n", __func__);
+		return -1;
+	}
+
 	switch (dev->interface) {
 #ifdef CONFIG_MKBP_SPI
 	case MKBPIF_SPI:
@@ -294,7 +299,7 @@ static int mkbp_decode_fdt(const void *blob, int node, struct mkbp_dev **devp)
 #endif
 #ifdef CONFIG_MKBP_LPC
 	case COMPAT_INTEL_LPC: {
-		int len, byte, i;
+		int len;
 		const u32 *reg;
 
 		interface = MKBPIF_LPC;
@@ -303,22 +308,12 @@ static int mkbp_decode_fdt(const void *blob, int node, struct mkbp_dev **devp)
 			debug("%s: LPC reg property is too small\n", __func__);
 			return -1;
 		}
-		byte = 0xff;
 		dev->lpc_cmd = fdt32_to_cpu(reg[0]);
 		dev->lpc_data = fdt32_to_cpu(reg[2]);
 		dev->lpc_param = fdt32_to_cpu(reg[4]);
 		dev->lpc_param_len = fdt32_to_cpu(reg[5]);
 		dev->lpc_memmap = fdt32_to_cpu(reg[6]);
 		dev->lpc_memmap_len = fdt32_to_cpu(reg[7]);
-		byte &= inb(dev->lpc_cmd);
-		byte &= inb(dev->lpc_data);
-		for (i = 0; i < dev->lpc_param_len; i++)
-			byte &= inb(dev->lpc_param + i);
-		if (byte == 0xff) {
-			debug("%s: MKBP device not found on LPC bus\n",
-			      __func__);
-			return -1;
-		}
 		break;
 	}
 #endif
@@ -357,21 +352,20 @@ struct mkbp_dev *mkbp_init(const void *blob)
 	switch (dev->interface) {
 #ifdef CONFIG_MKBP_SPI
 	case MKBPIF_SPI:
-		dev->spi = spi_setup_slave_fdt(blob, dev->parent_node,
-					dev->cs, dev->max_frequency, 0);
-		if (!dev->spi) {
-			debug("%s: Could not setup SPI slave\n", __func__);
+		if (mkbp_spi_init(dev, blob))
 			return NULL;
-		}
 		break;
 #endif
 #ifdef CONFIG_MKBP_I2C
 	case MKBPIF_I2C:
-		i2c_init(dev->max_frequency, dev->addr);
+		if (mkbp_i2c_init(dev, blob))
+			return NULL;
 		break;
 #endif
 #ifdef CONFIG_MKBP_LPC
 	case MKBPIF_LPC:
+		if (mkbp_lpc_init(dev, blob))
+			return NULL;
 		break;
 #endif
 	case MKBPIF_NONE:

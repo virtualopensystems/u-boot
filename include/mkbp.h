@@ -47,6 +47,7 @@ struct mkbp_dev {
 	unsigned int bus_num;		/* Bus number (for I2C) */
 	unsigned int max_frequency;	/* Maximum interface frequency */
 	struct fdt_gpio_state ec_int;	/* GPIO used as EC interrupt line */
+	int cmd_version_is_supported;   /* Device supports command versions */
 	int lpc_cmd;			/* LPC command IO port */
 	int lpc_data;			/* LPC command IO port */
 	int lpc_param;			/* LPC param IO port */
@@ -198,6 +199,9 @@ struct mkbp_dev *board_get_mkbp_dev(void);
 
 
 /* Internal interfaces */
+int mkbp_i2c_init(struct mkbp_dev *dev, const void *blob);
+int mkbp_spi_init(struct mkbp_dev *dev, const void *blob);
+int mkbp_lpc_init(struct mkbp_dev *dev, const void *blob);
 int mkbp_i2c_command(struct mkbp_dev *dev, uint8_t cmd, int cmd_version,
 		     const uint8_t *dout, int dout_len,
 		     uint8_t *din, int din_len);

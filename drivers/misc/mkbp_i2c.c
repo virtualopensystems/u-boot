@@ -62,11 +62,6 @@ int mkbp_i2c_command(struct mkbp_dev *dev, uint8_t cmd, int cmd_version,
 
 	old_bus = i2c_get_bus_num();
 
-	if (cmd_version != 0) {
-		debug("%s: Command version >0 unsupported\n", __func__);
-		return -1;
-	}
-
 	/*
 	 * Sanity-check I/O sizes given transaction overhead in internal
 	 * buffers.
@@ -128,6 +123,22 @@ int mkbp_i2c_command(struct mkbp_dev *dev, uint8_t cmd, int cmd_version,
 	/* Copy input data, if any */
 	if (din_len)
 		memcpy(din, dev->din + 1, din_len);
+
+	return 0;
+}
+
+/**
+ * Initialize I2C protocol.
+ *
+ * @param dev		MKBP device
+ * @param blob		Device tree blob
+ * @return 0 if ok, -1 on error
+ */
+int mkbp_i2c_init(struct mkbp_dev *dev, const void *blob)
+{
+	i2c_init(dev->max_frequency, dev->addr);
+
+	dev->cmd_version_is_supported = 0;
 
 	return 0;
 }

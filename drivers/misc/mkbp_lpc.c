@@ -74,11 +74,6 @@ int mkbp_lpc_command(struct mkbp_dev *dev, uint8_t cmd, int cmd_version,
 {
 	int ret, i;
 
-	if (cmd_version != 0) {
-		debug("%s: Command version >0 unsupported\n", __func__);
-		return -1;
-	}
-
 	if (dout_len > dev->lpc_param_len) {
 		debug("%s: Cannot send %d bytes\n", __func__, dout_len);
 		return -1;
@@ -121,4 +116,60 @@ int mkbp_lpc_command(struct mkbp_dev *dev, uint8_t cmd, int cmd_version,
 	debug_trace("\n");
 
 	return din_len;
+}
+
+/**
+ * Initialize LPC protocol.
+ *
+ * @param dev		MKBP device
+ * @param blob		Device tree blob
+ * @return 0 if ok, -1 on error
+ */
+int mkbp_lpc_init(struct mkbp_dev *dev, const void *blob)
+{
+	/*
+	 * Test if LPC command args are supported.
+	 *
+	 * The cheapest way to do this is by looking for the memory-mapped
+	 * flag.  This is faster than sending a new-style 'hello' command and
+	 * seeing whether the EC sets the EC_HOST_ARGS_FLAG_FROM_HOST flag
+	 * in args when it responds.
+	 */
+	if (inb(dev->lpc_memmap + EC_MEMMAP_ID) == 'E' &&
+	    inb(dev->lpc_memmap + EC_MEMMAP_ID + 1) == 'C' &&
+	    (inb(dev->lpc_memmap + EC_MEMMAP_HOST_CMD_FLAGS) &
+	     EC_HOST_CMD_FLAG_LPC_ARGS_SUPPORTED)) {
+		/* A MKBP-capable EC is present and supports command args */
+#ifdef CONFIG_MKBP_LPC_ARGS_SUPPORTED
+		dev->cmd_version_is_supported = 1;
+#else
+		/*
+		 * However, WE don't support command args yet, so ignore that
+		 * capability for now.  crosbug.com/p/11319
+		 */
+		dev->cmd_version_is_supported = 0;
+#endif
+	} else {
+		/* It's not an EC which supports command args. */
+		int byte = 0xff;
+		int i;
+
+		dev->cmd_version_is_supported = 0;
+
+		/*
+		 * Better make sure there's an MKBP-capable EC there at all.
+		 * If all of the I/O space is 0xff, there's not.
+		 */
+		byte &= inb(dev->lpc_cmd);
+		byte &= inb(dev->lpc_data);
+		for (i = 0; i < dev->lpc_param_len; i++)
+			byte &= inb(dev->lpc_param + i);
+		if (byte == 0xff) {
+			debug("%s: MKBP device not found on LPC bus\n",
+			      __func__);
+			return -1;
+		}
+	}
+
+	return 0;
 }
