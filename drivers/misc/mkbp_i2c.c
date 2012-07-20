@@ -93,6 +93,7 @@ int mkbp_i2c_command(struct mkbp_dev *dev, uint8_t cmd, int cmd_version,
 	}
 
 	/* Send output data */
+	mkbp_dump_data("out", -1, dev->dout, out_bytes);
 	ret = i2c_write(dev->addr, 0, 0, dev->dout, out_bytes);
 	if (ret) {
 		debug("%s: Cannot complete I2C write to 0x%x\n",
@@ -113,6 +114,7 @@ int mkbp_i2c_command(struct mkbp_dev *dev, uint8_t cmd, int cmd_version,
 	if (ret)
 		return ret;
 
+	mkbp_dump_data("in", -1, in_ptr, in_bytes);
 	if (*in_ptr != EC_RES_SUCCESS) {
 		debug("%s: Received bad result code %d\n", __func__, *in_ptr);
 		return -(int)*in_ptr;

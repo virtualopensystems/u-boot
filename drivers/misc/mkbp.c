@@ -46,6 +46,20 @@
 
 static struct mkbp_dev static_dev, *last_dev;
 
+void mkbp_dump_data(const char *name, int cmd, const uint8_t *data, int len)
+{
+#ifdef DEBUG
+	int i;
+
+	printf("%s: ", name);
+	if (cmd != -1)
+		printf("cmd=%#x: ", cmd);
+	for (i = 0; i < len; i++)
+		printf("%02x ", data[i]);
+	printf("\n");
+#endif
+}
+
 /**
  * Send a command to the MKBP device and return the reply.
  *

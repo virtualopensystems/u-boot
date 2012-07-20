@@ -258,4 +258,14 @@ int mkbp_lpc_command(struct mkbp_dev *dev, uint8_t cmd, int cmd_version,
 int mkbp_spi_command(struct mkbp_dev *dev, uint8_t cmd, int cmd_version,
 		     const uint8_t *dout, int dout_len,
 		     uint8_t *din, int din_len);
+
+/**
+ * Dump a block of data for a command.
+ *
+ * @param name	Name for data (e.g. 'in', 'out')
+ * @param cmd	Command number associated with data, or -1 for none
+ * @param data	Data block to dump
+ * @param len	Length of data block to dump
+ */
+void mkbp_dump_data(const char *name, int cmd, const uint8_t *data, int len);
 #endif
