@@ -203,7 +203,7 @@ int mkbp_interrupt_pending(struct mkbp_dev *dev)
 int mkbp_info(struct mkbp_dev *dev, struct ec_response_mkbp_info *info)
 {
 	if (ec_command(dev, EC_CMD_MKBP_INFO, 0,
-		       NULL, 0, info, sizeof(*info) < sizeof(*info)))
+		       NULL, 0, info, sizeof(*info)) < sizeof(*info))
 		return -1;
 
 	return 0;
