@@ -118,20 +118,6 @@ static int old_lpc_command(struct mkbp_dev *dev, uint8_t cmd,
 	return din_len;
 }
 
-/**
- * Send a command to a LPC MKBP device and return the reply.
- *
- * The device's internal input/output buffers are used.
- *
- * @param dev		MKBP device
- * @param cmd		Command to send (EC_CMD_...)
- * @param cmd_version	Version of command to send (EC_VER_...)
- * @param dout          Output data (may be NULL If dout_len=0)
- * @param dout_len      Size of output data in bytes
- * @param din           Response data (may be NULL If din_len=0)
- * @param din_len       Maximum size of response in bytes
- * @return number of bytes in response, or -1 on error
- */
 int mkbp_lpc_command(struct mkbp_dev *dev, uint8_t cmd, int cmd_version,
 		     const uint8_t *dout, int dout_len,
 		     uint8_t *din, int din_len)
@@ -249,41 +235,46 @@ int mkbp_lpc_command(struct mkbp_dev *dev, uint8_t cmd, int cmd_version,
  */
 int mkbp_lpc_init(struct mkbp_dev *dev, const void *blob)
 {
-	/*
-	 * Test if LPC command args are supported.
-	 *
-	 * The cheapest way to do this is by looking for the memory-mapped
-	 * flag.  This is faster than sending a new-style 'hello' command and
-	 * seeing whether the EC sets the EC_HOST_ARGS_FLAG_FROM_HOST flag
-	 * in args when it responds.
-	 */
+	int byte, i;
+
+	/* See if we can find an EC at the other end */
+	byte = 0xff;
+	byte &= inb(EC_LPC_ADDR_HOST_CMD);
+	byte &= inb(EC_LPC_ADDR_HOST_DATA);
+	for (i = 0; i < EC_HOST_PARAM_SIZE && (byte == 0xff); i++)
+		byte &= inb(EC_LPC_ADDR_HOST_PARAM + i);
+	if (byte == 0xff) {
+		debug("%s: MKBP device not found on LPC bus\n",
+			__func__);
+		return -1;
+	}
+
+	return 0;
+}
+
+/*
+ * Test if LPC command args are supported.
+ *
+ * The cheapest way to do this is by looking for the memory-mapped
+ * flag.  This is faster than sending a new-style 'hello' command and
+ * seeing whether the EC sets the EC_HOST_ARGS_FLAG_FROM_HOST flag
+ * in args when it responds.
+ */
+int mkbp_lpc_check_version(struct mkbp_dev *dev)
+{
 	if (inb(EC_LPC_ADDR_MEMMAP + EC_MEMMAP_ID) == 'E' &&
-	    inb(EC_LPC_ADDR_MEMMAP + EC_MEMMAP_ID + 1) == 'C' &&
-	    (inb(EC_LPC_ADDR_MEMMAP + EC_MEMMAP_HOST_CMD_FLAGS) &
-	     EC_HOST_CMD_FLAG_LPC_ARGS_SUPPORTED)) {
-		/* A MKBP-capable EC is present and supports command args */
+			inb(EC_LPC_ADDR_MEMMAP + EC_MEMMAP_ID + 1)
+				== 'C' &&
+			(inb(EC_LPC_ADDR_MEMMAP +
+				EC_MEMMAP_HOST_CMD_FLAGS) &
+				EC_HOST_CMD_FLAG_LPC_ARGS_SUPPORTED)) {
 		dev->cmd_version_is_supported = 1;
 	} else {
-		/* It's not an EC which supports command args. */
-		int byte = 0xff;
-		int i;
-
+		/* We are going to use the old IO ports */
 		dev->cmd_version_is_supported = 0;
-
-		/*
-		 * Better make sure there's an MKBP-capable EC there at all.
-		 * If all of the I/O space is 0xff, there's not.
-		 */
-		byte &= inb(EC_LPC_ADDR_HOST_CMD);
-		byte &= inb(EC_LPC_ADDR_HOST_DATA);
-		for (i = 0; i < EC_OLD_PARAM_SIZE; i++)
-			byte &= inb(EC_LPC_ADDR_OLD_PARAM + i);
-		if (byte == 0xff) {
-			debug("%s: MKBP device not found on LPC bus\n",
-			      __func__);
-			return -1;
-		}
 	}
+	debug("lpc: version %s\n", dev->cmd_version_is_supported ?
+			"new" : "old");
 
 	return 0;
 }

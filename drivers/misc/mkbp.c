@@ -306,6 +306,49 @@ int mkbp_flash_protect(struct mkbp_dev *dev,
 	return 0;
 }
 
+static int mkbp_check_version(struct mkbp_dev *dev)
+{
+	struct ec_params_hello req;
+	struct ec_response_hello *resp = NULL;
+
+#ifdef CONFIG_MKBP_LPC
+	/* LPC has its own way of doing this */
+	if (dev->interface == MKBPIF_LPC)
+		return mkbp_lpc_check_version(dev);
+#endif
+
+	/*
+	 * TODO(sjg@chromium.org).
+	 * There is a strange oddity here with the EC. We could just ignore
+	 * the response, i.e. pass the last two parameters as NULL and 0.
+	 * In this case we won't read back very many bytes from the EC.
+	 * On the I2C bus the EC gets upset about this and will try to send
+	 * the bytes anyway. This means that we will have to wait for that
+	 * to complete before continuing with a new EC command.
+	 *
+	 * This problem is probably unique to the I2C bus.
+	 *
+	 * So for now, just read all the data anyway.
+	 */
+	dev->cmd_version_is_supported = 1;
+	if (ec_command(dev, EC_CMD_HELLO, 0, (uint8_t **)&req, sizeof(req),
+		       (uint8_t **)&resp, sizeof(*resp)) > 0) {
+		/* It appears to understand new version commands */
+		dev->cmd_version_is_supported = 1;
+	} else {
+		dev->cmd_version_is_supported = 0;
+		if (ec_command(dev, EC_CMD_HELLO, 0, (uint8_t **)&req,
+			      sizeof(req), (uint8_t **)&resp,
+			      sizeof(*resp)) < 0) {
+			debug("%s: Failed both old and new command style\n",
+				__func__);
+			return -1;
+		}
+	}
+
+	return 0;
+}
+
 int mkbp_test(struct mkbp_dev *dev)
 {
 	struct ec_params_hello req;
@@ -545,13 +588,16 @@ struct mkbp_dev *mkbp_init(const void *blob)
 		return NULL;
 	}
 
-	/* TODO(sjg@chromium.org): Wait for Bill's x86 GPIO patch */
-#if defined(CONFIG_MKBP_SPI) || defined(CONFIG_MKBP_I2C)
 	/* we will poll the EC interrupt line */
 	fdtdec_setup_gpio(&dev->ec_int);
 	if (fdt_gpio_isvalid(&dev->ec_int))
 		gpio_direction_input(dev->ec_int.gpio);
-#endif
+
+	if (mkbp_check_version(dev)) {
+		debug("%s: Could not detect MKBP version\n", __func__);
+		return NULL;
+	}
+
 	if (mkbp_read_id(dev, id, sizeof(id))) {
 		debug("%s: Could not read KBC ID\n", __func__);
 		return NULL;

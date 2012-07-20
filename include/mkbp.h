@@ -235,6 +235,17 @@ int mkbp_lpc_init(struct mkbp_dev *dev, const void *blob);
 int mkbp_i2c_decode_fdt(struct mkbp_dev *dev, const void *blob);
 
 /**
+ * Check whether the LPC interface supports new-style commands.
+ *
+ * LPC has its own way of doing this, which involves checking LPC values
+ * visible to the host. Do this, and update dev->cmd_version_is_supported
+ * accordingly.
+ *
+ * @param dev		MKBP device to check
+ */
+int mkbp_lpc_check_version(struct mkbp_dev *dev);
+
+/**
  * Send a command to an I2C MKBP device and return the reply.
  *
  * This rather complicated function deals with sending both old-style and
