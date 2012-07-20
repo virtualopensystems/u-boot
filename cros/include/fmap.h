@@ -21,6 +21,7 @@ struct fmap_entry {
 };
 
 struct fmap_firmware_entry {
+	struct fmap_entry all;		/* how big is the whole RW section? */
 	struct fmap_entry boot;		/* U-Boot */
 	struct fmap_entry vblock;
 	struct fmap_entry firmware_id;

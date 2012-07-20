@@ -22,6 +22,7 @@ static void
 dump_fmap_firmware_entry(const char *name, struct fmap_firmware_entry *entry)
 {
 	VBDEBUG("%s\n", name);
+	dump_fmap_entry("all", &entry->all);
 	dump_fmap_entry("boot", &entry->boot);
 	dump_fmap_entry("vblock", &entry->vblock);
 	dump_fmap_entry("firmware_id", &entry->firmware_id);
@@ -31,7 +32,6 @@ dump_fmap_firmware_entry(const char *name, struct fmap_firmware_entry *entry)
 void
 dump_fmap(struct twostop_fmap *config)
 {
-	VBDEBUG("rw-a:\n");
 	dump_fmap_entry("fmap", &config->readonly.fmap);
 	dump_fmap_entry("gbb", &config->readonly.gbb);
 	dump_fmap_entry("firmware_id", &config->readonly.firmware_id);

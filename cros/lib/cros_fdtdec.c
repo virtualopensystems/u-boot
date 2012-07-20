@@ -160,6 +160,7 @@ static int process_fmap_node(const void *blob, int node, int depth,
 	if (rw) {
 		switch (section) {
 		case SECTION_BASE:
+			rw->all = entry;
 			rw->block_offset = fdtdec_get_uint64(blob, node,
 							"block-offset", ~0ULL);
 			if (rw->block_offset == ~0ULL)
