@@ -364,7 +364,6 @@ int mkbp_flash_update_rw(struct mkbp_dev *dev,
  */
 static int mkbp_decode_fdt(const void *blob, int node, struct mkbp_dev **devp)
 {
-	enum mkbp_interface_t interface;
 	enum fdt_compat_id compat;
 	struct mkbp_dev *dev;
 	int parent;
@@ -377,22 +376,26 @@ static int mkbp_decode_fdt(const void *blob, int node, struct mkbp_dev **devp)
 	}
 
 	dev = &static_dev;
+	dev->node = node;
+	dev->parent_node = parent;
 
 	compat = fdtdec_lookup(blob, parent);
 	switch (compat) {
 #ifdef CONFIG_MKBP_SPI
 	case COMPAT_SAMSUNG_EXYNOS_SPI:
-		interface = MKBPIF_SPI;
+		dev->interface = MKBPIF_SPI;
 		break;
 #endif
 #ifdef CONFIG_MKBP_I2C
 	case COMPAT_SAMSUNG_S3C2440_I2C:
-		interface = MKBPIF_I2C;
+		dev->interface = MKBPIF_I2C;
+		if (mkbp_i2c_decode_fdt(dev, blob))
+			return -1;
 		break;
 #endif
 #ifdef CONFIG_MKBP_LPC
 	case COMPAT_INTEL_LPC:
-		interface = MKBPIF_LPC;
+		dev->interface = MKBPIF_LPC;
 		break;
 #endif
 	default:
@@ -401,9 +404,6 @@ static int mkbp_decode_fdt(const void *blob, int node, struct mkbp_dev **devp)
 	}
 
 	fdtdec_decode_gpio(blob, node, "ec-interrupt", &dev->ec_int);
-	dev->interface = interface;
-	dev->node = node;
-	dev->parent_node = parent;
 	*devp = dev;
 
 	return 0;

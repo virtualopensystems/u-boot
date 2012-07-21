@@ -224,6 +224,16 @@ struct mkbp_dev *board_get_mkbp_dev(void);
 int mkbp_i2c_init(struct mkbp_dev *dev, const void *blob);
 int mkbp_spi_init(struct mkbp_dev *dev, const void *blob);
 int mkbp_lpc_init(struct mkbp_dev *dev, const void *blob);
+
+/**
+ * Read information from the fdt for the i2c mkbp interface
+ *
+ * @param dev		MKBP device
+ * @param blob		Device tree blob
+ * @return 0 if ok, -1 if we failed to read all required information
+ */
+int mkbp_i2c_decode_fdt(struct mkbp_dev *dev, const void *blob);
+
 int mkbp_i2c_command(struct mkbp_dev *dev, uint8_t cmd, int cmd_version,
 		     const uint8_t *dout, int dout_len,
 		     uint8_t *din, int din_len);
