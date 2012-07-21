@@ -124,7 +124,7 @@ int mkbp_i2c_command(struct mkbp_dev *dev, uint8_t cmd, int cmd_version,
 	if (din_len)
 		memcpy(din, dev->din + 1, din_len);
 
-	return 0;
+	return din_len;
 }
 
 /**
