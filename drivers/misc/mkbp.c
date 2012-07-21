@@ -265,16 +265,16 @@ int mkbp_flash_protect(struct mkbp_dev *dev,
 int mkbp_test(struct mkbp_dev *dev)
 {
 	struct ec_params_hello req;
-	struct ec_response_hello *resp;
+	struct ec_response_hello resp;
 
 	req.in_data = 0x12345678;
 	if (ec_command(dev, EC_CMD_HELLO, 0, (uint8_t **)&req, sizeof(req),
-		       (uint8_t **)&resp, sizeof(*resp)) < sizeof(*resp)) {
+		       &resp, sizeof(resp)) < sizeof(resp)) {
 		printf("ec_command() returned error\n");
 		return -1;
 	}
-	if (resp->out_data != req.in_data + 0x01020304) {
-		printf("Received invalid handshake %x\n", resp->out_data);
+	if (resp.out_data != req.in_data + 0x01020304) {
+		printf("Received invalid handshake %x\n", resp.out_data);
 		return -1;
 	}
 
