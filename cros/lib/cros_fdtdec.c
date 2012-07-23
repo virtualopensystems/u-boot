@@ -201,6 +201,7 @@ int cros_fdtdec_flashmap(const void *blob, struct twostop_fmap *config)
 	int offset;
 	int depth;
 
+	memset(config, '\0', sizeof(*config));
 	offset = fdt_node_offset_by_compatible(blob, -1,
 			"chromeos,flashmap");
 	if (offset < 0) {
