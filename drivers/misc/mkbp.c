@@ -281,6 +281,79 @@ int mkbp_test(struct mkbp_dev *dev)
 	return 0;
 }
 
+static int mkbp_flash_rw_offset(struct mkbp_dev *dev,
+				uint32_t *offset, uint32_t *size)
+{
+	struct ec_params_flash_region_info p;
+	struct ec_response_flash_region_info r;
+	int ret;
+
+	p.region = EC_FLASH_REGION_RW;
+	ret = ec_command(dev, EC_FLASH_REGION_INFO, EC_VER_FLASH_REGION_INFO,
+			 &p, sizeof(p), &r, sizeof(r));
+	if (ret != sizeof(r))
+		return -1;
+
+	if (offset)
+		*offset = r.offset;
+	if (size)
+		*size = r.size;
+
+	return 0;
+}
+
+static int mkbp_flash_erase(struct mkbp_dev *dev,
+			    uint32_t offset, uint32_t size)
+{
+	struct ec_params_flash_erase p;
+
+	p.offset = offset;
+	p.size = size;
+	return ec_command(dev, EC_CMD_FLASH_ERASE, 0,
+			  &p, sizeof(p), NULL, 0) >= 0 ? 0 : -1;
+}
+
+static int mkbp_flash_write(struct mkbp_dev *dev, const uint8_t  *data,
+			    uint32_t offset, uint32_t size)
+{
+	struct ec_params_flash_write p;
+
+	p.offset = offset;
+	p.size = size;
+	memcpy(p.data, data, p.size);
+
+	return ec_command(dev, EC_CMD_FLASH_WRITE, 0,
+			  &p, sizeof(p), NULL, 0) >= 0 ? 0 : -1;
+}
+
+int mkbp_flash_update_rw(struct mkbp_dev *dev,
+			 const uint8_t  *image, int image_size)
+{
+	uint32_t rw_offset, rw_size;
+	uint32_t end, off;
+	uint32_t burst = sizeof(dev->dout);
+	int ret;
+
+	if (mkbp_flash_rw_offset(dev, &rw_offset, &rw_size))
+		return -1;
+	if (image_size > rw_size)
+		return -1;
+
+	rw_size = min(rw_size, image_size);
+	ret = mkbp_flash_erase(dev, rw_offset, rw_size);
+	if (ret)
+		return ret;
+
+	end = rw_offset + rw_size;
+	for (off = rw_offset; off < end; off += burst, image += burst) {
+		ret = mkbp_flash_write(dev, image, off, min(end - off, burst));
+		if (ret)
+			return ret;
+	}
+
+	return 0;
+}
+
 /**
  * Decode MBKP details from the device tree and allocate a suitable device.
  *

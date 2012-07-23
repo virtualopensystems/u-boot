@@ -200,6 +200,17 @@ int mkbp_flash_protect(struct mkbp_dev *dev,
 int mkbp_test(struct mkbp_dev *dev);
 
 /**
+ * Update the EC RW copy.
+ *
+ * @param dev		MKBP device
+ * @param image		the content to write
+ * @param imafge_size	content length
+ * @return 0 if ok, <0 if the test failed
+ */
+int mkbp_flash_update_rw(struct mkbp_dev *dev,
+			 const uint8_t  *image, int image_size);
+
+/**
  * Return a pointer to the board's MKBP device
  *
  * This should be implemented by board files.

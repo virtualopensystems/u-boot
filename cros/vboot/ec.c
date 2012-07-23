@@ -116,8 +116,10 @@ VbError_t VbExEcHashRW(const uint8_t **hash, int *hash_size)
 
 VbError_t VbExEcUpdateRW(const uint8_t  *image, int image_size)
 {
-	/* TODO: implement me!  crosbug.com/p/11149 */
-	return VBERROR_UNKNOWN;
+	struct mkbp_dev *mdev = board_get_mkbp_dev();
+	int rv = mkbp_flash_update_rw(mdev, image, image_size);
+
+	return rv == 0 ? VBERROR_SUCCESS : VBERROR_UNKNOWN;
 }
 
 VbError_t VbExEcProtectRW(void)
