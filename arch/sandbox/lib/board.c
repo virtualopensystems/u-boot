@@ -44,6 +44,7 @@
 #include <timestamp.h>
 #include <version.h>
 #include <serial.h>
+#include <mmc.h>
 
 #include <os.h>
 
@@ -269,6 +270,10 @@ void board_init_r(gd_t *id, ulong dest_addr)
 #if defined(CONFIG_MISC_INIT_R)
 	/* miscellaneous platform dependent initialisations */
 	misc_init_r();
+#endif
+
+#if defined(CONFIG_GENERIC_MMC)
+	mmc_initialize(gd->bd);
 #endif
 
 	 /* set up exceptions */

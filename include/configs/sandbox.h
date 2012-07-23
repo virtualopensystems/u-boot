@@ -94,6 +94,8 @@
 /* We don't have networking support yet */
 #undef CONFIG_CMD_NET
 #undef CONFIG_CMD_NFS
+
+/* GPIO */
 #define CONFIG_CMD_GPIO
 #define CONFIG_SANDBOX_GPIO
 #define CONFIG_SANDBOX_GPIO_COUNT 256
@@ -107,4 +109,15 @@
 /* SPI */
 #define CONFIG_CMD_SF
 #define CONFIG_SANDBOX_SPI
+
+/* MMC */
+#define CONFIG_MMC
+#define CONFIG_CMD_MMC
+#define CONFIG_GENERIC_MMC
+#define CONFIG_CMD_FAT
+#define CONFIG_SANDBOX_MMC
+#define CONFIG_DOS_PARTITION
+#define CONFIG_ISO_PARTITION
+#define CONFIG_EFI_PARTITION
+
 #endif
