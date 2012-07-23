@@ -105,7 +105,7 @@ VbError_t VbExEcHashRW(const uint8_t **hash, int *hash_size)
 	 */
 	if (resp.status != EC_VBOOT_HASH_STATUS_DONE)
 		return VBERROR_UNKNOWN;
-	if (resp.hash_type == EC_VBOOT_HASH_TYPE_SHA256)
+	if (resp.hash_type != EC_VBOOT_HASH_TYPE_SHA256)
 		return VBERROR_UNKNOWN;
 
 	*hash = resp.hash_digest;
@@ -174,42 +174,65 @@ VbError_t VbExEcProtectRW(void)
 
 #endif  /* CONFIG_MKBP */
 
-VbError_t VbExEcGetExpectedRW(enum VbSelectFirmware_t select, uint8_t **image,
-			      int *image_size)
+VbError_t VbExEcGetExpectedRW(enum VbSelectFirmware_t select,
+			      const uint8_t **image, int *image_size)
 {
 	struct twostop_fmap fmap;
 	uint32_t offset;
-	firmware_storage_t *file;
+	firmware_storage_t file;
+	uint8_t *buf;
+	int size;
+
+	*image = NULL;
+	*image_size = 0;
 
 	cros_fdtdec_flashmap(gd->fdt_blob, &fmap);
 	switch (select) {
 	case VB_SELECT_FIRMWARE_A:
 		offset = fmap.readwrite_a.ec_bin.offset;
-		*image_size = fmap.readwrite_a.ec_bin.length;
+		size = fmap.readwrite_a.ec_bin.length;
+		break;
 	case VB_SELECT_FIRMWARE_B:
 		offset = fmap.readwrite_b.ec_bin.offset;
-		*image_size = fmap.readwrite_b.ec_bin.length;
+		size = fmap.readwrite_b.ec_bin.length;
+		break;
 	default:
 		VBDEBUG("Unrecognized EC firmware requested.\n");
 		return VBERROR_UNKNOWN;
 	}
 
-	if (firmware_storage_open_spi(file)) {
+	if (firmware_storage_open_spi(&file)) {
 		VBDEBUG("Failed to open firmware storage.\n");
 		return VBERROR_UNKNOWN;
 	}
 
-	*image = malloc(*image_size);
-	if (!*image) {
+	VBDEBUG("EC-RW image offset %d size %d.\n", offset, size);
+
+	/* Sanity-check; we don't expect EC images > 1MB */
+	if (size <= 0 || size > 0x100000) {
+		VBDEBUG("EC image has bogus size.\n");
+		return VBERROR_UNKNOWN;
+	}
+
+	/*
+	 * Note: this leaks memory each call, since we don't track the pointer
+	 * and the caller isn't expecting to free it.
+	 */
+	buf = malloc(size);
+	if (!buf) {
 		VBDEBUG("Failed to allocate space for the EC RW image.\n");
 		return VBERROR_UNKNOWN;
 	}
 
-	if (file->read(file, offset, *image_size, BT_EXTRA(*image))) {
-		free(*image);
+	if (file.read(&file, offset, size, BT_EXTRA(buf))) {
+		free(buf);
 		VBDEBUG("Failed to read the EC from flash.\n");
 		return VBERROR_UNKNOWN;
 	}
 
+	file.close(&file);
+
+	*image = buf;
+	*image_size = size;
 	return VBERROR_SUCCESS;
 }
