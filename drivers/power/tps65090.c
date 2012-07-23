@@ -15,9 +15,6 @@
 /* TPS65090 register addresses */
 enum {
 	REG_CG_CTRL0 = 4,
-	REG_CG_CTRL3 = 7,
-	REG_CG_CTRL4 = 8,
-	REG_CG_CTRL5 = 9,
 	REG_CG_STATUS1 = 0xa,
 	REG_FET1_CTRL = 0x0f,
 	REG_FET2_CTRL,
@@ -263,7 +260,6 @@ int tps65090_get_status(void)
 
 int tps65090_init(void)
 {
-	unsigned char val;
 	int ret;
 
 	/* TODO(sjg): Move to fdt */
@@ -279,38 +275,6 @@ int tps65090_init(void)
 	if (ret)
 		debug("%s: failed to probe TPS65090 over I2C, returned %d\n",
 		      __func__, ret);
-
-	/* Enable battery charging when discharged */
-	ret = tps65090_i2c_read(REG_CG_CTRL5, &val);
-	val |= 0x20;
-	ret = tps65090_i2c_write(REG_CG_CTRL5, val);
-	if (ret)
-		debug("%s: failed to set NOITERM, returned %d\n",
-			 __func__, ret);
-
-	/* HACK: Set fastcharge safety timer to 3 hours */
-	ret = tps65090_i2c_read(REG_CG_CTRL0, &val);
-	val |= 0x04;
-	ret = tps65090_i2c_write(REG_CG_CTRL0, val);
-	if (ret)
-		debug("%s: failed to set fastcharge, returned %d\n",
-			__func__, ret);
-
-	/* HACK: Set max fast charge current for T23 temp range */
-	ret = tps65090_i2c_read(REG_CG_CTRL3, &val);
-	val ^= 0x02;
-	ret = tps65090_i2c_write(REG_CG_CTRL3, val);
-	if (ret)
-		debug("%s: failed to set max T23 charge current, returned %d\n",
-			__func__, ret);
-
-	/* HACK: Set max fast charge current for T34 temp range */
-	ret = tps65090_i2c_read(REG_CG_CTRL4, &val);
-	val = (val ^ 0x0F) | 0x01;
-	ret = tps65090_i2c_write(REG_CG_CTRL4, val);
-	if (ret)
-		debug("%s: failed to set max T34 charge current, returned %d\n",
-			__func__, ret);
 
 	return ret;
 }
