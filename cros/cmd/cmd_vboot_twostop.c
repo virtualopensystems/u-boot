@@ -783,7 +783,7 @@ twostop_main_firmware(struct twostop_fmap *fmap, void *gbb,
 			return TWOSTOP_SELECT_COMMAND_LINE;
 		case VBERROR_EC_REBOOT_TO_RO_REQUIRED:
 			request_ec_reboot_to_ro();
-			break;
+			return TWOSTOP_SELECT_POWER_OFF;
 		}
 		return TWOSTOP_SELECT_ERROR;
 	}
