@@ -18,47 +18,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  */
+#ifndef __SANDBOX_MMC_H
+#define __SANDBOX_MMC_H
 
-#include <assert.h>
-#include <stdio.h>
-#include <unistd.h>
+struct mmc_t {
+	unsigned mmc_enabled;   /* sandbox-daemon -> u-boot. */
+	__u64    mmc_capacity;  /* sandbox-daemon <- u-boot. */
+};
 
-#include "lib.h"
-#include "sd_spi.h"
-#include "sd_mmc.h"
-#include "doorbell-command.h"
-#include "shared-memory.h"
-#include "asm/sandbox-api.h"
-
-void process_memory(void)
-{
-	while (1) {
-		const struct doorbell_t *db = sandbox_get_doorbell();
-		struct doorbell_command_t *dbc = sandbox_get_doorbell_command();
-
-		if (db->exit)
-			cleanup_and_exit();
-
-		if (dbc->doorbell) {
-			dbc->result = 0;
-
-			switch (dbc->device_id) {
-			case SB_SPI:
-				spi_command(dbc);
-				break;
-
-			case SB_MMC:
-				mmc_command(dbc);
-				break;
-
-			default:
-				printf("Doorbell by unhandled device: %d\n",
-				       dbc->device_id);
-				break;
-			}
-			dbc->doorbell = 0;
-		}
-		usleep(100);	/* 0.10 seconds */
-	}
-}
-
+extern char *mmc_file;          /* MMC backing file name */
+#endif

@@ -26,6 +26,7 @@
 #include <asm/types.h>
 
 #include "asm/sandbox-spi.h"
+#include "asm/sandbox-mmc.h"
 
 #define SANDBOX_SHM_START     0x10000000
 #define SANDBOX_SHM_ADDRESS   ((void *)(SANDBOX_SHM_START))
@@ -42,7 +43,8 @@
 	} while (0)
 
 #define DEVICES					\
-	D(SPI,	"SPI FLASH ROM")
+	D(SPI, "SPI FLASH ROM")                 \
+	D(MMC, "MMC Controller")
 
 enum device_t {
 #define D(n, s) SB_##n,
@@ -71,6 +73,7 @@ struct doorbell_command_t {
 struct doorbell_t {
 	__u32 exit;
 	struct spi_t spi;
+	struct mmc_t mmc;
 	struct doorbell_command_t cmd;
 };
 
