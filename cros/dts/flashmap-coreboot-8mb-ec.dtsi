@@ -1,0 +1,23 @@
+/*
+ * Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	/* Add our EC binary into RW binaries */
+	flash@ff800000 {
+		rw-a-vblock {
+			type = "keyblock boot,ecbin";
+		};
+		rw-a-boot {
+			type = "blob boot,ecbin";
+		};
+		rw-b-vblock {
+			type = "keyblock boot,ecbin";
+		};
+		rw-b-boot {
+			type = "blob boot,ecbin";
+		};
+	};
+};
