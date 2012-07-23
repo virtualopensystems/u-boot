@@ -125,6 +125,9 @@ static int process_fmap_node(const void *blob, int node, int depth,
 			return 0;
 		if (read_entry(blob, node, name, &rw->ec_bin))
 			return -FDT_ERR_MISSING;
+
+		/* Add the section offset to get an 'absolute offset' */
+		rw->ec_bin.offset += rw->boot.offset;
 		return 0;
 	}
 
