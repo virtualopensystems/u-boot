@@ -308,6 +308,50 @@ static int board_i2c_arb_init(const void *blob)
 }
 
 /**
+ * Fix-up the kernel device tree so the bridge pd_n and rst_n gpios accurately
+ * reflect the current board rev.
+ */
+void ft_board_setup(void *blob, bd_t *bd)
+{
+	int ret, rev, np, len;
+	const struct fdt_property *prop;
+
+	/* Do nothing for newer boards */
+	rev = board_get_revision();
+	if (rev < 4 || rev == 6)
+		return;
+
+	/*
+	 * If this is an older board, replace pd_n_gpio contents with that of
+	 * rst_n_gpio and delete rst_n_gpio from the dt.
+	 */
+	np = fdtdec_next_compatible(blob, 0, COMPAT_NXP_PTN3460);
+	if (np < 0) {
+		debug("%s: Could not find COMPAT_NXP_PTN3460\n", __func__);
+		return;
+	}
+
+	prop = fdt_get_property(blob, np, "rst_n_gpio", &len);
+	if (!prop) {
+		debug("%s: Could not get property err=%d\n", __func__, len);
+		return;
+	}
+
+	ret = fdt_setprop_inplace(blob, np, "pd_n_gpio", prop->data,
+			len);
+	if (ret) {
+		debug("%s: Could not setprop inplace err=%d\n", __func__, ret);
+		return;
+	}
+
+	ret = fdt_delprop(blob, np, "rst_n_gpio");
+	if (ret) {
+		debug("%s: Could not delprop err=%d\n", __func__, ret);
+		return;
+	}
+}
+
+/**
  * Enable the eDP to LVDS bridge.
  *
  * @return 0 if ok, non-zero if error
