@@ -210,6 +210,10 @@ static int bootm_linux_fdt(int machid, bootm_headers_t *images)
 	if (ret)
 		return ret;
 
+#ifdef CONFIG_OF_BOARD_SETUP
+	/* Call the board-specific fixup routine */
+	ft_board_setup(*of_flat_tree, gd->bd);
+#endif
 #ifdef CONFIG_OF_UPDATE_FDT_BEFORE_BOOT
 	/* this must be earlier than boot_relocate_fdt */
 	ret = fit_update_fdt_before_boot(*of_flat_tree, &of_size);
