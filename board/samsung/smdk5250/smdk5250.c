@@ -310,24 +310,72 @@ static int board_i2c_arb_init(const void *blob)
 /**
  * Enable the eDP to LVDS bridge.
  *
- * TODO(dianders): This whole function needs to be moved to device-
- * tree if we decide we can't find better solutions to some of the
- * problems here.
- *
  * @return 0 if ok, non-zero if error
  */
-static int board_dp_enable_bridge(void)
+static int board_dp_enable_bridge(const void *blob)
 {
 	const int NUM_TRIES = 10;
-	int i;
+	int ret, np, rev, i;
+	struct fdt_gpio_state pd, rst, hpd;
 
-	/* De-assert PD_N to power up the bridge */
-	gpio_set_value(GPIO_X15, 1);
-	gpio_cfg_pin(GPIO_X15, EXYNOS_GPIO_OUTPUT);
-	gpio_set_pull(GPIO_X15, EXYNOS_GPIO_PULL_NONE);
+	np = fdtdec_next_compatible(blob, 0, COMPAT_NXP_PTN3460);
+	if (np < 0) {
+		debug("%s: Could not find COMPAT_NXP_PTN3460 (%d)\n", __func__,
+			ret);
+		return np;
+	}
+	ret = fdtdec_decode_gpio(blob, np, "pd_n_gpio", &pd);
+	if (ret) {
+		debug("%s: Could not decode pd_n_gpio (%d)\n", __func__, ret);
+		return ret;
+	}
+	ret = fdtdec_decode_gpio(blob, np, "rst_n_gpio", &rst);
+	if (ret) {
+		debug("%s: Could not decode rst_n_gpio (%d)\n", __func__, ret);
+		return ret;
+	}
+	ret = fdtdec_decode_gpio(blob, np, "hotplug-gpio", &hpd);
+	if (ret) {
+		debug("%s: Could not decode hotplug (%d)\n", __func__, ret);
+		return ret;
+	}
+
+	/* If board is older, replace pd gpio with rst gpio */
+	rev = board_get_revision();
+	if (rev >= 4 && rev != 6) {
+		pd = rst;
+		rst.gpio = FDT_GPIO_NONE;
+	}
+
+	/* Setup the GPIOs */
+	ret = fdtdec_setup_gpio(&pd);
+	if (ret) {
+		debug("%s: Could not setup pd gpio (%d)\n", __func__, ret);
+		return ret;
+	}
+	ret = fdtdec_setup_gpio(&rst);
+	if (ret) {
+		debug("%s: Could not setup rst gpio (%d)\n", __func__, ret);
+		return ret;
+	}
+	ret = fdtdec_setup_gpio(&hpd);
+	if (ret) {
+		debug("%s: Could not setup hpd gpio (%d)\n", __func__, ret);
+		return ret;
+	}
 
 	/* Mux HPHPD to the special hotplug detect mode */
 	exynos_pinmux_config(PERIPH_ID_DPHPD, 0);
+
+	/* De-assert PD (and possibly RST) to power up the bridge */
+	fdtdec_set_gpio(&pd, 0);
+	gpio_cfg_pin(pd.gpio, EXYNOS_GPIO_OUTPUT);
+	gpio_set_pull(pd.gpio, EXYNOS_GPIO_PULL_NONE);
+	if (fdt_gpio_isvalid(&rst)) {
+		fdtdec_set_gpio(&rst, 0);
+		gpio_cfg_pin(rst.gpio, EXYNOS_GPIO_OUTPUT);
+		gpio_set_pull(rst.gpio, EXYNOS_GPIO_PULL_NONE);
+	}
 
 	/*
 	 * We'll wait for the bridge to come up here and retry if it didn't.
@@ -336,14 +384,14 @@ static int board_dp_enable_bridge(void)
 	 * and retry doesn't work.
 	 *
 	 * We really want to do better in the long term.  Ideally we should
-	 * set the PD_N pin high very early at boot and then probe the HPD pin
+	 * set the PD pin high very early at boot and then probe the HPD pin
 	 * to see when the chip has powered up.
 	 *
 	 * Right now we don't do the "ideal" solution for a few reasons:
 	 * - There is a phantom "high" on the HPD chip during its bootup.  The
-	 *   phantom high comes within 7ms of de-asserting PD_N and persists
+	 *   phantom high comes within 7ms of de-asserting PD and persists
 	 *   for at least 15ms.  The real high comes roughly 50ms after
-	 *   PD_N is de-asserted.  The phantom high makes it hard for us to
+	 *   PD is de-asserted.  The phantom high makes it hard for us to
 	 *   know when the NXP chip is up.
 	 * - We're trying to figure out how to make it so that the retry isn't
 	 *   needed, so we don't want to architect things too much until we
@@ -353,16 +401,8 @@ static int board_dp_enable_bridge(void)
 		/* Hardcode 90ms (max powerup) so we know HPD is valid. */
 		mdelay(90);
 
-		/*
-		 * Check HPD.  If it's high, we're all good.
-		 *
-		 * NOTE: This assumes exynos_pinmux_config(PERIPH_ID_DPHPD, 0)
-		 * has been called which sets the HPD pin to the HPD special
-		 * function (and disables internal pulls).  Here we have to
-		 * hardcode that HPD is GPIO_X07 since the pinmux stuff hasn't
-		 * been device-tree enabled yet.
-		 */
-		if (gpio_get_value(GPIO_X07))
+		/* Check HPD.  If it's high, we're all good. */
+		if (fdtdec_get_gpio(&hpd))
 			return 0;
 
 		/*
@@ -374,9 +414,11 @@ static int board_dp_enable_bridge(void)
 		 */
 		debug("%s: eDP bridge failed to come up; try %d of %d\n",
 		       __func__, i+1, NUM_TRIES);
-		gpio_set_value(GPIO_X15, 0);
+		fdtdec_set_gpio(&pd, 1);
+		fdtdec_set_gpio(&rst, 1);
 		mdelay(300);
-		gpio_set_value(GPIO_X15, 1);
+		fdtdec_set_gpio(&pd, 0);
+		fdtdec_set_gpio(&rst, 0);
 	}
 	debug("%s: eDP bridge failed to come up; giving up\n", __func__);
 	return -1;
@@ -447,7 +489,7 @@ int board_init(void)
 	 */
 	gpio_direction_output(GPIO_X30, 1);
 
-	if (board_dp_enable_bridge())
+	if (board_dp_enable_bridge(gd->fdt_blob))
 		debug("%s: Could not enable dp bridge\n", __func__);
 
 	if (board_init_mkbp_devices(gd->fdt_blob))
