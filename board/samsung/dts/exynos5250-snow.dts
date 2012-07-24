@@ -46,6 +46,15 @@
 			ec-interrupt = <&gpio 174 1>;
 		};
 	};
+	i2c7: i2c@12cd0000 {
+		dp_bridge@20 {
+			compatible = "nxp,ptn3460";
+			reg = <0x20>;
+			pd_n_gpio = <&gpio 0x7d 1>;	/* Y25 */
+			rst_n_gpio = <&gpio 0xad 1>;	/* X15 */
+			hotplug-gpio = <&gpio 0xa7 0>;	/* X07 */
+		};
+	};
 
 	dp@145b0000 {
 		samsung,interface = "edp";
