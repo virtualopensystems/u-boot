@@ -267,4 +267,13 @@ void i2c_set_early_reg(unsigned int base);
  */
 int i2c_get_bus_num_fdt(const void *blob, int node);
 
+/**
+ * Reset the I2C bus represented by the given a FDT I2C node.
+ *
+ * @param blob	Device tree blbo
+ * @param node	FDT I2C node to find
+ * @return 0 if port was reset, -1 if not found
+ */
+int i2c_reset_port_fdt(const void *blob, int node);
+
 #endif	/* _I2C_H_ */

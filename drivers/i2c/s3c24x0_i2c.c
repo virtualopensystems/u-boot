@@ -250,6 +250,28 @@ int i2c_get_bus_num_fdt(const void *blob, int node)
 	debug("%s: Can't find any matched I2C bus\n", __func__);
 	return -1;
 }
+
+int i2c_reset_port_fdt(const void *blob, int node)
+{
+	struct s3c24x0_i2c_bus *i2c;
+
+	int bus;
+
+	bus = i2c_get_bus_num_fdt(blob, node);
+	if (bus < 0) {
+		printf("could not get bus for node %d\n", node);
+		return -1;
+	}
+	i2c = get_bus(bus);
+	if (!i2c) {
+		printf("get_bus() failed for node node %d\n", node);
+		return -1;
+	}
+
+	i2c_ch_init(i2c->regs, CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
+
+	return 0;
+}
 #endif
 
 /*
