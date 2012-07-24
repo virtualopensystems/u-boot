@@ -20,6 +20,7 @@
  */
 
 #include <common.h>
+#include <mmc.h>
 
 #include <os.h>
 
@@ -59,3 +60,19 @@ int dram_init(void)
 	gd->ram_size = CONFIG_DRAM_SIZE;
 	return 0;
 }
+
+#ifdef CONFIG_GENERIC_MMC
+int board_mmc_getcd(struct mmc *mmc)
+{
+	return 1;
+}
+
+
+int board_mmc_init(bd_t *bis)
+{
+#ifdef CONFIG_SANDBOX_MMC
+	sandbox_mmc_init(0);
+#endif
+	return 0;
+}
+#endif

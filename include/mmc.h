@@ -327,4 +327,8 @@ struct mmc *mmc_spi_init(uint bus, uint cs, uint speed, uint mode);
 int mmc_legacy_init(int verbose);
 #endif
 
+#if defined(CONFIG_SANDBOX_MMC)
+int sandbox_mmc_init(int verbose);
+#endif
+
 #endif /* _MMC_H_ */
