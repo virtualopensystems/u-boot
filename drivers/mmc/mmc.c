@@ -571,7 +571,7 @@ int mmc_send_op_cond(struct mmc *mmc)
 }
 
 
-int mmc_send_ext_csd(struct mmc *mmc, char *ext_csd)
+int mmc_send_ext_csd(struct mmc *mmc, unsigned char *ext_csd)
 {
 	struct mmc_cmd cmd;
 	struct mmc_data data;
@@ -583,7 +583,7 @@ int mmc_send_ext_csd(struct mmc *mmc, char *ext_csd)
 	cmd.cmdarg = 0;
 	cmd.flags = 0;
 
-	data.dest = ext_csd;
+	data.dest = (char *)ext_csd;
 	data.blocks = 1;
 	data.blocksize = 512;
 	data.flags = MMC_DATA_READ;
@@ -618,7 +618,7 @@ int mmc_switch(struct mmc *mmc, u8 set, u8 index, u8 value)
 
 int mmc_change_freq(struct mmc *mmc)
 {
-	ALLOC_CACHE_ALIGN_BUFFER(char, ext_csd, 512);
+	ALLOC_CACHE_ALIGN_BUFFER(unsigned char, ext_csd, 512);
 	char cardtype;
 	int err;
 
@@ -880,8 +880,8 @@ int mmc_startup(struct mmc *mmc)
 	uint mult, freq;
 	u64 cmult, csize, capacity;
 	struct mmc_cmd cmd;
-	ALLOC_CACHE_ALIGN_BUFFER(char, ext_csd, 512);
-	ALLOC_CACHE_ALIGN_BUFFER(char, test_csd, 512);
+	ALLOC_CACHE_ALIGN_BUFFER(unsigned char, ext_csd, 512);
+	ALLOC_CACHE_ALIGN_BUFFER(unsigned char, test_csd, 512);
 	int timeout = 1000;
 
 #ifdef CONFIG_MMC_SPI_CRC_ON
