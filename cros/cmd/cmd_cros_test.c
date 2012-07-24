@@ -17,8 +17,10 @@
 #include <battery.h>
 #include <common.h>
 #include <command.h>
+#include <fdtdec.h>
 #include <smartbat.h>
 #include <tps65090.h>
+#include <asm/gpio.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -95,6 +97,81 @@ static int do_cros_test_i2c(cmd_tbl_t *cmdtp, int flag,
 	return 0;
 }
 
+#ifdef CONFIG_DRIVER_S3C24X0_I2C
+#include <asm/arch/pinmux.h>
+
+static int setup_i2c(int *nodep)
+{
+	int node;
+	int err;
+
+	node = fdtdec_find_alias_node(gd->fdt_blob, "i2c4");
+	if (node < 0) {
+		printf("Error: Cannot find fdt node\n");
+		return -1;
+	}
+
+	if (board_i2c_claim_bus(node)) {
+		printf("Error: Cannot claim bus\n");
+		return -1;
+	}
+	err = gpio_request(GPIO_A20, "i2creset");
+	err |= gpio_request(GPIO_A21, "i2creset");
+	err |= gpio_direction_output(GPIO_A20, 0);
+	err |= gpio_direction_output(GPIO_A21, 0);
+	if (err) {
+		printf("Error: Could not set up GPIOs\n");
+		return -1;
+	}
+	*nodep = node;
+
+	return 0;
+}
+
+static int restore_i2c(int node)
+{
+	int err;
+
+	err = gpio_direction_output(GPIO_A20, 1);
+	err |= gpio_direction_output(GPIO_A21, 1);
+	if (err) {
+		printf("Error: Could not restore GPIOs\n");
+		return -1;
+	}
+
+	if (i2c_reset_port_fdt(gd->fdt_blob, node)) {
+		printf("Error: Could not reset I2C after operation\n");
+		return -1;
+	}
+
+	if (exynos_pinmux_config(PERIPH_ID_I2C4, 0)) {
+		printf("Error: Could not restore I2C\n");
+		return -1;
+	}
+	board_i2c_release_bus(node);
+
+	return 0;
+}
+
+static int do_cros_test_i2creset(cmd_tbl_t *cmdtp, int flag,
+		int argc, char * const argv[])
+{
+	int node;
+
+	printf("Holding I2C bus 4 low for 15 seconds\n");
+	if (setup_i2c(&node))
+		return 1;
+
+	mdelay(15 * 1000);
+	if (restore_i2c(node))
+		return 1;
+
+	printf("   - done, I2C restored\n");
+
+	return 0;
+}
+#endif
+
 static int do_cros_test_all(cmd_tbl_t *cmdtp, int flag,
 		int argc, char * const argv[])
 {
@@ -108,6 +185,9 @@ static int do_cros_test_all(cmd_tbl_t *cmdtp, int flag,
 
 static cmd_tbl_t cmd_cros_test_sub[] = {
 	U_BOOT_CMD_MKENT(i2c, 0, 1, do_cros_test_i2c, "", ""),
+#ifdef CONFIG_DRIVER_S3C24X0_I2C
+	U_BOOT_CMD_MKENT(i2creset, 0, 1, do_cros_test_i2creset, "", ""),
+#endif
 	U_BOOT_CMD_MKENT(all, 0, 1, do_cros_test_all, "", ""),
 };
 
@@ -133,4 +213,5 @@ U_BOOT_CMD(cros_test, CONFIG_SYS_MAXARGS, 1, do_cros_test,
 	"Perform tests for Chrome OS",
 	"all        Run all tests\n"
 	"i2c        Test i2c link with EC, and arbitration\n"
+	"i2creset   Try to reset i2c bus by holding clk, data low for 15s"
 );
