@@ -47,6 +47,7 @@
 #define CONFIG_OF_CONTROL
 #define CONFIG_OF_SEPARATE
 #define CONFIG_ARCH_DEVICE_TREE		exynos5250
+#define CONFIG_OF_BOARD_SETUP
 
 /* Enable booting of fitImage format */
 #define CONFIG_FIT
