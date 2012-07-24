@@ -18,6 +18,7 @@
 #include <common.h>
 #include <command.h>
 #include <fdtdec.h>
+#include <i2c.h>
 #include <smartbat.h>
 #include <tps65090.h>
 #include <asm/gpio.h>
@@ -170,6 +171,46 @@ static int do_cros_test_i2creset(cmd_tbl_t *cmdtp, int flag,
 
 	return 0;
 }
+
+/**
+ * Return a 1-bit pseudo-random number related to the supplied seed
+ *
+ * @param seed		Seed value (any integer)
+ * @return pseudo-random number (0 or 1)
+ */
+static int get_fiddle_value(int seed)
+{
+	int value = 0;
+	int i;
+
+	for (i = 0; i < 32; i++)
+		value ^= (seed >> i) & 1;
+
+	return value;
+}
+
+static int do_cros_test_i2cfiddle(cmd_tbl_t *cmdtp, int flag,
+		int argc, char * const argv[])
+{
+	int node, i;
+
+	printf("Generate random transitions on I2C bus 4\n");
+	if (setup_i2c(&node))
+		return 1;
+
+	for (i = 0; i < 100; i++) {
+		gpio_set_value(GPIO_A20, get_fiddle_value(i));
+		udelay(1);
+		gpio_set_value(GPIO_A21, get_fiddle_value(100 - i));
+		udelay(1);
+	}
+
+	if (restore_i2c(node))
+		return 1;
+	printf("   - done, I2C restored\n");
+
+	return 0;
+}
 #endif
 
 static int do_cros_test_all(cmd_tbl_t *cmdtp, int flag,
@@ -187,6 +228,7 @@ static cmd_tbl_t cmd_cros_test_sub[] = {
 	U_BOOT_CMD_MKENT(i2c, 0, 1, do_cros_test_i2c, "", ""),
 #ifdef CONFIG_DRIVER_S3C24X0_I2C
 	U_BOOT_CMD_MKENT(i2creset, 0, 1, do_cros_test_i2creset, "", ""),
+	U_BOOT_CMD_MKENT(i2cfiddle, 0, 1, do_cros_test_i2cfiddle, "", ""),
 #endif
 	U_BOOT_CMD_MKENT(all, 0, 1, do_cros_test_all, "", ""),
 };
@@ -213,5 +255,6 @@ U_BOOT_CMD(cros_test, CONFIG_SYS_MAXARGS, 1, do_cros_test,
 	"Perform tests for Chrome OS",
 	"all        Run all tests\n"
 	"i2c        Test i2c link with EC, and arbitration\n"
-	"i2creset   Try to reset i2c bus by holding clk, data low for 15s"
+	"i2creset   Try to reset i2c bus by holding clk, data low for 15s\n"
+	"i2cfiddle  Try to break TPSCHROME or the battery on i2c"
 );
