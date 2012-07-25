@@ -30,7 +30,9 @@
 #include "process-memory.h"
 #include "shared-memory.h"
 #include "sd_spi.h"
+#include "sd_mmc.h"
 #include "asm/sandbox-api.h"
+
 
 
 static void help(const char *program_name)
@@ -41,6 +43,7 @@ static void help(const char *program_name)
 		"--help | --verbose\n"
 		"\t| --spi-page-size | --spi-page-count | "
 		"--spi-vendor | --spi-file\n"
+		"\t| --mmc-file\n"
 		"\t]..."
 		"\n\n"
 		"The sandbox daemon manages the shared memory "
@@ -52,6 +55,7 @@ static void help(const char *program_name)
 		"  --spi-page-count:  SPI ROM total page count\n"
 		"  --spi-page-vendor: SPI ROM vendor name\n"
 		"  --spi-page-file:   SPI ROM backing file\n"
+		"  --mmc-file:        MMC backing file\n"
 		"\n", program_name);
 	exit(0);
 }
@@ -69,13 +73,16 @@ static void process_args(int argc, char * const argv[])
 	 * necessary then.
 	 */
 	struct option args[] = {
-		{ "help",	     no_argument,	NULL,	256 },
-		{ "verbose",	     no_argument,	NULL,	257 },
-		{ "spi-page-size",   required_argument, NULL,	258 },
-		{ "spi-page-count",  required_argument, NULL,	259 },
-		{ "spi-vendor",	     required_argument, NULL,	260 },
-		{ "spi-file",	     required_argument, NULL,	261 },
-		{ NULL,		     no_argument,	NULL,	  0 }
+		{ "help",		no_argument,		NULL,	256 },
+		{ "verbose",		no_argument,		NULL,	257 },
+		{ "spi-page-size",	required_argument,	NULL,	258 },
+		{ "spi-page-count",	required_argument,	NULL,	259 },
+		{ "spi-vendor",		required_argument,	NULL,	260 },
+		{ "spi-file",		required_argument,	NULL,	261 },
+
+		{ "mmc-file",		required_argument,	NULL,	262 },
+
+		{ NULL,			no_argument,		NULL,	0 }
 	};
 
 	while (1) {
@@ -113,6 +120,10 @@ static void process_args(int argc, char * const argv[])
 			spi_file = strdup(optarg);
 			break;
 
+		case 262:
+			mmc_file = strdup(optarg);
+			break;
+
 		default:
 			help(argv[0]);
 			break;
@@ -122,6 +133,8 @@ static void process_args(int argc, char * const argv[])
 	if (validate_spi_arguments())
 		fatal("SPI peripheral not configured correctly");
 
+	if (mmc_validate_arguments())
+		fatal("MMC peripheral not configured correctly");
 }
 
 int main(int argc, char * const argv[])
