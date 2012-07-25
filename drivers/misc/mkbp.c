@@ -289,7 +289,8 @@ static int mkbp_flash_rw_offset(struct mkbp_dev *dev,
 	int ret;
 
 	p.region = EC_FLASH_REGION_RW;
-	ret = ec_command(dev, EC_FLASH_REGION_INFO, EC_VER_FLASH_REGION_INFO,
+	ret = ec_command(dev, EC_CMD_FLASH_REGION_INFO,
+			 EC_VER_FLASH_REGION_INFO,
 			 &p, sizeof(p), &r, sizeof(r));
 	if (ret != sizeof(r))
 		return -1;

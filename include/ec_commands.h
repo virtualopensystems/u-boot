@@ -486,7 +486,7 @@ struct ec_response_flash_protect {
  */
 
 /* Get the region offset/size */
-#define EC_FLASH_REGION_INFO 0x16
+#define EC_CMD_FLASH_REGION_INFO 0x16
 #define EC_VER_FLASH_REGION_INFO 1
 
 enum ec_flash_region {
