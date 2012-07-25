@@ -115,30 +115,58 @@ VbError_t VbExEcHashRW(const uint8_t **hash, int *hash_size)
 	return VBERROR_SUCCESS;
 }
 
+static VbError_t ec_protect_rw(int protect)
+{
+	struct mkbp_dev *mdev = board_get_mkbp_dev();
+	struct ec_response_flash_protect resp;
+	uint32_t mask = EC_FLASH_PROTECT_RW_NOW | EC_FLASH_PROTECT_RW_AT_BOOT;
+
+	/* Update protection */
+	if (mkbp_flash_protect(mdev, mask, protect ? mask : 0, &resp) < 0)
+		return VBERROR_UNKNOWN;
+
+	if (!protect) {
+		/* If protection is still enabled, need reboot */
+		if (resp.flags & EC_FLASH_PROTECT_RW_NOW)
+			return VBERROR_EC_REBOOT_TO_RO_REQUIRED;
+
+		return VBERROR_SUCCESS;
+	}
+
+	/* If write protect isn't asserted, don't expect protection enabled */
+	if (!(resp.flags & EC_FLASH_PROTECT_GPIO_ASSERTED))
+		return VBERROR_SUCCESS;
+
+	/* If flash is protected now, success */
+	if (resp.flags & EC_FLASH_PROTECT_RW_NOW)
+		return VBERROR_SUCCESS;
+
+	/* If RW will be protected at boot but not now, need a reboot */
+	if (resp.flags & EC_FLASH_PROTECT_RW_AT_BOOT)
+		return VBERROR_EC_REBOOT_TO_RO_REQUIRED;
+
+	/* Otherwise, it's an error */
+	return VBERROR_UNKNOWN;
+}
+
 VbError_t VbExEcUpdateRW(const uint8_t  *image, int image_size)
 {
 	struct mkbp_dev *mdev = board_get_mkbp_dev();
-	int rv = mkbp_flash_update_rw(mdev, image, image_size);
+	int rv;
 
+	rv = ec_protect_rw(0);
+	if (rv == VBERROR_EC_REBOOT_TO_RO_REQUIRED)
+		return rv;
+	else if (rv != VBERROR_SUCCESS)
+		return rv;
+
+	rv = mkbp_flash_update_rw(mdev, image, image_size);
 	return rv == 0 ? VBERROR_SUCCESS : VBERROR_UNKNOWN;
 }
 
 VbError_t VbExEcProtectRW(void)
 {
-	struct mkbp_dev *mdev = board_get_mkbp_dev();
-	struct ec_response_flash_protect resp;
-
-	/* Protect all flash code */
-	if (mkbp_flash_protect(mdev, EC_FLASH_PROTECT_RW_NOW,
-			       EC_FLASH_PROTECT_RW_NOW, &resp) < 0)
-		return VBERROR_UNKNOWN;
-
-	/* If write protect is asserted, that should have worked. */
-	if ((resp.flags & EC_FLASH_PROTECT_GPIO_ASSERTED) &&
-	    !(resp.flags & EC_FLASH_PROTECT_RW_NOW))
-		return VBERROR_UNKNOWN;
-
-	return VBERROR_SUCCESS;
+	return ec_protect_rw(1);
 }
 
 #else  /* CONFIG_MKBP */
