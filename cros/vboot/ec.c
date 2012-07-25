@@ -133,8 +133,12 @@ static VbError_t ec_protect_rw(int protect)
 		return VBERROR_SUCCESS;
 	}
 
-	/* If write protect isn't asserted, don't expect protection enabled */
-	if (!(resp.flags & EC_FLASH_PROTECT_GPIO_ASSERTED))
+	/*
+	 * If write protect and ro-at-boot aren't both asserted, don't expect
+	 * protection enabled.
+	 */
+	if ((~resp.flags) & (EC_FLASH_PROTECT_GPIO_ASSERTED |
+			     EC_FLASH_PROTECT_RO_AT_BOOT))
 		return VBERROR_SUCCESS;
 
 	/* If flash is protected now, success */
