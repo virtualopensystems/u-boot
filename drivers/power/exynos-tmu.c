@@ -235,7 +235,7 @@ int get_tmu_fdt_values(struct tmu_info *info, const void *blob)
 void tmu_setup_parameters(struct tmu_info *info)
 {
 	unsigned int te_temp, con;
-	unsigned int warning_temp, trip_temp, hwtrip_temp;
+	unsigned int warning_code, trip_code, hwtrip_code;
 	unsigned int cooling_temp;
 	unsigned int rising_value;
 	struct tmu_data *data = &info->data;
@@ -255,26 +255,33 @@ void tmu_setup_parameters(struct tmu_info *info)
 		info->te1 = data->efuse_value;
 
 	/* Get RISING & FALLING Threshold value */
-	warning_temp = data->ts.start_warning
+	warning_code = data->ts.start_warning
 			+ info->te1 - info->dc_value;
-	trip_temp = data->ts.start_tripping
+	trip_code = data->ts.start_tripping
 			+ info->te1 - info->dc_value;
-	hwtrip_temp = data->ts.hardware_tripping
+	hwtrip_code = data->ts.hardware_tripping
 			+ info->te1 - info->dc_value;
 
 	cooling_temp = 0;
 
-	rising_value = ((warning_temp << 8) |
-			(trip_temp << 16) |
-			(hwtrip_temp << 24));
+	rising_value = ((warning_code << 8) |
+			(trip_code << 16) |
+			(hwtrip_code << 24));
 
 	/* Set interrupt level */
 	writel(rising_value, &reg->threshold_temp_rise);
 	writel(cooling_temp, &reg->threshold_temp_fall);
 
 	/*
-	 * Need to init all regsiter setting after getting parameter info
-	 * [28:23] vref [11:8] slope - Tunning parameter
+	 * Need to init all register settings after getting parameter info
+	 * [28:23] vref [11:8] slope - Tuning parameter
+	 *
+	 * WARNING: this slope value writes into many bits in the tmu_control
+	 * register, with the default FDT value of 268470274 (0x10008802)
+	 * we are using this essentially sets the default register setting
+	 * from the TRM for tmu_control.
+	 * TODO(bhthompson): rewrite this code such that we are not performing
+	 * a hard wipe of tmu_control and re verify functionality.
 	 */
 	writel(data->slope, &reg->tmu_control);
 
