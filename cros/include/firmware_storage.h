@@ -25,16 +25,6 @@ typedef void **read_buf_type;
 #define FREE_IF_NEEDED(p)
 #endif
 
-#ifndef CONFIG_HARDWARE_MAPPED_SPI
-typedef void *read_buf_type;
-#define BT_EXTRA
-#define FREE_IF_NEEDED(p) free(p)
-#else
-typedef void **read_buf_type;
-#define BT_EXTRA (read_buf_type) &
-#define FREE_IF_NEEDED(p)
-#endif
-
 /**
  * These read or write [count] bytes starting from [offset] of storage into or
  * from the [buf].
