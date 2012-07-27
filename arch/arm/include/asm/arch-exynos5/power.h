@@ -33,17 +33,17 @@
 /* Power Management Unit register map */
 struct exynos5_power {
 	/* Add registers as and when required */
-	unsigned char	reserved1[0x0400];
-	unsigned int	sw_reset;		/* 0x0400 */
-	unsigned char	reserved2[0x0304];
-	unsigned int	usb_host_phy_ctrl;	/* 0x0708 */
-	unsigned char	reserved3[0x8];
-	unsigned int	mipi_phy1_control;	/* 0x0714 */
-	unsigned char	reserved4[0x8];
-	unsigned int	dptx_phy_control;	/* 0x0720 */
-	unsigned char	reserved5[0x2be8];
-	unsigned int	ps_hold_ctrl;		/* 0x330c */
-};
+	uint8_t		reserved1[0x0400];
+	uint32_t	sw_reset;		/* 0x0400 */
+	uint8_t		reserved2[0x0304];
+	uint32_t	usb_host_phy_ctrl;	/* 0x0708 */
+	uint8_t		reserved3[0x8];
+	uint32_t	mipi_phy1_control;	/* 0x0714 */
+	uint8_t		reserved4[0x8];
+	uint32_t	dptx_phy_control;	/* 0x0720 */
+	uint8_t		reserved5[0x2be8];
+	uint32_t	ps_hold_ctrl;		/* 0x330c */
+} __attribute__ ((__packed__));
 
 /**
  * Perform a software reset.
