@@ -21,6 +21,7 @@
  */
 
 #include <common.h>
+#include <asm/gpio.h>
 #include <asm/arch-exynos/cpu.h>
 #include <asm/arch-exynos/spl.h>
 #include <asm/arch/board.h>
@@ -79,6 +80,18 @@ int board_get_revision(void)
 	gpio[0] = params->board_rev_gpios & 0xffff;
 	gpio[1] = params->board_rev_gpios >> 16;
 	return gpio_decode_number(gpio, CONFIG_BOARD_REV_GPIO_COUNT);
+}
+
+int board_wakeup_permitted(void)
+{
+	struct spl_machine_param *param = spl_get_machine_params();
+	const int gpio = param->bad_wake_gpio;
+	int is_bad_wake;
+
+	/* We're a bad wakeup if the gpio was defined and was high */
+	is_bad_wake = ((gpio != -1) && gpio_get_value(gpio));
+
+	return !is_bad_wake;
 }
 
 /*

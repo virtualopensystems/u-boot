@@ -72,6 +72,19 @@ unsigned int exynos_get_uboot_size(void);
  */
 enum boot_mode exynos_get_boot_device(void);
 
+/**
+ * Check if a wakeup is permitted.
+ *
+ * On some boards we need to look at a special GPIO to ensure that the wakeup
+ * from sleep was valid.  If the wakeup is not valid we need to go through a
+ * full reset.
+ *
+ * The default implementation of this function allows all wakeups.
+ *
+ * @return 1 if wakeup is permitted; 0 otherwise
+ */
+int board_wakeup_permitted(void);
+
 /* CPU detection macros */
 extern unsigned int s5p_cpu_id;
 extern unsigned int s5p_cpu_rev;

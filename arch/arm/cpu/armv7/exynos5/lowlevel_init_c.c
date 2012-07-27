@@ -31,19 +31,57 @@
 #include <asm/arch/tzpc.h>
 #include "setup.h"
 
+#if defined(CONFIG_SPL_BUILD)
+
+/* Board-specific call to see if wakeup is allowed. */
+static int __def_board_wakeup_permitted(void)
+{
+	return 1;
+}
+int board_wakeup_permitted(void)
+	__attribute__((weak, alias("__def_board_wakeup_permitted")));
+
+/**
+ * Reset the CPU if the wakeup was not permitted.
+ *
+ * See the comments for board_wakeup_permitted() for details.
+ */
+static void reset_if_invalid_wakeup(void)
+{
+	if (!board_wakeup_permitted())
+		power_reset();
+}
+
 static void wakeup_reset(void)
 {
 	system_clock_init();
-#if defined(CONFIG_SPL_BUILD)
 	mem_ctrl_init();
-#endif
 	tzpc_init();
+	reset_if_invalid_wakeup();
 	power_exit_wakeup();
+}
+#endif
+
+/* Check for wakeup events and jump back to the kernel if appropriate. */
+static void check_for_wakeup(void)
+{
+#if defined(CONFIG_SPL_BUILD)
+	uint32_t reset_status = power_read_reset_status();
+
+	/* AFTR or LPA wakeup reset */
+	if (reset_status == S5P_CHECK_DIDLE || reset_status == S5P_CHECK_LPA) {
+		reset_if_invalid_wakeup();
+		power_exit_wakeup();
+	}
+	/* Sleep wakeup reset */
+	else if (reset_status == S5P_CHECK_SLEEP)
+		wakeup_reset();
+#endif
 }
 
 void lowlevel_init_c(void)
 {
-	uint32_t reset_status, pc;
+	uint32_t pc;
 
 	/*
 	 * The reason we don't write out the instructions dsb/isb/sev:
@@ -66,14 +104,7 @@ void lowlevel_init_c(void)
 	/* Setup cpu info which is needed to select correct register offsets */
 	cpu_info_init();
 
-	reset_status = power_read_reset_status();
-
-	/* AFTR or LPA wakeup reset */
-	if (reset_status == S5P_CHECK_DIDLE || reset_status == S5P_CHECK_LPA)
-		power_exit_wakeup();
-	/* Sleep wakeup reset */
-	else if (reset_status == S5P_CHECK_SLEEP)
-		wakeup_reset();
+	check_for_wakeup();
 
 	/* Set the PS-Hold in SPL */
 	ps_hold_setup();
