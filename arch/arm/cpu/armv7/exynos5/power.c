@@ -44,6 +44,9 @@ void power_reset(void)
 	struct exynos5_power *power =
 		(struct exynos5_power *)samsung_get_base_power();
 
+	/* Clear inform1 so there's no change we think we've got a wake reset */
+	power->inform1 = 0;
+
 	setbits_le32(&power->sw_reset, 1);
 }
 
