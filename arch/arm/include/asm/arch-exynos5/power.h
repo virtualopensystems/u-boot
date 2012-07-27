@@ -41,7 +41,10 @@ struct exynos5_power {
 	uint32_t	mipi_phy1_control;	/* 0x0714 */
 	uint8_t		reserved4[0x8];
 	uint32_t	dptx_phy_control;	/* 0x0720 */
-	uint8_t		reserved5[0x2be8];
+	uint8_t		reserved5[0xdc];
+	uint32_t	inform0;		/* 0x0800 */
+	uint32_t	inform1;		/* 0x0804 */
+	uint8_t		reserved6[0x2b04];
 	uint32_t	ps_hold_ctrl;		/* 0x330c */
 } __attribute__ ((__packed__));
 
@@ -66,5 +69,11 @@ void power_enable_hw_thermal_trip(void);
 
 /* Initialize the pmic voltages to power up the system */
 int power_init(void);
+
+/* Read the reset status. */
+uint32_t power_read_reset_status(void);
+
+/* Read the resume function and call it. */
+void power_exit_wakeup(void);
 
 #endif

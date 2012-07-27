@@ -102,6 +102,23 @@ void power_enable_hw_thermal_trip(void)
 	setbits_le32(&power->ps_hold_ctrl, POWER_ENABLE_HW_TRIP);
 }
 
+uint32_t power_read_reset_status(void)
+{
+	struct exynos5_power *power =
+		(struct exynos5_power *)samsung_get_base_power();
+
+	return power->inform1;
+}
+
+void power_exit_wakeup(void)
+{
+	struct exynos5_power *power =
+		(struct exynos5_power *)samsung_get_base_power();
+	typedef void (*resume_func)(void);
+
+	((resume_func)power->inform0)();
+}
+
 /**
  * Initialize the pmic voltages to power up the system
  * This also calls i2c_init so that we can program the pmic

@@ -31,16 +31,6 @@
 #include <asm/arch/tzpc.h>
 #include "setup.h"
 
-static void exit_wakeup(void)
-{
-	typedef void (*resume_func)(void);
-	resume_func resume;
-
-	resume = (resume_func)readl((void *)((EXYNOS5_POWER_BASE) +
-					     (INFORM0_OFFSET)));
-	resume();
-}
-
 static void wakeup_reset(void)
 {
 	system_clock_init();
@@ -48,7 +38,7 @@ static void wakeup_reset(void)
 	mem_ctrl_init();
 #endif
 	tzpc_init();
-	exit_wakeup();
+	power_exit_wakeup();
 }
 
 void lowlevel_init_c(void)
@@ -73,18 +63,17 @@ void lowlevel_init_c(void)
 #endif
 	);
 
-	reset_status = readl((void *)((EXYNOS5_POWER_BASE) +
-				      (INFORM1_OFFSET)));
+	/* Setup cpu info which is needed to select correct register offsets */
+	cpu_info_init();
+
+	reset_status = power_read_reset_status();
 
 	/* AFTR or LPA wakeup reset */
 	if (reset_status == S5P_CHECK_DIDLE || reset_status == S5P_CHECK_LPA)
-		exit_wakeup();
+		power_exit_wakeup();
 	/* Sleep wakeup reset */
 	else if (reset_status == S5P_CHECK_SLEEP)
 		wakeup_reset();
-
-	/* Setup cpu info which is needed to select correct register offsets */
-	cpu_info_init();
 
 	/* Set the PS-Hold in SPL */
 	ps_hold_setup();
