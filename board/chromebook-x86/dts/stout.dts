@@ -14,5 +14,6 @@
 
 	chromeos-config {
 		virtual-dev-switch;
+		oprom-matters;
 	};
 };
