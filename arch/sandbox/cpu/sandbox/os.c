@@ -38,7 +38,7 @@
 #include <asm/state.h>
 #include <os.h>
 
-#include "asm/sandbox-daemon.h"
+#include "asm/sandbox-api.h"
 
 static int   shm_id;
 
