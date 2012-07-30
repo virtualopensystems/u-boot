@@ -108,9 +108,22 @@
 			 * Alignment: 4k (for random read/write).
 			 * RW firmware can put calibration data here.
 			 */
-			reg = <0x00381000 0x0001b000>;
+			reg = <0x00381000 0x00019000>;
 			type = "wiped";
 			wipe-value = [00];
+		};
+
+		rw-vblock-dev {
+			label = "vblock-dev";
+			/*
+			 * Alignment: 4k (for random read/write).
+			 * Reserve space for an optional user-installed
+			 * vblock to validate dev-mode kernels.
+			 * See crosbug.com/p/11216.
+			 */
+			reg = <0x0039a000 0x00002000>;
+			type = "wiped";
+			wipe-value = [ff];
 		};
 
 		/* ---- Section: Rewritable private 16 KB---- */
