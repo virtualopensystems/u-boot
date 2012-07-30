@@ -309,6 +309,9 @@ static void wipe_unused_memory(crossystem_data_t *cdata,
 			gd->relocaddr + (&__bss_end - &__text_start)
 #elif defined(CONFIG_OF_CONTROL) && defined(CONFIG_ARM)
 			gd->relocaddr + (&__bss_end__ - &_start)
+#else
+#error Unknown compilation mode: text start & end unknown.
+			0
 #endif
 			);
 
