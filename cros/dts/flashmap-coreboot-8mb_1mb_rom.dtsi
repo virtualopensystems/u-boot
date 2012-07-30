@@ -213,7 +213,7 @@
 		/* ---- Section: Read-only ---- */
 		ro-section {
 			label = "ro-section";
-			reg = <0x005a0000 0x001e0000>;
+			reg = <0x005a0000 0x00260000>;
 			read-only;
 		};
 		ro-fmap {
