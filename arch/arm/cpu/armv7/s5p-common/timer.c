@@ -93,13 +93,14 @@ unsigned long get_timer(unsigned long base)
 
 unsigned long timer_get_us(void)
 {
-	static unsigned long base_time_us;
-
 	struct s5p_timer *const timer = s5p_get_base_timer();
 	unsigned long now_downward_us = readl(&timer->tcnto4);
 
-	/* Note that this timer counts downward. */
-	return base_time_us - now_downward_us;
+	/*
+	 * Note that this timer counts downward. The pre-SPL process (BL1)
+	 * takes about 100ms, so add this in here.
+	 */
+	return CONFIG_SPL_TIME_US - now_downward_us;
 }
 
 /* delay x useconds */
