@@ -468,6 +468,36 @@ static int board_dp_enable_bridge(const void *blob)
 	return -1;
 }
 
+void board_lcd_enable(void)
+{
+	/*
+	 * This delay is T3 in the LCD timing spec (defined as > 200ms). We need
+	 * to  set this above 260ms since the bridge takes 50-60ms from when it
+	 * asserts HP to when it starts driving LVDS clock/data
+	 */
+	mdelay(260);
+
+	tps65090_fet_enable(1); /* Enable FET1, backlight */
+
+	/* This delay is T5 in the LCD timing spec (defined as > 10ms) */
+	mdelay(10);
+
+	/*
+	 * Configure backlight PWM as a simple output high (100% brightness)
+	 * TODO(hatim.rv@samsung.com): Move to FDT
+	 */
+	gpio_direction_output(GPIO_B20, 1);
+
+	/* This delay is T6 in the LCD timing spec (defined as > 10ms) */
+	mdelay(10);
+
+	/*
+	 * Configure GPIO for LCD_BL_EN
+	 * TODO(hatim.rv@samsung.com): Move to FDT
+	 */
+	gpio_direction_output(GPIO_X30, 1);
+}
+
 int board_init(void)
 {
 	struct fdt_memory mem_config;
@@ -497,7 +527,6 @@ int board_init(void)
 /* Enable power for LCD */
 #ifdef CONFIG_TPS65090_POWER
 	tps65090_init();
-	tps65090_fet_enable(1); /* Enable FET1, backlight */
 	tps65090_fet_enable(6); /* Enable FET6, lcd panel */
 #endif
 
@@ -520,18 +549,6 @@ int board_init(void)
 		return -1;
 	}
 #endif
-
-	/*
-	 * Configure backlight PWM as a simple output high (100% brightness)
-	 * TODO(hatim.rv@samsung.com): Move to FDT
-	 */
-	gpio_direction_output(GPIO_B20, 1);
-
-	/*
-	 * Configure GPIO for LCD_BL_EN
-	 * TODO(hatim.rv@samsung.com): Move to FDT
-	 */
-	gpio_direction_output(GPIO_X30, 1);
 
 	if (board_dp_enable_bridge(gd->fdt_blob))
 		debug("%s: Could not enable dp bridge\n", __func__);

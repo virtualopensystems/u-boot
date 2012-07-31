@@ -144,8 +144,16 @@ void lcd_show_board_info()
 {
 }
 
-void lcd_enable()
+static void __def_board_lcd_enable(void)
 {
+}
+
+void board_lcd_enable(void)
+	__attribute__((weak, alias("__def_board_lcd_enable")));
+
+void lcd_enable(void)
+{
+	board_lcd_enable();
 }
 
 void lcd_setcolreg(ushort regno, ushort red, ushort green, ushort blue)
