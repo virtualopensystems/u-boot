@@ -624,7 +624,6 @@ static int s5p_dp_enable_scramble(struct s5p_dp_device *dp)
 static int s5p_dp_init_dp(struct s5p_dp_device *dp)
 {
 	int ret;
-	u32 reg;
 	struct exynos5_dp *base = dp->base;
 
 	s5p_dp_reset(dp);
@@ -635,14 +634,6 @@ static int s5p_dp_init_dp(struct s5p_dp_device *dp)
 	ret = s5p_dp_init_analog_func(dp);
 	if (ret)
 		return ret;
-
-	/* Init HPD */
-	reg = HOTPLUG_CHG | HPD_LOST | PLUG;
-	writel(reg, &base->common_int_sta_4);
-
-	writel(INT_HPD, &base->int_sta_mask);
-
-	clrbits_le32(&base->sys_ctl_3, F_HPD | HPD_CTRL);
 
 	s5p_dp_init_aux(dp);
 
