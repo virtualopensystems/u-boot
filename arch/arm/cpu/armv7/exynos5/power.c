@@ -30,7 +30,7 @@
 #include <i2c.h>
 #include <max77686.h>
 
-void ps_hold_setup(void)
+static void ps_hold_setup(void)
 {
 	struct exynos5_power *power =
 		(struct exynos5_power *)samsung_get_base_power();
@@ -140,6 +140,8 @@ int power_init(void)
 	/* Set the i2c register address base so i2c works before FDT */
 	i2c_set_early_reg(param->i2c_base);
 #endif
+
+	ps_hold_setup();
 
 	/* init the i2c so that we can program pmic chip */
 	i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);

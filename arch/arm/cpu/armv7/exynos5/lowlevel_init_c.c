@@ -106,9 +106,6 @@ void lowlevel_init_c(void)
 
 	check_for_wakeup();
 
-	/* Set the PS-Hold in SPL */
-	ps_hold_setup();
-
 	/*
 	 * If U-boot is already running in RAM, no need to relocate U-Boot.
 	 * Memory controller must be configured before relocating U-Boot
