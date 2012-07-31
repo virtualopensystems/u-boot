@@ -85,40 +85,12 @@ enum boot_mode exynos_get_boot_device(void);
  */
 int board_wakeup_permitted(void);
 
-/* CPU detection macros */
-extern unsigned int s5p_cpu_id;
-extern unsigned int s5p_cpu_rev;
+int s5p_get_cpu_rev(void);
+void s5p_set_cpu_id(void);
+int s5p_get_cpu_id(void);
 
-static inline int s5p_get_cpu_rev(void)
-{
-	return s5p_cpu_rev;
-}
-
-static inline void s5p_set_cpu_id(void)
-{
-	s5p_cpu_id = readl(EXYNOS_PRO_ID);
-	s5p_cpu_id = (0xC000 | ((s5p_cpu_id & 0x00FFF000) >> 12));
-
-	/*
-	 * 0xC200: EXYNOS4210 EVT0
-	 * 0xC210: EXYNOS4210 EVT1
-	 */
-	if (s5p_cpu_id == 0xC200) {
-		s5p_cpu_id |= 0x10;
-		s5p_cpu_rev = 0;
-	} else if (s5p_cpu_id == 0xC210) {
-		s5p_cpu_rev = 1;
-	}
-}
-
-#define IS_SAMSUNG_TYPE(type, id)			\
-static inline int cpu_is_##type(void)			\
-{							\
-	return s5p_cpu_id == id ? 1 : 0;		\
-}
-
-IS_SAMSUNG_TYPE(exynos4, 0xc210)
-IS_SAMSUNG_TYPE(exynos5, 0xc520)
+#define cpu_is_exynos4()	(s5p_get_cpu_id() == 0xc210)
+#define cpu_is_exynos5()	(s5p_get_cpu_id() == 0xc520)
 
 #endif
 

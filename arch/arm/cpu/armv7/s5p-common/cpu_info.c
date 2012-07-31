@@ -30,17 +30,39 @@
  * section since they don't have initial values. The relocation code which
  * runs after lowlevel_init() will reset them to zero.
  */
-unsigned int s5p_cpu_id __attribute__((section(".data")));
-unsigned int s5p_cpu_rev __attribute__((section(".data")));
+static unsigned int s5p_cpu_id __attribute__((section(".data")));
+static unsigned int s5p_cpu_rev __attribute__((section(".data")));
 
 void cpu_info_init(void)
 {
 	s5p_set_cpu_id();
 }
 
-u32 get_device_type(void)
+int s5p_get_cpu_id(void)
 {
 	return s5p_cpu_id;
+}
+
+int s5p_get_cpu_rev(void)
+{
+	return s5p_cpu_rev;
+}
+
+void s5p_set_cpu_id(void)
+{
+	s5p_cpu_id = readl(EXYNOS_PRO_ID);
+	s5p_cpu_id = (0xC000 | ((s5p_cpu_id & 0x00FFF000) >> 12));
+
+	/*
+	 * 0xC200: EXYNOS4210 EVT0
+	 * 0xC210: EXYNOS4210 EVT1
+	 */
+	if (s5p_cpu_id == 0xC200) {
+		s5p_cpu_id |= 0x10;
+		s5p_cpu_rev = 0;
+	} else if (s5p_cpu_id == 0xC210) {
+		s5p_cpu_rev = 1;
+	}
 }
 
 #ifdef CONFIG_DISPLAY_CPUINFO
@@ -50,6 +72,15 @@ int print_cpuinfo(void)
 
 	printf("CPU:\tS5P%X@%sMHz\n",
 			s5p_cpu_id, strmhz(buf, get_arm_clk()));
+
+	return 0;
+}
+#endif
+
+#ifdef CONFIG_ARCH_CPU_INIT
+int arch_cpu_init(void)
+{
+	cpu_info_init();
 
 	return 0;
 }
