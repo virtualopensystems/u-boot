@@ -182,4 +182,7 @@
 
 #define CONFIG_SYS_THUMB_BUILD
 
+/* We spend about 100us getting from reset to SPL */
+#define CONFIG_SPL_TIME_US	100000
+
 #endif	/* __EXYNOS5_CONFIG_H */
