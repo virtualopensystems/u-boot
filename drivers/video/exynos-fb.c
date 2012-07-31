@@ -1045,6 +1045,7 @@ int exynos_lcd_check_next_stage(const void *blob, int can_block)
 {
 	long delay;
 
+	bootstage_start(BOOTSTAGE_ID_ACCUM_LCD, "lcd");
 	do {
 		delay = timer_next - timer_get_boot_us();
 		if (delay > 0) {
@@ -1055,6 +1056,8 @@ int exynos_lcd_check_next_stage(const void *blob, int can_block)
 		}
 		handle_dp_stage(blob);
 	} while (stage != STAGE_DONE);
+	bootstage_accum(BOOTSTAGE_ID_ACCUM_LCD);
+
 	return 0;
 }
 #endif
@@ -1097,6 +1100,8 @@ void lcd_ctrl_init(void *lcdbase)
 {
 	int ret;
 
+	bootstage_start(BOOTSTAGE_ID_ACCUM_LCD, "lcd");
+
 	/* We can't return an error, so for now print it */
 	ret = init_lcd_controller(lcdbase);
 	if (ret)
@@ -1104,4 +1109,6 @@ void lcd_ctrl_init(void *lcdbase)
 
 	/* Enable flushing after LCD writes if requested */
 	lcd_set_flush_dcache(1);
+
+	bootstage_accum(BOOTSTAGE_ID_ACCUM_LCD);
 }

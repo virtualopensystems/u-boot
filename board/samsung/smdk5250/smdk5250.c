@@ -545,6 +545,11 @@ int board_init(void)
 {
 	struct fdt_memory mem_config;
 
+	/* Record the time we spent before SPL */
+	bootstage_add_record(BOOTSTAGE_ID_START_SPL, "spl_start", 0,
+			     CONFIG_SPL_TIME_US);
+	bootstage_mark_name(BOOTSTAGE_ID_BOARD_INIT, "board_init");
+
 	if (fdtdec_decode_memory(gd->fdt_blob, &mem_config)) {
 		debug("%s: Failed to decode memory\n", __func__);
 		return -1;
@@ -596,6 +601,9 @@ int board_init(void)
 		return -1;
 
 	exynos_lcd_check_next_stage(gd->fdt_blob, 0);
+
+	bootstage_mark_name(BOOTSTAGE_ID_BOARD_INIT_DONE, "board_init_done");
+
 	return 0;
 }
 
