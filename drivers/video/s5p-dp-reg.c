@@ -74,7 +74,7 @@ void s5p_dp_reset(struct s5p_dp_device *dp)
 	writel(0x0, &base->tx_amp_tuning_ctl);
 
 	/* Set interrupt pin assertion polarity as high */
-	writel(INT_POL, &base->int_ctl);
+	writel(INT_POL0 | INT_POL1, &base->int_ctl);
 
 	/* Clear pending regisers */
 	writel(0xff, &base->common_int_sta_1);

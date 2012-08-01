@@ -283,8 +283,9 @@ struct exynos5_dp {
 #define AUX_ERR					(1 << 0)
 
 /* DP_INT_CTL */
+#define INT_POL0				(1 << 0)
+#define INT_POL1				(1 << 1)
 #define SOFT_INT_CTRL				(1 << 2)
-#define INT_POL					(1 << 0)
 
 /* DP_SYS_CTL_1 */
 #define DET_STA					(1 << 2)
