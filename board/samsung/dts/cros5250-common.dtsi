@@ -49,6 +49,7 @@
 	};
 
 	config {
+		google,bad-wake-gpios = <&gpio 0x70 0>;
 		hwid = "DAISY TEST A-A 9382";
 		machine-arch-id = <3774>;
 	};
