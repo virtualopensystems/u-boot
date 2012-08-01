@@ -1,0 +1,138 @@
+This directory implements the 'sandbox-daemon' system.  This program
+is used as a required companion to the sandbox U-Boot program.
+
+In order to implement a sandboxed version of U-Boot that will run as a
+user-space application on a Linux host, there must be a method that
+allows accessing virtualized devices that are backed by a file on the
+host system.  Since U-Boot is not intended to run on a hosted system,
+support for accessing the host OS are presently anemic, but a small
+aperature has been opened for the sandbox via 'os.c'; this aperature
+should remain small, while at the same time the implementation of
+U-Boot should be impacted as little as possible.
+
+A minimal set of devices must be implemented to make a sandboxed
+U-Boot useful, but fully implementing such devices in the sandboxed
+U-Boot has several drawbacks:
+
+  1) The OS aperature is opened wider, coupling more tightly with the
+     host OS;.
+
+  2) Testing will not be effective against real U-Boot device drivers,
+     but will instead be testing the Sandbox versions
+
+  3) Some device drivers are not well structured for sandboxing as
+     part of U-Boot.
+
+     Devices such as the SPI ROM and GPIOs are conducive to
+     re-implementation entirely in the sandbox (modulo opening the
+     aperature).  The SPI ROM is encapsulated through an interface
+     which instigates a read or write, for example, and these can be
+     easily handled by a sandbox.  The GPIOs are already implemented
+     as an interal array.
+
+     Other devices, such as the MMC (which is bus based) and the SATA
+     device (which is memory mapped) are far less amenable to this
+     implementation in this manner.  The former writes many commands
+     which through a callback; this can be placed into U-Boot, but the
+     OS access is problematic due to the current structure of the code
+     & build.
+
+     Memory mapped devices are certainly harder to implement in
+     U-Boot.  If the memory is to be polled, U-Boot will either have
+     to fork() or use threads to have asynchrous monitoring of memory.
+
+Instead, the implementation of the devices-via-files will be handled
+through a separate daemonized process.  This daemon creates a SHM
+(shared memory) region used by itself and the sandbox U-Boot.
+
+The sandbox device drivers non-memory mapped devices will minimally
+write their commands to a 'doorbell' region of the shared memory and
+then 'ring the doorbell' to indicate device activity.  The daemon will
+intercept the doorbell and perform the device request, generally
+placing the results directly into the shared memory region.
+
+The SHM region appears to U-Boot and the daemon as shown below:
+
+
+                  Shared memory layout              Mappped addresses
+
+         +--------------------------------------+   0x117fffff  (24Mb - 1)
+         |                                      |
+         |        64Kb 'doorbell' area          |
+         |                                      |
+         +--------------------------------------+   0x117F0000 (24Mb - 64K)
+         |                                      |
+         |                                      |
+         |                                      |
+         |      U-Boot architecture memory      |
+         |            (24Mb - 64Kb)             |
+         |                                      |
+         |                                      |
+         |                                      |
+         +--------------------------------------+   0x10000000
+
+The size of the SHM has been selected to remain within the default
+restrictions imposed by the Linux Kernel.
+
+U-Boot proper does not have access to the 'doorbell' region; it is
+only accessed by the sandbox portions of the system.
+
+U-Boot view:
+
+  The lower section of the diagram above serves at the physical memory
+  of the U-Boot sandbox architecture.
+
+  The full 24Mb area is mapped at address 0x10000000, but the last
+  64Kb is carved out and the U-Boot architecture is actually provided
+  '24Mb - 64Kb' for memory.
+
+  The final 64Kb region is used as a 'doorbell' area.  It is through
+  this area that U-Boot initiates device requests, and is able to
+  transfer miscellaneous information to the daemon.
+
+  The device driver will write device-specific information into the
+  doorbell area, ring the doorbell and then wait for the device to
+  complete the request.
+
+  If a U-Boot device requests a data transfer into the SHM region by
+  'ringing the doorbell'.
+
+Daemon View
+
+  The daemon views the entire 24Mb region as a contiguous block of
+  memory, but it is only concerned at this point with the doorbell
+  region.
+
+  When the doorbell is rung, the daemon determines the requesting
+  device, and calls a function specific to the associated device that
+  will process the device request.
+
+  The arguments associated with a device request are stored in the
+  doorbell area in a device-specific manner.  For example, a SPI
+  device will have different arguments than an MMC to erase a region.
+
+  When the device request is finished, the daemon will indicate that
+  the request is finished by setting a result code and clearing the
+  doorbell.
+
+Future directions:
+
+  o Rather than using the doorbell method, memory mapped devices, such
+    as SATA, could be implemented by watching the memory associated
+    with the device, and responding in the same manner as actual
+    hardware.
+
+  o The Fully Automated Firmware Test (FAFT) might be able to be
+    easily retargeted to the SHM system of the sandbox.  In this
+    scenario, the FAFT could fully replace the shared-memory daemon
+    and provide full control of U-Boot and its devices.
+
+  o Rather than command line parameters, the doorbell area of memory
+    can be modified to contain device information.  This would
+    faciliate starting U-Boot with 'not present' removable devices,
+    and then later making them appear via programs which directly
+    modify the shared memory device information.
+
+  o Somehow linking shared memory daemon drivers with U-Boot might
+    make this system more palatable to upstream.  (Need to address
+    asynchronous aspect of device request detection)
