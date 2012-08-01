@@ -48,6 +48,11 @@
 #include <linux/ctype.h>
 #include <menu.h>
 
+#ifdef CONFIG_EXYNOS_DISPLAYPORT
+/* for exynos_lcd_check_next_stage() */
+#include <asm/arch/s5p-dp.h>
+#endif
+
 #if defined(CONFIG_SILENT_CONSOLE) || defined(CONFIG_POST) || defined(CONFIG_CMDLINE_EDITING)
 DECLARE_GLOBAL_DATA_PTR;
 #endif
@@ -468,6 +473,15 @@ void main_loop (void)
 		secure_boot_cmd(env);
 
 #endif /* CONFIG_OF_CONTROL */
+
+#ifdef CONFIG_EXYNOS_DISPLAYPORT
+	/*
+	 * Make sure the lcd comes up fully here (by setting can_block to 1).
+	 * Note that this happens in the secure_boot case as well, but we have
+	 * a bit more time to interleave the lcd initialization in that case.
+	 */
+	exynos_lcd_check_next_stage(gd->fdt_blob, 1);
+#endif
 
 	debug ("### main_loop: bootcmd=\"%s\"\n", s ? s : "<UNDEFINED>");
 

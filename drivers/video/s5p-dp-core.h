@@ -232,4 +232,23 @@ void s5p_dp_config_video_slave_mode(struct s5p_dp_device *dp,
  * param dp		pointer to main s5p-dp structure
  */
 void s5p_dp_wait_hw_link_training_done(struct s5p_dp_device *dp);
+
+#ifdef CONFIG_EXYNOS_DISPLAYPORT
+/*
+ * The following are board specific calls to implement the various
+ * STAGE_* steps.
+ *
+ * param blob		Flattened device tree blob
+ * param wait_ms	Set by the function to the next wait time
+ * return		0 on success, -EAGAIN to try again, others to fail
+ */
+extern int board_dp_lcd_vdd(const void *blob, unsigned *wait_ms);
+extern int board_dp_bridge_setup(const void *blob, unsigned *wait_ms);
+extern int board_dp_bridge_init(const void *blob, unsigned *wait_ms);
+extern int board_dp_bridge_reset(const void *blob, unsigned *wait_ms);
+extern int board_dp_hotplug(const void *blob, unsigned *wait_ms);
+extern int board_dp_backlight_vdd(const void *blob, unsigned *wait_ms);
+extern int board_dp_backlight_pwm(const void *blob, unsigned *wait_ms);
+extern int board_dp_backlight_en(const void *blob, unsigned *wait_ms);
+#endif
 #endif /* _S5P_DP_CORE_H */

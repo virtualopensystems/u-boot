@@ -32,6 +32,11 @@
 #include <asm/arch/display.h>
 #endif
 
+#ifdef CONFIG_EXYNOS_DISPLAYPORT
+/* for exynos_lcd_check_next_stage() */
+#include <asm/arch/s5p-dp.h>
+#endif
+
 #include <gbb_header.h> /* for GoogleBinaryBlockHeader */
 #include <tss_constants.h>
 #include <vboot_api.h>
@@ -422,6 +427,9 @@ twostop_init_vboot_library(firmware_storage_t *file, void *gbb,
 #ifdef CONFIG_VIDEO_TEGRA
 	tegra_lcd_check_next_stage(gd->fdt_blob, 0);
 #endif
+#ifdef CONFIG_EXYNOS_DISPLAYPORT
+	exynos_lcd_check_next_stage(gd->fdt_blob, 0);
+#endif
 	VBDEBUG("iparams.out_flags: %08x\n", iparams.out_flags);
 
 	if (virtual_dev_switch) {
@@ -758,6 +766,9 @@ twostop_init(struct twostop_fmap *fmap, firmware_storage_t *file,
 #ifdef CONFIG_VIDEO_TEGRA
 	tegra_lcd_check_next_stage(gd->fdt_blob, 0);
 #endif
+#ifdef CONFIG_EXYNOS_DISPLAYPORT
+	exynos_lcd_check_next_stage(gd->fdt_blob, 0);
+#endif
 
 out:
 	if (ret)
@@ -790,6 +801,11 @@ twostop_main_firmware(struct twostop_fmap *fmap, void *gbb,
 	VBDEBUG("- kernel_buffer:      : %p\n", kparams.kernel_buffer);
 	VBDEBUG("- kernel_buffer_size: : %08x\n",
 			kparams.kernel_buffer_size);
+
+#ifdef CONFIG_EXYNOS_DISPLAYPORT
+	/* Make sure the LCD is up before we load the kernel */
+	exynos_lcd_check_next_stage(gd->fdt_blob, 1);
+#endif
 
 	if ((err = VbSelectAndLoadKernel(&cparams, &kparams))) {
 		VBDEBUG("VbSelectAndLoadKernel: %d\n", err);

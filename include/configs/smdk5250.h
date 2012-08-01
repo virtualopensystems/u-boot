@@ -162,9 +162,10 @@
 /* LCD */
 #define CONFIG_LCD
 #define CONFIG_EXYNOS_LCD
-#define LCD_XRES		1280
-#define LCD_YRES		800
-#define LCD_BPP			LCD_COLOR16
+#define CONFIG_EXYNOS_DISPLAYPORT
+#define LCD_XRES			1280
+#define LCD_YRES			800
+#define LCD_BPP				LCD_COLOR16
 
 #define CONFIG_MAX77686_POWER
 

@@ -26,6 +26,7 @@
 #include <fdtdec.h>
 #include <lcd.h>
 #include <pwm.h>
+#include <errno.h>
 #include <asm/errno.h>
 #include <asm/gpio.h>
 #include <asm/io.h>
@@ -72,6 +73,25 @@ enum {
 	/* Add other types here as and when required */
 	MIPI_DSI_GENERIC_LONG_WRITE	= 0x29,
 };
+
+#ifdef CONFIG_EXYNOS_DISPLAYPORT
+enum stage_t {
+	STAGE_START = 0,
+	STAGE_LCD_VDD,
+	STAGE_BRIDGE_SETUP,
+	STAGE_BRIDGE_INIT,
+	STAGE_BRIDGE_RESET,
+	STAGE_HOTPLUG,
+	STAGE_DP_CONTROLLER,
+	STAGE_BACKLIGHT_VDD,
+	STAGE_BACKLIGHT_PWM,
+	STAGE_BACKLIGHT_EN,
+	STAGE_DONE,
+};
+
+static enum stage_t stage = STAGE_START;
+static unsigned long timer_next; /* Time we can move onto next stage */
+#endif
 
 int lcd_line_length;
 int lcd_color_fg;
@@ -122,6 +142,7 @@ static struct exynos5_fimd_panel global_panel_data[2] = {
 	}
 };
 
+#ifdef CONFIG_EXYNOS_DISPLAYPORT
 static struct s5p_dp_device dp_device;
 
 static struct video_info smdk5250_dp_config = {
@@ -139,6 +160,7 @@ static struct video_info smdk5250_dp_config = {
 	.link_rate		= LINK_RATE_2_70GBPS,
 	.lane_count		= LANE_COUNT2,
 };
+#endif
 
 void lcd_show_board_info()
 {
@@ -512,6 +534,7 @@ void exynos_fimd_disable(void)
 	clrbits_le32(&fimd->shadowcon, CHANNEL0_EN);
 }
 
+#ifdef CONFIG_EXYNOS_DISPLAYPORT
 /*
  * Configure DP in slave mode and wait for video stream.
  *
@@ -818,20 +841,75 @@ static int s5p_dp_hw_link_training(struct s5p_dp_device *dp,
 
 	return 0;
 }
+#endif
+
+/*
+ * Note that despite having the prefix is_, this function can return an error.
+ *
+ * Return value:	= 0 if interface is not edp
+ *			> 0 if interface is edp
+ *			< 0 if an error occurred
+ */
+static int is_edp_panel(const void *blob)
+{
+	int node;
+	const char *interface;
+
+	/* Get the node from FDT for DP */
+	node = fdtdec_next_compatible(gd->fdt_blob, 0,
+					COMPAT_SAMSUNG_EXYNOS_DP);
+	if (node < 0) {
+		debug("EXYNOS_DP: No node for dp in device tree\n");
+		return -ERR_NO_FDT_NODE;
+	}
+
+	interface = fdt_getprop(blob, node, "samsung,interface", NULL);
+	return interface && !strcmp(interface, "edp");
+}
+
+#ifdef CONFIG_EXYNOS_DISPLAYPORT
+static int dp_start(const void *blob, unsigned *wait_ms)
+{
+	int ret;
+
+	ret = is_edp_panel(blob);
+	/* Error, bail out */
+	if (ret < 0)
+		return ret;
+
+	/* DisplayPort, go to LCD_VDD */
+	if (ret > 0) {
+		stage = STAGE_LCD_VDD;
+		return 0;
+	}
+
+	/* MIPI, init the controller and skip to BACKLIGHT_VDD */
+	mipi_init();
+	stage = STAGE_BACKLIGHT_VDD;
+	return 0;
+}
 
 /*
  * Initialize DP display
- * param node		DP node
- * return		Initialization status
+ * param blob	Flattened device tree blob
+ * return	Initialization status
  */
-static int dp_main_init(int node)
+static int dp_controller_init(const void *blob, unsigned *wait_ms)
 {
-	int ret;
+	int ret, node;
 	struct s5p_dp_device *dp = &dp_device;
 	fdt_addr_t addr;
 	struct exynos5_dp *base;
 
-	addr = fdtdec_get_addr(gd->fdt_blob, node, "reg");
+	/* Get the node from FDT for DP */
+	node = fdtdec_next_compatible(blob, 0,
+					COMPAT_SAMSUNG_EXYNOS_DP);
+	if (node < 0) {
+		debug("EXYNOS_DP: No node for dp in device tree\n");
+		return -ERR_NO_FDT_NODE;
+	}
+
+	addr = fdtdec_get_addr(blob, node, "reg");
 	if (addr == FDT_ADDR_T_NONE) {
 		debug("%s: Missing dp-base\n", __func__);
 		return -ERR_MISSING_DP_BASE;
@@ -884,35 +962,102 @@ static int dp_main_init(int node)
 		return ret;
 	}
 
+	/*
+	 * This delay is T3 in the LCD timing spec (defined as >200ms). We set
+	 * this down to 60ms since that's the approximate maximum amount of time
+	 * it'll take a bridge to start outputting LVDS data. The delay of
+	 * >200ms is just a conservative value to avoid turning on the backlight
+	 * when there's random LCD data on the screen. Shaving 140ms off the
+	 * boot is an acceptable trade-off.
+	 */
+	*wait_ms = 60;
 	return 0;
 }
 
-/*
- * Fill LCD timing data for DP or MIPI
- * param node	DP/FIMD node
- * return	(struct exynos5_fimd_panel *) LCD timing data
+/**
+ * Handle the next stage of LCD initialization
  */
-static struct exynos5_fimd_panel *fill_panel_data(int node)
+static int handle_dp_stage(const void *blob)
 {
-	const char *interface;
-	int val;
+	int ret = 0;
+	unsigned wait_ms = 0;
 
-	interface = fdt_getprop(gd->fdt_blob, node, "samsung,interface", NULL);
-	val = interface && strcmp(interface, "edp");
-
-	global_panel_data[0].xres = panel_info.vl_col;
-	global_panel_data[0].yres = panel_info.vl_row;
-	global_panel_data[1].xres = panel_info.vl_col;
-	global_panel_data[1].yres = panel_info.vl_row;
-
-	if (!val)
-		/* Display I/F is eDP */
-		return &global_panel_data[0];
-	else
-		/* Display I/F is MIPI */
-		return &global_panel_data[1];
-
+	debug("%s: stage %d\n", __func__, stage);
+	switch (stage) {
+	case STAGE_START:
+		ret = dp_start(blob, &wait_ms);
+		break;
+	case STAGE_LCD_VDD:
+		ret = board_dp_lcd_vdd(blob, &wait_ms);
+		stage = STAGE_BRIDGE_SETUP;
+		break;
+	case STAGE_BRIDGE_SETUP:
+		ret = board_dp_bridge_setup(blob, &wait_ms);
+		stage = STAGE_BRIDGE_INIT;
+		break;
+	case STAGE_BRIDGE_INIT:
+		ret = board_dp_bridge_init(blob, &wait_ms);
+		stage = STAGE_HOTPLUG;
+		break;
+	case STAGE_BRIDGE_RESET:
+		ret = board_dp_bridge_reset(blob, &wait_ms);
+		stage = STAGE_BRIDGE_INIT;
+		break;
+	case STAGE_HOTPLUG:
+		ret = board_dp_hotplug(blob, &wait_ms);
+		if (ret)
+			stage = STAGE_BRIDGE_RESET;
+		else
+			stage = STAGE_DP_CONTROLLER;
+		break;
+	case STAGE_DP_CONTROLLER:
+		ret = dp_controller_init(blob, &wait_ms);
+		stage = STAGE_BACKLIGHT_VDD;
+		break;
+	case STAGE_BACKLIGHT_VDD:
+		ret = board_dp_backlight_vdd(blob, &wait_ms);
+		stage = STAGE_BACKLIGHT_PWM;
+		break;
+	case STAGE_BACKLIGHT_PWM:
+		ret = board_dp_backlight_pwm(blob, &wait_ms);
+		stage = STAGE_BACKLIGHT_EN;
+		break;
+	case STAGE_BACKLIGHT_EN:
+		ret = board_dp_backlight_en(blob, &wait_ms);
+		stage = STAGE_DONE;
+		break;
+	case STAGE_DONE:
+		return 0;
+	}
+	timer_next = timer_get_boot_us() + wait_ms * 1000;
+	if (ret == -EAGAIN) {
+		printf("%s: LCD init stage %d failed with %d; continuing.\n",
+			__func__, stage, ret);
+	} else if (ret) {
+		printf("%s: LCD init stage %d failed with %d\n", __func__,
+			stage, ret);
+		stage = STAGE_DONE;
+	}
+	return ret;
 }
+
+int exynos_lcd_check_next_stage(const void *blob, int can_block)
+{
+	long delay;
+
+	do {
+		delay = timer_next - timer_get_boot_us();
+		if (delay > 0) {
+			if (!can_block)
+				return 0;
+
+			udelay(delay);
+		}
+		handle_dp_stage(blob);
+	} while (stage != STAGE_DONE);
+	return 0;
+}
+#endif
 
 /**
  * Init the LCD controller
@@ -922,36 +1067,28 @@ static struct exynos5_fimd_panel *fill_panel_data(int node)
  */
 static int init_lcd_controller(void *lcdbase)
 {
+	int ret;
 	struct exynos5_fimd_panel *panel_data;
-	int node;
 
-	/* Get the node from FDT for DP */
-	node = fdtdec_next_compatible(gd->fdt_blob, 0,
-					COMPAT_SAMSUNG_EXYNOS_DP);
-	if (node < 0) {
-		debug("EXYNOS_DP: No node for dp in device tree\n");
-		return -ERR_NO_FDT_NODE;
-	}
+	ret = is_edp_panel(gd->fdt_blob);
+	if (ret < 0)
+		return ret;
+	else if (ret)
+		panel_data = &global_panel_data[0];
+	else
+		panel_data = &global_panel_data[1];
 
-	pwm_init(0, MUX_DIV_2, 0);
-
-	panel_data = fill_panel_data(node);
-
-	if (panel_data->is_mipi)
-		mipi_init();
+	global_panel_data[0].xres = panel_info.vl_col;
+	global_panel_data[0].yres = panel_info.vl_row;
+	global_panel_data[1].xres = panel_info.vl_col;
+	global_panel_data[1].yres = panel_info.vl_row;
 
 	fimd_bypass();
 	fb_init(lcdbase, panel_data);
-
-	if (panel_data->is_dp) {
-		int err;
-
-		err = dp_main_init(node);
-		if (err) {
-			debug("DP initialization failed\n");
-			return err;
-		}
-	}
+#ifndef CONFIG_EXYNOS_DISPLAYPORT
+	if (panel_data->is_mipi)
+		mipi_init();
+#endif
 
 	return 0;
 }

@@ -28,6 +28,7 @@
 #include <mmc.h>
 #include <netdev.h>
 #include <tps65090.h>
+#include <errno.h>
 #include <asm/gpio.h>
 #include <asm/arch/cpu.h>
 #include <asm/arch/ehci-s5p.h>
@@ -41,8 +42,13 @@
 #include <asm/arch/sata.h>
 #include <asm/arch/exynos-tmu.h>
 #include <asm/arch/exynos-cpufreq.h>
+#include <asm/arch/s5p-dp.h>
 
 #include "board.h"
+
+#ifndef CONFIG_EXYNOS_DISPLAYPORT
+#error "CONFIG_EXYNOS_DISPLAYPORT must be defined for smdk5250"
+#endif
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -51,6 +57,11 @@ struct local_info {
 	int arbitrate_node;
 	struct fdt_gpio_state ap_claim;
 	struct fdt_gpio_state ec_claim;
+
+	/* DisplayPort gpios */
+	struct fdt_gpio_state dp_pd;
+	struct fdt_gpio_state dp_rst;
+	struct fdt_gpio_state dp_hpd;
 
 	/* Time between requesting bus and deciding that we have it */
 	unsigned slew_delay_us;
@@ -351,16 +362,17 @@ void ft_board_setup(void *blob, bd_t *bd)
 	}
 }
 
-/**
- * Enable the eDP to LVDS bridge.
- *
- * @return 0 if ok, non-zero if error
- */
-static int board_dp_enable_bridge(const void *blob)
+#ifdef CONFIG_TPS65090_POWER
+int board_dp_lcd_vdd(const void *blob, unsigned *wait_ms)
 {
-	const int NUM_TRIES = 10;
-	int ret, np, rev, i;
-	struct fdt_gpio_state pd, rst, hpd;
+	*wait_ms = 0;
+	return tps65090_fet_enable(6); /* Enable FET6, lcd panel */
+}
+#endif
+
+static int board_dp_fill_gpios(const void *blob)
+{
+	int np, ret, rev;
 
 	np = fdtdec_next_compatible(blob, 0, COMPAT_NXP_PTN3460);
 	if (np < 0) {
@@ -368,17 +380,17 @@ static int board_dp_enable_bridge(const void *blob)
 			ret);
 		return np;
 	}
-	ret = fdtdec_decode_gpio(blob, np, "pd_n_gpio", &pd);
+	ret = fdtdec_decode_gpio(blob, np, "pd_n_gpio", &local.dp_pd);
 	if (ret) {
 		debug("%s: Could not decode pd_n_gpio (%d)\n", __func__, ret);
 		return ret;
 	}
-	ret = fdtdec_decode_gpio(blob, np, "rst_n_gpio", &rst);
+	ret = fdtdec_decode_gpio(blob, np, "rst_n_gpio", &local.dp_rst);
 	if (ret) {
 		debug("%s: Could not decode rst_n_gpio (%d)\n", __func__, ret);
 		return ret;
 	}
-	ret = fdtdec_decode_gpio(blob, np, "hotplug-gpio", &hpd);
+	ret = fdtdec_decode_gpio(blob, np, "hotplug-gpio", &local.dp_hpd);
 	if (ret) {
 		debug("%s: Could not decode hotplug (%d)\n", __func__, ret);
 		return ret;
@@ -387,115 +399,145 @@ static int board_dp_enable_bridge(const void *blob)
 	/* If board is older, replace pd gpio with rst gpio */
 	rev = board_get_revision();
 	if (rev >= 4 && rev != 6) {
-		pd = rst;
-		rst.gpio = FDT_GPIO_NONE;
+		local.dp_pd = local.dp_rst;
+		local.dp_rst.gpio = FDT_GPIO_NONE;
 	}
+	return 0;
+}
+
+int board_dp_bridge_setup(const void *blob, unsigned *wait_ms)
+{
+	int ret;
+
+	ret = board_dp_fill_gpios(blob);
+	if (ret)
+		return ret;
+
+	/* Mux HPHPD to the special hotplug detect mode */
+	exynos_pinmux_config(PERIPH_ID_DPHPD, 0);
 
 	/* Setup the GPIOs */
-	ret = fdtdec_setup_gpio(&pd);
+	ret = fdtdec_setup_gpio(&local.dp_pd);
 	if (ret) {
 		debug("%s: Could not setup pd gpio (%d)\n", __func__, ret);
 		return ret;
 	}
-	ret = fdtdec_setup_gpio(&rst);
+	ret = fdtdec_setup_gpio(&local.dp_rst);
 	if (ret) {
 		debug("%s: Could not setup rst gpio (%d)\n", __func__, ret);
 		return ret;
 	}
-	ret = fdtdec_setup_gpio(&hpd);
+	ret = fdtdec_setup_gpio(&local.dp_hpd);
 	if (ret) {
 		debug("%s: Could not setup hpd gpio (%d)\n", __func__, ret);
 		return ret;
 	}
 
-	/* Mux HPHPD to the special hotplug detect mode */
-	exynos_pinmux_config(PERIPH_ID_DPHPD, 0);
-
-	/* De-assert PD (and possibly RST) to power up the bridge */
-	fdtdec_set_gpio(&pd, 0);
-	gpio_cfg_pin(pd.gpio, EXYNOS_GPIO_OUTPUT);
-	gpio_set_pull(pd.gpio, EXYNOS_GPIO_PULL_NONE);
-	if (fdt_gpio_isvalid(&rst)) {
-		fdtdec_set_gpio(&rst, 0);
-		gpio_cfg_pin(rst.gpio, EXYNOS_GPIO_OUTPUT);
-		gpio_set_pull(rst.gpio, EXYNOS_GPIO_PULL_NONE);
+	fdtdec_set_gpio(&local.dp_pd, 0);
+	gpio_cfg_pin(local.dp_pd.gpio, EXYNOS_GPIO_OUTPUT);
+	gpio_set_pull(local.dp_pd.gpio, EXYNOS_GPIO_PULL_NONE);
+	if (fdt_gpio_isvalid(&local.dp_rst)) {
+		fdtdec_set_gpio(&local.dp_rst, 1);
+		gpio_cfg_pin(local.dp_rst.gpio, EXYNOS_GPIO_OUTPUT);
+		gpio_set_pull(local.dp_rst.gpio, EXYNOS_GPIO_PULL_NONE);
+		udelay(10);
+		fdtdec_set_gpio(&local.dp_rst, 0);
 	}
 
-	/*
-	 * We'll wait for the bridge to come up here and retry if it didn't.
-	 *
-	 * Sometimes the retry works and sometimes things are really wedged
-	 * and retry doesn't work.
-	 *
-	 * We really want to do better in the long term.  Ideally we should
-	 * set the PD pin high very early at boot and then probe the HPD pin
-	 * to see when the chip has powered up.
-	 *
-	 * Right now we don't do the "ideal" solution for a few reasons:
-	 * - There is a phantom "high" on the HPD chip during its bootup.  The
-	 *   phantom high comes within 7ms of de-asserting PD and persists
-	 *   for at least 15ms.  The real high comes roughly 50ms after
-	 *   PD is de-asserted.  The phantom high makes it hard for us to
-	 *   know when the NXP chip is up.
-	 * - We're trying to figure out how to make it so that the retry isn't
-	 *   needed, so we don't want to architect things too much until we
-	 *   get a more final solution.
-	 */
-	for (i = 0; i < NUM_TRIES; i++) {
-		/* Hardcode 90ms (max powerup) so we know HPD is valid. */
-		mdelay(90);
-
-		/* Check HPD.  If it's high, we're all good. */
-		if (fdtdec_get_gpio(&hpd))
-			return 0;
-
-		/*
-		 * If we're here, the bridge chip failed to initialize.
-		 * Drive DP_N low in an attempt to reset.
-		 *
-		 * Arbitrarily wait 300ms here with DP_N low.  Don't know for
-		 * sure how long we should wait, but we're being paranoid.
-		 */
-		debug("%s: eDP bridge failed to come up; try %d of %d\n",
-		       __func__, i+1, NUM_TRIES);
-		fdtdec_set_gpio(&pd, 1);
-		fdtdec_set_gpio(&rst, 1);
-		mdelay(300);
-		fdtdec_set_gpio(&pd, 0);
-		fdtdec_set_gpio(&rst, 0);
-	}
-	debug("%s: eDP bridge failed to come up; giving up\n", __func__);
-	return -1;
+	*wait_ms = 0;
+	return 0;
 }
 
-void board_lcd_enable(void)
+int board_dp_bridge_init(const void *blob, unsigned *wait_ms)
 {
+	/* De-assert PD (and possibly RST) to power up the bridge */
+	fdtdec_set_gpio(&local.dp_pd, 0);
+
+	/* Ignore the return value here, on some boards this is NC */
+	fdtdec_set_gpio(&local.dp_rst, 0);
+
 	/*
-	 * This delay is T3 in the LCD timing spec (defined as > 200ms). We need
-	 * to  set this above 260ms since the bridge takes 50-60ms from when it
-	 * asserts HP to when it starts driving LVDS clock/data
+	 * We need to wait for 90ms after bringing up the bridge since there
+	 * is a phantom "high" on the HPD chip during its bootup.  The phantom
+	 * high comes within 7ms of de-asserting PD and persists for at least
+	 * 15ms.  The real high comes roughly 50ms after PD is de-asserted. The
+	 * phantom high makes it hard for us to know when the NXP chip is up.
 	 */
-	mdelay(260);
+	*wait_ms = 90;
+	return 0;
+}
 
-	tps65090_fet_enable(1); /* Enable FET1, backlight */
+int board_dp_bridge_reset(const void *blob, unsigned *wait_ms)
+{
+	debug("%s: eDP bridge failed to come up\n", __func__);
 
+	/*
+	 * If we're here, the bridge chip failed to initialize.
+	 * Drive DP_N low in an attempt to reset.
+	 */
+	fdtdec_set_gpio(&local.dp_pd, 1);
+
+	/* Ignore the return value here, on some boards this is NC */
+	fdtdec_set_gpio(&local.dp_rst, 1);
+
+	/*
+	 * Arbitrarily wait 300ms here with DP_N low.  Don't know for
+	 * sure how long we should wait, but we're being paranoid.
+	 */
+	*wait_ms = 300;
+	return 0;
+}
+
+int board_dp_hotplug(const void *blob, unsigned *wait_ms)
+{
+	const int MAX_TRIES = 10;
+	static int num_tries;
+
+	/* Check HPD.  If it's high, we're all good. */
+	if (fdtdec_get_gpio(&local.dp_hpd)) {
+		*wait_ms = 0;
+		return 0;
+	}
+
+	debug("%s: eDP bridge failed to come up; try %d of %d\n", __func__,
+		num_tries, MAX_TRIES);
+	/* Immediately go into bridge reset if the hp line is not high */
+	*wait_ms = 0;
+	++num_tries;
+	return num_tries <= MAX_TRIES ? -EAGAIN : -ENODEV;
+}
+
+#ifdef CONFIG_TPS65090_POWER
+int board_dp_backlight_vdd(const void *blob, unsigned *wait_ms)
+{
 	/* This delay is T5 in the LCD timing spec (defined as > 10ms) */
-	mdelay(10);
+	*wait_ms = 10;
+	return tps65090_fet_enable(1); /* Enable FET1, backlight */
+}
+#endif
 
+int board_dp_backlight_pwm(const void *blob, unsigned *wait_ms)
+{
 	/*
 	 * Configure backlight PWM as a simple output high (100% brightness)
 	 * TODO(hatim.rv@samsung.com): Move to FDT
 	 */
 	gpio_direction_output(GPIO_B20, 1);
-
 	/* This delay is T6 in the LCD timing spec (defined as > 10ms) */
-	mdelay(10);
+	*wait_ms = 10;
+	return 0;
+}
 
+int board_dp_backlight_en(const void *blob, unsigned *wait_ms)
+{
 	/*
 	 * Configure GPIO for LCD_BL_EN
 	 * TODO(hatim.rv@samsung.com): Move to FDT
 	 */
 	gpio_direction_output(GPIO_X30, 1);
+	/* We're done, no more delays! */
+	*wait_ms = 0;
+	return 0;
 }
 
 int board_init(void)
@@ -524,11 +566,10 @@ int board_init(void)
 
 	board_i2c_init(gd->fdt_blob);
 
-/* Enable power for LCD */
 #ifdef CONFIG_TPS65090_POWER
 	tps65090_init();
-	tps65090_fet_enable(6); /* Enable FET6, lcd panel */
 #endif
+	exynos_lcd_check_next_stage(gd->fdt_blob, 0);
 
 	if (max77686_enable_32khz_cp()) {
 		debug("%s: Failed to enable max77686 32khz coprocessor clock\n",
@@ -550,12 +591,10 @@ int board_init(void)
 	}
 #endif
 
-	if (board_dp_enable_bridge(gd->fdt_blob))
-		debug("%s: Could not enable dp bridge\n", __func__);
-
 	if (board_init_mkbp_devices(gd->fdt_blob))
 		return -1;
 
+	exynos_lcd_check_next_stage(gd->fdt_blob, 0);
 	return 0;
 }
 
