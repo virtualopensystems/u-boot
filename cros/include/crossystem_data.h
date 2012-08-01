@@ -19,7 +19,8 @@
 
 enum {
 	ACTIVE_EC_FIRMWARE_RO = 0,
-	ACTIVE_EC_FIRMWARE_RW = 1
+	ACTIVE_EC_FIRMWARE_RW = 1,
+	ACTIVE_EC_FIRMWARE_UNCHANGE = 2, /* Use value set by coreboot */
 };
 
 enum {

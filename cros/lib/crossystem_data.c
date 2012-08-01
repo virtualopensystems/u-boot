@@ -226,6 +226,7 @@ int crossystem_data_embed_into_fdt(crossystem_data_t *cdata, void *fdt,
 	err |= set_scalar_prop("fmap-offset", fmap_offset);
 
 	switch (cdata->active_ec_firmware) {
+	case ACTIVE_EC_FIRMWARE_UNCHANGE: /* Default to RO */
 	case ACTIVE_EC_FIRMWARE_RO:
 		err |= set_conststring_prop("active-ec-firmware", "RO");
 		break;
@@ -300,8 +301,9 @@ int crossystem_data_update_acpi(crossystem_data_t *cdata)
 	acpi_table->vbt0 = BOOT_REASON_OTHER;
 	acpi_table->vbt1 =
 		crossystem_fw_index_vdat_to_binf(vdat->firmware_index);
-	/* active_ec_firmware(vbt2) is set up by coreboot, so we don't
-	 * set it up here on purpose. */
+	/* Use value set by coreboot if we don't want to change it */
+	if (cdata->active_ec_firmware != ACTIVE_EC_FIRMWARE_UNCHANGE)
+		acpi_table->vbt2 = cdata->active_ec_firmware;
 	acpi_table->vbt3 =
 		(cdata->boot_write_protect_switch ? CHSW_FIRMWARE_WP_DIS : 0) |
 		(cdata->boot_recovery_switch ? CHSW_RECOVERY_X86 : 0) |

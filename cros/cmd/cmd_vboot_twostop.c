@@ -329,6 +329,26 @@ static int request_ec_reboot_to_ro(void)
 #endif
 }
 
+/* Fill in active EC firmware information. */
+static int set_active_ec_firmware(crossystem_data_t* cdata)
+{
+	int in_rw = 0;
+	int rv;
+
+	/* If software sync is disabled, just leave this as original value. */
+	if (!cros_fdtdec_config_has_prop(gd->fdt_blob, "ec-software-sync")) {
+		cdata->active_ec_firmware = ACTIVE_EC_FIRMWARE_UNCHANGE;
+		return 0;
+	}
+
+	rv = VbExEcRunningRW(&in_rw);
+	if (rv != VBERROR_SUCCESS)
+		return rv;
+	cdata->active_ec_firmware = (in_rw ? ACTIVE_EC_FIRMWARE_RW :
+					     ACTIVE_EC_FIRMWARE_RO);
+	return 0;
+}
+
 static VbError_t
 twostop_init_vboot_library(firmware_storage_t *file, void *gbb,
 			   uint32_t gbb_offset, size_t gbb_size,
@@ -801,6 +821,9 @@ twostop_main_firmware(struct twostop_fmap *fmap, void *gbb,
 	VbExDebug("\n");
 #endif /* VBOOT_DEBUG */
 
+	/* EC might jump between RO and RW during software sync. We need to
+	 * update active EC copy in cdata. */
+	set_active_ec_firmware(cdata);
 	crossystem_data_dump(cdata);
 	boot_kernel(&kparams, cdata);
 
