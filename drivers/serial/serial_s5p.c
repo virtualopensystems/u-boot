@@ -27,6 +27,7 @@
 #include <asm/arch/uart.h>
 #include <asm/arch/clk.h>
 #include <asm/arch-exynos/spl.h>
+#include <asm/global_data.h>
 #include <fdtdec.h>
 #include <serial.h>
 
@@ -107,6 +108,13 @@ void serial_setbrg_dev(const int dev_index)
 int serial_init_dev(const int dev_index)
 {
 	struct s5p_uart *const uart = s5p_get_base_uart(dev_index);
+
+#if defined(CONFIG_SILENT_CONSOLE) && \
+		defined(CONFIG_OF_CONTROL) && \
+		!defined(CONFIG_SPL_BUILD)
+	if (fdtdec_get_config_int(gd->fdt_blob, "silent_console", 0))
+		gd->flags |= GD_FLG_SILENT;
+#endif
 
 	if (!config.enabled)
 		return 0;
