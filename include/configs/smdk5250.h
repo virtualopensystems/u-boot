@@ -226,6 +226,8 @@
 					"stdout=serial,lcd\0" \
 					"stderr=serial,lcd\0"
 
+#define CONFIG_SILENT_CONSOLE
+
 /* Don't load kernel at the very bottom of ram so that it has room when
  * it relocates down. */
 #define CONFIG_LOADADDR			0x42000000
