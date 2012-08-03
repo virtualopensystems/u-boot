@@ -31,6 +31,7 @@
 #include "shared-memory.h"
 #include "sd_spi.h"
 #include "sd_mmc.h"
+#include "sd_gpio.h"
 #include "asm/sandbox-api.h"
 
 
@@ -39,13 +40,7 @@ static void help(const char *program_name)
 {
 	fprintf(stderr,
 		"\n"
-		"%s\n\t["
-		"--help | --verbose\n"
-		"\t| --spi-page-size | --spi-page-count | "
-		"--spi-vendor | --spi-file\n"
-		"\t| --mmc-file\n"
-		"\t]..."
-		"\n\n"
+		"%s\n\t[options]...\n\n"
 		"The sandbox daemon manages the shared memory "
 		"region used by the\nsandbox version of u-boot."
 		"\n\n"
@@ -56,6 +51,11 @@ static void help(const char *program_name)
 		"  --spi-page-vendor: SPI ROM vendor name\n"
 		"  --spi-page-file:   SPI ROM backing file\n"
 		"  --mmc-file:        MMC backing file\n"
+		"  --write-protect:   Set write protect switch\n"
+		"  --recovery:        Set recovery switch\n"
+		"  --developer:       Set dev mode switch\n"
+		"  --lid:             Set lid  switch\n"
+		"  --power-off:       Set power switch\n"
 		"\n", program_name);
 	exit(0);
 }
@@ -81,6 +81,12 @@ static void process_args(int argc, char * const argv[])
 		{ "spi-file",		required_argument,	NULL,	261 },
 
 		{ "mmc-file",		required_argument,	NULL,	262 },
+
+		{ "write-protect",	required_argument,	NULL,	263 },
+		{ "recovery",		required_argument,	NULL,	264 },
+		{ "developer",		required_argument,	NULL,	265 },
+		{ "lid",		required_argument,	NULL,	266 },
+		{ "power-off",		required_argument,	NULL,	267 },
 
 		{ NULL,			no_argument,		NULL,	0 }
 	};
@@ -124,6 +130,26 @@ static void process_args(int argc, char * const argv[])
 		case 262:
 			if (n_mmc_files < ARRAY_SIZE(mmc_file))
 				mmc_file[n_mmc_files++] = strdup(optarg);
+			break;
+
+		case 263:
+			gpio_set(GPIO_WRITE_PROTECT, atoi(optarg));
+			break;
+
+		case 264:
+			gpio_set(GPIO_RECOVERY, atoi(optarg));
+			break;
+
+		case 265:
+			gpio_set(GPIO_DEVELOPER, atoi(optarg));
+			break;
+
+		case 266:
+			gpio_set(GPIO_LID, atoi(optarg));
+			break;
+
+		case 267:
+			gpio_set(GPIO_POWER_OFF, atoi(optarg));
 			break;
 
 		default:
