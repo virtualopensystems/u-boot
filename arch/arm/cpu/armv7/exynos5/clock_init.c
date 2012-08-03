@@ -525,9 +525,14 @@ struct mem_timings *clock_get_mem_timings(void)
 void system_clock_init()
 {
 	struct exynos5_clock *clk = (struct exynos5_clock *)EXYNOS5_CLOCK_BASE;
+	struct exynos5_mct_regs *mct_regs =
+		(struct exynos5_mct_regs *)EXYNOS5_MULTI_CORE_TIMER_BASE;
 	struct mem_timings *mem;
 	struct arm_clk_ratios *arm_clk_ratio;
 	u32 val, tmp;
+
+	/* Turn on the MCT as early as possible. */
+	mct_regs->g_tcon |= (1 << 8);
 
 	mem = clock_get_mem_timings();
 	arm_clk_ratio = get_arm_ratios();
