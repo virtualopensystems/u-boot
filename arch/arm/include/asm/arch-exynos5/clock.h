@@ -23,6 +23,7 @@
 #define __ASM_ARM_ARCH_CLOCK_H_
 
 #include <asm/arch/periph.h>
+#include <compiler.h>
 
 #ifndef __ASSEMBLY__
 struct exynos5_clock {
@@ -377,6 +378,64 @@ struct exynos5_clock {
 	unsigned int	lpddr3phy_con3;
 	unsigned int	pll_div2_sel;
 	unsigned char	res109b[0xf5e4];
+};
+
+struct exynos5_mct_regs {
+	uint32_t	mct_cfg;
+	uint8_t		reserved0[0xfc];
+	uint32_t	g_cnt_l;
+	uint32_t	g_cnt_u;
+	uint8_t		reserved1[0x8];
+	uint32_t	g_cnt_wstat;
+	uint8_t		reserved2[0xec];
+	uint32_t	g_comp0_l;
+	uint32_t	g_comp0_u;
+	uint32_t	g_comp0_addr_incr;
+	uint8_t		reserved3[0x4];
+	uint32_t	g_comp1_l;
+	uint32_t	g_comp1_u;
+	uint32_t	g_comp1_addr_incr;
+	uint8_t		reserved4[0x4];
+	uint32_t	g_comp2_l;
+	uint32_t	g_comp2_u;
+	uint32_t	g_comp2_addr_incr;
+	uint8_t		reserved5[0x4];
+	uint32_t	g_comp3_l;
+	uint32_t	g_comp3_u;
+	uint32_t	g_comp3_addr_incr;
+	uint8_t		reserved6[0x4];
+	uint32_t	g_tcon;
+	uint32_t	g_int_cstat;
+	uint32_t	g_int_enb;
+	uint32_t	g_wstat;
+	uint8_t		reserved7[0xb0];
+	uint32_t	l0_tcntb;
+	uint32_t	l0_tcnto;
+	uint32_t	l0_icntb;
+	uint32_t	l0_icnto;
+	uint32_t	l0_frcntb;
+	uint32_t	l0_frcnto;
+	uint8_t		reserved8[0x8];
+	uint32_t	l0_tcon;
+	uint8_t		reserved9[0xc];
+	uint32_t	l0_int_cstat;
+	uint32_t	l0_int_enb;
+	uint8_t		reserved10[0x8];
+	uint32_t	l0_wstat;
+	uint8_t		reserved11[0xbc];
+	uint32_t	l1_tcntb;
+	uint32_t	l1_tcnto;
+	uint32_t	l1_icntb;
+	uint32_t	l1_icnto;
+	uint32_t	l1_frcntb;
+	uint32_t	l1_frcnto;
+	uint8_t		reserved12[0x8];
+	uint32_t	l1_tcon;
+	uint8_t		reserved13[0xc];
+	uint32_t	l1_int_cstat;
+	uint32_t	l1_int_enb;
+	uint8_t		reserved14[0x8];
+	uint32_t	l1_wstat;
 };
 
 #define EXYNOS5_EPLLCON0_LOCKED_SHIFT	29  /* EPLL Locked bit position*/
