@@ -58,9 +58,32 @@ The SHM region appears to U-Boot and the daemon as shown below:
 
          +--------------------------------------+   0x117fffff  (24Mb - 1)
          |                                      |
-         |        64Kb 'doorbell' area          |
+         |        64Kb 'doorbell' area          |   Not provided to
+         |                                      |   sandbox proper.
          |                                      |
          +--------------------------------------+   0x117F0000 (24Mb - 64K)
+         |         google-binary-block          |
+         +--------------------------------------+   0x117E8000
+         |         cros-system-data             |
+         +--------------------------------------+   0x117E0000
+         |                                      |
+         |                                      |
+         | gpio                                 |
+         |                                      |
+         +--------------------------------------+   0x117EF000
+         |                                      |
+         | google-binary-block                  |
+         |                                      |
+         +--------------------------------------+   0x117E7000
+         |                                      |
+         | cros-system-data                     |
+         |                                      |
+         +--------------------------------------+   0x117DF000
+         |                                      |
+         | Linux Kernel                         |
+         |                                      |
+         +--------------------------------------+   0x116DF000
+         |                                      |
          |                                      |
          |                                      |
          |                                      |
@@ -70,6 +93,10 @@ The SHM region appears to U-Boot and the daemon as shown below:
          |                                      |
          |                                      |
          +--------------------------------------+   0x10000000
+
+         NOTE: Changes to this memory layout must
+               be reflected in the sandbox DT
+               file (sandbox.dts).
 
 The size of the SHM has been selected to remain within the default
 restrictions imposed by the Linux Kernel.

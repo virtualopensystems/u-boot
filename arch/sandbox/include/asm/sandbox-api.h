@@ -46,6 +46,24 @@
 		typedef char f[m];		\
 	} while (0)
 
+/*
+ * This address layout must correspond to the one in README.text, and
+ * in sandbox.dts.
+ */
+#define SANDBOX_MEMORY_LAYOUT			\
+	SML(FREE, 0x16df)			\
+	SML(KERNEL, 0x100)			\
+	SML(CROS_SYSTEM_DATA, 0x8)		\
+	SML(GOOGLE_BINARY_BLOCK, 0x8)		\
+	SML(GPIO, 0x1)
+
+enum sandbox_memory_region {
+#define SML(_id, _pages) SML_##_id,
+	SANDBOX_MEMORY_LAYOUT
+#undef SML
+	N_SANDBOX_MEMORY_REGIONS
+};
+
 #define DEVICES					\
 	D(SPI,	"SPI FLASH ROM")		\
 	D(MMC0, "MMC0")				\
@@ -112,5 +130,25 @@ static inline unsigned sandbox_in_shared_memory(const void *p)
 {
 	return (SANDBOX_SHM_ADDRESS <= p &&
 		p < SANDBOX_SHM_ADDRESS + SANDBOX_SHM_SIZE);
+}
+
+static inline void *sandbox_region_address(enum sandbox_memory_region region)
+{
+	/*
+	 * TODO(thutt@chromium.org): This should eventually not be an
+	 * inline function so that code size can be reduced.
+	 */
+	unsigned n_bytes[] = {
+#define SML(_id, _pages) _pages,
+		SANDBOX_MEMORY_LAYOUT
+#undef SML
+	};
+	unsigned char *start = SANDBOX_SHM_ADDRESS;
+	unsigned i = 0;
+	while (i < region) {
+		start += n_bytes[i] * SANDBOX_PAGE_SIZE;
+		++i;
+	}
+	return start;
 }
 #endif

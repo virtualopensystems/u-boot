@@ -139,12 +139,36 @@ static void process_args(int argc, char * const argv[])
 		fatal("MMC peripheral not configured correctly");
 }
 
+static void dump_address_layout(void)
+{
+	unsigned i = SML_FREE;
+	unsigned start = SANDBOX_SHM_START;
+	struct regions {
+		const char *name;
+		unsigned n_pages;
+	} r[N_SANDBOX_MEMORY_REGIONS] =	 {
+#define SML(_name, _pages) { .name = #_name,		\
+			     .n_pages = _pages, },
+		SANDBOX_MEMORY_LAYOUT
+#undef SML
+	};
+
+	for (i = SML_FREE; i < N_SANDBOX_MEMORY_REGIONS; ++i) {
+		const char     *name  = r[i].name;
+		const unsigned	bytes = r[i].n_pages * SANDBOX_PAGE_SIZE;
+		const unsigned	end   = start + bytes;
+		verbose("%20s: [%#x..%#x)\n", name, start, end);
+		start = end;
+	}
+}
+
 int main(int argc, char * const argv[])
 {
 	pid_t child;
 
 	initialize_shared_memory(); /* process_args() uses shared memory. */
 	process_args(argc, argv);
+	dump_address_layout();
 	initialize_shared_devices();
 
 	child = fork();
