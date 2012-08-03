@@ -796,7 +796,7 @@ twostop_main_firmware(struct twostop_fmap *fmap, void *gbb,
 	VbError_t err;
 	VbSelectAndLoadKernelParams kparams;
 	VbCommonParams cparams;
-	size_t size;
+	size_t size = 0;
 
 	bootstage_mark_name(BOOTSTAGE_VBOOT_TWOSTOP_MAIN_FIRMWARE,
 			"twostop_main_firmware");
@@ -805,6 +805,10 @@ twostop_main_firmware(struct twostop_fmap *fmap, void *gbb,
 		return TWOSTOP_SELECT_ERROR;
 	}
 
+	/*
+	 * Note that in case "kernel" is not found in the device tree, the
+	 * "size" value is going to remain unchanged.
+	 */
 	kparams.kernel_buffer = cros_fdtdec_alloc_region(gd->fdt_blob,
 		"kernel", &size);
 	kparams.kernel_buffer_size = size;
@@ -834,6 +838,9 @@ twostop_main_firmware(struct twostop_fmap *fmap, void *gbb,
 	}
 
 	VBDEBUG("kparams:\n");
+	VBDEBUG("- kernel_buffer:      : %p\n", kparams.kernel_buffer);
+	VBDEBUG("- kernel_buffer_size: : %08x\n",
+			kparams.kernel_buffer_size);
 	VBDEBUG("- disk_handle:        : %p\n", kparams.disk_handle);
 	VBDEBUG("- partition_number:   : %08x\n",
 			kparams.partition_number);

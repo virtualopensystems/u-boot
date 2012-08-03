@@ -15,9 +15,11 @@
 		twostop;		/* Two-stop boot */
 		twostop-optional;       /* One-stop optimization enabled */
 
-		/* Memory addresses for kernel and cros-system */
-		kernel = <0x00100000 0x00800000>;
-		cros-system-data = <0x00900000 0x8000>;
+		/*
+		 * Memory addresses for cros-system, should allow for up to
+		 * 16MB kernel loaded at 0x100000
+		 */
+		cros-system-data = <0x01100000 0x8000>;
 
 		firmware-storage = <&firmware_storage_spi>;
 		nvstorage-media = "nvram";
