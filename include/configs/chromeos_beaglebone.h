@@ -9,6 +9,9 @@
 
 #include <configs/am335x_evm.h>
 
+#define CONFIG_ARCH_DEVICE_TREE         am335x_evm
+#define CONFIG_DEFAULT_DEVICE_TREE      am335x_evm-beaglebone
+
 /* Generally verified boot needs more heap space */
 #undef CONFIG_SYS_MALLOC_LEN
 #define CONFIG_SYS_MALLOC_LEN	(32 << 20)
