@@ -333,8 +333,8 @@ void ft_board_setup(void *blob, bd_t *bd)
 		return;
 
 	/*
-	 * If this is an older board, replace pd_n_gpio contents with that of
-	 * rst_n_gpio and delete rst_n_gpio from the dt.
+	 * If this is an older board, replace powerdown-gpio contents with that
+	 * of reset-gpio and delete reset-gpio from the dt.
 	 */
 	np = fdtdec_next_compatible(blob, 0, COMPAT_NXP_PTN3460);
 	if (np < 0) {
@@ -342,20 +342,20 @@ void ft_board_setup(void *blob, bd_t *bd)
 		return;
 	}
 
-	prop = fdt_get_property(blob, np, "rst_n_gpio", &len);
+	prop = fdt_get_property(blob, np, "reset-gpio", &len);
 	if (!prop) {
 		debug("%s: Could not get property err=%d\n", __func__, len);
 		return;
 	}
 
-	ret = fdt_setprop_inplace(blob, np, "pd_n_gpio", prop->data,
+	ret = fdt_setprop_inplace(blob, np, "powerdown-gpio", prop->data,
 			len);
 	if (ret) {
 		debug("%s: Could not setprop inplace err=%d\n", __func__, ret);
 		return;
 	}
 
-	ret = fdt_delprop(blob, np, "rst_n_gpio");
+	ret = fdt_delprop(blob, np, "reset-gpio");
 	if (ret) {
 		debug("%s: Could not delprop err=%d\n", __func__, ret);
 		return;
@@ -380,14 +380,15 @@ static int board_dp_fill_gpios(const void *blob)
 			ret);
 		return np;
 	}
-	ret = fdtdec_decode_gpio(blob, np, "pd_n_gpio", &local.dp_pd);
+	ret = fdtdec_decode_gpio(blob, np, "powerdown-gpio", &local.dp_pd);
 	if (ret) {
-		debug("%s: Could not decode pd_n_gpio (%d)\n", __func__, ret);
+		debug("%s: Could not decode powerdown-gpio (%d)\n", __func__,
+			ret);
 		return ret;
 	}
-	ret = fdtdec_decode_gpio(blob, np, "rst_n_gpio", &local.dp_rst);
+	ret = fdtdec_decode_gpio(blob, np, "reset-gpio", &local.dp_rst);
 	if (ret) {
-		debug("%s: Could not decode rst_n_gpio (%d)\n", __func__, ret);
+		debug("%s: Could not decode reset-gpio (%d)\n", __func__, ret);
 		return ret;
 	}
 	ret = fdtdec_decode_gpio(blob, np, "hotplug-gpio", &local.dp_hpd);
