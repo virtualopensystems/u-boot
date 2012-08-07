@@ -408,6 +408,8 @@ twostop_init_vboot_library(firmware_storage_t *file, void *gbb,
 		iparams.flags |= VB_INIT_FLAG_VIRTUAL_DEV_SWITCH;
 	if (cros_fdtdec_config_has_prop(gd->fdt_blob, "ec-software-sync"))
 		iparams.flags |= VB_INIT_FLAG_EC_SOFTWARE_SYNC;
+	if (cros_fdtdec_config_has_prop(gd->fdt_blob, "ec-slow-update"))
+		iparams.flags |= VB_INIT_FLAG_EC_SLOW_UPDATE;
 	VBDEBUG("iparams.flags: %08x\n", iparams.flags);
 
 	if ((err = VbInit(cparams, &iparams))) {
