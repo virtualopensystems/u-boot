@@ -28,6 +28,19 @@
 #include <common.h>
 #include <os.h>
 
+/*
+ *
+ *   serial_buf: A buffer that holds keyboard characters for the
+ *		 Sandbox U-boot.
+ *
+ * invariants:
+ *   serial_buf_write		 == serial_buf_read -> empty buffer
+ *   (serial_buf_write + 1) % 16 == serial_buf_read -> full buffer
+ */
+static char serial_buf[16];
+static unsigned int serial_buf_write;
+static unsigned int serial_buf_read;
+
 int serial_init(void)
 {
 	os_tty_raw(0);
@@ -48,16 +61,33 @@ void serial_puts(const char *str)
 	os_write(1, str, strlen(str));
 }
 
+static unsigned int increment_buffer_index(unsigned int index)
+{
+	return (index + 1) % ARRAY_SIZE(serial_buf);
+}
+
 int serial_getc(void)
 {
-	char buf;
-	ssize_t count;
+	int result = serial_buf[serial_buf_read];
 
-	count = os_read(0, &buf, 1);
-	return count == 1 ? buf : 0;
+	if (serial_buf_read == serial_buf_write)
+		return 0;	/* buffer empty */
+
+	serial_buf_read = increment_buffer_index(serial_buf_read);
+	return result;
 }
 
 int serial_tstc(void)
 {
-	return 0;
+	const unsigned int next_index =
+		increment_buffer_index(serial_buf_write);
+	ssize_t count;
+
+	if (next_index == serial_buf_read)
+		return 1;	/* buffer full */
+
+	count = os_read_no_block(0, &serial_buf[serial_buf_write], 1);
+	if (count == 1)
+		serial_buf_write = next_index;
+	return serial_buf_write != serial_buf_read;
 }
