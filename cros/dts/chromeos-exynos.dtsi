@@ -21,6 +21,8 @@
 		flash-method = "exynos";/* How to flash the board */
 		firmware-storage = <&firmware_storage_spi>;
 		nvstorage-media = "disk";
+		ec-software-sync;       /* EC firmware in sync with BIOS */
+		ec-slow-update;         /* Display WAIT screen when updating */
 
 		/* Memory addresses for kernel, cros-system and gbb */
 		kernel = <0x42000000 0x00800000>;
