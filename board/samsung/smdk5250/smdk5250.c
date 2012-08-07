@@ -151,11 +151,10 @@ static int decode_sromc(const void *blob, struct fdt_sromc *config)
 
 uint32_t exynos5_read_and_clear_spl_marker(void)
 {
-	uint32_t value, *marker = (uint32_t *)CONFIG_IRAM_STACK;
+	uint32_t value, *marker = (uint32_t *)CONFIG_SPL_MARKER;
 
-	/* Stack grows toward lower address of memory */
-	value = marker[-1];
-	marker[-1] = 0;
+	value = *marker;
+	*marker = 0;
 
 	return value;
 }

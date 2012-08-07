@@ -170,12 +170,23 @@
 #define CONFIG_EFI_PARTITION
 #endif
 
-#define CONFIG_IRAM_STACK	0x02050000
+#define CONFIG_IRAM_TOP		0x02050000
+
+/*
+ * Put the initial stack pointer 1KB below this to allow room for the
+ * SPL marker. This value is arbitrary.
+ */
+#define CONFIG_SYS_INIT_SP_ADDR	(CONFIG_IRAM_TOP - 0x400)
+
+/* The place where we put our SPL marker */
+#define CONFIG_SPL_MARKER	(CONFIG_IRAM_TOP - 4)
+
+/* The top of the SPL stack, also used for early U-Boot init */
+#define CONFIG_IRAM_STACK	CONFIG_SYS_INIT_SP_ADDR
+
 #define CONFIG_SPL_LDSCRIPT
 #define CONFIG_SPL_TEXT_BASE	0x02023400
 #define CONFIG_SPL_MAX_SIZE	(14 * 1024)
-
-#define CONFIG_SYS_INIT_SP_ADDR	(CONFIG_SYS_LOAD_ADDR - 0x1000000)
 
 /* Enable devicetree support */
 #define CONFIG_OF_LIBFDT

@@ -141,6 +141,14 @@ void memzero(void *s, size_t n)
 		*ptr++ = '\0';
 }
 
+/* Tell the loaded U-Boot that it was loaded from SPL */
+static void exynos5_set_spl_marker(void)
+{
+	uint32_t *marker = (uint32_t *)CONFIG_SPL_MARKER;
+
+	*marker = EXYNOS5_SPL_MARKER;
+}
+
 /*
  * Initialize the timer and serial driver in SPL u-boot.
  * Besides the serial driver, it also setup the minimal set of its dependency,
@@ -170,6 +178,8 @@ void spl_early_init(void)
 void board_init_f(unsigned long bootflag)
 {
 	__attribute__((noreturn)) void (*uboot)(void);
+
+	exynos5_set_spl_marker();
 
 	printf("\n\nU-Boot SPL, board rev %u\n", board_get_revision());
 
