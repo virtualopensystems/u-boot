@@ -1012,6 +1012,7 @@ static int
 do_vboot_twostop(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	uint32_t selection;
+	int ro_firmware;
 
 	bootstage_mark_name(BOOTSTAGE_VBOOT_TWOSTOP, "do_vboot_twostop");
 
@@ -1036,7 +1037,10 @@ do_vboot_twostop(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	 * processor reset, this instance of read-only firmware should go to the
 	 * readwrite firmware code path.
 	 */
-	if (is_processor_reset())
+	ro_firmware = is_processor_reset();
+	VBDEBUG("Starting %s firmware\n", ro_firmware ? "read-only" :
+			"read-write");
+	if (ro_firmware)
 		selection = twostop_boot();
 	else
 		selection = twostop_readwrite_main_firmware();
