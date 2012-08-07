@@ -130,8 +130,3 @@ unsigned long get_tbclk(void)
 {
 	return CONFIG_SYS_HZ;
 }
-
-unsigned long timer_get_boot_us(void)
-{
-	return timer_get_us();
-}
