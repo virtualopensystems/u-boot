@@ -33,6 +33,10 @@ int is_processor_reset(void)
 /* This function never returns */
 void cold_reboot(void)
 {
+	VBDEBUG("Reboot\n");
+
+	/* Add a delay to allow serial output to drain */
+	mdelay(100);
 	power_reset();
 }
 
