@@ -27,7 +27,8 @@
 
 #include "asm/sandbox-spi.h"
 
-#define SANDBOX_SHM_ADDRESS   ((void *)0x10000000)
+#define SANDBOX_SHM_START     0x10000000
+#define SANDBOX_SHM_ADDRESS   ((void *)(SANDBOX_SHM_START))
 #define SANDBOX_SHM_KEY       ((key_t)0xbeefcafe)
 #define SANDBOX_SHM_SIZE      (24U * 1024 * 1024)
 #define SANDBOX_SHM_FLAGS     (IPC_CREAT | IPC_EXCL | S_IRWXU)
