@@ -23,10 +23,12 @@
  * MA 02111-1307 USA
  */
 
+#include <common.h>
 #include <config.h>
 #include <asm/arch-exynos/spl.h>
 #include <asm/arch/cpu.h>
 #include <asm/arch/dmc.h>
+#include <asm/arch/pinmux.h>
 #include <asm/arch/power.h>
 #include <asm/arch/tzpc.h>
 #include "setup.h"
@@ -40,49 +42,10 @@ static int __def_board_wakeup_permitted(void)
 }
 int board_wakeup_permitted(void)
 	__attribute__((weak, alias("__def_board_wakeup_permitted")));
-
-/**
- * Reset the CPU if the wakeup was not permitted.
- *
- * See the comments for board_wakeup_permitted() for details.
- */
-static void reset_if_invalid_wakeup(void)
-{
-	if (!board_wakeup_permitted())
-		power_reset();
-}
-
-static void wakeup_reset(void)
-{
-	system_clock_init();
-	mem_ctrl_init();
-	tzpc_init();
-	reset_if_invalid_wakeup();
-	power_exit_wakeup();
-}
 #endif
 
-/* Check for wakeup events and jump back to the kernel if appropriate. */
-static void check_for_wakeup(void)
+void do_barriers(void)
 {
-#if defined(CONFIG_SPL_BUILD)
-	uint32_t reset_status = power_read_reset_status();
-
-	/* AFTR or LPA wakeup reset */
-	if (reset_status == S5P_CHECK_DIDLE || reset_status == S5P_CHECK_LPA) {
-		reset_if_invalid_wakeup();
-		power_exit_wakeup();
-	}
-	/* Sleep wakeup reset */
-	else if (reset_status == S5P_CHECK_SLEEP)
-		wakeup_reset();
-#endif
-}
-
-void lowlevel_init_c(void)
-{
-	uint32_t pc;
-
 	/*
 	 * The reason we don't write out the instructions dsb/isb/sev:
 	 * While ARM Cortex-A8 supports ARM v7 instruction set (-march=armv7a),
@@ -100,28 +63,73 @@ void lowlevel_init_c(void)
 	".word  0xE320F004\n"      /* sev; darn -march=armv5 */
 #endif
 	);
+}
+
+/* These are the things we can do during low-level init */
+enum {
+	DO_WAKEUP	= 1 << 0,
+	DO_UART		= 1 << 1,
+	DO_CLOCKS	= 1 << 2,
+	DO_POWER	= 1 << 3,
+};
+
+static int lowlevel_init_subsystems(void)
+{
+	uint32_t reset_status = 0;
+	int actions = 0;
+
+	do_barriers();
 
 	/* Setup cpu info which is needed to select correct register offsets */
 	cpu_info_init();
 
-	check_for_wakeup();
-
-	/*
-	 * If U-boot is already running in RAM, no need to relocate U-Boot.
-	 * Memory controller must be configured before relocating U-Boot
-	 * in ram.
-	 */
-	__asm__ __volatile__("mov %[pc], pc\n": [pc]"=r"(pc));
-	/* Do sdram init. */
-	if ((pc & ~0xffffff) != ((CONFIG_SYS_TEXT_BASE) &  ~0xffffff)) {
-		power_init();
-		system_clock_init();
-#if defined(CONFIG_SPL_BUILD)
-		/* Serial initialization only for SPL */
-		spl_early_init();
-		mem_ctrl_init();
+#ifdef CONFIG_SPL_BUILD
+	reset_status = power_read_reset_status();
+#endif
+	switch (reset_status) {
+	case S5P_CHECK_SLEEP:
+		actions = DO_CLOCKS | DO_WAKEUP;
+		break;
+	case S5P_CHECK_DIDLE:
+	case S5P_CHECK_LPA:
+		actions = DO_WAKEUP;
+	default:
+		/* This is a normal boot (not a wake from sleep) */
+#ifdef CONFIG_SPL_BUILD
+		actions = DO_CLOCKS | DO_POWER;
+		actions |= DO_UART;
+#else
+		;
 #endif
 	}
 
-	tzpc_init();
+	if (actions & DO_POWER)
+		power_init();
+	if (actions & DO_CLOCKS)
+		system_clock_init();
+	if (actions & DO_UART)
+		spl_early_init();
+	if (actions & DO_CLOCKS) {
+#if defined(CONFIG_SPL_BUILD)
+		mem_ctrl_init();
+#endif
+		tzpc_init();
+	}
+
+	return actions & DO_WAKEUP;
+}
+
+void lowlevel_init_c(void)
+{
+	/*
+	 * Init subsystems, and resume if required. For a normal boot this
+	 * will set up the UART and display a message.
+	 */
+	if (lowlevel_init_subsystems()) {
+#if defined(CONFIG_SPL_BUILD)
+		if (!board_wakeup_permitted())
+			power_reset();
+		power_exit_wakeup();
+#endif
+	}
 }
