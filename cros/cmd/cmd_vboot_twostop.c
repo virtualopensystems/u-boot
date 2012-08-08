@@ -287,6 +287,7 @@ static void setup_arch_unused_memory(memory_wipe_t *wipe,
 
 #endif
 
+#if !defined(CONFIG_SANDBOX)
 static uintptr_t get_current_sp(void)
 {
 	uintptr_t addr;
@@ -294,6 +295,7 @@ static uintptr_t get_current_sp(void)
 	addr = (uintptr_t)&addr;
 	return addr;
 }
+#endif
 
 static void wipe_unused_memory(crossystem_data_t *cdata,
 	VbCommonParams *cparams)
@@ -477,7 +479,9 @@ twostop_make_selection(struct twostop_fmap *fmap, firmware_storage_t *file,
 		       uint32_t *fw_size_ptr)
 {
 	uint32_t selection = TWOSTOP_SELECT_ERROR;
+#if !defined(CONFIG_SANDBOX)
 	VbError_t err;
+#endif
 	uint32_t vlength;
 	VbSelectFirmwareParams fparams;
 	hasher_state_t s;
@@ -537,6 +541,13 @@ twostop_make_selection(struct twostop_fmap *fmap, firmware_storage_t *file,
 	s.file = file;
 	cparams->caller_context = &s;
 
+#if defined(CONFIG_SANDBOX)
+	fparams.verification_block_A = NULL;
+	fparams.verification_size_A = 0;
+	fparams.verification_block_B = NULL;
+	fparams.verification_size_B = 0;
+	fparams.selected_firmware = VB_SELECT_FIRMWARE_A;
+#else
 	if ((err = VbSelectFirmware(cparams, &fparams))) {
 		VBDEBUG("VbSelectFirmware: %d\n", err);
 
@@ -550,7 +561,7 @@ twostop_make_selection(struct twostop_fmap *fmap, firmware_storage_t *file,
 
 		goto out;
 	}
-
+#endif
 	VBDEBUG("selected_firmware: %d\n", fparams.selected_firmware);
 	selection = fparams.selected_firmware;
 
@@ -658,6 +669,7 @@ twostop_select_and_set_main_firmware(struct twostop_fmap *fmap,
 	return selection;
 }
 
+#if !defined(CONFIG_SANDBOX)
 static uint32_t
 twostop_jump(crossystem_data_t *cdata, void *fw_blob, uint32_t fw_size)
 {
@@ -682,6 +694,7 @@ twostop_jump(crossystem_data_t *cdata, void *fw_blob, uint32_t fw_size)
 	/* It is an error if readwrite firmware returns */
 	return TWOSTOP_SELECT_ERROR;
 }
+#endif
 
 static int
 twostop_init(struct twostop_fmap *fmap, firmware_storage_t *file,
@@ -863,10 +876,14 @@ twostop_main_firmware(struct twostop_fmap *fmap, void *gbb,
 	 * update active EC copy in cdata. */
 	set_active_ec_firmware(cdata);
 	crossystem_data_dump(cdata);
+#if defined(CONFIG_SANDBOX)
+	return TWOSTOP_SELECT_COMMAND_LINE;
+#else
 	boot_kernel(&kparams, cdata);
 
 	/* It is an error if boot_kenel returns */
 	return TWOSTOP_SELECT_ERROR;
+#endif
 }
 
 /**
@@ -954,16 +971,17 @@ twostop_boot(int stop_at_select)
 		return selection;
 
 	/* Don't we bother to free(fw_blob) if there was an error? */
+#if !defined(CONFIG_SANDBOX)
 	if (selection == TWOSTOP_SELECT_ERROR)
 		return TWOSTOP_SELECT_ERROR;
 
 	if (selection == VB_SELECT_FIRMWARE_A ||
-			selection == VB_SELECT_FIRMWARE_B)
+	    selection == VB_SELECT_FIRMWARE_B)
 		return twostop_jump(cdata, fw_blob, fw_size);
 
 	assert(selection == VB_SELECT_FIRMWARE_READONLY ||
-			selection == VB_SELECT_FIRMWARE_RECOVERY);
-
+	       selection == VB_SELECT_FIRMWARE_RECOVERY);
+#endif
 	/*
 	 * TODO: Now, load drivers for rec/normal/dev main firmware.
 	 */
