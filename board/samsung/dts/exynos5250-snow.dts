@@ -59,4 +59,15 @@
 	dp@145b0000 {
 		samsung,interface = "edp";
 	};
+
+	sound@12d60000 {
+		samsung,codec-type = "max98095";
+	};
+
+	i2c@12cd0000 {
+		soundcodec@22 {
+			reg = <0x22>;
+			compatible = "maxim,max98095-codec";
+		};
+	};
 };
