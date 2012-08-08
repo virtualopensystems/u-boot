@@ -31,9 +31,10 @@ enum {
 	MAX_FET_NUM	= 7,
 
 	/* TPS65090 FET_CTRL register values */
-	FET_CTRL_PGFET		= 0x10,  /* Power good for FET status */
-	FET_CTRL_ADENFET	= 0x02,  /* Enable output auto discharge */
-	FET_CTRL_ENFET		= 0x01,  /* Enable FET */
+	FET_CTRL_PGFET		= 1 << 4,  /* Power good for FET status */
+	FET_CTRL_WAIT		= 3 << 2,  /* Overcurrent timeout max */
+	FET_CTRL_ADENFET	= 1 << 1,  /* Enable output auto discharge */
+	FET_CTRL_ENFET		= 1 << 0,  /* Enable FET */
 };
 
 static struct {
@@ -143,7 +144,7 @@ int tps65090_fet_enable(unsigned int fet_id)
 	if (tps65090_select())
 		return -1;
 	ret = tps65090_i2c_write(REG_FET1_CTRL + fet_id - 1,
-			FET_CTRL_ADENFET | FET_CTRL_ENFET);
+			FET_CTRL_WAIT | FET_CTRL_ADENFET | FET_CTRL_ENFET);
 	if (!ret) {
 		ret = tps65090_i2c_read(REG_FET1_CTRL + fet_id - 1,
 				&reg);
