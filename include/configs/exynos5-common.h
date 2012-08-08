@@ -31,6 +31,8 @@
 #define CONFIG_EXYNOS5			/* which is in a Exynos5 Family */
 #define BUILD_PART_FS_STUFF	1	/* Disk Partition Support */
 
+#define CONFIG_ARCH_CPU_INIT		/* Used to check cpu type */
+
 #include <asm/arch/cpu.h>		/* get chip and board defs */
 
 /* Align LCD to 1MB boundary */
