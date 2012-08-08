@@ -141,6 +141,22 @@ void memzero(void *s, size_t n)
 		*ptr++ = '\0';
 }
 
+/**
+ * Set up the U-Boot global_data pointer
+ *
+ * This sets the address of the global data, and sets up basic values.
+ *
+ * @param gdp	Value to give to gd
+ */
+static void setup_global_data(gd_t *gdp)
+{
+	gd = gdp;
+	memzero((void *)gd, sizeof(gd_t));
+	gd->flags |= GD_FLG_RELOC;
+	gd->baudrate = CONFIG_BAUDRATE;
+	gd->have_console = 1;
+}
+
 /* Tell the loaded U-Boot that it was loaded from SPL */
 static void exynos5_set_spl_marker(void)
 {
@@ -164,11 +180,7 @@ void spl_early_init(void)
 	 */
 	__attribute__((aligned(8))) gd_t local_gd;
 
-	gd = &local_gd;
-	memzero((void *)gd, sizeof(gd_t));
-	gd->flags |= GD_FLG_RELOC;
-	gd->baudrate = CONFIG_BAUDRATE;
-	gd->have_console = 1;
+	setup_global_data(&local_gd);
 
 	exynos_pinmux_config(EXYNOS_UART, PINMUX_FLAG_NONE);
 	serial_init();
