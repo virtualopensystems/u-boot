@@ -68,6 +68,7 @@ static const char * const compat_names[COMPAT_COUNT] = {
 	COMPAT(GOOGLE_ARBITRATOR, "google,arbitrator"),
 	COMPAT(SAMSUNG_EXYNOS_SOUND, "samsung,exynos-sound"),
 	COMPAT(WOLFSON_WM8994_CODEC, "wolfson,wm8994-codec"),
+	COMPAT(MAXIM_98095_CODEC, "maxim,max98095-codec"),
 	COMPAT(GOOGLE_SATA, "google,sata"),
 	COMPAT(NXP_PTN3460, "nxp,ptn3460"),
 };

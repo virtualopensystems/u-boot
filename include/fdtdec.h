@@ -93,6 +93,7 @@ enum fdt_compat_id {
 	COMPAT_GOOGLE_ARBITRATOR,	/* Arbitrator a device between EC/AP */
 	COMPAT_SAMSUNG_EXYNOS_SOUND,	/* Exynos Sound */
 	COMPAT_WOLFSON_WM8994_CODEC,	/* Wolfson WM8994 Sound Codec */
+	COMPAT_MAXIM_98095_CODEC,	/* Maxim Max98095 Sound Codec */
 	COMPAT_GOOGLE_SATA,		/* Google SATA support */
 	COMPAT_NXP_PTN3460,		/* NXP PTN3460 DP/LVDS bridge */
 
