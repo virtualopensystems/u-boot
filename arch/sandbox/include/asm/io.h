@@ -39,3 +39,24 @@ static inline void unmap_physmem(void *vaddr, unsigned long flags)
 {
 
 }
+
+#define __sandbox_write(_a, _v) ({					\
+			__typeof__(_v) __v = _v;			\
+			__typeof__(_v) *__a =				\
+				(__typeof__(_v) *)(uintptr_t)_a;	\
+			*__a = __v;					\
+		})
+
+#define __sandbox_read(_a, _v) ({					\
+			__typeof__(_v) *__a =				\
+				(__typeof__(_v) *)(uintptr_t)_a;	\
+			_v = *__a;					\
+		})
+
+#define writeb(_v, _a)	({ u8 __v = _v; __sandbox_write(_a, __v); })
+#define writew(_v, _a)	({ u16 __v = _v; __sandbox_write(_a, __v); })
+#define writel(_v, _a)	({ u32 __v = _v; __sandbox_write(_a, __v); })
+
+#define readb(_a)	({ u8 _v; __sandbox_read(_a, _v); })
+#define readw(_a)	({ u16 _v; __sandbox_read(_a, _v); })
+#define readl(_a)	({ u32 _v; __sandbox_read(_a, _v); })
