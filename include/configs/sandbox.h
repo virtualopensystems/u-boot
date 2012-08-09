@@ -40,7 +40,11 @@
  * TODO(thutt): Create config option for sandbox DRAM size.
  * TODO(thutt): Create config option for sandbox doorbell area size.
  */
-#define CONFIG_DRAM_SIZE	((24 * 1024 * 1024) - (16 * 4096))
+#define CONFIG_SHM_SIZE_IN_MB		24U
+#define CONFIG_DOORBELL_SIZE_IN_KB	64U
+
+#define CONFIG_DRAM_SIZE	((CONFIG_SHM_SIZE_IN_MB * 1024 * 1024) - \
+				 (CONFIG_DOORBELL_SIZE_IN_KB * 1024))
 
 /*
  * do_spi_flash_test() uses CONFIG_SYS_TEXT_BASE, so define it to be

@@ -32,13 +32,25 @@
 #define ARRAY_SIZE(_a) (sizeof(_a) / sizeof(_a[0]))
 #endif
 
+/* NOTE: These two configuration items are also defined in sandbox.h.
+ * If changed in sandbox.h, an error will be produced stating that
+ * these macros are redefined and do not have the exact same textual
+ * value.  This is desired, as these two values must be kept
+ * synchronized until config.h can be included in this file when
+ * compiling the daemon.
+ *
+ */
+#define CONFIG_SHM_SIZE_IN_MB		24U
+#define CONFIG_DOORBELL_SIZE_IN_KB	64U
+
 #define SANDBOX_SHM_START     0x10000000
 #define SANDBOX_SHM_ADDRESS   ((void *)(SANDBOX_SHM_START))
 #define SANDBOX_SHM_KEY       ((key_t)0xbeefcafe)
-#define SANDBOX_SHM_SIZE      (24U * 1024 * 1024)
+#define SANDBOX_SHM_SIZE      (CONFIG_SHM_SIZE_IN_MB * 1024 * 1024)
 #define SANDBOX_SHM_FLAGS     (IPC_CREAT | IPC_EXCL | S_IRWXU)
 #define SANDBOX_PAGE_SIZE     4096
-#define SANDBOX_RESERVE_PAGES 16
+#define SANDBOX_RESERVE_PAGES ((CONFIG_DOORBELL_SIZE_IN_KB * 1024) / \
+			       SANDBOX_PAGE_SIZE)
 
 #define ASSERT_ON_COMPILE(e)			\
 	do {					\
@@ -109,6 +121,8 @@ static inline struct doorbell_t *sandbox_get_doorbell(void)
 		       SANDBOX_SHM_SIZE) -
 		      (SANDBOX_RESERVE_PAGES * SANDBOX_PAGE_SIZE));
 
+	ASSERT_ON_COMPILE((CONFIG_SHM_SIZE_IN_MB * 1024 * 1024) >
+			  (CONFIG_DOORBELL_SIZE_IN_KB * 1024));
 	ASSERT_ON_COMPILE((SANDBOX_PAGE_SIZE & ~SANDBOX_PAGE_SIZE) == 0);
 	ASSERT_ON_COMPILE(sizeof(struct doorbell_t) <=
 			  SANDBOX_RESERVE_PAGES * SANDBOX_PAGE_SIZE);
