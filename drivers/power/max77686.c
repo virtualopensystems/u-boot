@@ -141,15 +141,13 @@ static int max77686_enablereg(enum max77686_regnum reg, int enable)
 	return 0;
 }
 
-int max77686_volsetting(enum max77686_regnum reg, unsigned int volt,
-			int enable, int volt_units)
+static int max77686_do_volsetting(enum max77686_regnum reg, unsigned int volt,
+				  int enable, int volt_units)
 {
 	struct max77686_para *pmic;
 	unsigned char read_data;
 	int vol_level = 0;
 	int ret;
-
-	i2c_set_bus_num(0);
 
 	pmic = &max77686_param[reg];
 
@@ -191,6 +189,18 @@ int max77686_volsetting(enum max77686_regnum reg, unsigned int volt,
 	}
 
 	return 0;
+}
+
+int max77686_volsetting(enum max77686_regnum reg, unsigned int volt,
+			int enable, int volt_units)
+{
+	int old_bus = i2c_get_bus_num();
+	int ret;
+
+	i2c_set_bus_num(0);
+	ret = max77686_do_volsetting(reg, volt, enable, volt_units);
+	i2c_set_bus_num(old_bus);
+	return ret;
 }
 
 int max77686_enable_32khz_cp(void)
