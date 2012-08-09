@@ -25,6 +25,8 @@
 
 #include <asm/types.h>
 
+#include "asm/sandbox-spi.h"
+
 #define SANDBOX_SHM_ADDRESS   ((void *)0x10000000)
 #define SANDBOX_SHM_KEY       ((key_t)0xbeefcafe)
 #define SANDBOX_SHM_SIZE      (24U * 1024 * 1024)
@@ -38,7 +40,8 @@
 		typedef char f[m];		\
 	} while (0)
 
-#define DEVICES
+#define DEVICES					\
+	D(SPI,	"SPI FLASH ROM")
 
 enum device_t {
 #define D(n, s) SB_##n,
@@ -66,6 +69,7 @@ struct doorbell_command_t {
  */
 struct doorbell_t {
 	__u32 exit;
+	struct spi_t spi;
 	struct doorbell_command_t cmd;
 };
 

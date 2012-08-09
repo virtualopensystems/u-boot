@@ -18,41 +18,28 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  */
+#ifndef __SPI_H
+#define __SPI_H
 
-#include <assert.h>
-#include <stdio.h>
-#include <unistd.h>
-
-#include "lib.h"
-#include "sd_spi.h"
-#include "shared-memory.h"
 #include "asm/sandbox-api.h"
 
-void process_memory(void)
-{
-	while (1) {
-		const struct doorbell_t *db = sandbox_get_doorbell();
-		struct doorbell_command_t *dbc = sandbox_get_doorbell_command();
+/**
+ * Checks device driver command attributes for validity.
+ *
+ * Result == 0 -> success
+ * Result != 0 -> failure
+ */
+int validate_spi_arguments(void);
 
-		if (db->exit)
-			cleanup_and_exit();
+/**
+ * Initializes the Sandobx SPI driver.
+ * @param db	Pointer to doorbell data
+ */
+void initialize_spi(struct doorbell_t *db);
 
-		if (dbc->doorbell) {
-			dbc->result = 0;
-
-			switch (dbc->device_id) {
-			case SB_SPI:
-				spi_command(dbc);
-				break;
-
-			default:
-				printf("Doorbell by unhandled device: %d\n",
-				       dbc->device_id);
-				break;
-			}
-			dbc->doorbell = 0;
-		}
-		usleep(100);	/* 0.10 seconds */
-	}
-}
-
+/**
+ * Executes a SPI device request
+ * @param dbc	Pointer to doorbell command data
+ */
+void spi_command(struct doorbell_command_t *dbc);
+#endif

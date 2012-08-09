@@ -29,22 +29,30 @@
 #include "lib.h"
 #include "process-memory.h"
 #include "shared-memory.h"
+#include "sd_spi.h"
 #include "asm/sandbox-api.h"
 
 
-static void help(void)
+static void help(const char *program_name)
 {
 	fprintf(stderr,
 		"\n"
-		"sandbox-daemon "
-		"[--help | --verbose]..."
+		"%s\n\t["
+		"--help | --verbose\n"
+		"\t| --spi-page-size | --spi-page-count | "
+		"--spi-vendor | --spi-file\n"
+		"\t]..."
 		"\n\n"
 		"The sandbox daemon manages the shared memory "
 		"region used by the\nsandbox version of u-boot."
 		"\n\n"
-		"  --help:    Show this help message and exit\n"
-		"  --verbose: Turn on verbosity\n"
-		"\n");
+		"  --help:            Show this help message and exit\n"
+		"  --verbose:         Turn on verbosity\n"
+		"  --spi-page-size:   SPI ROM page size in bytes\n"
+		"  --spi-page-count:  SPI ROM total page count\n"
+		"  --spi-page-vendor: SPI ROM vendor name\n"
+		"  --spi-page-file:   SPI ROM backing file\n"
+		"\n", program_name);
 	exit(0);
 }
 
@@ -53,6 +61,10 @@ static void process_args(int argc, char * const argv[])
 	struct option args[] = {
 		{ "help",	     no_argument,	NULL,	256 },
 		{ "verbose",	     no_argument,	NULL,	257 },
+		{ "spi-page-size",   required_argument, NULL,	258 },
+		{ "spi-page-count",  required_argument, NULL,	259 },
+		{ "spi-vendor",	     required_argument, NULL,	260 },
+		{ "spi-file",	     required_argument, NULL,	261 },
 		{ NULL,		     no_argument,	NULL,	  0 }
 	};
 
@@ -66,7 +78,7 @@ static void process_args(int argc, char * const argv[])
 		switch (c) {
 		case 'h':
 		case 256:
-			help();
+			help(argv[0]);
 			break;
 
 		case 'v':
@@ -75,11 +87,31 @@ static void process_args(int argc, char * const argv[])
 			verbose("verbosity enabled\n");
 			break;
 
+		case 258:
+			spi_page_size = strtol(optarg, NULL, 0);
+			break;
+
+		case 259:
+			spi_page_count = strtol(optarg, NULL, 0);
+			break;
+
+		case 260:
+			spi_vendor = strdup(optarg);
+			break;
+
+		case 261:
+			spi_file = strdup(optarg);
+			break;
+
 		default:
-			help();
+			help(argv[0]);
 			break;
 		}
 	}
+
+	if (!validate_spi_arguments())
+		fatal("SPI peripheral not configured correctly");
+
 }
 
 int main(int argc, char * const argv[])

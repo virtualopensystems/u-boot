@@ -24,6 +24,7 @@
 #include <sys/stat.h>
 
 #include "lib.h"
+#include "sd_spi.h"
 #include "asm/sandbox-api.h"
 
 /* ipcs -m: show shared memory. look for the value of SANDBOX_SHM_KEY. */
@@ -72,4 +73,5 @@ void initialize_shared_memory(void)
 
 void initialize_shared_devices(void)
 {
+	initialize_spi(sandbox_get_doorbell());
 }

@@ -18,41 +18,17 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  */
+#ifndef __SANDBOX_SPI_H
+#define __SANDBOX_SPI_H
 
-#include <assert.h>
-#include <stdio.h>
-#include <unistd.h>
+struct spi_t {
+	char  vendor[32];	/* not NULL terminated */
+	__u32 page_size;
+	__u32 n_pages;
+};
 
-#include "lib.h"
-#include "sd_spi.h"
-#include "shared-memory.h"
-#include "asm/sandbox-api.h"
-
-void process_memory(void)
-{
-	while (1) {
-		const struct doorbell_t *db = sandbox_get_doorbell();
-		struct doorbell_command_t *dbc = sandbox_get_doorbell_command();
-
-		if (db->exit)
-			cleanup_and_exit();
-
-		if (dbc->doorbell) {
-			dbc->result = 0;
-
-			switch (dbc->device_id) {
-			case SB_SPI:
-				spi_command(dbc);
-				break;
-
-			default:
-				printf("Doorbell by unhandled device: %d\n",
-				       dbc->device_id);
-				break;
-			}
-			dbc->doorbell = 0;
-		}
-		usleep(100);	/* 0.10 seconds */
-	}
-}
-
+extern __u32   spi_page_size;
+extern __u32   spi_page_count;
+extern char   *spi_vendor;
+extern char   *spi_file;
+#endif
