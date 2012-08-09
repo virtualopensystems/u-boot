@@ -15,15 +15,19 @@
 
 #include <fdtdec.h>
 
-enum vboot_flag_id {
-	VBOOT_FLAG_WRITE_PROTECT = 0,
-	VBOOT_FLAG_RECOVERY,
-	VBOOT_FLAG_DEVELOPER,
-	VBOOT_FLAG_LID_OPEN,
-	VBOOT_FLAG_POWER_OFF,
-	VBOOT_FLAG_EC_IN_RW,
-	VBOOT_FLAG_OPROM_LOADED,
+#define VBOOT_FLAGS							\
+	VBF(VBOOT_FLAG_WRITE_PROTECT = 0, "vboot-flag-write-protect")	\
+	VBF(VBOOT_FLAG_RECOVERY, "vboot-flag-recovery")			\
+	VBF(VBOOT_FLAG_DEVELOPER, "vboot-flag-developer")		\
+	VBF(VBOOT_FLAG_LID_OPEN, "vboot-flag-lid-open")			\
+	VBF(VBOOT_FLAG_POWER_OFF, "vboot-flag-power-off")		\
+	VBF(VBOOT_FLAG_EC_IN_RW, "vboot-flag-ec-in-rw")			\
+	VBF(VBOOT_FLAG_OPROM_LOADED, "vboot-flag-oprom-loaded")
 
+enum vboot_flag_id {
+#define VBF(__e, __s) __e,
+	VBOOT_FLAGS
+#undef VBF
 	VBOOT_FLAG_MAX_FLAGS
 };
 
