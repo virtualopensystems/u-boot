@@ -21,6 +21,7 @@
  * MA 02111-1307 USA
  */
 
+#include <asm/arch/pinmux.h>
 #include <malloc.h>
 #include <common.h>
 #include <asm/io.h>
@@ -30,6 +31,7 @@
 #include <sound.h>
 #include "i2s.h"
 #include "wm8994.h"
+#include "max98095.h"
 
 /* defines */
 #define SOUND_400_HZ 400
@@ -129,18 +131,18 @@ static int get_sound_i2s_fdt_values(struct i2stx_info *i2s, const void *blob)
  * @param blob		FDT blob
  * @return		int value, 0 for success
  */
-static int get_sound_wm8994_fdt_values(struct sound_codec_info *pcodec_info,
-							const void *blob)
+static int get_sound_fdt_values(struct sound_codec_info *pcodec_info,
+				const void *blob, enum fdt_compat_id compat_id)
 {
 	enum fdt_compat_id compat;
 	int node;
 	int error = 0;
 	int parent;
 
-	/* Get the node from FDT for WM8994 */
-	node = fdtdec_next_compatible(blob, 0, COMPAT_WOLFSON_WM8994_CODEC);
+	/* Get the node from FDT for codec */
+	node = fdtdec_next_compatible(blob, 0, compat_id);
 	if (node <= 0) {
-		debug("EXYNOS_SOUND: No node for wm8994 in device tree\n");
+		debug("EXYNOS_SOUND: No node for codec in device tree\n");
 		debug("node = %d\n", node);
 		return -1;
 	}
@@ -171,7 +173,7 @@ static int get_sound_wm8994_fdt_values(struct sound_codec_info *pcodec_info,
 	}
 
 	if (error == -1) {
-		debug("fail to get wm8994 codec node properties\n");
+		debug("fail to get codec node properties\n");
 		return -1;
 	}
 
@@ -210,7 +212,12 @@ static int get_sound_codec_fdt_values(struct sound_codec_info *pcodec_info,
 
 	if (!strcmp(codectype, "wm8994")) {
 		pcodec_info->codec_type = CODEC_WM_8994;
-		error = get_sound_wm8994_fdt_values(pcodec_info, blob);
+		error = get_sound_fdt_values(pcodec_info, blob,
+					     COMPAT_WOLFSON_WM8994_CODEC);
+	} else if (!strcmp(codectype, "max98095")) {
+		pcodec_info->codec_type = CODEC_MAX_98095;
+		error = get_sound_fdt_values(pcodec_info, blob,
+					     COMPAT_MAXIM_98095_CODEC);
 	} else
 		error = -1;
 
@@ -249,6 +256,15 @@ int sound_init(const void *blob)
 			pi2s_tx->samplingrate,
 			(pi2s_tx->samplingrate * (pi2s_tx->rfs)),
 			pi2s_tx->bitspersample, pi2s_tx->channels);
+	} else if (pcodec_info->codec_type == CODEC_MAX_98095) {
+#if defined CONFIG_SOUND_MAX98095
+		ret = max98095_init(pcodec_info, pi2s_tx->samplingrate,
+			(pi2s_tx->samplingrate * (pi2s_tx->rfs)),
+			pi2s_tx->bitspersample);
+#else
+		ret = -1;
+		debug("%s: max98095 codec support not built in.\n", __func__);
+#endif
 	} else {
 		debug("%s: Unknown code type %d\n", __func__,
 		      pcodec_info->codec_type);
