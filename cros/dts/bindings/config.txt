@@ -1,0 +1,12 @@
+Chrome OS dts config bindings
+=============================
+
+hda_codec_beep - use codec or legacy PC beep source
+ 0 or not present - use legacy PC beep
+ 1 - use a codec beep source
+ ex: hda_codec_beep <1>
+
+hda-codec-beep-nid - Node ID (NID) #
+ -1 or not preset - auto detect NID
+ 0 or any other value - sets the codec beep NID
+ ex: hda-codec-beep-nid <0x01>

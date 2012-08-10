@@ -11,6 +11,7 @@
 /* Implementation of per-board codec beeping */
 
 #include <common.h>
+#include <fdtdec.h>
 #include <asm/global_data.h>
 #include <asm/io.h>
 #include <pci.h>
@@ -249,6 +250,11 @@ static uint32_t get_hda_beep_nid(uint32_t base)
 	uint32_t node_count = 0;
 	uint32_t current_nid = 0;
 	uint32_t end_nid;
+
+	/* If the field exists, use the beep nid set in the fdt */
+	rc = fdtdec_get_config_int(gd->fdt_blob, "hda-codec-beep-nid", -1);
+	if (rc != -1)
+		return rc;
 
 	rc = get_subnode_info(base, HDA_ROOT_NODE, &node_count, &current_nid);
 	if (rc < 0)

@@ -11,6 +11,7 @@
 	config {
 		hwid = "X86 PARROT TEST 8762";
 		hda_codec_beep = <1>;
+		hda-codec-beep-nid = <0x1>;
 	};
 
 	gpio: gpio {};
