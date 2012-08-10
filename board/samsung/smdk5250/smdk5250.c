@@ -540,6 +540,27 @@ int board_dp_backlight_en(const void *blob, unsigned *wait_ms)
 	return 0;
 }
 
+static void board_enable_audio_codec(void)
+{
+	int node, ret, value;
+	struct fdt_gpio_state en_gpio;
+
+	node = fdtdec_next_compatible(gd->fdt_blob, 0,
+		COMPAT_SAMSUNG_EXYNOS_SOUND);
+	if (node <= 0)
+		return;
+
+	ret = fdtdec_decode_gpio(gd->fdt_blob, node, "codec-enable-gpio",
+				&en_gpio);
+	if (ret == -FDT_ERR_NOTFOUND)
+		return;
+
+	/* Turn on the GPIO which connects to the codec's "enable" line. */
+	value = (en_gpio.flags & FDT_GPIO_ACTIVE_LOW) ? 0 : 1;
+	gpio_direction_output(en_gpio.gpio, value);
+	gpio_set_pull(en_gpio.gpio, EXYNOS_GPIO_PULL_NONE);
+}
+
 int board_init(void)
 {
 	struct fdt_memory mem_config;
@@ -598,6 +619,8 @@ int board_init(void)
 
 	if (board_init_mkbp_devices(gd->fdt_blob))
 		return -1;
+
+	board_enable_audio_codec();
 
 	exynos_lcd_check_next_stage(gd->fdt_blob, 0);
 
