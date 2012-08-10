@@ -25,22 +25,11 @@
 #include <config.h>
 #include <asm/arch/cpu.h>
 
-_TEXT_BASE:
-	.word	CONFIG_SYS_TEXT_BASE
-
 	.globl lowlevel_init
 lowlevel_init:
-
-	/* use iRAM stack in bl2 */
+	/*
+	 * Set the stack pointer, although it will be overwriten by the caller
+	 * It seems we will not boot if this function is empty.
+	 */
 	ldr	sp, =CONFIG_IRAM_STACK
-#if defined(CONFIG_SPL_BUILD)
-	/* In SPL, write a special marker value at the bottom of IRAM stack */
-	ldr	r0, =EXYNOS5_SPL_MARKER
-	stmdb	r13!, {r0}
-#else
-	/* Otherwise, leave the marker value untouched */
-	sub	r13, r13, #4
-#endif
-	push	{lr}
-	bl	lowlevel_init_c
-	pop	{pc}
+	mov	pc, lr

@@ -23,7 +23,7 @@
 #include <common.h>
 #include <config.h>
 #include <asm/arch/board.h>
-#include <asm/arch/pinmux.h>
+#include <asm/arch/power.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -165,12 +165,15 @@ static void exynos5_set_spl_marker(void)
 	*marker = EXYNOS5_SPL_MARKER;
 }
 
-/*
- * Initialize the timer and serial driver in SPL u-boot.
- * Besides the serial driver, it also setup the minimal set of its dependency,
- * like gd struct, pinmux, and serial.
- */
-void spl_early_init(void)
+/* Board-specific call to see if wakeup is allowed. */
+static int __def_board_wakeup_permitted(void)
+{
+	return 1;
+}
+int board_wakeup_permitted(void)
+	__attribute__((weak, alias("__def_board_wakeup_permitted")));
+
+void board_init_f(unsigned long bootflag)
 {
 	/*
 	 * The gd struct is only needed for serial initialization. Since this
@@ -179,19 +182,20 @@ void spl_early_init(void)
 	 * initialized.
 	 */
 	__attribute__((aligned(8))) gd_t local_gd;
-
-	setup_global_data(&local_gd);
-
-	exynos_pinmux_config(EXYNOS_UART, PINMUX_FLAG_NONE);
-	serial_init();
-	timer_init();
-}
-
-void board_init_f(unsigned long bootflag)
-{
 	__attribute__((noreturn)) void (*uboot)(void);
 
 	exynos5_set_spl_marker();
+	setup_global_data(&local_gd);
+
+	/*
+	 * Init subsystems, and resume if required. For a normal boot this
+	 * will set up the UART and display a message.
+	 */
+	if (lowlevel_init_subsystems()) {
+		if (!board_wakeup_permitted())
+			power_reset();
+		power_exit_wakeup();
+	}
 
 	printf("\n\nU-Boot SPL, board rev %u\n", board_get_revision());
 

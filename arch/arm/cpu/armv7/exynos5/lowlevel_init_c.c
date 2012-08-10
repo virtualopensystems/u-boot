@@ -33,17 +33,6 @@
 #include <asm/arch/tzpc.h>
 #include "setup.h"
 
-#if defined(CONFIG_SPL_BUILD)
-
-/* Board-specific call to see if wakeup is allowed. */
-static int __def_board_wakeup_permitted(void)
-{
-	return 1;
-}
-int board_wakeup_permitted(void)
-	__attribute__((weak, alias("__def_board_wakeup_permitted")));
-#endif
-
 void do_barriers(void)
 {
 	/*
@@ -73,9 +62,9 @@ enum {
 	DO_POWER	= 1 << 3,
 };
 
-static int lowlevel_init_subsystems(void)
+int lowlevel_init_subsystems(void)
 {
-	uint32_t reset_status = 0;
+	uint32_t reset_status;
 	int actions = 0;
 
 	do_barriers();
@@ -83,9 +72,8 @@ static int lowlevel_init_subsystems(void)
 	/* Setup cpu info which is needed to select correct register offsets */
 	cpu_info_init();
 
-#ifdef CONFIG_SPL_BUILD
 	reset_status = power_read_reset_status();
-#endif
+
 	switch (reset_status) {
 	case S5P_CHECK_SLEEP:
 		actions = DO_CLOCKS | DO_WAKEUP;
@@ -95,41 +83,22 @@ static int lowlevel_init_subsystems(void)
 		actions = DO_WAKEUP;
 	default:
 		/* This is a normal boot (not a wake from sleep) */
-#ifdef CONFIG_SPL_BUILD
-		actions = DO_CLOCKS | DO_POWER;
-		actions |= DO_UART;
-#else
-		;
-#endif
+		actions = DO_UART | DO_CLOCKS | DO_POWER;
 	}
 
 	if (actions & DO_POWER)
 		power_init();
 	if (actions & DO_CLOCKS)
 		system_clock_init();
-	if (actions & DO_UART)
-		spl_early_init();
+	if (actions & DO_UART) {
+		/* Set up serial UART so we can printf() */
+		exynos_pinmux_config(EXYNOS_UART, PINMUX_FLAG_NONE);
+		serial_init();
+	}
 	if (actions & DO_CLOCKS) {
-#if defined(CONFIG_SPL_BUILD)
 		mem_ctrl_init();
-#endif
 		tzpc_init();
 	}
 
 	return actions & DO_WAKEUP;
-}
-
-void lowlevel_init_c(void)
-{
-	/*
-	 * Init subsystems, and resume if required. For a normal boot this
-	 * will set up the UART and display a message.
-	 */
-	if (lowlevel_init_subsystems()) {
-#if defined(CONFIG_SPL_BUILD)
-		if (!board_wakeup_permitted())
-			power_reset();
-		power_exit_wakeup();
-#endif
-	}
 }

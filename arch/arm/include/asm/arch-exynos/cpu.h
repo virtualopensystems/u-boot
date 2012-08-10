@@ -92,6 +92,13 @@ int s5p_get_cpu_id(void);
 #define cpu_is_exynos4()	(s5p_get_cpu_id() == 0xc210)
 #define cpu_is_exynos5()	(s5p_get_cpu_id() == 0xc520)
 
+/**
+ * Init subsystems according to the reset status
+ *
+ * @return 0 for a normal boot, non-zero for a resume
+ */
+int lowlevel_init_subsystems(void);
+
 #endif
 
 #endif	/* _EXYNOS_COMMON_CPU_H */
