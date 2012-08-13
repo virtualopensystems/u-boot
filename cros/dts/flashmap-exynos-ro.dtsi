@@ -22,9 +22,15 @@
 	 */
 	flash@0 {
 		/* ---- Section: Read-only ---- */
+		ro-unused {
+			label = "ro-unused";
+			reg = <0x001af000 0x0051000>;
+			read-only;
+		};
+
 		ro-section {
 			label = "ro-section";
-			reg = <0x00000000 0x00100000>;
+			reg = <0x00000000 0x001af000>;
 			read-only;
 		};
 
@@ -91,7 +97,7 @@
 			label = "gbb";
 
 			/* GBB offset must be aligned to 4K bytes */
-			reg = <0x000c0000 0x00040000>;
+			reg = <0x000c0000 0x000ef000>;
 			read-only;
 			type = "blob gbb";
 		};

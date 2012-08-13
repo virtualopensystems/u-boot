@@ -27,7 +27,7 @@
 		/* Memory addresses for kernel, cros-system and gbb */
 		kernel = <0x42000000 0x00800000>;
 		cros-system-data = <0x42800000 0x8000>;
-		google-binary-block = <0x42808000 0x80000>;
+		google-binary-block = <0x42808000 0x100000>;
 	};
 
 	config {
