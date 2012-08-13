@@ -46,6 +46,11 @@ VbError_t VbExEcRunningRW(int *in_rw)
 	struct mkbp_dev *mdev = board_get_mkbp_dev();
 	enum ec_current_image image;
 
+	if (!mdev) {
+		VBDEBUG("%s: no mkbp device\n", __func__);
+		return VBERROR_UNKNOWN;
+	}
+
 	if (mkbp_read_current_image(mdev, &image) < 0)
 		return VBERROR_UNKNOWN;
 
@@ -67,6 +72,11 @@ VbError_t VbExEcJumpToRW(void)
 {
 	struct mkbp_dev *mdev = board_get_mkbp_dev();
 
+	if (!mdev) {
+		VBDEBUG("%s: no mkbp device\n", __func__);
+		return VBERROR_UNKNOWN;
+	}
+
 	if (mkbp_reboot(mdev, EC_REBOOT_JUMP_RW, 0) < 0)
 		return VBERROR_UNKNOWN;
 
@@ -76,6 +86,11 @@ VbError_t VbExEcJumpToRW(void)
 VbError_t VbExEcStayInRO(void)
 {
 	struct mkbp_dev *mdev = board_get_mkbp_dev();
+
+	if (!mdev) {
+		VBDEBUG("%s: no mkbp device\n", __func__);
+		return VBERROR_UNKNOWN;
+	}
 
 	if (mkbp_reboot(mdev, EC_REBOOT_DISABLE_JUMP, 0) < 0)
 		return VBERROR_UNKNOWN;
@@ -87,6 +102,11 @@ VbError_t VbExEcHashRW(const uint8_t **hash, int *hash_size)
 {
 	struct mkbp_dev *mdev = board_get_mkbp_dev();
 	static struct ec_response_vboot_hash resp;
+
+	if (!mdev) {
+		VBDEBUG("%s: no mkbp device\n", __func__);
+		return VBERROR_UNKNOWN;
+	}
 
 	if (mkbp_read_hash(mdev, &resp) < 0)
 		return VBERROR_UNKNOWN;
@@ -120,6 +140,11 @@ static VbError_t ec_protect_rw(int protect)
 	struct mkbp_dev *mdev = board_get_mkbp_dev();
 	struct ec_response_flash_protect resp;
 	uint32_t mask = EC_FLASH_PROTECT_RW_NOW | EC_FLASH_PROTECT_RW_AT_BOOT;
+
+	if (!mdev) {
+		VBDEBUG("%s: no mkbp device\n", __func__);
+		return VBERROR_UNKNOWN;
+	}
 
 	/* Update protection */
 	if (mkbp_flash_protect(mdev, mask, protect ? mask : 0, &resp) < 0)
@@ -157,6 +182,11 @@ VbError_t VbExEcUpdateRW(const uint8_t  *image, int image_size)
 {
 	struct mkbp_dev *mdev = board_get_mkbp_dev();
 	int rv;
+
+	if (!mdev) {
+		VBDEBUG("%s: no mkbp device\n", __func__);
+		return VBERROR_UNKNOWN;
+	}
 
 	rv = ec_protect_rw(0);
 	if (rv == VBERROR_EC_REBOOT_TO_RO_REQUIRED)

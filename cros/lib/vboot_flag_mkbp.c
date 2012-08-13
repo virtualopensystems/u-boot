@@ -23,6 +23,11 @@ static int vboot_flag_fetch_mkbp(enum vboot_flag_id id,
 	struct ec_response_mkbp_info info;
 
 	dev = board_get_mkbp_dev();
+	if (!dev) {
+		VBDEBUG("%s: no mkbp device\n", __func__);
+		return -1;
+	}
+
 	if (mkbp_info(dev, &info)) {
 		VBDEBUG("Could not read KBC info\n");
 		return -1;

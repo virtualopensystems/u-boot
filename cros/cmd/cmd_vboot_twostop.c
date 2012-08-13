@@ -327,6 +327,12 @@ static int request_ec_reboot_to_ro(void)
 #ifdef CONFIG_MKBP
 	struct mkbp_dev *mdev = board_get_mkbp_dev();
 
+	if (!mdev) {
+		VBDEBUG("%s: no mkbp device: cannot request EC reboot to RO\n",
+					__func__);
+		return -1;
+	}
+
 	return mkbp_reboot(mdev, EC_REBOOT_COLD,
 			   EC_REBOOT_FLAG_ON_AP_SHUTDOWN);
 #else
@@ -366,31 +372,35 @@ twostop_init_vboot_library(firmware_storage_t *file, void *gbb,
 					    "virtual-dev-switch");
 #ifdef CONFIG_MKBP
 	struct mkbp_dev *mdev = board_get_mkbp_dev();
-	uint32_t ec_events = 0;
-	const uint32_t kb_rec_mask =
-		EC_HOST_EVENT_MASK(EC_HOST_EVENT_KEYBOARD_RECOVERY);
 #endif
 
 	memset(&iparams, 0, sizeof(iparams));
 	iparams.flags = check_ro_normal_support();
 
 #ifdef CONFIG_MKBP
-	/* Read keyboard recovery flag from EC, then clear it */
-	if (mkbp_get_host_events(mdev, &ec_events)) {
-		/*
-		 * TODO: what can we do if that fails?  Request recovery?  We
-		 * don't simply want to fail, because that'll prevent us from
-		 * going into recovery mode.  We don't want to go into
-		 * recovery mode automatically, because that'll break snow.
-		 */
-		VBDEBUG("VbInit: unable to read EC events\n");
-		ec_events = 0;
-	}
-	if (ec_events & kb_rec_mask) {
-		iparams.flags |= VB_INIT_FLAG_REC_BUTTON_PRESSED;
-		if (mkbp_clear_host_events(mdev, kb_rec_mask))
-			VBDEBUG("VbInit: unable to clear "
-				"EC KB recovery event\n");
+	if (mdev) {
+		uint32_t ec_events = 0;
+		const uint32_t kb_rec_mask =
+			EC_HOST_EVENT_MASK(EC_HOST_EVENT_KEYBOARD_RECOVERY);
+
+		/* Read keyboard recovery flag from EC, then clear it */
+		if (mkbp_get_host_events(mdev, &ec_events)) {
+			/*
+			 * TODO: what can we do if that fails?  Request
+			 * recovery?  We don't simply want to fail, because
+			 * that'll prevent us from going into recovery mode.
+			 * We don't want to go into recovery mode
+			 * automatically, because that'll break snow.
+			 */
+			VBDEBUG("VbInit: unable to read EC events\n");
+			ec_events = 0;
+		}
+		if (ec_events & kb_rec_mask) {
+			iparams.flags |= VB_INIT_FLAG_REC_BUTTON_PRESSED;
+			if (mkbp_clear_host_events(mdev, kb_rec_mask))
+				VBDEBUG("VbInit: unable to clear "
+					"EC KB recovery event\n");
+		}
 	}
 #endif
 
