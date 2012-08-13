@@ -167,3 +167,13 @@ int power_init(void)
 
 	return error;
 }
+
+void power_enable_xclkout(void)
+{
+	struct exynos5_power *power =
+		(struct exynos5_power *)samsung_get_base_power();
+
+	/* use xxti for xclk out */
+	clrsetbits_le32(&power->pmu_debug, PMU_DEBUG_CLKOUT_SEL_MASK,
+				PMU_DEBUG_XXTI);
+}

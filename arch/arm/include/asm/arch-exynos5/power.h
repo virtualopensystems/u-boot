@@ -30,6 +30,11 @@
 
 #define DPTX_PHY_ENABLE		(1 << 0)
 
+/* PMU_DEBUG bits [12:8] = 0x1000 selects XXTI clock source */
+#define PMU_DEBUG_XXTI                          0x1000
+/* Mask bit[12:8] for xxti clock selection */
+#define PMU_DEBUG_CLKOUT_SEL_MASK               0x1f00
+
 /* Power Management Unit register map */
 struct exynos5_power {
 	/* Add registers as and when required */
@@ -44,7 +49,9 @@ struct exynos5_power {
 	uint8_t		reserved5[0xdc];
 	uint32_t	inform0;		/* 0x0800 */
 	uint32_t	inform1;		/* 0x0804 */
-	uint8_t		reserved6[0x2b04];
+	uint8_t		reserved6[0x1f8];
+	uint32_t	pmu_debug;		/* 0x0A00*/
+	uint8_t         reserved7[0x2908];
 	uint32_t	ps_hold_ctrl;		/* 0x330c */
 } __attribute__ ((__packed__));
 
@@ -75,5 +82,8 @@ uint32_t power_read_reset_status(void);
 
 /* Read the resume function and call it. */
 void power_exit_wakeup(void);
+
+/* pmu debug is used for xclkout, enable xclkout with source as XXTI */
+void power_enable_xclkout(void);
 
 #endif
