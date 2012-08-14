@@ -17,7 +17,41 @@ struct tpm {
 	int i2c_bus;
 	int slave_addr;
 	char inited;
+	int old_bus;
 } tpm;
+
+
+static int tpm_select(void)
+{
+	int ret;
+
+	tpm.old_bus = i2c_get_bus_num();
+	if (tpm.old_bus != tpm.i2c_bus) {
+		ret = i2c_set_bus_num(tpm.i2c_bus);
+		if (ret) {
+			debug("%s: Fail to set i2c bus %d\n", __func__,
+			      tpm.i2c_bus);
+			return -1;
+		}
+	}
+	return 0;
+}
+
+static int tpm_deselect(void)
+{
+	int ret;
+
+	if (tpm.old_bus != i2c_get_bus_num()) {
+		ret = i2c_set_bus_num(tpm.old_bus);
+		if (ret) {
+			debug("%s: Fail to restore i2c bus %d\n",
+			      __func__, tpm.old_bus);
+			return -1;
+		}
+	}
+	tpm.old_bus = -1;
+	return 0;
+}
 
 /**
  * Decode TPM configuration.
@@ -62,10 +96,8 @@ int tis_init(void)
 	if (tpm_decode_config(&tpm))
 		return -1;
 
-	if (i2c_set_bus_num(tpm.i2c_bus)) {
-		debug("%s: fail to set i2c bus %d\n", __func__, tpm.i2c_bus);
+	if (tpm_select())
 		return -1;
-	}
 
 	/*
 	 * Probe TPM twice; the first probing might fail because TPM is asleep,
@@ -77,16 +109,28 @@ int tis_init(void)
 		return -1;
 	}
 
+	tpm_deselect();
+
 	tpm.inited = 1;
+
 	return 0;
 }
 
 int tis_open(void)
 {
+	int rc;
+
 	if (!tpm.inited)
 		return -1;
 
-	return tpm_open(tpm.slave_addr);
+	if (tpm_select())
+		return -1;
+
+	rc = tpm_open(tpm.slave_addr);
+
+	tpm_deselect();
+
+	return rc;
 }
 
 int tis_close(void)
@@ -94,7 +138,12 @@ int tis_close(void)
 	if (!tpm.inited)
 		return -1;
 
+	if (tpm_select())
+		return -1;
+
 	tpm_close();
+
+	tpm_deselect();
 
 	return 0;
 }
@@ -113,7 +162,13 @@ int tis_sendrecv(const uint8_t *sendbuf, size_t sbuf_size,
 
 	memcpy(buf, sendbuf, sbuf_size);
 
+	if (tpm_select())
+		return -1;
+
 	len = tpm_transmit(buf, sbuf_size);
+
+	tpm_deselect();
+
 	if (len < 10) {
 		*rbuf_len = 0;
 		return -1;
