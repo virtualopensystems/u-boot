@@ -381,14 +381,23 @@ int mkbp_test(struct mkbp_dev *dev)
 	return 0;
 }
 
-static int mkbp_flash_rw_offset(struct mkbp_dev *dev,
-				uint32_t *offset, uint32_t *size)
+/**
+ * Obtain position and size of a flash region
+ *
+ * @param dev		MKBP device
+ * @param region	Flash region to query
+ * @param offset	Returns offset of flash region in EC flash
+ * @param size		Returns size of flash region
+ * @return 0 if ok, -1 on error
+ */
+static int mkbp_flash_offset(struct mkbp_dev *dev, enum ec_flash_region region,
+			     uint32_t *offset, uint32_t *size)
 {
 	struct ec_params_flash_region_info p;
-	struct ec_response_flash_region_info *r;
+	struct ec_response_flash_region_info *r = NULL;
 	int ret;
 
-	p.region = EC_FLASH_REGION_RW;
+	p.region = region;
 	ret = ec_command(dev, EC_CMD_FLASH_REGION_INFO,
 			 EC_VER_FLASH_REGION_INFO,
 			 &p, sizeof(p), (uint8_t **)&r, sizeof(*r));
@@ -444,7 +453,7 @@ int mkbp_flash_update_rw(struct mkbp_dev *dev,
 	uint32_t burst = mkbp_flash_write_burst_size(dev);
 	int ret;
 
-	if (mkbp_flash_rw_offset(dev, &rw_offset, &rw_size))
+	if (mkbp_flash_offset(dev, EC_FLASH_REGION_RW, &rw_offset, &rw_size))
 		return -1;
 	if (image_size > rw_size)
 		return -1;
