@@ -740,6 +740,59 @@ static int decode_region(int argc, char * const argv[])
 	return -1;
 }
 
+/**
+ * Perform a flash read or write command
+ *
+ * @param dev		MKBP device to read/write
+ * @param is_write	1 do to a write, 0 to do a read
+ * @param argc		Number of arguments
+ * @param argv		Arguments (2 is region, 3 is address)
+ * @return 0 for ok, 1 for a usage error or -ve for ec command error
+ *	(negative EC_RES_...)
+ */
+static int do_read_write(struct mkbp_dev *dev, int is_write, int argc,
+			 char * const argv[])
+{
+	uint32_t offset, size = -1U, region_size;
+	unsigned long addr;
+	char *endp;
+	int region;
+	int ret;
+
+	region = decode_region(argc - 2, argv + 2);
+	if (region == -1)
+		return 1;
+	if (argc < 4)
+		return 1;
+	addr = simple_strtoul(argv[3], &endp, 16);
+	if (*argv[3] == 0 || *endp != 0)
+		return 1;
+	if (argc > 4) {
+		size = simple_strtoul(argv[4], &endp, 16);
+		if (*argv[4] == 0 || *endp != 0)
+			return 1;
+	}
+
+	ret = mkbp_flash_offset(dev, region, &offset, &region_size);
+	if (ret) {
+		debug("%s: Could not read region info\n", __func__);
+		return ret;
+	}
+	if (size == -1U)
+		size = region_size;
+
+	ret = is_write ?
+		mkbp_flash_write(dev, (uint8_t *)addr, offset, size) :
+		mkbp_flash_read(dev, (uint8_t *)addr, offset, size);
+	if (ret) {
+		debug("%s: Could not %s region\n", __func__,
+		      is_write ? "write" : "read");
+		return ret;
+	}
+
+	return 0;
+}
+
 static int do_mkbp(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	struct mkbp_dev *dev = last_dev;
@@ -830,6 +883,14 @@ static int do_mkbp(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 			debug("%s: Could not clear host events\n", __func__);
 			return 1;
 		}
+	} else if (0 == strcmp("read", cmd)) {
+		ret = do_read_write(dev, 0, argc, argv);
+		if (ret > 0)
+			return CMD_RET_USAGE;
+	} else if (0 == strcmp("write", cmd)) {
+		ret = do_read_write(dev, 1, argc, argv);
+		if (ret > 0)
+			return CMD_RET_USAGE;
 	} else if (0 == strcmp("erase", cmd)) {
 		int region = decode_region(argc - 2, argv + 2);
 		uint32_t offset, size;
@@ -889,6 +950,8 @@ U_BOOT_CMD(
 	"mkbp clrevents [mask]    Clear MKBP host events\n"
 	"mkbp regioninfo <ro|rw>  Read image info\n"
 	"mkbp erase <ro|rw>       Erase EC image\n"
+	"mkbp read <ro|rw> <addr> [<size>]   Read EC image\n"
+	"mkbp write <ro|rw> <addr> [<size>]  Write EC image\n"
 	"mkbp test                run tests on mkbp"
 );
 #endif
