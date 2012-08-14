@@ -423,13 +423,32 @@ static int mkbp_flash_erase(struct mkbp_dev *dev,
 			  &p, sizeof(p), NULL, 0) >= 0 ? 0 : -1;
 }
 
-static int mkbp_flash_write(struct mkbp_dev *dev, const uint8_t  *data,
-			    uint32_t offset, uint32_t size)
+/**
+ * Write a single block to the flash
+ *
+ * Write a block of data to the EC flash. The size must not exceed the flash
+ * write block size which you can obtain from mkbp_flash_write_burst_size().
+ *
+ * The offset starts at 0. You can obtain the region information from
+ * mkbp_flash_offset() to find out where to write for a particular region.
+ *
+ * Attempting to write to the region where the EC is currently running from
+ * will result in an error.
+ *
+ * @param dev		MKBP device
+ * @param data		Pointer to data buffer to write
+ * @param offset	Offset within flash to write to.
+ * @param size		Number of bytes to write
+ * @return 0 if ok, -1 on error
+ */
+static int mkbp_flash_write_block(struct mkbp_dev *dev, const uint8_t *data,
+				  uint32_t offset, uint32_t size)
 {
 	struct ec_params_flash_write p;
 
 	p.offset = offset;
 	p.size = size;
+	assert(data && p.size <= sizeof(p.data));
 	memcpy(p.data, data, p.size);
 
 	return ec_command(dev, EC_CMD_FLASH_WRITE, 0,
@@ -445,12 +464,50 @@ static int mkbp_flash_write_burst_size(struct mkbp_dev *dev)
 	return sizeof(p.data);
 }
 
+/**
+ * Write data to the flash
+ *
+ * Write an arbitrary amount of data to the EC flash, by repeatedly writing
+ * small blocks.
+ *
+ * The offset starts at 0. You can obtain the region information from
+ * mkbp_flash_offset() to find out where to write for a particular region.
+ *
+ * Attempting to write to the region where the EC is currently running from
+ * will result in an error.
+ *
+ * @param dev		MKBP device
+ * @param data		Pointer to data buffer to write
+ * @param offset	Offset within flash to write to.
+ * @param size		Number of bytes to write
+ * @return 0 if ok, -1 on error
+ */
+static int mkbp_flash_write(struct mkbp_dev *dev, const uint8_t *data,
+			    uint32_t offset, uint32_t size)
+{
+	uint32_t burst = mkbp_flash_write_burst_size(dev);
+	uint32_t end, off;
+	int ret;
+
+	/*
+	 * TODO: round up to the nearest multiple of write size.  Can get away
+	 * without that on link right now because its write size is 4 bytes.
+	 */
+	end = offset + size;
+	for (off = offset; off < end; off += burst, data += burst) {
+		ret = mkbp_flash_write_block(dev, data, off,
+					     min(end - off, burst));
+		if (ret)
+			return ret;
+	}
+
+	return 0;
+}
+
 int mkbp_flash_update_rw(struct mkbp_dev *dev,
-			 const uint8_t  *image, int image_size)
+			 const uint8_t *image, int image_size)
 {
 	uint32_t rw_offset, rw_size;
-	uint32_t end, off;
-	uint32_t burst = mkbp_flash_write_burst_size(dev);
 	int ret;
 
 	if (mkbp_flash_offset(dev, EC_FLASH_REGION_RW, &rw_offset, &rw_size))
@@ -470,19 +527,10 @@ int mkbp_flash_update_rw(struct mkbp_dev *dev,
 	if (ret)
 		return ret;
 
-	/*
-	 * Write the image
-	 */
-	/*
-	 * TODO: round up to the nearest multiple of write size.  Can get away
-	 * without that on link right now because its write size is 4 bytes.
-	 */
-	end = rw_offset + image_size;
-	for (off = rw_offset; off < end; off += burst, image += burst) {
-		ret = mkbp_flash_write(dev, image, off, min(end - off, burst));
-		if (ret)
-			return ret;
-	}
+	/* Write the image */
+	ret = mkbp_flash_write(dev, image, rw_offset, image_size);
+	if (ret)
+		return ret;
 
 	return 0;
 }
