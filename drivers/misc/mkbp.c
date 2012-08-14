@@ -46,6 +46,8 @@
 
 static struct mkbp_dev static_dev, *last_dev;
 
+DECLARE_GLOBAL_DATA_PTR;
+
 void mkbp_dump_data(const char *name, int cmd, const uint8_t *data, int len)
 {
 #ifdef DEBUG
@@ -668,9 +670,6 @@ struct mkbp_dev *mkbp_init(const void *blob)
 		return NULL;
 	}
 
-	/* Remember this device for use by the mkbp command */
-	last_dev = dev;
-
 	switch (dev->interface) {
 #ifdef CONFIG_MKBP_SPI
 	case MKBPIF_SPI:
@@ -711,6 +710,9 @@ struct mkbp_dev *mkbp_init(const void *blob)
 		debug("%s: Could not read KBC ID\n", __func__);
 		return NULL;
 	}
+
+	/* Remember this device for use by the mkbp command */
+	last_dev = dev;
 	debug("Google Chrome EC MKBP driver ready, id '%s'\n", id);
 
 	return dev;
@@ -802,12 +804,20 @@ static int do_mkbp(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	if (argc < 2)
 		return CMD_RET_USAGE;
 
+	cmd = argv[1];
+	if (0 == strcmp("init", cmd)) {
+		if (!mkbp_init(gd->fdt_blob)) {
+			printf("Could not init mkbp device\n");
+			return 1;
+		}
+		return 0;
+	}
+
 	/* Just use the last allocated device; there should be only one */
 	if (!last_dev) {
 		printf("No MKBP device available\n");
 		return 1;
 	}
-	cmd = argv[1];
 	if (0 == strcmp("id", cmd)) {
 		char id[MSG_BYTES];
 
@@ -941,7 +951,8 @@ static int do_mkbp(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 U_BOOT_CMD(
 	mkbp,	5,	1,	do_mkbp,
 	"MKBP utility command",
-	"id                       Read MKBP ID\n"
+	"init                Re-init MKBP (done on startup automatically)\n"
+	"mkbp id                  Read MKBP ID\n"
 	"mkbp info                Read MKBP info\n"
 	"mkbp curimage            Read MKBP current image\n"
 	"mkbp hash                Read MKBP hash\n"
