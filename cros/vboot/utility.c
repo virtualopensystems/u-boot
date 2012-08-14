@@ -14,14 +14,18 @@
  */
 
 #include <common.h>
+#include <asm/global_data.h>
 #include <malloc.h>
 #include <cros/common.h>
 #include <cros/cros_init.h>
 #include <cros/hda_codec.h>
 #include <cros/power_management.h>
+#include <sound.h>
 
 /* Import the definition of vboot_wrapper interfaces. */
 #include <vboot_api.h>
+
+DECLARE_GLOBAL_DATA_PTR;
 
 #define UINT32_MAX		(~0UL)
 #define TICKS_PER_MSEC		(CONFIG_SYS_HZ / 1000)
@@ -114,6 +118,29 @@ VbError_t VbExBeep(uint32_t msec, uint32_t frequency)
 	if (msec > 0) {
 		VbExSleepMs(msec);
 		disable_beep();
+	}
+
+	return VBERROR_SUCCESS;
+#elif defined CONFIG_SOUND
+	int ret;
+
+	VBDEBUG("About to beep for %d ms at %d Hz.\n", msec, frequency);
+	if (!msec || !frequency) {
+		if (msec)
+			VbExSleepMs(msec);
+		return VBERROR_NO_BACKGROUND_SOUND;
+	}
+
+	ret = sound_init(gd->fdt_blob);
+	if (ret) {
+		VbExError("Failed to initialize sound.\n");
+		return VBERROR_NO_SOUND;
+	}
+
+	ret = sound_play(msec, frequency);
+	if (ret) {
+		VbExError("Failed to play beep.\n");
+		return VBERROR_NO_SOUND;
 	}
 
 	return VBERROR_SUCCESS;
