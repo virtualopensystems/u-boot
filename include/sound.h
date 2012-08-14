@@ -51,8 +51,10 @@ int sound_init(const void *blob);
  * plays the pcm data buffer in pcm_data.h through i2s1 to make the
  * sine wave sound
  *
- * @return	int 0 for success, -1 for error
+ * @param msec		number of milliseconds to play sound
+ * @param frequency	frequency of the sound
+ * @return		int 0 for success, -1 for error
  */
-int sound_play(void);
+int sound_play(uint32_t msec, uint32_t frequency);
 
 #endif  /* __SOUND__H__ */

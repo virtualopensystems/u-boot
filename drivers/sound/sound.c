@@ -34,25 +34,7 @@
 #include "max98095.h"
 
 /* defines */
-#define SOUND_400_HZ 400
 #define SOUND_BITS_IN_BYTE 8
-
-/* pcm values for 400hz 48k sampling rate from 1 cycle */
-unsigned short sine_table_400[120] = {
-	0, 1714, 3425, 5125, 6812, 8480, 10125, 11742, 13327, 14875, 16383,
-	17846, 19259, 20620, 21925, 23169, 24350, 25464, 26509, 27480, 28377,
-	29195, 29934, 30590, 31163, 31650, 32050, 32363, 32587, 32722, 32767,
-	32722, 32587, 32363, 32050, 31650, 31163, 30590, 29934, 29195, 28377,
-	27480, 26509, 25464, 24350, 23169, 21925, 20620, 19259, 17846, 16383,
-	14875, 13327, 11742, 10125, 8480, 6812, 5125, 3425, 1714, 0, -1714,
-	-3425, -5125, -6812, -8480, -10125, -11742, -13327, -14875, -16383,
-	-17846, -19259, -20620, -21925, -23169, -24350, -25464, -26509,
-	-27480, -28377, -29195, -29934, -30590, -31163, -31650, -32050,
-	-32363, -32587, -32722, -32767, -32722, -32587, -32363, -32050,
-	-31650, -31163, -30590, -29934, -29195, -28377, -27480, -26509,
-	-25464, -24350, -23169, -21925, -20620, -19259, -17846, -16383,
-	-14875, -13327, -11742, -10125, -8480, -6812, -5125, -3425, -1714
-};
 
 /* Globals */
 struct i2stx_info g_i2stx_pri;
@@ -279,31 +261,45 @@ int sound_init(const void *blob)
 }
 
 /*
- * Generates 400hz sine wave data for 1sec
+ * Generates square wave sound data for 1 second
  *
- * @param samplingrate	samplinng rate of the sinewave need to be generated
  * @param data		data buffer pointer
+ * @param size		size of the buffer
+ * @param freq		frequency of the wave
  */
-static void sound_prepare_sinewave_400hz_buffer(unsigned short *data)
+static void sound_prepare_buffer(unsigned short *data, int size, uint32_t freq)
 {
-	int freq = SOUND_400_HZ;
-	int i;
+	const int sample = 48000;
+	const unsigned short amplitude = 16000; /* between 1 and 32767 */
+	const int period = freq ? sample / freq : 0;
+	const int half = period / 2;
 
-	while (freq--) {
-		i = ARRAY_SIZE(sine_table_400);
+	assert(freq);
 
-		for (i = 0; i < ARRAY_SIZE(sine_table_400); i++) {
-			*data++ = sine_table_400[i];
-			*data++ = sine_table_400[i];
+	/* Make sure we don't overflow our buffer */
+	if (size % 2)
+		size--;
+
+	while (size) {
+		int i;
+		for (i = 0; size && i < half; i++) {
+			size -= 2;
+			*data++ = amplitude;
+			*data++ = amplitude;
+		}
+		for (i = 0; size && i < period - half; i++) {
+			size -= 2;
+			*data++ = -amplitude;
+			*data++ = -amplitude;
 		}
 	}
 }
 
-int sound_play(void)
+int sound_play(uint32_t msec, uint32_t frequency)
 {
 	unsigned int *data;
 	unsigned long data_size;
-	unsigned int ret;
+	unsigned int ret = 0;
 
 	/* Sine wave Buffer length computation */
 	data_size = g_i2stx_pri.samplingrate * g_i2stx_pri.channels;
@@ -315,10 +311,21 @@ int sound_play(void)
 		return -1;
 	}
 
-	sound_prepare_sinewave_400hz_buffer((unsigned short *)data);
+	sound_prepare_buffer((unsigned short *)data,
+				data_size / sizeof(unsigned short), frequency);
 
-	ret = i2s_transfer_tx_data(&g_i2stx_pri, data,
-				   (data_size / sizeof(int)));
+	while (msec >= 1000) {
+		ret = i2s_transfer_tx_data(&g_i2stx_pri, data,
+					   (data_size / sizeof(int)));
+		msec -= 1000;
+	}
+	if (msec) {
+		unsigned long size =
+			(data_size * msec) / (sizeof(int) * 1000);
+
+		ret = i2s_transfer_tx_data(&g_i2stx_pri, data, size);
+	}
+
 	free(data);
 
 	return ret;
