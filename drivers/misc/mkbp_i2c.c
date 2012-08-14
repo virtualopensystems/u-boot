@@ -113,6 +113,7 @@ int mkbp_i2c_command(struct mkbp_dev *dev, uint8_t cmd, int cmd_version,
 	if (ret) {
 		debug("%s: Cannot complete I2C write to 0x%x\n",
 			__func__, dev->addr);
+		ret = -1;
 	}
 
 	if (!ret) {
@@ -120,6 +121,7 @@ int mkbp_i2c_command(struct mkbp_dev *dev, uint8_t cmd, int cmd_version,
 		if (ret) {
 			debug("%s: Cannot complete I2C read from 0x%x\n",
 				__func__, dev->addr);
+			ret = -1;
 		}
 	}
 
