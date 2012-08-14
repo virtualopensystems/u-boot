@@ -26,6 +26,7 @@
 #include "lib.h"
 #include "sd_spi.h"
 #include "sd_mmc.h"
+#include "sd_keyboard.h"
 #include "asm/sandbox-api.h"
 
 /* ipcs -m: show shared memory. look for the value of SANDBOX_SHM_KEY. */
@@ -76,4 +77,5 @@ void initialize_shared_devices(void)
 {
 	initialize_spi(sandbox_get_doorbell());
 	mmc_initialize(sandbox_get_doorbell());
+	keyboard_initialize(sandbox_get_doorbell());
 }

@@ -66,6 +66,7 @@ enum sandbox_memory_region {
 
 #define DEVICES					\
 	D(SPI,	"SPI FLASH ROM")		\
+	D(KEYBOARD, "Keyboard")			\
 	D(MMC0, "MMC0")				\
 	D(MMC1, "MMC1")
 

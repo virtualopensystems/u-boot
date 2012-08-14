@@ -18,53 +18,28 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  */
+#ifndef __SD_KEYBOARD_H
+#define __SD_KEYBOARD_H
 
-#include <assert.h>
-#include <stdio.h>
-#include <unistd.h>
-
-#include "lib.h"
-#include "sd_spi.h"
-#include "sd_mmc.h"
-#include "sd_keyboard.h"
-#include "doorbell-command.h"
-#include "shared-memory.h"
 #include "asm/sandbox-api.h"
 
-void process_memory(void)
-{
-	while (1) {
-		const struct doorbell_t *db = sandbox_get_doorbell();
-		struct doorbell_command_t *dbc = sandbox_get_doorbell_command();
+/*
+ * Backing file pathname.
+ * Backing file contains characters to be produced by the keyboard.
+ */
+extern char *keyboard_file;
 
-		if (db->exit)
-			cleanup_and_exit();
+/**
+ * Initializes the keyboard system.
+ *
+ * @param db	Pointer to doorbell data
+ */
+void keyboard_initialize(struct doorbell_t *db);
 
-		if (dbc->doorbell) {
-			dbc->result = 0;
-
-			switch (dbc->device_id) {
-			case SB_SPI:
-				spi_command(dbc);
-				break;
-
-			case SB_MMC0:
-			case SB_MMC1:
-				mmc_command(dbc);
-				break;
-
-			case SB_KEYBOARD:
-				keyboard_command(dbc);
-				break;
-
-			default:
-				printf("Doorbell by unhandled device: %d\n",
-				       dbc->device_id);
-				break;
-			}
-			dbc->doorbell = 0;
-		}
-		usleep(100);	/* 0.10 seconds */
-	}
-}
-
+/**
+ * Executes the requested keyboard command.
+ *
+ * @param dbc	Pointer to doorbell command data
+ */
+void keyboard_command(struct doorbell_command_t *dbc);
+#endif

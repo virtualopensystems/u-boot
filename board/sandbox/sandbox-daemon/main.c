@@ -32,6 +32,7 @@
 #include "sd_spi.h"
 #include "sd_mmc.h"
 #include "sd_gpio.h"
+#include "sd_keyboard.h"
 #include "asm/sandbox-api.h"
 
 
@@ -56,6 +57,7 @@ static void help(const char *program_name)
 		"  --developer:       Set dev mode switch\n"
 		"  --lid:             Set lid  switch\n"
 		"  --power-off:       Set power switch\n"
+		"  --keyboard-file:   Set file holding keystrokes\n"
 		"\n", program_name);
 	exit(0);
 }
@@ -88,6 +90,7 @@ static void process_args(int argc, char * const argv[])
 		{ "lid",		required_argument,	NULL,	266 },
 		{ "power-off",		required_argument,	NULL,	267 },
 
+		{ "keyboard-file",	required_argument,	NULL,	268 },
 		{ NULL,			no_argument,		NULL,	0 }
 	};
 	unsigned n_mmc_files = 0;
@@ -150,6 +153,10 @@ static void process_args(int argc, char * const argv[])
 
 		case 267:
 			gpio_set(GPIO_POWER_OFF, atoi(optarg));
+			break;
+
+		case 268:
+			keyboard_file = strdup(optarg);
 			break;
 
 		default:
