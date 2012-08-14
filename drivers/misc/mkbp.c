@@ -773,6 +773,19 @@ static int do_mkbp(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 			debug("%s: Could not clear host events\n", __func__);
 			return 1;
 		}
+	} else if (0 == strcmp("erase", cmd)) {
+		int region = decode_region(argc - 2, argv + 2);
+		uint32_t offset, size;
+
+		if (region == -1)
+			return CMD_RET_USAGE;
+		if (mkbp_flash_offset(dev, region, &offset, &size)) {
+			debug("%s: Could not read region info\n", __func__);
+			ret = -1;
+		} else if (mkbp_flash_erase(dev, offset, size)) {
+			debug("%s: Could not erase region\n", __func__);
+			ret = -1;
+		}
 	} else if (0 == strcmp("regioninfo", cmd)) {
 		int region = decode_region(argc - 2, argv + 2);
 		uint32_t offset, size;
@@ -818,6 +831,7 @@ U_BOOT_CMD(
 	"mkbp events              Read MKBP host events\n"
 	"mkbp clrevents [mask]    Clear MKBP host events\n"
 	"mkbp regioninfo <ro|rw>  Read image info\n"
+	"mkbp erase <ro|rw>       Erase EC image\n"
 	"mkbp test                run tests on mkbp"
 );
 #endif
