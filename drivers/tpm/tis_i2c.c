@@ -12,16 +12,11 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-/* Wake up TPM if the duration between 2 transmissions is longer than 2sec. */
-#define WAKE_UP_TPM_DURATION 2000 /* ms */
-
 /* TPM configuration */
 struct tpm {
 	int i2c_bus;
 	int slave_addr;
 	char inited;
-	/* timestamp to record a last transmission with TPM */
-	unsigned long last_transmission;
 } tpm;
 
 /**
@@ -83,7 +78,6 @@ int tis_init(void)
 	}
 
 	tpm.inited = 1;
-	tpm.last_transmission = get_timer(0);
 	return 0;
 }
 
@@ -117,14 +111,9 @@ int tis_sendrecv(const uint8_t *sendbuf, size_t sbuf_size,
 	if (sizeof(buf) < sbuf_size)
 		return -1;
 
-	/* TPM may be asleep. Probing can wake up TPM. */
-	if (get_timer(tpm.last_transmission) > WAKE_UP_TPM_DURATION)
-		i2c_probe(tpm.slave_addr);
-
 	memcpy(buf, sendbuf, sbuf_size);
 
 	len = tpm_transmit(buf, sbuf_size);
-	tpm.last_transmission = get_timer(0);
 	if (len < 10) {
 		*rbuf_len = 0;
 		return -1;
