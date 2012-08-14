@@ -504,6 +504,66 @@ static int mkbp_flash_write(struct mkbp_dev *dev, const uint8_t *data,
 	return 0;
 }
 
+/**
+ * Read a single block from the flash
+ *
+ * Read a block of data from the EC flash. The size must not exceed the flash
+ * write block size which you can obtain from mkbp_flash_write_burst_size().
+ *
+ * The offset starts at 0. You can obtain the region information from
+ * mkbp_flash_offset() to find out where to read for a particular region.
+ *
+ * @param dev		MKBP device
+ * @param data		Pointer to data buffer to read into
+ * @param offset	Offset within flash to read from
+ * @param size		Number of bytes to read
+ * @return 0 if ok, -1 on error
+ */
+static int mkbp_flash_read_block(struct mkbp_dev *dev, uint8_t *data,
+				 uint32_t offset, uint32_t size)
+{
+	struct ec_params_flash_read p;
+
+	p.offset = offset;
+	p.size = size;
+
+	return ec_command(dev, EC_CMD_FLASH_READ, 0,
+			  &p, sizeof(p), &data, size) >= 0 ? 0 : -1;
+}
+
+/**
+ * Read data from the flash
+ *
+ * Read an arbitrary amount of data from the EC flash, by repeatedly reading
+ * small blocks.
+ *
+ * The offset starts at 0. You can obtain the region information from
+ * mkbp_flash_offset() to find out where to read for a particular region.
+ *
+ * @param dev		MKBP device
+ * @param data		Pointer to data buffer to read into
+ * @param offset	Offset within flash to read from
+ * @param size		Number of bytes to read
+ * @return 0 if ok, -1 on error
+ */
+int mkbp_flash_read(struct mkbp_dev *dev, uint8_t *data, uint32_t offset,
+		    uint32_t size)
+{
+	uint32_t burst = mkbp_flash_write_burst_size(dev);
+	uint32_t end, off;
+	int ret;
+
+	end = offset + size;
+	for (off = offset; off < end; off += burst, data += burst) {
+		ret = mkbp_flash_read_block(dev, data, off,
+					    min(end - off, burst));
+		if (ret)
+			return ret;
+	}
+
+	return 0;
+}
+
 int mkbp_flash_update_rw(struct mkbp_dev *dev,
 			 const uint8_t *image, int image_size)
 {
