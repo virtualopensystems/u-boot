@@ -488,21 +488,16 @@ int mkbp_flash_update_rw(struct mkbp_dev *dev,
 	 * Erase the entire RW section, so that the EC doesn't see any garbage
 	 * past the new image if it's smaller than the current image.
 	 *
-	 * TODO: could optimize this to erase just the current image + the 0xea
-	 * byte, since presumably everything past that is 0xff's.  But would
-	 * still need to round up to the nearest multiple of erase size.
+	 * TODO: could optimize this to erase just the current image, since
+	 * presumably everything past that is 0xff's.  But would still need to
+	 * round up to the nearest multiple of erase size.
 	 */
 	ret = mkbp_flash_erase(dev, rw_offset, rw_size);
 	if (ret)
 		return ret;
 
 	/*
-	 * Write the image, followed by a 0xea byte so the EC can scan
-	 * backwards from the end of the region to find the RW image size.
-	 *
-	 * TODO: clunky that MKBP needs to know that.  Maybe should have an
-	 * option to flash-write to indicate this is the last byte in the
-	 * RW region?  Fix in ver 2 of flash write command.
+	 * Write the image
 	 */
 	/*
 	 * TODO: round up to the nearest multiple of write size.  Can get away
@@ -511,26 +506,6 @@ int mkbp_flash_update_rw(struct mkbp_dev *dev,
 	end = rw_offset + image_size;
 	for (off = rw_offset; off < end; off += burst, image += burst) {
 		ret = mkbp_flash_write(dev, image, off, min(end - off, burst));
-		if (ret)
-			return ret;
-	}
-	/*
-	 * If the image doesn't fill the entire section, write a 0xea byte
-	 * following the image so that the EC can scan backwards to detect
-	 * the image size.
-	 *
-	 * TODO: clunky that MKBP needs to know this.  Maybe EC should have a
-	 * finalize-rw-image command which appends the byte and erases
-	 * everything past that?  Or a prepare-rw-image command which starts
-	 * with that?  But if we need to round up to the nearest multiple of
-	 * write size, the 0xea byte would need to go there, or be written
-	 * after the image (because flash write can turn 1 bits into 0 bits but
-	 * not vice versa).
-	 */
-	if (image_size < rw_size) {
-		uint8_t trailer[4] = {0xea, 0xff, 0xff, 0xff};
-		ret = mkbp_flash_write(dev, trailer, rw_offset + image_size,
-				       sizeof(trailer));
 		if (ret)
 			return ret;
 	}
