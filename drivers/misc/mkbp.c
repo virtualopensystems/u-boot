@@ -634,10 +634,34 @@ struct mkbp_dev *mkbp_init(const void *blob)
 }
 
 #ifdef CONFIG_CMD_MKBP
+/**
+ * Decode a flash region parameter
+ *
+ * @param argc	Number of params remaining
+ * @param argv	List of remaining parameters
+ * @return flash region (EC_FLASH_REGION_...) or -1 on error
+ */
+static int decode_region(int argc, char * const argv[])
+{
+	if (argc > 0) {
+		if (0 == strcmp(*argv, "rw"))
+			return EC_FLASH_REGION_RW;
+		else if (0 == strcmp(*argv, "ro"))
+			return EC_FLASH_REGION_RO;
+
+		debug("%s: Invalid region '%s'\n", __func__, *argv);
+	} else {
+		debug("%s: Missing region parameter\n", __func__);
+	}
+
+	return -1;
+}
+
 static int do_mkbp(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	struct mkbp_dev *dev = last_dev;
 	const char *cmd;
+	int ret = 0;
 
 	if (argc < 2)
 		return CMD_RET_USAGE;
@@ -723,6 +747,21 @@ static int do_mkbp(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 			debug("%s: Could not clear host events\n", __func__);
 			return 1;
 		}
+	} else if (0 == strcmp("regioninfo", cmd)) {
+		int region = decode_region(argc - 2, argv + 2);
+		uint32_t offset, size;
+
+		if (region == -1)
+			return CMD_RET_USAGE;
+		ret = mkbp_flash_offset(dev, region, &offset, &size);
+		if (ret) {
+			debug("%s: Could not read region info\n", __func__);
+		} else {
+			printf("Region: %s\n", region == EC_FLASH_REGION_RO ?
+					"RO" : "RW");
+			printf("Offset: %x\n", offset);
+			printf("Size:   %x\n", size);
+		}
 	} else if (0 == strcmp("test", cmd)) {
 		int result = mkbp_test(dev);
 
@@ -730,10 +769,16 @@ static int do_mkbp(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 			printf("Test failed with error %d\n", result);
 		else
 			puts("Test passed\n");
-	} else
+	} else {
 		return CMD_RET_USAGE;
+	}
 
-	return 0;
+	if (ret < 0) {
+		printf("Error: MKBP command failed (error %d)\n", ret);
+		ret = 1;
+	}
+
+	return ret;
 }
 
 U_BOOT_CMD(
@@ -746,6 +791,7 @@ U_BOOT_CMD(
 	"mkbp reboot [rw | cold]  Reboot MKBP\n"
 	"mkbp events              Read MKBP host events\n"
 	"mkbp clrevents [mask]    Clear MKBP host events\n"
+	"mkbp regioninfo <ro|rw>  Read image info\n"
 	"mkbp test                run tests on mkbp"
 );
 #endif
