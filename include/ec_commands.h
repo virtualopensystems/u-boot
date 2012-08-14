@@ -367,6 +367,19 @@ struct ec_response_get_cmd_versions {
 	uint32_t version_mask;
 } __packed;
 
+/* Check EC communcations status (busy) */
+#define EC_CMD_GET_STATUS	0x09
+
+/* Avoid using ec_status which is for return values */
+enum ec_comms_status {
+	EC_COMMS_STATUS_PROCESSING	= 1 << 0,	/* Processing cmd */
+};
+
+struct ec_response_get_status {
+	uint32_t flags;		/* Mask of enum ec_comms_status */
+} __packed;
+
+
 /*****************************************************************************/
 /* Flash commands */
 
