@@ -335,7 +335,7 @@ static int max98095_reset(void)
 	 * reset hardware control register.
 	 */
 	for (i = M98095_010_HOST_INT_CFG; i < M98095_REG_MAX_CACHED; i++) {
-		ret != max98095_i2c_write(i, 0);
+		ret = max98095_i2c_write(i, 0);
 		if (ret < 0) {
 			debug("%s: Failed to reset: %d\n", __func__, ret);
 			return ret;
