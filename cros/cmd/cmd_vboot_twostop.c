@@ -917,7 +917,7 @@ static int setup_gbb_and_cdata(void **gbb, size_t *gbb_size,
 }
 
 static uint32_t
-twostop_boot(void)
+twostop_boot(int stop_at_select)
 {
 	struct twostop_fmap fmap;
 	firmware_storage_t file;
@@ -946,6 +946,9 @@ twostop_boot(void)
 	VBDEBUG("selection of bootstub: %s\n", str_selection(selection));
 
 	file.close(&file); /* We don't care even if it fails */
+
+	if (stop_at_select)
+		return selection;
 
 	/* Don't we bother to free(fw_blob) if there was an error? */
 	if (selection == TWOSTOP_SELECT_ERROR)
@@ -1058,7 +1061,7 @@ do_vboot_twostop(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	VBDEBUG("Starting %s firmware\n", ro_firmware ? "read-only" :
 			"read-write");
 	if (ro_firmware)
-		selection = twostop_boot();
+		selection = twostop_boot(0);
 	else
 		selection = twostop_readwrite_main_firmware();
 
@@ -1080,3 +1083,54 @@ on_error:
 
 U_BOOT_CMD(vboot_twostop, 1, 1, do_vboot_twostop,
 		"verified boot twostop firmware", NULL);
+
+static int
+do_vboot_load_oprom(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+{
+	uint32_t selection;
+	struct vboot_flag_details oprom;
+
+	if (cros_init()) {
+		VBDEBUG("fail to init cros library\n");
+		return -1;
+	}
+
+	/* We should be in RO now. */
+	if (!is_processor_reset()) {
+		VBDEBUG("This command should only be executed in RO.\n");
+		return -1;
+	}
+
+	if (!cros_fdtdec_config_has_prop(gd->fdt_blob, "oprom-matters")) {
+		VBDEBUG("FDT doesn't say oprom-matters.\n");
+		return -1;
+	}
+
+	if (vboot_flag_fetch(VBOOT_FLAG_OPROM_LOADED, &oprom)) {
+		VBDEBUG("Failed to fetch OPROM gpio\n");
+		return -1;
+	}
+
+	vboot_flag_dump(VBOOT_FLAG_OPROM_LOADED, &oprom);
+	if (oprom.value) {
+		VBDEBUG("OPROM already loaded\n");
+		return 0;
+	}
+
+	/*
+	 * Initialize necessary data and stop at firmware selection. If
+	 * OPROM is not loaded and is needed, we should get an error here.
+	 */
+	selection = twostop_boot(1);
+
+	if (selection == TWOSTOP_SELECT_ERROR) {
+		cold_reboot();
+		return 0;
+	} else {
+		VBDEBUG("Vboot doesn't say we need OPROM.\n");
+		return -1;
+	}
+}
+
+U_BOOT_CMD(vboot_load_oprom, 1, 1, do_vboot_load_oprom,
+	   "load oprom if it is needed", NULL);
