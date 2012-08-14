@@ -257,6 +257,8 @@ void board_init_r(gd_t *id, ulong dest_addr)
 
 	jumptable_init();
 
+	sandbox_keyboard_init();
+
 	console_init_r();	/* fully init console as a device */
 
 #if defined(CONFIG_DISPLAY_BOARDINFO_LATE)
