@@ -29,6 +29,10 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+#if defined(HAVE_DISPLAY) && defined(CONFIG_SANDBOX)
+#error HAVE_DISPLAY is not handled for Sandbox configuration
+#endif
+
 struct display_callbacks {
 	int (*dc_get_pixel_width) (void);
 	int (*dc_get_pixel_height) (void);
@@ -108,36 +112,47 @@ static void print_on_center(const char *message)
 
 VbError_t VbExDisplayScreen(uint32_t screen_type)
 {
-#ifdef HAVE_DISPLAY
+	const char *msg = NULL;
+
 	/*
 	 * Show the debug messages for development. It is a backup method
 	 * when GBB does not contain a full set of bitmaps.
 	 */
 	switch (screen_type) {
-		case VB_SCREEN_BLANK:
-			/* clear the screen */
-			display_clear();
-			break;
-		case VB_SCREEN_DEVELOPER_WARNING:
-			print_on_center("developer mode warning");
-			break;
-		case VB_SCREEN_DEVELOPER_EGG:
-			print_on_center("easter egg");
-			break;
-		case VB_SCREEN_RECOVERY_REMOVE:
-			print_on_center("remove inserted devices");
-			break;
-		case VB_SCREEN_RECOVERY_INSERT:
-			print_on_center("insert recovery image");
-			break;
-		case VB_SCREEN_RECOVERY_NO_GOOD:
-			print_on_center("insert image invalid");
-			break;
-		default:
-			VBDEBUG("Not a valid screen type: %08x.\n",
-					screen_type);
-			return 1;
+	case VB_SCREEN_BLANK:
+		/* clear the screen */
+#ifdef HAVE_DISPLAY
+		display_clear();
+#elif defined(CONFIG_SANDBOX)
+		msg = "<screen cleared>";
+#endif
+		break;
+	case VB_SCREEN_DEVELOPER_WARNING:
+		msg = "developer mode warning";
+		break;
+	case VB_SCREEN_DEVELOPER_EGG:
+		msg = "easter egg";
+		break;
+	case VB_SCREEN_RECOVERY_REMOVE:
+		msg = "remove inserted devices";
+		break;
+	case VB_SCREEN_RECOVERY_INSERT:
+		msg = "insert recovery image";
+		break;
+	case VB_SCREEN_RECOVERY_NO_GOOD:
+		msg = "insert image invalid";
+		break;
+	default:
+		VBDEBUG("Not a valid screen type: %08x.\n",
+			screen_type);
+		return 1;
 	}
+
+	if (msg != NULL)
+#ifdef HAVE_DISPLAY
+		print_on_center(msg);
+#elif defined(CONFIG_SANDBOX)
+		VbExDebug("%s", msg);
 #endif
 	return VBERROR_SUCCESS;
 }
