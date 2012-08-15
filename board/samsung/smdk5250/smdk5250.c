@@ -30,6 +30,7 @@
 #include <tps65090.h>
 #include <errno.h>
 #include <asm/gpio.h>
+#include <asm/arch/clock.h>
 #include <asm/arch/cpu.h>
 #include <asm/arch/ehci-s5p.h>
 #include <asm/arch/board.h>
@@ -616,6 +617,9 @@ int board_init(void)
 		return -1;
 	}
 #endif
+
+	/* Clock Gating all the unused IP's to save power */
+	clock_gate();
 
 	if (board_init_mkbp_devices(gd->fdt_blob))
 		return -1;

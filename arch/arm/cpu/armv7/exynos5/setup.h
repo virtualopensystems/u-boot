@@ -450,6 +450,66 @@
 /* CLK_GATE_IP_DISP1 */
 #define CLK_GATE_DP1_ALLOW	(1 << 4)
 
+/* CLK_GATE_IP_ACP */
+#define CLK_SMMUG2D_MASK	(1 << 7)
+#define CLK_SMMUSSS_MASK	(1 << 6)
+#define CLK_SMMUMDMA_MASK	(1 << 5)
+#define CLK_ID_REMAPPER_MASK	(1 << 4)
+#define CLK_G2D_MASK		(1 << 3)
+#define CLK_SSS_MASK		(1 << 2)
+#define CLK_MDMA_MASK		(1 << 1)
+#define CLK_SECJTAG_MASK	(1 << 0)
+
+/* Clock gate complete ISP */
+#define CLK_GATE_ISP0	0x203fc000
+#define CLK_GATE_ISP1	0xffffcf08
+
+#define SCLK_MPWM_ISP_MASK	(1 << 0)
+
+/* CLK_GATE_IP_GEN */
+#define CLK_SMMUMDMA1_MASK	(1 << 9)
+#define CLK_SMMUJPEG_MASK	(1 << 7)
+#define CLK_SMMUROTATOR_MASK	(1 << 6)
+#define CLK_MDMA1_MASK		(1 << 4)
+#define CLK_JPEG_MASK		(1 << 2)
+#define CLK_ROTATOR_MASK	(1 << 1)
+
+/* CLK_GATE_IP_FSYS */
+#define CLK_SMMUMCU_IOP_MASK	(1 << 26)
+#define CLK_SATA_PHY_I2C_MASK	(1 << 25)
+#define CLK_SATA_PHY_CTRL_MASK	(1 << 24)
+#define CLK_MCUCTL_MASK		(1 << 23)
+#define CLK_NFCON_MASK		(1 << 22)
+#define CLK_SMMURTIC_MASK	(1 << 11)
+#define CLK_RTIC_MASK		(1 << 9)
+#define CLK_SATA_MASK		(1 << 6)
+#define CLK_PDMA1_MASK		(1 << 2)
+#define CLK_PDMA0_MASK		(1 << 1)
+#define CLK_MCU_IOP_MASK	(1 << 0)
+
+/* CLK_GATE_IP_PERIC */
+#define CLK_HS_I2C3_MASK	(1 << 31)
+#define CLK_HS_I2C2_MASK	(1 << 30)
+#define CLK_HS_I2C1_MASK	(1 << 29)
+#define CLK_HS_I2C0_MASK	(1 << 28)
+#define CLK_SPDIF_MASK		(1 << 26)
+#define CLK_I2CHDMI_MASK	(1 << 14)
+
+#define CLK_GATE_IP_PERIS	0xffff003f
+
+/* CLK_GATE_BLOCK */
+#define CLK_ACP_MASK	(1 << 7)
+
+/* CLK_GATE_IP_CDREX */
+#define CLK_TZASC_DRBXW_MASK	(1 << 23)
+#define CLK_TZASC_DRBXR_MASK	(1 << 22)
+#define CLK_TZASC_XLBXW_MASK	(1 << 21)
+#define CLK_TZASC_XLBXR_MASK	(1 << 20)
+#define CLK_TZASC_XR1BXW_MASK	(1 << 19)
+#define CLK_TZASC_XR1BXR_MASK	(1 << 18)
+#define CLK_DPHY1_MASK		(1 << 5)
+#define CLK_DPHY0_MASK		(1 << 4)
+
 /*
  * TZPC Register Value :
  * R0SIZE: 0x0 : Size of secured ram

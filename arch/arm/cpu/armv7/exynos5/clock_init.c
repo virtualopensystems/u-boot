@@ -765,6 +765,70 @@ void system_clock_init()
 	writel(val, &clk->div_fsys2);
 }
 
+void clock_gate(void)
+{
+	struct exynos5_clock *clk = (struct exynos5_clock *)EXYNOS5_CLOCK_BASE;
+
+	/* CLK_GATE_IP_ACP */
+	clrbits_le32(&clk->gate_ip_acp, CLK_SMMUG2D_MASK);
+	clrbits_le32(&clk->gate_ip_acp, CLK_SMMUSSS_MASK);
+	clrbits_le32(&clk->gate_ip_acp, CLK_SMMUMDMA_MASK);
+	clrbits_le32(&clk->gate_ip_acp, CLK_ID_REMAPPER_MASK);
+	clrbits_le32(&clk->gate_ip_acp, CLK_G2D_MASK);
+	clrbits_le32(&clk->gate_ip_acp, CLK_SSS_MASK);
+	clrbits_le32(&clk->gate_ip_acp, CLK_MDMA_MASK);
+	clrbits_le32(&clk->gate_ip_acp, CLK_SECJTAG_MASK);
+
+	/* CLK_GATE_IP_ISP */
+	writel(CLK_GATE_ISP0, &clk->gate_ip_isp0);
+	writel(CLK_GATE_ISP1, &clk->gate_ip_isp1);
+	clrbits_le32(&clk->gate_sclk_isp, SCLK_MPWM_ISP_MASK);
+
+	/* CLK_GATE_IP_GEN */
+	clrbits_le32(&clk->gate_ip_gen, CLK_SMMUMDMA1_MASK);
+	clrbits_le32(&clk->gate_ip_gen, CLK_SMMUJPEG_MASK);
+	clrbits_le32(&clk->gate_ip_gen, CLK_SMMUROTATOR_MASK);
+	clrbits_le32(&clk->gate_ip_gen, CLK_MDMA1_MASK);
+	clrbits_le32(&clk->gate_ip_gen, CLK_JPEG_MASK);
+	clrbits_le32(&clk->gate_ip_gen, CLK_ROTATOR_MASK);
+
+	/* CLK_GATE_IP_FSYS */
+	clrbits_le32(&clk->gate_ip_fsys, CLK_SMMUMCU_IOP_MASK);
+	clrbits_le32(&clk->gate_ip_fsys, CLK_SATA_PHY_I2C_MASK);
+	clrbits_le32(&clk->gate_ip_fsys, CLK_SATA_PHY_CTRL_MASK);
+	clrbits_le32(&clk->gate_ip_fsys, CLK_MCUCTL_MASK);
+	clrbits_le32(&clk->gate_ip_fsys, CLK_NFCON_MASK);
+	clrbits_le32(&clk->gate_ip_fsys, CLK_SMMURTIC_MASK);
+	clrbits_le32(&clk->gate_ip_fsys, CLK_RTIC_MASK);
+	clrbits_le32(&clk->gate_ip_fsys, CLK_SATA_MASK);
+	clrbits_le32(&clk->gate_ip_fsys, CLK_PDMA1_MASK);
+	clrbits_le32(&clk->gate_ip_fsys, CLK_PDMA0_MASK);
+	clrbits_le32(&clk->gate_ip_fsys, CLK_MCU_IOP_MASK);
+
+	/* CLK_GATE_IP_PERIC */
+	clrbits_le32(&clk->gate_ip_peric, CLK_HS_I2C3_MASK);
+	clrbits_le32(&clk->gate_ip_peric, CLK_HS_I2C2_MASK);
+	clrbits_le32(&clk->gate_ip_peric, CLK_HS_I2C1_MASK);
+	clrbits_le32(&clk->gate_ip_peric, CLK_HS_I2C0_MASK);
+	clrbits_le32(&clk->gate_ip_peric, CLK_SPDIF_MASK);
+	clrbits_le32(&clk->gate_ip_peric, CLK_I2CHDMI_MASK);
+
+	/* CLK_GATE_IP_PERIS
+	 * Mainly TZPC 0-9, PKEY0-1 are gated
+	 */
+	writel(CLK_GATE_IP_PERIS, &clk->gate_ip_peris);
+
+	/* CLK_GATE_BLOCK */
+	clrbits_le32(&clk->gate_block, CLK_ACP_MASK);
+
+	/* CLK_GATE_IP_CDREX */
+	clrbits_le32(&clk->gate_ip_cdrex, CLK_DPHY0_MASK);
+	clrbits_le32(&clk->gate_ip_cdrex, CLK_DPHY1_MASK);
+	clrbits_le32(&clk->gate_ip_cdrex, CLK_TZASC_DRBXW_MASK);
+	clrbits_le32(&clk->gate_ip_cdrex, CLK_TZASC_DRBXR_MASK);
+
+}
+
 void clock_init_dp_clock(void)
 {
 	struct exynos5_clock *clk = (struct exynos5_clock *)EXYNOS5_CLOCK_BASE;

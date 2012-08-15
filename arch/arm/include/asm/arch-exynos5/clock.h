@@ -510,6 +510,10 @@ int clock_set_rate(enum periph_id periph_id, unsigned int rate);
  * @param node	Node containing the information
  */
 int clock_decode_periph_id(const void *blob, int node);
+
+/* Clock gate unused IP */
+void clock_gate(void);
+
 #endif
 
 #endif
