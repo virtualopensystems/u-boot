@@ -44,6 +44,11 @@
 #define debug_trace(fmt, b...)
 #endif
 
+enum {
+	/* Timeout waiting for a flash erase command to complete */
+	MKBP_CMD_TIMEOUT_MS	= 5000,
+};
+
 static struct mkbp_dev static_dev, *last_dev;
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -78,6 +83,42 @@ int mkbp_calc_checksum(const uint8_t *data, int size)
 	return csum & 0xff;
 }
 
+static int send_command(struct mkbp_dev *dev, uint8_t cmd, int cmd_version,
+			const void *dout, int dout_len,
+			uint8_t **dinp, int din_len)
+{
+	int ret;
+
+	switch (dev->interface) {
+#ifdef CONFIG_MKBP_SPI
+	case MKBPIF_SPI:
+		ret = mkbp_spi_command(dev, cmd, cmd_version,
+					(const uint8_t *)dout, dout_len,
+					dinp, din_len);
+		break;
+#endif
+#ifdef CONFIG_MKBP_I2C
+	case MKBPIF_I2C:
+		ret = mkbp_i2c_command(dev, cmd, cmd_version,
+					(const uint8_t *)dout, dout_len,
+					dinp, din_len);
+		break;
+#endif
+#ifdef CONFIG_MKBP_LPC
+	case MKBPIF_LPC:
+		ret = mkbp_lpc_command(dev, cmd, cmd_version,
+					(const uint8_t *)dout, dout_len,
+					dinp, din_len);
+		break;
+#endif
+	case MKBPIF_NONE:
+	default:
+		ret = -1;
+	}
+
+	return ret;
+}
+
 /**
  * Send a command to the MKBP device and return the reply.
  *
@@ -108,31 +149,36 @@ static int ec_command(struct mkbp_dev *dev, uint8_t cmd, int cmd_version,
 		return -1;
 	}
 
-	switch (dev->interface) {
-#ifdef CONFIG_MKBP_SPI
-	case MKBPIF_SPI:
-		len = mkbp_spi_command(dev, cmd, cmd_version,
-					(const uint8_t *)dout, dout_len,
-					&din, din_len);
-		break;
-#endif
-#ifdef CONFIG_MKBP_I2C
-	case MKBPIF_I2C:
-		len = mkbp_i2c_command(dev, cmd, cmd_version,
-					(const uint8_t *)dout, dout_len,
-					&din, din_len);
-		break;
-#endif
-#ifdef CONFIG_MKBP_LPC
-	case MKBPIF_LPC:
-		len = mkbp_lpc_command(dev, cmd, cmd_version,
-					(const uint8_t *)dout, dout_len,
-					&din, din_len);
-		break;
-#endif
-	case MKBPIF_NONE:
-	default:
-		return -1;
+	len = send_command(dev, cmd, cmd_version, dout, dout_len,
+				&din, din_len);
+
+	/* If the command doesn't complete, wait a while */
+	if (len == -EC_RES_IN_PROGRESS) {
+		struct ec_response_get_comms_status *resp;
+		ulong start;
+
+		/* Wait for command to complete */
+		start = get_timer(0);
+		do {
+			int ret;
+
+			mdelay(50);	/* Insert some reasonable delay */
+			ret = send_command(dev, EC_CMD_GET_COMMS_STATUS, 0,
+					NULL, 0,
+					(uint8_t **)&resp, sizeof(*resp));
+			if (ret < 0)
+				return ret;
+
+			if (get_timer(start) > MKBP_CMD_TIMEOUT_MS) {
+				debug("%s: Command %#02x timeout",
+				      __func__, cmd);
+				return -EC_RES_TIMEOUT;
+			}
+		} while (resp->flags & EC_COMMS_STATUS_PROCESSING);
+
+		/* OK it completed, so read the status response */
+		len = send_command(dev, EC_CMD_RESEND_RESPONSE, 0,
+				NULL, 0, &din, 0);
 	}
 
 	/*
@@ -421,8 +467,7 @@ static int mkbp_flash_erase(struct mkbp_dev *dev,
 
 	p.offset = offset;
 	p.size = size;
-	return ec_command(dev, EC_CMD_FLASH_ERASE, 0,
-			  &p, sizeof(p), NULL, 0) >= 0 ? 0 : -1;
+	return ec_command(dev, EC_CMD_FLASH_ERASE, 0, &p, sizeof(p), NULL, 0);
 }
 
 /**
@@ -910,9 +955,12 @@ static int do_mkbp(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		if (mkbp_flash_offset(dev, region, &offset, &size)) {
 			debug("%s: Could not read region info\n", __func__);
 			ret = -1;
-		} else if (mkbp_flash_erase(dev, offset, size)) {
-			debug("%s: Could not erase region\n", __func__);
-			ret = -1;
+		} else {
+			ret = mkbp_flash_erase(dev, offset, size);
+			if (ret) {
+				debug("%s: Could not erase region\n",
+				      __func__);
+			}
 		}
 	} else if (0 == strcmp("regioninfo", cmd)) {
 		int region = decode_region(argc - 2, argv + 2);
