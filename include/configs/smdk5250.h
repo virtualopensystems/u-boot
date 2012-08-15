@@ -53,6 +53,9 @@
 #define CONFIG_FIT
 #define CONFIG_FIT_BEST_MATCH
 
+/* We might use LZO compression */
+#define CONFIG_LZO
+
 /* input clock of PLL: SMDK5250 has 24MHz input clock */
 #define CONFIG_SYS_CLK_FREQ            24000000
 
