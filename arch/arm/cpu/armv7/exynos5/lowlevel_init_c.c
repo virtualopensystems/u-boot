@@ -94,6 +94,7 @@ int lowlevel_init_subsystems(void)
 		/* Set up serial UART so we can printf() */
 		exynos_pinmux_config(EXYNOS_UART, PINMUX_FLAG_NONE);
 		serial_init();
+		timer_init();
 	}
 	if (actions & DO_CLOCKS) {
 		mem_ctrl_init();
