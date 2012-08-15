@@ -44,11 +44,6 @@
 #define debug_trace(fmt, b...)
 #endif
 
-enum {
-	/* Timeout waiting for a flash erase command to complete */
-	MKBP_CMD_TIMEOUT_MS	= 5000,
-};
-
 static struct mkbp_dev static_dev, *last_dev;
 
 void mkbp_dump_data(const char *name, int cmd, const uint8_t *data, int len)
@@ -420,33 +415,12 @@ static int mkbp_flash_offset(struct mkbp_dev *dev, enum ec_flash_region region,
 static int mkbp_flash_erase(struct mkbp_dev *dev,
 			    uint32_t offset, uint32_t size)
 {
-	struct ec_response_get_status *resp;
 	struct ec_params_flash_erase p;
-	ulong start;
-	int ret;
 
 	p.offset = offset;
 	p.size = size;
-	ret = ec_command(dev, EC_CMD_FLASH_ERASE, 0, &p, sizeof(p), NULL, 0);
-	if (ret < 0)
-		return -1;
-
-	/* Wait for erase to complete */
-	start = get_timer(0);
-	do {
-		resp = NULL;
-		ret = ec_command(dev, EC_CMD_GET_STATUS, 0, NULL, 0,
-				 (uint8_t **)&resp, sizeof(resp));
-		if (ret < 0)
-			return -1;
-
-		if (get_timer(start) > MKBP_CMD_TIMEOUT_MS) {
-			debug("%s: Flash erase timeout\n", __func__);
-			return -1;
-		}
-	} while (resp->flags & EC_COMMS_STATUS_PROCESSING);
-
-	return 0;
+	return ec_command(dev, EC_CMD_FLASH_ERASE, 0,
+			  &p, sizeof(p), NULL, 0) >= 0 ? 0 : -1;
 }
 
 static int mkbp_flash_write(struct mkbp_dev *dev, const uint8_t  *data,
