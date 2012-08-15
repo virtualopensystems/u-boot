@@ -425,12 +425,23 @@ int gpio_decode_number(unsigned gpio_list[], int count)
 		udelay(GPIO_DELAY_US);
 		low = gpio_get_value(gpio);
 
-		if (high && low)
+		if (high && low) /* external pullup */
 			value = 2;
-		else if (!high && !low)
+		else if (!high && !low) /* external pulldown */
 			value = 1;
-		else
+		else /* floating */
 			value = 0;
+
+		/*
+		 * Check if line is externally pulled high and
+		 * configure the internal pullup to match.  For
+		 * floating and pulldowns, the GPIO is already
+		 * configured with an internal pulldown from the
+		 * above test.
+		 */
+		if (value == 2)
+			gpio_set_pull(gpio, EXYNOS_GPIO_PULL_UP);
+
 		result += value * multiplier;
 		multiplier *= 3;
 	}
