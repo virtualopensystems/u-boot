@@ -275,6 +275,27 @@ uint32_t bootstage_accum(enum bootstage_id id);
 /* Print a report about boot time */
 void bootstage_report(void);
 
+/**
+ * Stash bootstage data into memory
+ *
+ * @param base	Base address of memory buffer
+ * @param size	Size of memory buffer
+ * @return 0 if stashed ok, -1 if out of space
+ */
+int bootstage_stash(void *base, int size);
+
+/**
+ * Read bootstage data from memory
+ *
+ * Bootstage data is read from memory and placed in the bootstage table
+ * in the user records.
+ *
+ * @param base	Base address of memory buffer
+ * @param size	Size of memory buffer (-1 if unknown)
+ * @return 0 if unstashed ok, -1 if bootstage info not found, or out of space
+ */
+int bootstage_unstash(void *base, int size);
+
 #else
 /*
  * This is a dummy implementation which just calls show_boot_progress(),
@@ -298,7 +319,15 @@ static inline ulong bootstage_mark_name(enum bootstage_id id, const char *name)
 	return 0;
 }
 
+static inline int bootstage_stash(void *base, int size)
+{
+	return 0;	/* Pretend to succeed */
+}
 
+static inline int bootstage_unstash(void *base, int size)
+{
+	return 0;	/* Pretend to succeed */
+}
 #endif /* CONFIG_BOOTSTAGE */
 
 #endif
