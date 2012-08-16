@@ -49,6 +49,13 @@ void save_boot_params(u32 r0, u32 r1, u32 r2, u32 r3)
 
 int cleanup_before_linux(void)
 {
+#ifdef CONFIG_BOOTSTAGE_REPORT
+	bootstage_report();
+#endif
+#ifdef CONFIG_BOOTSTAGE_STASH
+	bootstage_stash((void *)CONFIG_BOOTSTAGE_STASH,
+			CONFIG_BOOTSTAGE_STASH_SIZE);
+#endif
 	/*
 	 * this function is called just before we call linux
 	 * it prepares the processor for linux
