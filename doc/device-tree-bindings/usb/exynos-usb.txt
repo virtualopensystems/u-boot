@@ -1,0 +1,20 @@
+Exynos USB controllers
+======================
+
+The device node for an USB controller that is part of an Exynos SOC.
+
+Required properties :
+ - compatible : Should be "samsung,exynos-usb" for USB controllers
+
+Optional properties:
+ - usb3-pll-gpio : GPIO data node. This node describes the GPIO line connected
+		to the USB 3.0 PLL enable/disable line. In exynos we are
+		disabling the USB 3.0 PLL to save around 250mW of power.
+
+Example
+=======
+
+usb@12000000 {
+	compatible = "samsung,exynos-usb";
+	usb3-pll-gpio = <&gpio 0x71 0>;
+};

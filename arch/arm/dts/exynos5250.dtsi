@@ -435,6 +435,10 @@
 		#size-cells = <0>;
 	};
 
+	usb@12000000 {
+		compatible = "samsung,exynos-usb";
+	};
+
 	dmc@10C00000 {
 		compatible = "samsung,exynos-dmc";
 	};
