@@ -824,7 +824,6 @@ void clock_gate(void)
 	/* CLK_GATE_IP_CDREX */
 	clrbits_le32(&clk->gate_ip_cdrex, CLK_DPHY0_MASK);
 	clrbits_le32(&clk->gate_ip_cdrex, CLK_DPHY1_MASK);
-	clrbits_le32(&clk->gate_ip_cdrex, CLK_TZASC_DRBXW_MASK);
 	clrbits_le32(&clk->gate_ip_cdrex, CLK_TZASC_DRBXR_MASK);
 
 }
