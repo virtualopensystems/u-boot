@@ -217,7 +217,7 @@ static void show_ec_bin(const char *name, struct fmap_entry *entry)
 	printf("EC binary %s at %#x, length %#x\n", name, entry->offset,
 	       entry->length);
 	if (entry->length) {
-		data = (u32 *)(CONFIG_SYS_TEXT_BASE + entry->offset);
+		data = (u32 *)(uintptr_t)(CONFIG_SYS_TEXT_BASE + entry->offset);
 		printf("%p: ", data);
 		for (i = 0; i < 4; i++)
 			printf("%08x ", data[i]);
