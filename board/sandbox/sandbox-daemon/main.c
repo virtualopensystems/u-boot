@@ -119,7 +119,7 @@ static void process_args(int argc, char * const argv[])
 		}
 	}
 
-	if (!validate_spi_arguments())
+	if (validate_spi_arguments())
 		fatal("SPI peripheral not configured correctly");
 
 }
