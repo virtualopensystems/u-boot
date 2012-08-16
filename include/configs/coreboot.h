@@ -368,6 +368,7 @@
 
 #ifdef CONFIG_FACTORY_IMAGE
 #define CONFIG_BOOTCOMMAND \
+	"vboot_load_oprom; "\
 	"netboot_acpi; "\
 	"run set_netbootargs; "\
 	"usb start; "\
