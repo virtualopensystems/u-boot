@@ -57,7 +57,12 @@
 #define I2C_START_STOP	0x20	/* START / STOP */
 #define I2C_TXRX_ENA	0x10	/* I2C Tx/Rx enable */
 
-#define I2C_TIMEOUT	1	/* 1 second */
+/* The timeouts we live by */
+enum {
+	I2C_XFER_TIMEOUT_MS	= 35,	/* xfer to complete */
+	I2C_INIT_TIMEOUT_MS	= 1000,	/* bus free on init */
+	I2C_IDLE_TIMEOUT_MS	= 100,	/* waiting for bus idle */
+};
 
 /* We should not rely on any particular ordering of these IDs */
 #ifndef CONFIG_OF_CONTROL
@@ -108,13 +113,17 @@ static int WaitForXfer(struct s3c24x0_i2c *i2c)
 {
 	int i;
 
-	i = I2C_TIMEOUT * 20;
-	while (!(readl(&i2c->iiccon) & I2CCON_IRPND) && (i > 0)) {
+	i = I2C_XFER_TIMEOUT_MS * 20;
+	while (!(readl(&i2c->iiccon) & I2CCON_IRPND)) {
+		if (i == 0) {
+			debug("%s: i2c xfer timeout\n", __func__);
+			return I2C_NOK_TOUT;
+		}
 		udelay(50);
 		i--;
 	}
 
-	return (readl(&i2c->iiccon) & I2CCON_IRPND) ? I2C_OK : I2C_NOK_TOUT;
+	return I2C_OK;
 }
 
 static int IsACK(struct s3c24x0_i2c *i2c)
@@ -319,7 +328,7 @@ void i2c_init(int speed, int slaveadd)
 	i2c_bus_init(i2c, g_current_bus);
 
 	/* wait for some time to give previous transfer a chance to finish */
-	i = I2C_TIMEOUT * 20000;
+	i = I2C_INIT_TIMEOUT_MS * 20;
 	while ((readl(&i2c->regs->iicstat) & I2CSTAT_BSY) && (i > 0)) {
 		udelay(50);
 		i--;
@@ -355,14 +364,16 @@ static int i2c_transfer(struct s3c24x0_i2c *i2c,
 	}
 
 	/* Check I2C bus idle */
-	i = I2C_TIMEOUT * 200;
+	i = I2C_IDLE_TIMEOUT_MS * 20;
 	while ((readl(&i2c->iicstat) & I2CSTAT_BSY) && (i > 0)) {
 		udelay(50);
 		i--;
 	}
 
-	if (readl(&i2c->iicstat) & I2CSTAT_BSY)
+	if (readl(&i2c->iicstat) & I2CSTAT_BSY) {
+		debug("%s: bus busy\n", __func__);
 		return I2C_NOK_TOUT;
+	}
 
 	writel(readl(&i2c->iiccon) | I2CCON_ACKGEN, &i2c->iiccon);
 
