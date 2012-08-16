@@ -58,6 +58,16 @@ static void help(const char *program_name)
 
 static void process_args(int argc, char * const argv[])
 {
+	/* TODO(thutt@chromium.org):
+	 *
+	 * Redesign the method used to provide device information.
+	 * Having to supply information about each device will become
+	 * cumbersome when there are a lot of drivers avaialble.
+	 * Perhaps having a more complicated backing file scheme where
+	 * the device information is embedded in the backing file;
+	 * only supplying the name to the backing file would be
+	 * necessary then.
+	 */
 	struct option args[] = {
 		{ "help",	     no_argument,	NULL,	256 },
 		{ "verbose",	     no_argument,	NULL,	257 },
