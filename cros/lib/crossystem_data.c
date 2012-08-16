@@ -143,7 +143,6 @@ int crossystem_data_embed_into_fdt(crossystem_data_t *cdata, void *fdt,
 {
 	char path[] = "/firmware/chromeos";
 	int nodeoffset, err;
-	int gpio_phandle;
 	int gpio_prop[3];
 	const char *ddr_type;
 
@@ -154,24 +153,6 @@ int crossystem_data_embed_into_fdt(crossystem_data_t *cdata, void *fdt,
 		return 1;
 	}
 	*size_ptr = fdt_totalsize(fdt);
-
-	/* TODO: Upstream device tree is moving from tegra250 to
-	 * tegra20. Keep the check for 250 around for now but it can be
-	 * removed once the changes have trickled down.
-	 */
-	nodeoffset = fdt_node_offset_by_compatible(fdt, 0,
-						   "nvidia,tegra20-gpio");
-	if (nodeoffset <= 0)
-		nodeoffset = fdt_node_offset_by_compatible(fdt, 0,
-						   "nvidia,tegra250-gpio");
-
-	gpio_phandle = fdt_get_phandle(fdt, nodeoffset);
-	if (gpio_phandle <= 0) {
-		gpio_phandle = fdt_alloc_phandle(fdt);
-		fdt_setprop_cell(fdt, nodeoffset,
-				 "linux,phandle", gpio_phandle);
-	}
-	gpio_prop[0] = cpu_to_fdt32(gpio_phandle);
 
 	nodeoffset = fdt_add_subnodes_from_path(fdt, 0, path);
 	if (nodeoffset < 0) {
