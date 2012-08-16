@@ -184,11 +184,6 @@ int crossystem_data_embed_into_fdt(crossystem_data_t *cdata, void *fdt,
 	err |= set_bool_prop("boot-developer-switch",
 			boot_developer_switch);
 
-	gpio_prop[1] = cpu_to_fdt32(cdata->gpio_port_write_protect_switch);
-	gpio_prop[2] = cpu_to_fdt32(cdata->polarity_write_protect_switch);
-	err |= fdt_setprop(fdt, nodeoffset, "write-protect-switch",
-			   gpio_prop, sizeof(gpio_prop));
-
 	gpio_prop[1] = cpu_to_fdt32(cdata->gpio_port_recovery_switch);
 	gpio_prop[2] = cpu_to_fdt32(cdata->polarity_recovery_switch);
 	err |= fdt_setprop(fdt, nodeoffset, "recovery-switch",
