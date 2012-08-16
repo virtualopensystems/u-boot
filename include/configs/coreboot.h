@@ -364,14 +364,11 @@
 #ifdef CONFIG_FACTORY_IMAGE
 #undef CONFIG_ZERO_BOOTDELAY_CHECK
 
-/* TODO: Remove the second 'net_boot'. See crosbug/p/11152 */
 #define CONFIG_BOOTCOMMAND \
 	"netboot_acpi; "\
 	"run set_netbootargs; "\
 	"usb start; "\
 	"setenv tftpblocksize 1408; "\
-	"run net_boot; "\
-	"setenv tftpblocksize 512; "\
 	"run net_boot; "\
 	"setenv devnum 0; "\
 	"run fallback_usb; "\
