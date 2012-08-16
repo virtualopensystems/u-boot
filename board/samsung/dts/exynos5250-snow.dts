@@ -82,4 +82,7 @@
 			compatible = "maxim,max98095-codec";
 		};
 	};
+	usb@12000000 {
+		usb3-pll-gpio = <&gpio 0x71 0>;	/* Y11 */
+	};
 };
