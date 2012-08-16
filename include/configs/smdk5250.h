@@ -32,6 +32,7 @@
 /* Record boot stage delta time between records and print final report */
 #define CONFIG_BOOTSTAGE
 #define CONFIG_BOOTSTAGE_REPORT
+#define CONFIG_CMD_BOOTSTAGE
 
 #include "exynos5-common.h"	/* Common Exynos5 based board configurations */
 

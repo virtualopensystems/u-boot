@@ -176,12 +176,16 @@
 
 /*
  * Put the initial stack pointer 1KB below this to allow room for the
- * SPL marker. This value is arbitrary.
+ * SPL marker. This value is arbitrary, but gd_t is placed starting here.
  */
-#define CONFIG_SYS_INIT_SP_ADDR	(CONFIG_IRAM_TOP - 0x400)
+#define CONFIG_SYS_INIT_SP_ADDR	(CONFIG_IRAM_TOP - 0x800)
 
 /* The place where we put our SPL marker */
 #define CONFIG_SPL_MARKER	(CONFIG_IRAM_TOP - 4)
+
+/* Place to stash bootstage data from first-stage U-Boot */
+#define CONFIG_BOOTSTAGE_STASH	(CONFIG_IRAM_TOP - 0x400)
+#define CONFIG_BOOTSTAGE_STASH_SIZE	0x3fc
 
 /* The top of the SPL stack, also used for early U-Boot init */
 #define CONFIG_IRAM_STACK	CONFIG_SYS_INIT_SP_ADDR
