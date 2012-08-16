@@ -9,11 +9,15 @@
 	compatible = "google,stout", "intel,celeron-sandybridge";
 
 	config {
-	       hwid = "X86 STOUT TEST 8762";
+		hwid = "X86 STOUT TEST 8762";
 	};
 
 	chromeos-config {
 		virtual-dev-switch;
 		oprom-matters;
+		vboot-flag-ec-in-rw {
+			compatible = "google,sysinfo-flag";
+			google,name = "ec_in_rw";
+		};
 	};
 };
