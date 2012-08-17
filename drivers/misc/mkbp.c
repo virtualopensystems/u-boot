@@ -703,13 +703,16 @@ struct mkbp_dev *mkbp_init(const void *blob)
 {
 	char id[MSG_BYTES];
 	struct mkbp_dev *dev;
-	int node;
+	int node = 0;
 
-	node = fdtdec_next_compatible(blob, 0, COMPAT_GOOGLE_MKBP);
-	if (node < 0) {
-		debug("%s: Node not found\n", __func__);
-		return NULL;
-	}
+	do {
+		node = fdtdec_next_compatible(blob, node, COMPAT_GOOGLE_MKBP);
+		if (node < 0) {
+			debug("%s: Node not found\n", __func__);
+			return NULL;
+		}
+	} while (!fdtdec_get_is_enabled(blob, node));
+
 	if (mkbp_decode_fdt(blob, node, &dev)) {
 		debug("%s: Failed to decode device.\n", __func__);
 		return NULL;
