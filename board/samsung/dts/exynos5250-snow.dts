@@ -56,6 +56,18 @@
 		};
 	};
 
+	spi@131b0000 {
+		spi-max-frequency = <1000000>;
+		spi-deactivate-delay = <100>;
+		mkbp@0 {
+			reg = <0>;
+			compatible = "google,mkbp";
+			spi-max-frequency = <5000000>;
+			ec-interrupt = <&gpio 174 1>;
+			status = "disabled";
+		};
+	};
+
 	dp@145b0000 {
 		samsung,interface = "edp";
 	};
