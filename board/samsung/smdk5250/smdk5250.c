@@ -170,13 +170,17 @@ int board_eth_init(bd_t *bis)
 
 #ifdef CONFIG_OF_CONTROL
 	node = decode_sromc(gd->fdt_blob, &config);
-	if (node < 0)
-		return -1;
+	if (node < 0) {
+		debug("%s: Could not find sromc configuration\n", __func__);
+		return 0;
+	}
 	node = fdtdec_next_compatible(gd->fdt_blob, node, COMPAT_SMSC_LAN9215);
 	if (node < 0) {
 		debug("%s: Could not find lan9215 configuration\n", __func__);
-		return -1;
+		return 0;
 	}
+
+	/* We now have a node, so any problems from now on are errors */
 	base_addr = fdtdec_get_addr(gd->fdt_blob, node, "reg");
 	if (base_addr == FDT_ADDR_T_NONE) {
 		debug("%s: Could not find lan9215 address\n", __func__);
