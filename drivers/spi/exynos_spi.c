@@ -52,6 +52,7 @@ struct exynos_spi_slave {
 	unsigned int mode;
 	enum periph_id periph_id;	/* Peripheral ID for this device */
 	unsigned int fifo_size;
+	int skip_preamble;		/* True to skip preamble bytes */
 };
 
 static struct spi_bus *spi_get_bus(unsigned dev_index)
@@ -137,6 +138,7 @@ struct spi_slave *spi_setup_slave(unsigned int busnum, unsigned int cs,
 		spi_slave->fifo_size = 256;
 	else
 		spi_slave->fifo_size = 64;
+	spi_slave->skip_preamble = 0;
 
 	spi_slave->freq = bus->frequency;
 	if (max_hz)
@@ -251,16 +253,21 @@ static void spi_request_bytes(struct exynos_spi *regs, int count)
 	writel(count | SPI_PACKET_CNT_EN, &regs->pkt_cnt);
 }
 
-static void spi_rx_tx(struct exynos_spi_slave *spi_slave, int todo,
-		      void **dinp, void const **doutp)
+static int spi_rx_tx(struct exynos_spi_slave *spi_slave, int todo,
+		     void **dinp, void const **doutp, unsigned long flags)
 {
 	struct exynos_spi *regs = spi_slave->regs;
 	uchar *rxp = *dinp;
 	const uchar *txp = *doutp;
 	int rx_lvl, tx_lvl;
 	uint out_bytes, in_bytes;
+	int toread, preamable_count = 0;
+	unsigned start = get_timer(0);
+	int stopping;
 
 	out_bytes = in_bytes = todo;
+	stopping = spi_slave->skip_preamble && (flags & SPI_XFER_END) &&
+		!(spi_slave->mode & SPI_SLAVE);
 
 	/*
 	 * If there's something to send, do a software reset and set a
@@ -272,6 +279,7 @@ static void spi_rx_tx(struct exynos_spi_slave *spi_slave, int todo,
 	 * Bytes are transmitted/received in pairs. Wait to receive all the
 	 * data because then transmission will be done as well.
 	 */
+	toread = in_bytes;
 	while (in_bytes) {
 		int temp;
 
@@ -284,13 +292,43 @@ static void spi_rx_tx(struct exynos_spi_slave *spi_slave, int todo,
 		}
 		if (rx_lvl > 0 && in_bytes) {
 			temp = readl(&regs->rx_data);
-			if (rxp)
+			if (!rxp && !stopping) {
+				in_bytes--;
+			} else if (spi_slave->skip_preamble) {
+				if (temp == SPI_PREAMBLE_END_BYTE) {
+					spi_slave->skip_preamble = 0;
+					stopping = 0;
+				}
+			} else {
 				*rxp++ = temp;
-			in_bytes--;
+				in_bytes--;
+			}
+			toread--;
+		}
+
+		/*
+		 * We have run out of input data, but haven't read enough
+		 * bytes after the preamble yet. Read some more, and make
+		 * sure that we transmit dummy bytes too, to keep things
+		 * going.
+		 */
+		else if (in_bytes && !toread) {
+			assert(!out_bytes);
+			toread = out_bytes = in_bytes;
+			txp = NULL;
+			spi_request_bytes(regs, toread);
+		}
+		if (spi_slave->skip_preamble && get_timer(start) > 100) {
+			printf("SPI timeout: in_bytes=%d, out_bytes=%d, ",
+			       in_bytes, out_bytes);
+			printf("count = %d\n", preamable_count);
+			return -1;
 		}
 	}
 	*dinp = rxp;
 	*doutp = txp;
+
+	return 0;
 }
 
 /**
@@ -310,6 +348,7 @@ int spi_xfer(struct spi_slave *slave, unsigned int bitlen, const void *dout,
 	struct exynos_spi_slave *spi_slave = to_exynos_spi(slave);
 	int upto, todo;
 	int bytelen;
+	int ret = 0;
 
 	/* spi core configured to do 8 bit transfers */
 	if (bitlen % 8) {
@@ -323,16 +362,21 @@ int spi_xfer(struct spi_slave *slave, unsigned int bitlen, const void *dout,
 
 	/* Exynos SPI limits each transfer to 65535 bytes */
 	bytelen =  bitlen / 8;
-	for (upto = 0; upto < bytelen; upto += todo) {
+	for (upto = 0; !ret && upto < bytelen; upto += todo) {
 		todo = min(bytelen - upto, (1 << 16) - 1);
-		spi_rx_tx(spi_slave, todo, &din, &dout);
+		ret = spi_rx_tx(spi_slave, todo, &din, &dout, flags);
 	}
 
-	/* Stop the transaction, if necessary. */
-	if ((flags & SPI_XFER_END) && !(spi_slave->mode & SPI_SLAVE))
+	if ((flags & SPI_XFER_END) && !(spi_slave->mode & SPI_SLAVE)) {
 		spi_cs_deactivate(slave);
+		if (spi_slave->skip_preamble) {
+			assert(!spi_slave->skip_preamble);
+			debug("Failed to complete premable transaction\n");
+			ret = -1;
+		}
+	}
 
-	return 0;
+	return ret;
 }
 
 /**
@@ -359,6 +403,7 @@ void spi_cs_activate(struct spi_slave *slave)
 
 	clrbits_le32(&spi_slave->regs->cs_reg, SPI_SLAVE_SIG_INACT);
 	debug("Activate CS, bus %d\n", spi_slave->slave.bus);
+	spi_slave->skip_preamble = spi_slave->mode & SPI_PREAMBLE;
 }
 
 /**
