@@ -54,9 +54,9 @@
 
 		ro-boot {
 			label = "u-boot";
-			size = <0x7a000>;
+			size = <0x9a000>;
 			read-only;
-			type = "blob boot,dtb,ecbin";
+			type = "blob boot,dtb,ecrw,ecro";
 			required;
 		};
 
@@ -68,7 +68,7 @@
 			 * For example, aligning to 512KB is better than to
 			 * 256KB. */
 
-			reg = <0x00080000 0x00001000>;
+			reg = <0x000a0000 0x00001000>;
 			read-only;
 			type = "fmap";
 			ver-major = <1>;
