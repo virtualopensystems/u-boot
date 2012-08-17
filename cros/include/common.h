@@ -54,7 +54,4 @@ void *cros_memalign_cache(size_t n);
 /* this function is implemented along with vboot_api */
 int display_clear(void);
 
-/* put this prototype here for now */
-ulong timer_get_us(void);
-
 #endif /* CHROMEOS_COMMON_H_ */
