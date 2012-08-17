@@ -209,13 +209,14 @@ static int do_vboot_poweroff(cmd_tbl_t *cmdtp,
 	return 1; /* It should never reach here */
 }
 
-static void show_ec_bin(const char *name, struct fmap_entry *entry)
+static void show_ec_bin(const char *name, const char *region,
+			struct fmap_entry *entry)
 {
 	u32 *data;
 	int i;
 
-	printf("EC binary %s at %#x, length %#x\n", name, entry->offset,
-	       entry->length);
+	printf("EC %s binary %s at %#x, length %#x\n", region, name,
+	       entry->offset, entry->length);
 	if (entry->length) {
 		data = (u32 *)(uintptr_t)(CONFIG_SYS_TEXT_BASE + entry->offset);
 		printf("%p: ", data);
@@ -239,7 +240,7 @@ static void show_firmware_entry(const char *name,
 	show_entry("vblock", &fw_entry->vblock);
 	show_entry("firmware_id", &fw_entry->firmware_id);
 	printf("block_offset: %llx\n", fw_entry->block_offset);
-	show_ec_bin(name, &fw_entry->ec_bin);
+	show_ec_bin(name, "RW", &fw_entry->ec_rwbin);
 	puts("\n");
 }
 
@@ -258,6 +259,7 @@ static int do_vboot_fmap(cmd_tbl_t *cmdtp, int flag,
 	show_entry("fmap", &fmap.readonly.fmap);
 	show_entry("gbb", &fmap.readonly.gbb);
 	show_entry("firmware_id", &fmap.readonly.firmware_id);
+	show_ec_bin("ro", "RO", &fmap.readonly.ec_robin);
 	printf("flash_base: %u\n", fmap.flash_base);
 
 	show_firmware_entry("rw-a", &fmap.readwrite_a);

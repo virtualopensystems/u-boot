@@ -29,8 +29,8 @@ struct fmap_firmware_entry {
 	/* The offset of the first block of R/W firmware when stored on disk */
 	uint64_t block_offset;
 
-	/* Sub-entry for EC binary, if present */
-	struct fmap_entry ec_bin;
+	/* Sub-entry for EC RW binary, and RO binary if present */
+	struct fmap_entry ec_rwbin;
 };
 
 /*
@@ -42,6 +42,8 @@ struct twostop_fmap {
 		struct fmap_entry fmap;
 		struct fmap_entry gbb;
 		struct fmap_entry firmware_id;
+		struct fmap_entry ec_robin;
+		struct fmap_entry boot;		/* U-Boot */
 	} readonly;
 
 	struct fmap_firmware_entry readwrite_a;

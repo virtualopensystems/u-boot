@@ -121,13 +121,25 @@ static int process_fmap_node(const void *blob, int node, int depth,
 	/* At depth 2, we are looking for our ecbin subnode */
 	name = fdt_get_name(blob, node, &len);
 	if (depth == 2) {
-		if (!rw || strcmp(name, "ecbin"))
+		struct fmap_entry *entry;
+		ulong offset;
+
+		/* TODO(sjg@chromium.org): Remove ecbin */
+		if (rw && (0 == strcmp(name, "ecbin") ||
+				0 == strcmp(name, "ecrw"))) {
+			entry = &rw->ec_rwbin;
+			offset = rw->boot.offset;
+		} else if (!rw && 0 == strcmp(name, "ecro")) {
+			entry = &config->readonly.ec_robin;
+			offset = config->readonly.boot.offset;
+		} else {
 			return 0;
-		if (read_entry(blob, node, name, &rw->ec_bin))
+		}
+		if (read_entry(blob, node, name, entry))
 			return -FDT_ERR_MISSING;
 
 		/* Add the section offset to get an 'absolute offset' */
-		rw->ec_bin.offset += rw->boot.offset;
+		entry->offset += offset;
 		return 0;
 	}
 
@@ -188,6 +200,9 @@ static int process_fmap_node(const void *blob, int node, int depth,
 			break;
 		case SECTION_FIRMWARE_ID:
 			config->readonly.firmware_id = entry;
+			break;
+		case SECTION_BOOT:
+			config->readonly.boot = entry;
 			break;
 		default:
 			return 0;

@@ -254,12 +254,12 @@ VbError_t VbExEcGetExpectedRW(enum VbSelectFirmware_t select,
 	cros_fdtdec_flashmap(gd->fdt_blob, &fmap);
 	switch (select) {
 	case VB_SELECT_FIRMWARE_A:
-		offset = fmap.readwrite_a.ec_bin.offset;
-		size = fmap.readwrite_a.ec_bin.length;
+		offset = fmap.readwrite_a.ec_rwbin.offset;
+		size = fmap.readwrite_a.ec_rwbin.length;
 		break;
 	case VB_SELECT_FIRMWARE_B:
-		offset = fmap.readwrite_b.ec_bin.offset;
-		size = fmap.readwrite_b.ec_bin.length;
+		offset = fmap.readwrite_b.ec_rwbin.offset;
+		size = fmap.readwrite_b.ec_rwbin.length;
 		break;
 	default:
 		VBDEBUG("Unrecognized EC firmware requested.\n");
