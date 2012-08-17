@@ -39,6 +39,7 @@ struct spi_bus {
 	s32 frequency;		/* Default clock frequency, -1 for none */
 	struct exynos_spi *regs;
 	int inited;		/* 1 if this bus is ready for use */
+	uint deactivate_delay_us;	/* Delay to wait after deactivate */
 };
 
 /* A list of spi buses that we know about */
@@ -53,6 +54,8 @@ struct exynos_spi_slave {
 	enum periph_id periph_id;	/* Peripheral ID for this device */
 	unsigned int fifo_size;
 	int skip_preamble;		/* True to skip preamble bytes */
+	struct spi_bus *bus;		/* Pointer to our SPI bus info */
+	ulong last_transaction_us;	/* Time of last transaction end */
 };
 
 static struct spi_bus *spi_get_bus(unsigned dev_index)
@@ -129,6 +132,7 @@ struct spi_slave *spi_setup_slave(unsigned int busnum, unsigned int cs,
 	}
 
 	bus = &spi_bus[busnum];
+	spi_slave->bus = bus;
 	spi_slave->slave.bus = busnum;
 	spi_slave->slave.cs = cs;
 	spi_slave->regs = bus->regs;
@@ -139,6 +143,7 @@ struct spi_slave *spi_setup_slave(unsigned int busnum, unsigned int cs,
 	else
 		spi_slave->fifo_size = 64;
 	spi_slave->skip_preamble = 0;
+	spi_slave->last_transaction_us = timer_get_us();
 
 	spi_slave->freq = bus->frequency;
 	if (max_hz)
@@ -401,6 +406,16 @@ void spi_cs_activate(struct spi_slave *slave)
 {
 	struct exynos_spi_slave *spi_slave = to_exynos_spi(slave);
 
+	/* If it's too soon to do another transaction, wait */
+	if (spi_slave->bus->deactivate_delay_us &&
+			spi_slave->last_transaction_us) {
+		ulong delay_us;		/* The delay completed so far */
+
+		delay_us = timer_get_us() - spi_slave->last_transaction_us;
+		if (delay_us < spi_slave->bus->deactivate_delay_us)
+			udelay(spi_slave->bus->deactivate_delay_us - delay_us);
+	}
+
 	clrbits_le32(&spi_slave->regs->cs_reg, SPI_SLAVE_SIG_INACT);
 	debug("Activate CS, bus %d\n", spi_slave->slave.bus);
 	spi_slave->skip_preamble = spi_slave->mode & SPI_PREAMBLE;
@@ -418,6 +433,10 @@ void spi_cs_deactivate(struct spi_slave *slave)
 
 	setbits_le32(&spi_slave->regs->cs_reg, SPI_SLAVE_SIG_INACT);
 	debug("Deactivate CS, bus %d\n", spi_slave->slave.bus);
+
+	/* Remember time of this transaction so we can honour the bus delay */
+	if (spi_slave->bus->deactivate_delay_us)
+		spi_slave->last_transaction_us = timer_get_us();
 }
 
 /**
@@ -433,6 +452,8 @@ static int spi_get_config(const void *blob, int node, struct spi_bus *bus)
 	bus->node = node;
 	bus->regs = (struct exynos_spi *)fdtdec_get_addr(blob, node, "reg");
 	bus->periph_id = clock_decode_periph_id(blob, node);
+	bus->deactivate_delay_us = fdtdec_get_int(blob, node,
+						  "spi-deactivate-delay", 0);
 	if (bus->periph_id == PERIPH_ID_NONE) {
 		debug("%s: Invalid peripheral ID %d\n", __func__,
 		      bus->periph_id);
