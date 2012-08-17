@@ -214,6 +214,12 @@ typedef void (interrupt_handler_t)(void *);
 ulong timer_get_boot_us(void);
 
 /*
+ * Return the current value of a monotonically increasing microsecond timer.
+ * Granularity may be larger than 1us if hardware does not support this.
+ */
+ulong timer_get_us(void);
+
+/*
  * General Purpose Utilities
  */
 #define min(X, Y)				\
