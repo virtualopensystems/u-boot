@@ -864,10 +864,20 @@ static int do_mkbp(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 			printf("%02x", hash.hash_digest[i]);
 		printf("\n");
 	} else if (0 == strcmp("reboot", cmd)) {
-		enum ec_reboot_cmd cmd = EC_REBOOT_COLD;
+		int region;
+		enum ec_reboot_cmd cmd;
 
-		if (argc >= 3 && !strcmp(argv[2], "rw"))
-			cmd = EC_REBOOT_JUMP_RW;
+		if (argc >= 3 && !strcmp(argv[2], "cold"))
+			cmd = EC_REBOOT_COLD;
+		else {
+			region = mkbp_decode_region(argc - 2, argv + 2);
+			if (region == EC_FLASH_REGION_RO)
+				cmd = EC_REBOOT_JUMP_RO;
+			else if (region == EC_FLASH_REGION_RW)
+				cmd = EC_REBOOT_JUMP_RW;
+			else
+				return CMD_RET_USAGE;
+		}
 
 		if (mkbp_reboot(dev, cmd, 0)) {
 			debug("%s: Could not reboot KBC\n", __func__);
@@ -957,7 +967,7 @@ U_BOOT_CMD(
 	"mkbp info                Read MKBP info\n"
 	"mkbp curimage            Read MKBP current image\n"
 	"mkbp hash                Read MKBP hash\n"
-	"mkbp reboot [rw | cold]  Reboot MKBP\n"
+	"mkbp reboot [rw | ro | cold]  Reboot MKBP\n"
 	"mkbp events              Read MKBP host events\n"
 	"mkbp clrevents [mask]    Clear MKBP host events\n"
 	"mkbp regioninfo <ro|rw>  Read image info\n"
