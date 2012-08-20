@@ -17,11 +17,15 @@
 #include <battery.h>
 #include <common.h>
 #include <command.h>
+#include <ec_commands.h>
 #include <fdtdec.h>
 #include <i2c.h>
+#include <malloc.h>
+#include <mkbp.h>
 #include <smartbat.h>
 #include <tps65090.h>
 #include <asm/gpio.h>
+#include <cros/firmware_storage.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -213,6 +217,281 @@ static int do_cros_test_i2cfiddle(cmd_tbl_t *cmdtp, int flag,
 }
 #endif
 
+#ifdef CONFIG_MKBP
+struct ssync_info {
+	struct mkbp_dev *dev;		/* MKBP device */
+	firmware_storage_t file;	/* Firmware storage access */
+	struct twostop_fmap fmap;	/* Chrome OS Flash map */
+	uint8_t *old_data;		/* Buffer to hold old EC image */
+	uint8_t *new_data;		/* Buffer to hold new EC image */
+	int force;			/* force flashing even if the same */
+	struct fdt_chrome_ec ec;	/* EC configuration */
+};
+
+static int ensure_region_writable(struct mkbp_dev *dev,
+				  enum ec_flash_region region)
+{
+	enum ec_current_image image;
+	enum ec_flash_region want_region;
+	enum ec_reboot_cmd cmd;
+	int ret;
+
+	ret = mkbp_read_current_image(dev, &image);
+	if (ret) {
+		debug("%s: Could not read image\n", __func__);
+		return ret;
+	}
+
+	if (image == EC_IMAGE_UNKNOWN) {
+		debug("%s: Unknown current image\n", __func__);
+		return -1;
+	}
+
+	/*
+	 * Work out which flash region we want to be in. If we are writing
+	 * to RO, then the EC needs to be running from RW, and vice versa.
+	 */
+	want_region = region == EC_FLASH_REGION_RO ?
+		EC_FLASH_REGION_RW : EC_FLASH_REGION_RO;
+
+	/* If we are not already in the right image, change it */
+	if (!!(want_region == EC_FLASH_REGION_RO) !=
+			!!(image == EC_IMAGE_RO)) {
+		if (want_region == EC_FLASH_REGION_RO)
+			cmd = EC_REBOOT_JUMP_RO;
+		else
+			cmd = EC_REBOOT_JUMP_RW;
+		ret = mkbp_reboot(dev, cmd, 0);
+		if (ret) {
+			debug("%s: Could not boot into image\n", __func__);
+			return ret;
+		}
+	}
+
+	/* We are now in the right image */
+	return 0;
+}
+
+static int do_ssync(struct ssync_info *ssync, uint32_t offset, uint32_t size,
+		    struct fmap_entry *entry)
+{
+	uint32_t reset, base;
+	int ret;
+
+	if (ssync->file.read(&ssync->file, entry->offset,
+			entry->length, BT_EXTRA ssync->new_data)) {
+		debug("%s: Cannot read firmware storage\n", __func__);
+		return -1;
+	}
+
+	/*
+	* Do a sanity check on the image. This uses information about EC
+	* internals, which is nasty, but OTOH it is very useful to get a
+	* check that we are not writing garbage to the EC. This can easily
+	* happen if the firmware in the SPI flash is not the same as that
+	* running (e.g. USB download is used).
+	*
+	* The second word of the image is the reset vector, and it should
+	* point at least 100 bytes into the image, since the vector table
+	* and version info precede the init code pointed to by the reset
+	* vector. Otherwise, on link, where base=0, you could end up
+	* thinking /dev/zero is a valid EC-RO image.
+	*
+	* (Currently on snow, reset vector points to 0x15c; on link, it
+	* points to 0x278).
+	*/
+	reset = *(uint32_t *)(ssync->new_data + 4);
+	base = ssync->ec.flash.offset + offset;
+	if (reset < base + 100 || reset >= base + size) {
+		printf("Invalid EC image (reset vector %#08x)\n",
+			reset);
+		return -1;
+	}
+
+	if (!ssync->force) {
+		puts("read, ");
+		ret = mkbp_flash_read(ssync->dev, ssync->old_data,
+				      offset, size);
+		if (ret) {
+			debug("%s: Cannot read flash\n", __func__);
+			return ret;
+		}
+
+		if (0 == memcmp(ssync->old_data, ssync->new_data, size)) {
+			printf("same, skipping update, ");
+			return 0;
+		}
+	}
+
+	puts("erase, ");
+	ret = mkbp_flash_erase(ssync->dev, offset, size);
+	if (ret) {
+		debug("%s: Cannot erase flash\n", __func__);
+		return ret;
+	}
+
+	puts("write, ");
+	ret = mkbp_flash_write(ssync->dev, ssync->new_data, offset, size);
+	if (ret) {
+		debug("%s: Cannot write flash\n", __func__);
+		return ret;
+	}
+
+	puts("verify, ");
+	ret = mkbp_flash_read(ssync->dev, ssync->old_data, offset, size);
+	if (ret) {
+		debug("%s: Cannot write flash\n", __func__);
+		return ret;
+	}
+	if (memcmp(ssync->old_data, ssync->new_data, size)) {
+		debug("%s: Cannot verify flash\n", __func__);
+		return ret;
+	}
+
+	return 0;
+}
+
+static int process_region(struct ssync_info *ssync,
+			  enum ec_flash_region region)
+{
+	struct fmap_entry *entry;
+	uint32_t offset, size;
+	int ret;
+
+	printf("Flashing %s EC image: ",
+		region == EC_FLASH_REGION_RW ? "RW" : "RO");
+	ret = ensure_region_writable(ssync->dev, region);
+	if (ret)
+		return ret;
+	ret = mkbp_flash_offset(ssync->dev, region, &offset, &size);
+	if (ret) {
+		debug("%s: Cannot read flash offset for region %d\n",
+			__func__, region);
+		return ret;
+	}
+
+	ssync->new_data = malloc(size);
+	ssync->old_data = malloc(size);
+	if (!ssync->new_data || !ssync->old_data) {
+		debug("%s: Cannot malloc %d bytes\n", __func__,
+			size * 2);
+		return -1;
+	}
+
+	/*
+	 * Clear to the erase value to make it flash friendly. If we don't
+	 * know the erase value, assume 0xff. Getting this wrong won't break
+	 * things, but might take longer.
+	 */
+	memset(ssync->new_data, ssync->ec.flash_erase_value, size);
+
+	entry = region == EC_FLASH_REGION_RW ?
+		&ssync->fmap.readonly.ec_rwbin :
+		&ssync->fmap.readonly.ec_robin;
+	ret = do_ssync(ssync, offset, size, entry);
+	if (ret)
+		return -1;
+
+	free(ssync->new_data);
+	free(ssync->old_data);
+	puts("done\n");
+
+	return 0;
+}
+
+int cros_test_swsync(struct mkbp_dev *dev, int region_mask, int force)
+{
+	struct ssync_info ssync;
+	ulong start, duration;
+	int ret = 0, reboot_ret;
+
+	ssync.dev = dev;
+	ssync.force = force;
+
+	assert(dev);
+	if (cros_fdtdec_flashmap(gd->fdt_blob, &ssync.fmap)) {
+		printf("Cannot read Chrome OS flashmap information\n");
+		return 1;
+	}
+
+	if (cros_fdtdec_chrome_ec(gd->fdt_blob, &ssync.ec)) {
+		printf("Cannot read Chrome OS EC information\n");
+		return 1;
+	}
+
+	if (firmware_storage_open_spi(&ssync.file)) {
+		debug("%s: Cannot open firmware storage\n", __func__);
+		return 1;
+	}
+
+	start = get_timer(0);
+
+	/* Do RW first, since it might not be bootable, but RO must be */
+	if (region_mask & (1 << EC_FLASH_REGION_RW))
+		ret = process_region(&ssync, EC_FLASH_REGION_RW);
+	if (!ret && (region_mask & (1 << EC_FLASH_REGION_RO)))
+		ret = process_region(&ssync, EC_FLASH_REGION_RO);
+
+	ssync.file.close(&ssync.file);
+
+	if (ret)
+		printf("\nSoftware sync failed with error %d\n", ret);
+
+	/* Ensure we exit in the RO image */
+	reboot_ret = mkbp_reboot(dev, EC_REBOOT_JUMP_RO, 0);
+	if (reboot_ret)
+		debug("%s: Could not boot into RO image\n", __func__);
+
+	if (ret)
+		return ret;
+
+	duration = get_timer(start);
+	printf("Full software sync completed in %lu.%lus\n", duration / 1000,
+	       duration % 1000);
+
+	return 0;
+}
+
+static int do_cros_test_swsync(cmd_tbl_t *cmdtp, int flag,
+		int argc, char * const argv[])
+{
+	int region_mask = -1;
+	struct mkbp_dev *dev;
+	int region, force;
+	int ret;
+
+	force = 0;
+	dev = board_get_mkbp_dev();
+	if (!dev) {
+		printf("No MKBP device available\n");
+		return 1;
+	}
+
+	argc--;
+	argv++;
+	if (argc > 0 && 0 == strcmp(*argv, "-f")) {
+		force = 1;
+		argc--;
+		argv++;
+	}
+
+	if (argc > 0) {
+		region = mkbp_decode_region(argc, argv);
+		if (region == -1) {
+			printf("Invalid region\n");
+			return 1;
+		}
+		region_mask = 1 << region;
+	}
+
+	ret = cros_test_swsync(dev, region_mask, force);
+	if (ret)
+		return 1;
+
+	return 0;
+}
+#endif /* CONFIG_MKBP */
+
 static int do_cros_test_all(cmd_tbl_t *cmdtp, int flag,
 		int argc, char * const argv[])
 {
@@ -229,6 +508,9 @@ static cmd_tbl_t cmd_cros_test_sub[] = {
 #ifdef CONFIG_DRIVER_S3C24X0_I2C
 	U_BOOT_CMD_MKENT(i2creset, 0, 1, do_cros_test_i2creset, "", ""),
 	U_BOOT_CMD_MKENT(i2cfiddle, 0, 1, do_cros_test_i2cfiddle, "", ""),
+#endif
+#ifdef CONFIG_MKBP
+	U_BOOT_CMD_MKENT(swsync, 0, 1, do_cros_test_swsync, "", ""),
 #endif
 	U_BOOT_CMD_MKENT(all, 0, 1, do_cros_test_all, "", ""),
 };
@@ -256,5 +538,7 @@ U_BOOT_CMD(cros_test, CONFIG_SYS_MAXARGS, 1, do_cros_test,
 	"all        Run all tests\n"
 	"i2c        Test i2c link with EC, and arbitration\n"
 	"i2creset   Try to reset i2c bus by holding clk, data low for 15s\n"
-	"i2cfiddle  Try to break TPSCHROME or the battery on i2c"
+	"i2cfiddle  Try to break TPSCHROME or the battery on i2c\n"
+	"swsync [-f] [ro|rw]   Flash the EC (read-only/read-write/both)\n"
+	"                         -f   Force update even if the same"
 );

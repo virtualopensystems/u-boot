@@ -43,6 +43,8 @@ enum {
 	BOOTSTAGE_VBOOT_LAST
 };
 
+struct mkbp_dev;
+
 /**
  * Allocate a memory space aligned to cache line size.
  *
@@ -53,5 +55,18 @@ void *cros_memalign_cache(size_t n);
 
 /* this function is implemented along with vboot_api */
 int display_clear(void);
+
+/**
+ * Test code for performing a software sync
+ *
+ * This is used for dogfood devices where we want to update the RO EC.
+ *
+ * @param dev		MKBP device
+ * @param region_mask	Bit mask of regions to update:
+ *				1 << EC_FLASH_REGION_RO: read-only
+ *				1 << EC_FLASH_REGION_RW: read-write
+ * @param force		Force update without checking existing contents
+ */
+int cros_test_swsync(struct mkbp_dev *dev, int region_mask, int force);
 
 #endif /* CHROMEOS_COMMON_H_ */
