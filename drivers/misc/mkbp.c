@@ -429,17 +429,8 @@ int mkbp_test(struct mkbp_dev *dev)
 	return 0;
 }
 
-/**
- * Obtain position and size of a flash region
- *
- * @param dev		MKBP device
- * @param region	Flash region to query
- * @param offset	Returns offset of flash region in EC flash
- * @param size		Returns size of flash region
- * @return 0 if ok, -1 on error
- */
-static int mkbp_flash_offset(struct mkbp_dev *dev, enum ec_flash_region region,
-			     uint32_t *offset, uint32_t *size)
+int mkbp_flash_offset(struct mkbp_dev *dev, enum ec_flash_region region,
+		      uint32_t *offset, uint32_t *size)
 {
 	struct ec_params_flash_region_info p;
 	struct ec_response_flash_region_info *r = NULL;
@@ -460,8 +451,7 @@ static int mkbp_flash_offset(struct mkbp_dev *dev, enum ec_flash_region region,
 	return 0;
 }
 
-static int mkbp_flash_erase(struct mkbp_dev *dev,
-			    uint32_t offset, uint32_t size)
+int mkbp_flash_erase(struct mkbp_dev *dev, uint32_t offset, uint32_t size)
 {
 	struct ec_params_flash_erase p;
 
@@ -511,26 +501,8 @@ static int mkbp_flash_write_burst_size(struct mkbp_dev *dev)
 	return sizeof(p.data);
 }
 
-/**
- * Write data to the flash
- *
- * Write an arbitrary amount of data to the EC flash, by repeatedly writing
- * small blocks.
- *
- * The offset starts at 0. You can obtain the region information from
- * mkbp_flash_offset() to find out where to write for a particular region.
- *
- * Attempting to write to the region where the EC is currently running from
- * will result in an error.
- *
- * @param dev		MKBP device
- * @param data		Pointer to data buffer to write
- * @param offset	Offset within flash to write to.
- * @param size		Number of bytes to write
- * @return 0 if ok, -1 on error
- */
-static int mkbp_flash_write(struct mkbp_dev *dev, const uint8_t *data,
-			    uint32_t offset, uint32_t size)
+int mkbp_flash_write(struct mkbp_dev *dev, const uint8_t *data,
+		     uint32_t offset, uint32_t size)
 {
 	uint32_t burst = mkbp_flash_write_burst_size(dev);
 	uint32_t end, off;
@@ -578,21 +550,6 @@ static int mkbp_flash_read_block(struct mkbp_dev *dev, uint8_t *data,
 			  &p, sizeof(p), &data, size) >= 0 ? 0 : -1;
 }
 
-/**
- * Read data from the flash
- *
- * Read an arbitrary amount of data from the EC flash, by repeatedly reading
- * small blocks.
- *
- * The offset starts at 0. You can obtain the region information from
- * mkbp_flash_offset() to find out where to read for a particular region.
- *
- * @param dev		MKBP device
- * @param data		Pointer to data buffer to read into
- * @param offset	Offset within flash to read from
- * @param size		Number of bytes to read
- * @return 0 if ok, -1 on error
- */
 int mkbp_flash_read(struct mkbp_dev *dev, uint8_t *data, uint32_t offset,
 		    uint32_t size)
 {
@@ -767,14 +724,7 @@ struct mkbp_dev *mkbp_init(const void *blob)
 }
 
 #ifdef CONFIG_CMD_MKBP
-/**
- * Decode a flash region parameter
- *
- * @param argc	Number of params remaining
- * @param argv	List of remaining parameters
- * @return flash region (EC_FLASH_REGION_...) or -1 on error
- */
-static int decode_region(int argc, char * const argv[])
+int mkbp_decode_region(int argc, char * const argv[])
 {
 	if (argc > 0) {
 		if (0 == strcmp(*argv, "rw"))
@@ -809,7 +759,7 @@ static int do_read_write(struct mkbp_dev *dev, int is_write, int argc,
 	int region;
 	int ret;
 
-	region = decode_region(argc - 2, argv + 2);
+	region = mkbp_decode_region(argc - 2, argv + 2);
 	if (region == -1)
 		return 1;
 	if (argc < 4)
@@ -950,7 +900,7 @@ static int do_mkbp(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		if (ret > 0)
 			return CMD_RET_USAGE;
 	} else if (0 == strcmp("erase", cmd)) {
-		int region = decode_region(argc - 2, argv + 2);
+		int region = mkbp_decode_region(argc - 2, argv + 2);
 		uint32_t offset, size;
 
 		if (region == -1)
@@ -966,7 +916,7 @@ static int do_mkbp(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 			}
 		}
 	} else if (0 == strcmp("regioninfo", cmd)) {
-		int region = decode_region(argc - 2, argv + 2);
+		int region = mkbp_decode_region(argc - 2, argv + 2);
 		uint32_t offset, size;
 
 		if (region == -1)

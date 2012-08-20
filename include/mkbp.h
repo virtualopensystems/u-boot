@@ -317,4 +317,67 @@ void mkbp_dump_data(const char *name, int cmd, const uint8_t *data, int len);
  * @return checksum value (0 to 255)
  */
 int mkbp_calc_checksum(const uint8_t *data, int size);
+
+/**
+ * Decode a flash region parameter
+ *
+ * @param argc	Number of params remaining
+ * @param argv	List of remaining parameters
+ * @return flash region (EC_FLASH_REGION_...) or -1 on error
+ */
+int mkbp_decode_region(int argc, char * const argv[]);
+
+int mkbp_flash_erase(struct mkbp_dev *dev, uint32_t offset, uint32_t size);
+
+/**
+ * Read data from the flash
+ *
+ * Read an arbitrary amount of data from the EC flash, by repeatedly reading
+ * small blocks.
+ *
+ * The offset starts at 0. You can obtain the region information from
+ * mkbp_flash_offset() to find out where to read for a particular region.
+ *
+ * @param dev		MKBP device
+ * @param data		Pointer to data buffer to read into
+ * @param offset	Offset within flash to read from
+ * @param size		Number of bytes to read
+ * @return 0 if ok, -1 on error
+ */
+int mkbp_flash_read(struct mkbp_dev *dev, uint8_t *data, uint32_t offset,
+		    uint32_t size);
+
+/**
+ * Write data to the flash
+ *
+ * Write an arbitrary amount of data to the EC flash, by repeatedly writing
+ * small blocks.
+ *
+ * The offset starts at 0. You can obtain the region information from
+ * mkbp_flash_offset() to find out where to write for a particular region.
+ *
+ * Attempting to write to the region where the EC is currently running from
+ * will result in an error.
+ *
+ * @param dev		MKBP device
+ * @param data		Pointer to data buffer to write
+ * @param offset	Offset within flash to write to.
+ * @param size		Number of bytes to write
+ * @return 0 if ok, -1 on error
+ */
+int mkbp_flash_write(struct mkbp_dev *dev, const uint8_t *data,
+		     uint32_t offset, uint32_t size);
+
+/**
+ * Obtain position and size of a flash region
+ *
+ * @param dev		MKBP device
+ * @param region	Flash region to query
+ * @param offset	Returns offset of flash region in EC flash
+ * @param size		Returns size of flash region
+ * @return 0 if ok, -1 on error
+ */
+int mkbp_flash_offset(struct mkbp_dev *dev, enum ec_flash_region region,
+		      uint32_t *offset, uint32_t *size);
+
 #endif
