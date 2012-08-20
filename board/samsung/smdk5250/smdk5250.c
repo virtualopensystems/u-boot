@@ -822,3 +822,12 @@ int sata_initialize(void)
 	return exynos5_sata_init(gd->fdt_blob);
 }
 #endif
+
+#ifdef CONFIG_BOARD_LATE_INIT
+int board_late_init(void)
+{
+	stdio_print_current_devices();
+
+	return 0;
+}
+#endif
