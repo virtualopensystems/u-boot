@@ -63,7 +63,5 @@ static void exynos5_set_l2cache_params(void)
 void v7_outer_cache_enable(void)
 {
 	exynos5_set_l2cache_params();
-
-	puts("WARNING: L2 Cache enabled\n");
 }
 #endif

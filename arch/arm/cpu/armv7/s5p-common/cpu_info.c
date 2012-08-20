@@ -70,7 +70,7 @@ int print_cpuinfo(void)
 {
 	char buf[32];
 
-	printf("CPU:\tS5P%X@%sMHz\n",
+	printf("CPU:   S5P%X @ %sMHz\n",
 			s5p_cpu_id, strmhz(buf, get_arm_clk()));
 
 	return 0;
