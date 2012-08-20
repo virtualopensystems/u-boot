@@ -49,6 +49,7 @@ struct mkbp_dev {
 	unsigned int max_frequency;	/* Maximum interface frequency */
 	struct fdt_gpio_state ec_int;	/* GPIO used as EC interrupt line */
 	int cmd_version_is_supported;   /* Device supports command versions */
+	int optimise_flash_write;	/* Don't write erased flash blocks */
 
 	/*
 	 * These two buffers will always be dword-aligned and include enough

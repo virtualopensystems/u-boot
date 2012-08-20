@@ -501,6 +501,27 @@ static int mkbp_flash_write_burst_size(struct mkbp_dev *dev)
 	return sizeof(p.data);
 }
 
+/**
+ * Check if a block of data is erased (all 0xff)
+ *
+ * This function is useful when dealing with flash, for checking whether a
+ * data block is erased and thus does not need to be programmed.
+ *
+ * @param data		Pointer to data to check (must be word-aligned)
+ * @param size		Number of bytes to check (must be word-aligned)
+ * @return 0 if erased, non-zero if any word is not erased
+ */
+static int mkbp_data_is_erased(const uint32_t *data, int size)
+{
+	assert(!(size & 3));
+	size /= sizeof(uint32_t);
+	for (; size > 0; size -= 4, data++)
+		if (*data != -1U)
+			return 0;
+
+	return 1;
+}
+
 int mkbp_flash_write(struct mkbp_dev *dev, const uint8_t *data,
 		     uint32_t offset, uint32_t size)
 {
@@ -514,8 +535,15 @@ int mkbp_flash_write(struct mkbp_dev *dev, const uint8_t *data,
 	 */
 	end = offset + size;
 	for (off = offset; off < end; off += burst, data += burst) {
-		ret = mkbp_flash_write_block(dev, data, off,
-					     min(end - off, burst));
+		uint32_t todo;
+
+		/* If the data is empty, there is no point in programming it */
+		todo = min(end - off, burst);
+		if (dev->optimise_flash_write &&
+				mkbp_data_is_erased((uint32_t *)data, todo))
+			continue;
+
+		ret = mkbp_flash_write_block(dev, data, off, todo);
 		if (ret)
 			return ret;
 	}
@@ -651,6 +679,8 @@ static int mkbp_decode_fdt(const void *blob, int node, struct mkbp_dev **devp)
 	}
 
 	fdtdec_decode_gpio(blob, node, "ec-interrupt", &dev->ec_int);
+	dev->optimise_flash_write = fdtdec_get_bool(blob, node,
+						    "optimise-flash-write");
 	*devp = dev;
 
 	return 0;
