@@ -212,18 +212,8 @@ static int do_vboot_poweroff(cmd_tbl_t *cmdtp,
 static void show_ec_bin(const char *name, const char *region,
 			struct fmap_entry *entry)
 {
-	u32 *data;
-	int i;
-
 	printf("EC %s binary %s at %#x, length %#x\n", region, name,
 	       entry->offset, entry->length);
-	if (entry->length) {
-		data = (u32 *)(uintptr_t)(CONFIG_SYS_TEXT_BASE + entry->offset);
-		printf("%p: ", data);
-		for (i = 0; i < 4; i++)
-			printf("%08x ", data[i]);
-		putc('\n');
-	}
 }
 
 static void show_entry(const char *name, struct fmap_entry *entry)
@@ -260,6 +250,7 @@ static int do_vboot_fmap(cmd_tbl_t *cmdtp, int flag,
 	show_entry("gbb", &fmap.readonly.gbb);
 	show_entry("firmware_id", &fmap.readonly.firmware_id);
 	show_ec_bin("ro", "RO", &fmap.readonly.ec_robin);
+	show_ec_bin("ro", "RW", &fmap.readonly.ec_rwbin);
 	printf("flash_base: %u\n", fmap.flash_base);
 
 	show_firmware_entry("rw-a", &fmap.readwrite_a);

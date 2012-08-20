@@ -129,9 +129,14 @@ static int process_fmap_node(const void *blob, int node, int depth,
 				0 == strcmp(name, "ecrw"))) {
 			entry = &rw->ec_rwbin;
 			offset = rw->boot.offset;
-		} else if (!rw && 0 == strcmp(name, "ecro")) {
-			entry = &config->readonly.ec_robin;
+		} else if (!rw) {
 			offset = config->readonly.boot.offset;
+			if (0 == strcmp(name, "ecro"))
+				entry = &config->readonly.ec_robin;
+			else if (0 == strcmp(name, "ecrw"))
+				entry = &config->readonly.ec_rwbin;
+			else
+				return 0;
 		} else {
 			return 0;
 		}
