@@ -630,15 +630,6 @@ void board_init_r(gd_t *id, ulong dest_addr)
 
 	console_init_r();	/* fully init console as a device */
 
-#ifdef CONFIG_DISPLAY_BOARDINFO_LATE
-# ifdef CONFIG_OF_CONTROL
-	/* Put this here so it appears on the LCD, now it is ready */
-	printf("Model: %s\n", fdt_decode_get_model(gd->fdt_blob));
-# else
-	checkboard();
-# endif
-#endif
-
 #if defined(CONFIG_ARCH_MISC_INIT)
 	/* miscellaneous arch dependent initialisations */
 	arch_misc_init();
