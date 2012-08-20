@@ -55,6 +55,6 @@ void *cros_memalign_cache(size_t n);
 int display_clear(void);
 
 /* put this prototype here for now */
-unsigned timer_get_us(void);
+ulong timer_get_us(void);
 
 #endif /* CHROMEOS_COMMON_H_ */
