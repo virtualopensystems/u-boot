@@ -10,6 +10,8 @@
 
 	config {
 		hwid = "X86 STOUT TEST 8762";
+		hda_codec_beep = <1>;
+		hda-codec-beep-nid = <0x1>;
 	};
 
 	chromeos-config {
