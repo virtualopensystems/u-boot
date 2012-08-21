@@ -1,0 +1,19 @@
+# This is an example script to change netboot process.
+# Usage:
+# 0. Change all string start with "your" in this file by your environment.
+# 1. Make this script into an image file.
+#    $ mkimage -T script -C none -n "My Script Image" -d netboot.scr scriptImg
+# 2. Place script image on TFTP server.
+#    $ cp scriptImg /path/to/tftpboot/
+# 3. Set universal read permission to scriptImg.
+#    $ chmod o+r /path/to/tftpboot/scriptImg
+# 4. Set boot file name in DHCP server configuration (/etc/default/dhcpd.conf).
+#    You may do this by adding 'filename "scriptImg";' into host statement.
+# 5. Restart DHCP Server.
+#    $ sudo service dhcp3-server restart
+# 6. Boot your device with netboot firmware.
+
+setenv bootargs ${bootargs} 'omahaserver=http://your_server:your_port/update'
+tftpboot 0x101000 your_uImage
+tftpboot 0x12008000 your_rootImg
+bootm 0x101000 0x12008000

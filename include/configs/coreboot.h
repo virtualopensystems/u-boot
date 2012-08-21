@@ -387,6 +387,7 @@
 		"setenv bootfile uImage; "\
 		"dhcp; "\
 		"setenv loadaddr 0x12008000; "\
+		"if test ${bootfile} != uImage; then source 0x100000; fi; "\
 		"setenv bootfile rootImg; "\
 		"dhcp; "\
 		"bootm 0x100000 0x12008000\0"\
