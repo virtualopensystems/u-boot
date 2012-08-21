@@ -29,8 +29,10 @@ enum {
 	CG_CTRL0_ENC_MASK	= 0x01,
 
 	MAX_FET_NUM	= 7,
+	MAX_CTRL_READ_TRIES = 5,
 
 	/* TPS65090 FET_CTRL register values */
+	FET_CTRL_TOFET		= 1 << 7,  /* Timeout, startup, overload */
 	FET_CTRL_PGFET		= 1 << 4,  /* Power good for FET status */
 	FET_CTRL_WAIT		= 3 << 2,  /* Overcurrent timeout max */
 	FET_CTRL_ADENFET	= 1 << 1,  /* Enable output auto discharge */
@@ -137,26 +139,34 @@ static int tps65090_check_fet(unsigned int fet_id)
 int tps65090_fet_enable(unsigned int fet_id)
 {
 	unsigned char reg;
-	int ret;
+	int ret, i;
 
 	if (tps65090_check_fet(fet_id))
 		return -1;
 	if (tps65090_select())
 		return -1;
+
 	ret = tps65090_i2c_write(REG_FET1_CTRL + fet_id - 1,
 			FET_CTRL_WAIT | FET_CTRL_ADENFET | FET_CTRL_ENFET);
-	if (!ret) {
-		ret = tps65090_i2c_read(REG_FET1_CTRL + fet_id - 1,
-				&reg);
-	}
-	tps65090_deselect();
 	if (ret)
-		return ret;
+		goto out;
 
+	for (i = 0; i < MAX_CTRL_READ_TRIES; i++) {
+		ret = tps65090_i2c_read(REG_FET1_CTRL + fet_id - 1, &reg);
+		if (ret)
+			goto out;
+
+		if (!(reg & FET_CTRL_TOFET))
+			break;
+
+		mdelay(1);
+	}
 	if (!(reg & FET_CTRL_PGFET)) {
 		debug("still no power after enable FET%d\n", fet_id);
-		return -2;
+		ret = -2;
 	}
+out:
+	tps65090_deselect();
 
 	return ret;
 }
