@@ -1,0 +1,85 @@
+/*
+ * Sandbox board device tree source
+ *
+ * Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ *
+ * Alternatively, this software may be distributed under the terms of the
+ * GNU General Public License ("GPL") version 2 as published by the Free
+ * Software Foundation.
+*/
+
+/dts-v1/;
+
+
+/include/ "flashmap-twostop-4mb.dtsi"
+
+/ {
+	#address-cells = <1>;
+	#size-cells = <0>;
+	model = "Sandbox board";
+	compatible = "google,sandbox";
+
+	spi {
+		spi-max-frequency = <50000000>;
+		firmware_storage_spi: flash@0 {
+			bus = <1>;
+		};
+	};
+
+	gpio: gpio@0x117ff000 {
+		#address-cells = <2>;
+		#size-cells = <1>;
+		compatible = "google,sandbox";
+		#gpio-cells = <2>;
+		reg = < 0x117ff000 0x1000 >;
+		gpio-controller;
+	};
+
+
+	chromeos-config {
+	#address-cells = <1>;
+	#size-cells = <0>;
+		virtual-dev-switch;
+		nvstorage-media = "disk";
+		kernel = /bits/ 64 <0x10fef000 0x00800000>;
+		cros-system-data = /bits/ 64 <0x117ef000 0x00008000>;
+		google-binary-block = /bits/ 64 <0x117f7000 0x00008000>;
+		firmware-storage = <&firmware_storage_spi>;
+		cros-gpio-input-charging-delay = <0>;
+
+		rw-a {
+			label = "rw-section-a";
+			/* Alignment: 4k (for updating) */
+			reg = <0x00200000 0x000f0000>;
+			block-offset = /bits/ 64 <0x00004400>;
+		};
+
+		vboot-flag-oprom-loaded {
+			compatible = "google,const-flag";
+			value = <0>;
+		};
+
+		vboot-flag-write-protect {
+			compatible = "google,gpio-flag";
+			gpio = <&gpio 0 0>; /* address 0, active low */
+		};
+		vboot-flag-recovery {
+			compatible = "google,gpio-flag";
+			gpio = <&gpio 1 0>;
+		};
+		vboot-flag-developer {
+			compatible = "google,gpio-flag";
+			gpio = <&gpio 2 0>;
+		};
+		vboot-flag-lid-open {
+			compatible = "google,gpio-flag";
+			gpio = <&gpio 3 0>;
+		};
+		vboot-flag-power-off {
+			compatible = "google,gpio-flag";
+			gpio = <&gpio 4 0>;
+		};
+	};
+};
