@@ -28,13 +28,22 @@
 static int read(struct spi_flash *flash, u32 offset, size_t len, void *buf)
 {
 	struct doorbell_command_t *dbc = sandbox_get_doorbell_command();
+	void *dest;
+
+	dest = buf;
+	if (!sandbox_in_shared_memory(buf))
+		dest = dbc->dbc_buf;
 
 	dbc->device_id = SB_SPI;
 	dbc->command_data[0] = 0; /* read */
 	dbc->command_data[1] = offset;
 	dbc->command_data[2] = len;
-	dbc->command_data[3] = (__u32)(uintptr_t)buf;
+	dbc->command_data[3] = (u32)(uintptr_t)dest;
 	sandbox_ring_doorbell();
+
+	if (!sandbox_in_shared_memory(buf))
+		memcpy(buf, dest, len);
+
 	return dbc->result;
 }
 
@@ -42,12 +51,19 @@ static int write(struct spi_flash *flash, u32 offset,
 		 size_t len, const void *buf)
 {
 	struct doorbell_command_t *dbc = sandbox_get_doorbell_command();
+	void *dest;
+
+	dest = (void *)buf;
+	if (!sandbox_in_shared_memory(buf)) {
+		dest = dbc->dbc_buf;
+		memcpy(dest, buf, len);
+	}
 
 	dbc->device_id = SB_SPI;
 	dbc->command_data[0] = 1; /* write */
 	dbc->command_data[1] = offset;
 	dbc->command_data[2] = len;
-	dbc->command_data[3] = (__u32)(uintptr_t)buf;
+	dbc->command_data[3] = (u32)(uintptr_t)buf;
 	sandbox_ring_doorbell();
 	return dbc->result;
 }
@@ -73,7 +89,7 @@ struct spi_flash *spi_flash_probe(unsigned int bus, unsigned int cs,
 	char *name;
 
 	if (spi->vendor[0] == '\0') /* No SPI device */
-	    return NULL;
+		return NULL;
 
 	sf = malloc(sizeof(struct spi_flash));
 	if (sf == NULL)
