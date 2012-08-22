@@ -26,5 +26,5 @@ struct mmc_t {
 	__u64    mmc_capacity;  /* sandbox-daemon <- u-boot. */
 };
 
-extern char *mmc_file;          /* MMC backing file name */
+extern char *mmc_file[2];          /* MMC backing file name */
 #endif

@@ -84,6 +84,7 @@ static void process_args(int argc, char * const argv[])
 
 		{ NULL,			no_argument,		NULL,	0 }
 	};
+	unsigned n_mmc_files = 0;
 
 	while (1) {
 		int index;
@@ -121,7 +122,8 @@ static void process_args(int argc, char * const argv[])
 			break;
 
 		case 262:
-			mmc_file = strdup(optarg);
+			if (n_mmc_files < ARRAY_SIZE(mmc_file))
+				mmc_file[n_mmc_files++] = strdup(optarg);
 			break;
 
 		default:

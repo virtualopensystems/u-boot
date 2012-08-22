@@ -47,7 +47,8 @@ void process_memory(void)
 				spi_command(dbc);
 				break;
 
-			case SB_MMC:
+			case SB_MMC0:
+			case SB_MMC1:
 				mmc_command(dbc);
 				break;
 

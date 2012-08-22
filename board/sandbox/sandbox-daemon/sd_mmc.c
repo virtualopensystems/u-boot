@@ -39,7 +39,7 @@
 #include "asm/sandbox-api.h"
 #include "sd_mmc.h"
 
-char *mmc_file;		/* file implementing MMC device. */
+char   *mmc_file[2];		/* file implementing MMC device. */
 
 static unsigned mmc_blocklen = 512;   /* block size */
 
@@ -124,12 +124,19 @@ static const unsigned char ext_csd_register[512] = {
 	0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 };
 
+unsigned get_mmc_device(const struct doorbell_command_t *dbc)
+{
+	return dbc->device_id - SB_MMC0; /* 0-based device numbers */
+}
+
 int mmc_validate_arguments(void)
 {
 	unsigned error = 0;
 
-	/* No file means that there is no MMC device. */
-	if (mmc_file == NULL)
+	/* No file means that there is no MMC device; files assigned
+	 * sequentially, no need to check more than first element.
+	 */
+	if (mmc_file[0] == NULL)
 		return 0;
 
 	/*
@@ -142,22 +149,25 @@ int mmc_validate_arguments(void)
 
 void mmc_initialize(struct doorbell_t *db)
 {
-	db->mmc.mmc_enabled = mmc_file != NULL;
+	unsigned i;
+	for (i = 0; i < ARRAY_SIZE(db->mmc); ++i)
+		db->mmc[i].mmc_enabled = mmc_file[i] != NULL;
 }
 
-static int open_mmc_file(void)
+static int open_mmc_file(unsigned device)
 {
-	if (mmc_file == NULL)
+	if (mmc_file[device] == NULL)
 		return -1;
 
-	return open(mmc_file, O_RDWR | O_CREAT, 0600);
+	return open(mmc_file[device], O_RDWR | O_CREAT, 0600);
 }
 
-static __u64 mmc_size(void)
+static __u64 mmc_size(unsigned device)
 {
 	const struct doorbell_t *db = sandbox_get_doorbell();
-
-	return db->mmc.mmc_capacity;
+	if (device >= ARRAY_SIZE(db->mmc))
+		return 0;
+	return db->mmc[device].mmc_capacity;
 }
 
 /**
@@ -179,10 +189,10 @@ static off_t mmc_bounded_seek(struct doorbell_command_t *dbc,
 	const __u64 offset = block_start * (__u64)mmc_blocklen;
 	const __u64 len = n_blocks * (__u64)mmc_blocklen;
 
-	if (offset + len > mmc_size()) {
+	if (offset + len > mmc_size(get_mmc_device(dbc))) {
 		verbose("%s: bounds failure [%u..%u)  size: %u\n",
-			offset, offset + len, mmc_size());
-		command_failure(dbc, SB_MMC);
+			offset, offset + len, mmc_size(get_mmc_device(dbc)));
+		command_failure(dbc, dbc->device_id);
 		return (off_t)-2; /* out-of-bounds */
 	}
 
@@ -214,7 +224,7 @@ static void mmc_write_block(struct doorbell_command_t *dbc,
 	const off_t s = mmc_bounded_seek(dbc, fd, start, length);
 
 	if (s <= (off_t)-1) {
-		command_failure(dbc, SB_MMC);
+		command_failure(dbc, dbc->device_id);
 	} else {
 		/*
 		 *  TODO(thutt@chromium.org):
@@ -231,7 +241,7 @@ static void mmc_write_block(struct doorbell_command_t *dbc,
 			 * Error writing file, or a full write was not
 			 * completed.  Fail the command.
 			 */
-			command_failure(dbc, SB_MMC);
+			command_failure(dbc, dbc->device_id);
 		}
 	}
 }
@@ -250,13 +260,13 @@ static void mmc_erase_group(struct doorbell_command_t *dbc, int fd,
 	const off_t s = mmc_bounded_seek(dbc, fd, start, end + 1 - start);
 
 	if (s <= (off_t)-1) {
-		command_failure(dbc, SB_MMC);
+		command_failure(dbc, dbc->device_id);
 		return;
 	}
 
 	buf = malloc(mmc_blocklen);
 	if (buf == NULL) {
-		command_failure(dbc, SB_MMC);
+		command_failure(dbc, dbc->device_id);
 		return;
 	}
 
@@ -280,7 +290,7 @@ static void mmc_read_block(struct doorbell_command_t *dbc,
 
 	if (s == (off_t)-2) {
 		/* Out-of-bounds range */
-		command_failure(dbc, SB_MMC);
+		command_failure(dbc, dbc->device_id);
 	} else if (s == (off_t)-1) {
 		/* Unable to seek. Return all-bits-set. */
 		memset(buf, 0xff, len);
@@ -295,7 +305,7 @@ static void mmc_read_block(struct doorbell_command_t *dbc,
 		const ssize_t s = read(fd, buf, len);
 
 		if (s == -1) {
-			command_failure(dbc, SB_MMC);
+			command_failure(dbc, dbc->device_id);
 		} else if (s < (ssize_t)len) {
 			/*
 			 * A partial read has occurred.
@@ -319,7 +329,7 @@ static void mmc_unknown_command(struct doorbell_command_t *dbc,
 				unsigned command)
 {
 	fprintf(stderr, "Unhandled MMC command '%u'\n", command);
-	command_failure(dbc, SB_MMC);
+	command_failure(dbc, dbc->device_id);
 }
 
 static void mmc_clear_results(struct doorbell_command_t *dbc)
@@ -375,11 +385,12 @@ void mmc_command(struct doorbell_command_t *dbc)
 	int fd;
 	unsigned command = dbc->command_data[0];
 
-	fd = open_mmc_file();
+	fd = open_mmc_file(get_mmc_device(dbc));
 
 	if (fd == -1) {
-		fprintf(stderr, "Unable to open/create '%s'\n", mmc_file);
-		command_failure(dbc, SB_MMC);
+		fprintf(stderr, "Unable to open/create '%s'\n",
+			mmc_file[get_mmc_device(dbc)]);
+		command_failure(dbc, dbc->device_id);
 		return;
 	}
 
@@ -406,7 +417,7 @@ void mmc_command(struct doorbell_command_t *dbc)
 		break;
 	case MMC_CMD_SEND_EXT_CSD:
 		if (dbc->command_data[4] == 0)	/* SD_CMD_SEND_IF_COND */
-			command_timeout(dbc, SB_MMC);
+			command_timeout(dbc, dbc->device_id);
 		else				/* MMC_CMD_SEND_EXT_CSD */
 			mmc_send_ext_csd_register(dbc);
 		break;
@@ -464,11 +475,11 @@ void mmc_command(struct doorbell_command_t *dbc)
 		break;
 	case SD_CMD_APP_SEND_OP_COND:
 		dbc->command_data[8] = 0;
-		command_timeout(dbc, SB_MMC);
+		command_timeout(dbc, dbc->device_id);
 		break;
 	case SD_CMD_APP_SEND_SCR:
 		/* Do not support higher clock speeds */
-		command_failure(dbc, SB_MMC);
+		command_failure(dbc, dbc->device_id);
 		break;
 	case MMC_CMD_APP_CMD:
 		dbc->command_data[8] = OCR_BUSY | OCR_HCS;

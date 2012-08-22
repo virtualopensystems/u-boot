@@ -30,13 +30,26 @@
 struct mmc_host {
 };
 
-static struct mmc mmc_dev;		/* MMC device. */
+static struct mmc mmc_dev[2];		/* MMC device. */
 static struct mmc_host mmc_host;	/* MMC host device */
 
 static void copy_id(char *dest, size_t dest_len, const char *src)
 {
 	strncpy(dest, src, dest_len);
 	dest[dest_len - 1] = '\0';
+}
+
+/**
+ * Returns the device number of 'dev'.
+ *
+ * @param dev	Pointer into array 'mmc_dev'
+ * Result == 0 -> &mmc_dev[0]
+ * Result == 1 -> &mmc_dev[1]
+ */
+static unsigned get_device(const struct mmc *dev)
+{
+	ASSERT_ON_COMPILE(ARRAY_SIZE(mmc_dev) == 2);
+	return dev == &mmc_dev[1];
 }
 
 /**
@@ -55,9 +68,11 @@ static int sandbox_mmc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd,
 	struct doorbell_command_t *dbc = sandbox_get_doorbell_command();
 	const unsigned is_sandbox_mem = (data != NULL &&
 					sandbox_in_shared_memory(data->dest));
+	const unsigned device = get_device(mmc);
 
-	db->mmc.mmc_capacity = mmc->capacity;
-	dbc->device_id = SB_MMC;
+	db->mmc[device].mmc_capacity = mmc->capacity;
+	ASSERT_ON_COMPILE(ARRAY_SIZE(db->mmc) == 2);
+	dbc->device_id = device == 0 ? SB_MMC0 : SB_MMC1;
 	dbc->command_data[0] = cmd->cmdidx;
 	dbc->command_data[1] = cmd->resp_type;
 	dbc->command_data[2] = cmd->cmdarg;
@@ -113,29 +128,42 @@ int sandbox_mmc_getcd(struct mmc *mmc)
 	return 0;
 }
 
+static void register_mmc_device(struct mmc *dev)
+{
+	copy_id(dev->name, sizeof(dev->name), "Sandbox MMC");
+	dev->priv = &mmc_host;
+	dev->send_cmd = sandbox_mmc_send_cmd;
+	dev->set_ios = sandbox_mmc_set_ios;
+	dev->init = sandbox_mmc_core_init;
+	dev->getcd = sandbox_mmc_getcd;
+
+	/* These following values taken from the regular mmc driver. */
+	dev->voltages = MMC_VDD_32_33 | MMC_VDD_33_34 | MMC_VDD_165_195;
+	dev->host_caps = MMC_MODE_8BIT;
+	dev->host_caps |= MMC_MODE_HS_52MHz | MMC_MODE_HS | MMC_MODE_HC;
+	dev->f_min = 375000;
+	dev->f_max = 48000000;
+	dev->b_max = 0;
+	mmc_register(dev);
+}
+
 int sandbox_mmc_init(int verbose)
 {
 	struct doorbell_t *db = sandbox_get_doorbell();
-	struct mmc_t *mmc = &db->mmc;
+	unsigned i;
 
-	if (!mmc->mmc_enabled)	/* No MMC device. */
+	ASSERT_ON_COMPILE(ARRAY_SIZE(db->mmc) ==
+			  ARRAY_SIZE(mmc_dev));
+
+	if (!db->mmc[0].mmc_enabled)	/* No MMC devices. */
 		return -ENODEV;
 
-	copy_id(mmc_dev.name, sizeof(mmc_dev.name), "Sandbox MMC");
-	mmc_dev.priv = &mmc_host;
-	mmc_dev.send_cmd = sandbox_mmc_send_cmd;
-	mmc_dev.set_ios = sandbox_mmc_set_ios;
-	mmc_dev.init = sandbox_mmc_core_init;
-	mmc_dev.getcd = sandbox_mmc_getcd;
-
-	/* These following values taken from the regular mmc driver. */
-	mmc_dev.voltages = MMC_VDD_32_33 | MMC_VDD_33_34 | MMC_VDD_165_195;
-	mmc_dev.host_caps = MMC_MODE_8BIT;
-	mmc_dev.host_caps |= MMC_MODE_HS_52MHz | MMC_MODE_HS | MMC_MODE_HC;
-	mmc_dev.f_min = 375000;
-	mmc_dev.f_max = 48000000;
-	mmc_dev.b_max = 0;
-	mmc_register(&mmc_dev);
-
+	for (i = 0; i < ARRAY_SIZE(db->mmc); ++i) {
+		if (db->mmc[i].mmc_enabled) {
+			/* Only device 0 is a removable device */
+			register_mmc_device(&mmc_dev[i]);
+			mmc_dev[1].block_dev.removable = i == 0;
+		}
+	}
 	return 0;
 }

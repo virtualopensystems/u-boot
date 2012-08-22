@@ -28,6 +28,10 @@
 #include "asm/sandbox-spi.h"
 #include "asm/sandbox-mmc.h"
 
+#if !defined(ARRAY_SIZE)
+#define ARRAY_SIZE(_a) (sizeof(_a) / sizeof(_a[0]))
+#endif
+
 #define SANDBOX_SHM_START     0x10000000
 #define SANDBOX_SHM_ADDRESS   ((void *)(SANDBOX_SHM_START))
 #define SANDBOX_SHM_KEY       ((key_t)0xbeefcafe)
@@ -43,8 +47,9 @@
 	} while (0)
 
 #define DEVICES					\
-	D(SPI, "SPI FLASH ROM")                 \
-	D(MMC, "MMC Controller")
+	D(SPI,	"SPI FLASH ROM")		\
+	D(MMC0, "MMC0")				\
+	D(MMC1, "MMC1")
 
 enum device_t {
 #define D(n, s) SB_##n,
@@ -73,7 +78,7 @@ struct doorbell_command_t {
 struct doorbell_t {
 	__u32 exit;
 	struct spi_t spi;
-	struct mmc_t mmc;
+	struct mmc_t mmc[2];
 	struct doorbell_command_t cmd;
 };
 
@@ -103,7 +108,7 @@ static inline void sandbox_ring_doorbell(void)
 		;
 }
 
-static inline unsigned sandbox_in_shared_memory(void *p)
+static inline unsigned sandbox_in_shared_memory(const void *p)
 {
 	return (SANDBOX_SHM_ADDRESS <= p &&
 		p < SANDBOX_SHM_ADDRESS + SANDBOX_SHM_SIZE);
