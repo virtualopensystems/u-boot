@@ -262,6 +262,27 @@ struct mkbp_dev *board_get_mkbp_dev(void)
 	return local.mkbp_dev;
 }
 
+/*
+ * This functions disable the USB3.0 PLL to save power
+ */
+static void disable_usb30_pll(void)
+{
+	int node, ret;
+	struct fdt_gpio_state en_gpio;
+
+	node = fdtdec_next_compatible(gd->fdt_blob, 0,
+		COMPAT_SAMSUNG_EXYNOS_USB);
+	if (node < 0)
+		return;
+
+	ret = fdtdec_decode_gpio(gd->fdt_blob, node, "usb3-pll-gpio", &en_gpio);
+	if (ret)
+		return;
+
+	fdtdec_setup_gpio(&en_gpio);
+	gpio_direction_output(en_gpio.gpio, en_gpio.flags);
+}
+
 static int board_init_mkbp_devices(const void *blob)
 {
 	local.mkbp_dev = mkbp_init(blob);
@@ -624,6 +645,9 @@ int board_init(void)
 
 	/* Clock Gating all the unused IP's to save power */
 	clock_gate();
+
+	/* Disable USB3.0 PLL to save 250mW of power */
+	disable_usb30_pll();
 
 	if (board_init_mkbp_devices(gd->fdt_blob))
 		return -1;
