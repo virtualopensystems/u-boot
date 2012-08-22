@@ -22,44 +22,35 @@
 #include <common.h>
 #include <asm/gpio.h>
 
+#include "asm/sandbox-api.h"
+
 /* Flags for each GPIO */
 #define GPIOF_OUTPUT	(1 << 0)	/* Currently set as an output */
 #define GPIOF_HIGH	(1 << 1)	/* Currently set high */
 #define GPIOF_RESERVED	(1 << 2)	/* Is in use / requested */
 
-struct gpio_state {
-	const char *label;	/* label given by requester */
-	u8 flags;		/* flags (GPIOF_...) */
-};
+static const char *gpio_name[CONFIG_SANDBOX_GPIO_COUNT];
 
-/*
- * State of GPIOs
- * TODO: Put this into sandbox state
- */
-static struct gpio_state state[CONFIG_SANDBOX_GPIO_COUNT];
-
-/* Access routines for GPIO state */
-static u8 *get_gpio_flags(unsigned gp)
+/* Access routines for GPIOs */
+static u8 *get_gpio_address(unsigned gp)
 {
-	/* assert()'s could be disabled, so make sure we handle that */
-	assert(gp < ARRAY_SIZE(state));
-	if (gp >= ARRAY_SIZE(state)) {
+	if (gp >= CONFIG_SANDBOX_GPIO_COUNT) {
 		static u8 invalid_flags;
 		printf("sandbox_gpio: error: invalid gpio %u\n", gp);
 		return &invalid_flags;
 	}
 
-	return &state[gp].flags;
+	return sandbox_region_address(SML_GPIO) + gp;
 }
 
 static int get_gpio_flag(unsigned gp, int flag)
 {
-	return (*get_gpio_flags(gp) & flag) != 0;
+	return (*get_gpio_address(gp) & flag) != 0;
 }
 
 static int set_gpio_flag(unsigned gp, int flag, int value)
 {
-	u8 *gpio = get_gpio_flags(gp);
+	u8 *gpio = get_gpio_address(gp);
 
 	if (value)
 		*gpio |= flag;
@@ -164,7 +155,7 @@ int gpio_request(unsigned gp, const char *label)
 {
 	debug("%s: gp:%u, label:%s\n", __func__, gp, label);
 
-	if (gp >= ARRAY_SIZE(state)) {
+	if (gp >= CONFIG_SANDBOX_GPIO_COUNT) {
 		printf("sandbox_gpio: error: invalid gpio %u\n", gp);
 		return -1;
 	}
@@ -174,7 +165,7 @@ int gpio_request(unsigned gp, const char *label)
 		return -1;
 	}
 
-	state[gp].label = label;
+	gpio_name[gp] = label;
 	return set_gpio_flag(gp, GPIOF_RESERVED, 1);
 }
 
@@ -185,7 +176,7 @@ int gpio_free(unsigned gp)
 	if (check_reserved(gp, __func__))
 		return -1;
 
-	state[gp].label = NULL;
+	gpio_name[gp] = NULL;
 	return set_gpio_flag(gp, GPIOF_RESERVED, 0);
 }
 
@@ -196,8 +187,8 @@ void gpio_info(void)
 
 	puts("Sandbox GPIOs\n");
 
-	for (gpio = 0; gpio < ARRAY_SIZE(state); ++gpio) {
-		const char *label = state[gpio].label;
+	for (gpio = 0; gpio < CONFIG_SANDBOX_GPIO_COUNT; ++gpio) {
+		const char *label = gpio_name[gpio];
 
 		printf("%4d: %s: %d [%c] %s\n",
 			gpio,
