@@ -50,12 +50,15 @@ void power_reset(void)
 	setbits_le32(&power->sw_reset, 1);
 }
 
+/* This function never returns */
 void power_shutdown(void)
 {
 	struct exynos5_power *power =
 		(struct exynos5_power *)samsung_get_base_power();
 
 	clrbits_le32(&power->ps_hold_ctrl, POWER_PS_HOLD_CONTROL_DATA_HIGH);
+
+	hang();
 }
 
 void power_enable_dp_phy(void)
