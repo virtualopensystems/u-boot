@@ -43,16 +43,9 @@ void cold_reboot(void)
 /* This function never returns */
 void power_off(void)
 {
-	power_shutdown();
+	VBDEBUG("Power off\n");
 
-	/*
-	 * Somehow it takes a few seconds before the board shuts down.
-	 * Add a delay here so that you would not see a misleading error
-	 * message "Board cannot power off ..." from below.
-	 */
-	mdelay(5000);
-
-	/* It should never reach here */
-	VBDEBUG("Board cannot power off itself; enter infinite loop!\n");
-	hang();
+	/* Add a delay to allow serial output to drain */
+	mdelay(100);
+	power_shutdown();		/* never returns */
 }
