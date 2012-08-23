@@ -107,6 +107,7 @@ int os_close(int fd)
 
 void os_exit(int exit_code)
 {
+	sandbox_get_doorbell()->exit = 1;	/* Signal exit to daemon. */
 	os_detach_shared_memory();
 	exit(exit_code);
 }
