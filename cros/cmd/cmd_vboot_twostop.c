@@ -814,6 +814,10 @@ twostop_main_firmware(struct twostop_fmap *fmap, void *gbb,
 	VbCommonParams cparams;
 	size_t size = 0;
 
+#ifdef CONFIG_BOOTSTAGE_STASH
+	bootstage_unstash((void *)CONFIG_BOOTSTAGE_STASH,
+			CONFIG_BOOTSTAGE_STASH_SIZE);
+#endif
 	bootstage_mark_name(BOOTSTAGE_VBOOT_TWOSTOP_MAIN_FIRMWARE,
 			"twostop_main_firmware");
 	if (twostop_init_cparams(fmap, gbb, vb_shared_data, &cparams)) {
