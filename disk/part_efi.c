@@ -276,7 +276,8 @@ static int is_gpt_valid(block_dev_desc_t * dev_desc, unsigned long long lba,
 	}
 
 	/* Check the GPT header signature */
-	if (le64_to_int(pgpt_head->signature) != GPT_HEADER_SIGNATURE) {
+	if ((le64_to_int(pgpt_head->signature) != GPT_HEADER_SIGNATURE) &&
+	    (le64_to_int(pgpt_head->signature) != GPT_HEADER_SIGNATURE2)) {
 		printf("GUID Partition Table Header signature is wrong:"
 			"0x%llX != 0x%llX\n",
 			(unsigned long long)le64_to_int(pgpt_head->signature),
