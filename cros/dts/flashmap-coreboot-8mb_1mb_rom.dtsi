@@ -222,41 +222,19 @@
 			wipe-value = [ff];
 		};
 
+		rw-seabios {
+			label = "rw-seabios";
+			reg = <0x00400000 0x00200000>;
+			read-only;
+		};
+
 		/*
 		 * This describes the portion of the image that will be
 		 * write-protected in the factory.
 		 */
 		wp-ro {
 			label = "wp-ro";
-			reg = <0x00400000 0x00400000>;
-			read-only;
-		};
-
-		/*
-		 * Backup copy of the non-BIOS section of the Intel Firmware
-		 * Descriptor image.
-		 *
-		 * This is conveniently located in the 4MB-6MB range, so if
-		 * you need more space for RW code you can drop this section
-		 * and shift wp-ro to cover just the top 2MB of flash.
-		 */
-		ro-si-backup {
-			label = "ro-si-all";
-			reg = <0x00400000 0x00200000>;
-			read-only;
-		};
-
-		/* Backup Firmware Descriptor section */
-		ro-si-desc {
-			label = "ro-si-desc";
-			reg = <0x00400000 0x00001000>;
-			read-only;
-		};
-
-		/* Backup Intel Management Engine section */
-		ro-si-me {
-			label = "ro-si-me";
-			reg = <0x00401000 0x001ff000>;
+			reg = <0x00600000 0x00200000>;
 			read-only;
 		};
 
