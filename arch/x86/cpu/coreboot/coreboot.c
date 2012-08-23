@@ -170,42 +170,8 @@ int board_early_init_f(void)
 
 int board_early_init_r(void)
 {
-	CbfsFile file;
-	void *dtb;
-	u32 size;
-
-	file_cbfs_init(0xffffffff);
-	if (file_cbfs_result != CBFS_SUCCESS) {
-		printf("%s.\n", file_cbfs_error());
-		goto cbfs_failed;
-	}
-	file = file_cbfs_find("u-boot.dtb");
-	if (!file) {
-		if (file_cbfs_result != CBFS_FILE_NOT_FOUND)
-			printf("%s.\n", file_cbfs_error());
-		goto cbfs_failed;
-	}
-	size = file_cbfs_size(file);
-	if (file_cbfs_result != CBFS_SUCCESS) {
-		printf("%s.\n", file_cbfs_error());
-		goto cbfs_failed;
-	}
-	dtb = malloc(size + 2048); /* 2K more for console + vdat */
-	if (!dtb) {
-		printf("Bad allocation!\n");
-		goto cbfs_failed;
-	}
-	if (size != file_cbfs_read(file, dtb, size)) {
-		free(dtb);
-		printf("%s.\n", file_cbfs_error());
-		goto cbfs_failed;
-	}
-	gd->fdt_blob = dtb;
-
 	if (map_coreboot_serial_to_fdt())
 		printf("Couldn't add serial port to FDT.\n");
-
-cbfs_failed:
 	return 0;
 }
 
