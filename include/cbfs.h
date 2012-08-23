@@ -25,6 +25,7 @@
 
 #include <linux/compiler.h>
 #include <compiler.h>
+#include <common.h>
 
 typedef enum CbfsResult {
 	CBFS_SUCCESS = 0,
@@ -74,6 +75,24 @@ typedef struct CbfsCacheNode {
 	u32 nameLength;
 	u32 checksum;
 } __packed CbfsCacheNode;
+
+#define PAYLOAD_SEGMENT_CODE   0x45444F43
+#define PAYLOAD_SEGMENT_DATA   0x41544144
+#define PAYLOAD_SEGMENT_BSS    0x20535342
+#define PAYLOAD_SEGMENT_PARAMS 0x41524150
+#define PAYLOAD_SEGMENT_ENTRY  0x52544E45
+
+#define CBFS_COMPRESS_NONE  0
+#define CBFS_COMPRESS_LZMA  1
+
+typedef struct CbfsPayloadSegment {
+	uint32_t type;
+	uint32_t compression;
+	uint32_t offset;
+	uint64_t load_addr;
+	uint32_t len;
+	uint32_t mem_len;
+} __packed CbfsPayloadSegment;
 
 typedef const struct CbfsCacheNode *CbfsFile;
 
@@ -177,5 +196,16 @@ u32 file_cbfs_type(CbfsFile file);
  *         error occurred.
  */
 long file_cbfs_read(CbfsFile file, void *buffer, unsigned long maxsize);
+
+/*
+ * Print CBFS inventory
+ *
+ * @param cmdtp         Should be NULL
+ * @param flag          Should be 0
+ * @param argc          Should be 0
+ * @param argv          Should be NULL
+ *
+ */
+int do_cbfs_ls(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[]);
 
 #endif /* __CBFS_H */
