@@ -39,6 +39,8 @@ struct vboot_flag_context {
 	int initialized;	/* 1 if the driver is initialized; 0 if not */
 	struct fdt_gpio_state gpio_state;	/* the gpio state of fdt */
 	int gpio_valid_time;	/* time of delay when gpio value is valid */
+	/* previous value of the flag (1 or 0), or -1 if not known */
+	int prev_value;
 };
 
 /* GPIO details required in the crossystem data structure */
@@ -46,6 +48,8 @@ struct vboot_flag_details {
 	int value;		/* the value of the flag, either 1 or 0 */
 	int port;		/* the gpio port number */
 	int active_high;	/* 1 if the port is active high; 0 active low */
+	/* previous value of the flag (1 or 0), or -1 if not known */
+	int prev_value;
 };
 
 /* API function pointers of the driver to get vboot flag info */

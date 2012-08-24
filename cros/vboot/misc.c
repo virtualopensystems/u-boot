@@ -22,8 +22,12 @@ uint32_t VbExIsShutdownRequested(void)
 		VBDEBUG("Lid-closed is detected.\n");
 		return 1;
 	}
-	/* if power switch is pressed */
-	if (!vboot_flag_fetch(VBOOT_FLAG_POWER_OFF, &pwrsw) && pwrsw.value) {
+	/*
+	 * If power switch is pressed (but previously was known to be not
+	 * pressed), we power off.
+	 */
+	if (!vboot_flag_fetch(VBOOT_FLAG_POWER_OFF, &pwrsw) &&
+			!pwrsw.prev_value && pwrsw.value) {
 		VBDEBUG("Power-key-pressed is detected.\n");
 		return 1;
 	}

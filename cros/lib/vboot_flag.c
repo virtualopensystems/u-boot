@@ -111,8 +111,13 @@ int vboot_flag_fetch(enum vboot_flag_id id, struct vboot_flag_details *details)
 	if (context == NULL)
 		return -1;
 
-	if (context->driver && context->driver->fetch)
-		return context->driver->fetch(id, context, details);
+	if (context->driver && context->driver->fetch) {
+		details->prev_value = context->prev_value;
+		if (context->driver->fetch(id, context, details))
+			return -1;
+		context->prev_value = details->value;
+		return 0;
+	}
 
 	VBDEBUG("the driver of %s not assigned\n", node_name[id]);
 	return -1;
@@ -141,6 +146,7 @@ int vboot_flag_init(void)
 		context->node = child;
 		context->config_node = config;
 		context->driver = &vboot_flag_driver_unknown;
+		context->prev_value = -1;
 
 		switch (fdtdec_lookup(blob, child)) {
 #ifdef CONFIG_CHROMEOS_CONST_FLAG
