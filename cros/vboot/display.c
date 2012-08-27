@@ -185,12 +185,65 @@ VbError_t VbExDecompress(void *inbuf, uint32_t in_size,
 	return VBERROR_INVALID_PARAMETER;
 }
 
+#ifdef HAVE_DISPLAY
+#include <bmp_layout.h>
+
+static int sanity_check_bitmap(void *buffer, uint32_t buffersize)
+{
+	bmp_image_t *bmp;
+	uint32_t data_offset, width, height, bit_count, bitmap_size;
+
+	if (buffersize < sizeof(bmp_image_t)) {
+		VBDEBUG("buffersize = %u < sizeof(bmp_image_t) = %u\n",
+				buffersize, sizeof(bmp_image_t));
+		return -1;
+	}
+
+	bmp = (bmp_image_t *)buffer;
+	if (bmp->header.signature[0] != 'B' ||
+			bmp->header.signature[1] != 'M') {
+		VBDEBUG("invalid bmp image or "
+				"gzipped image, which is not supported\n");
+		return -1;
+	}
+
+	data_offset = le32_to_cpu(bmp->header.data_offset);
+	if (data_offset > buffersize) {
+		VBDEBUG("data_offset = %u > buffersize = %u\n",
+				data_offset, buffersize);
+		return -1;
+	}
+
+	/*
+	 * This is a conservative estimation of bitmap size (it does not
+	 * consider padding).
+	 */
+	width = le32_to_cpu(bmp->header.width);
+	height = le32_to_cpu(bmp->header.height);
+	bit_count = le16_to_cpu(bmp->header.bit_count);
+	bitmap_size = width * height * bit_count / 8;
+	if (data_offset + bitmap_size > buffersize) {
+		VBDEBUG("data_offset + bitmap_size = %u > buffersize = %u\n",
+				data_offset + bitmap_size, buffersize);
+		return -1;
+	}
+
+	return 0;
+}
+#endif
 
 VbError_t VbExDisplayImage(uint32_t x, uint32_t y,
                            void *buffer, uint32_t buffersize)
 {
 #ifdef HAVE_DISPLAY
 	int ret;
+
+	/*
+	 * Put bitmap sanity check in assertion so that it can be skipped in
+	 * production code, as bitmaps are stored in write-protected region and
+	 * thus it should be safe to skip such check.
+	 */
+	assert(!sanity_check_bitmap(buffer, buffersize));
 
 	ret = display_callbacks_.dc_display_bitmap((ulong)buffer, x, y);
 	if (ret) {
