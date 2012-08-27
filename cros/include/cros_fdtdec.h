@@ -14,6 +14,16 @@
 #include <fdtdec.h>
 #include <cros/fmap.h>
 
+/* Holds information about the Chrome EC */
+struct fdt_chrome_ec {
+	struct fmap_entry flash;	/* Address and size of EC flash */
+	/*
+	 * Byte value of erased flash, or -1 if not known. It is normally
+	 * 0xff but some flash devices use 0 (e.g. STM32Lxxx)
+	 */
+	int flash_erase_value;
+};
+
 /* Decode Chrome OS specific configuration from fdt */
 
 int cros_fdtdec_flashmap(const void *fdt, struct twostop_fmap *config);
@@ -61,5 +71,13 @@ void *cros_fdtdec_alloc_region(const void *blob,
  */
 int cros_fdtdec_memory(const void *blob, const char *name,
 		struct fdt_memory *config);
+
+/**
+ * Returns information from the FDT about the Chrome EC
+ *
+ * @param blob		FDT blob to use
+ * @param config	Structure to use to return information
+ */
+int cros_fdtdec_chrome_ec(const void *blob, struct fdt_chrome_ec *config);
 
 #endif /* CROS_FDTDEC_H_ */

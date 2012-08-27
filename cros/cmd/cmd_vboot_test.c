@@ -259,6 +259,27 @@ static int do_vboot_fmap(cmd_tbl_t *cmdtp, int flag,
 	return 0;
 }
 
+static int do_vboot_chrome_ec(cmd_tbl_t *cmdtp, int flag,
+		int argc, char * const argv[])
+{
+	struct fdt_chrome_ec ec;
+
+	/* TODO(sjg@chromium.org): Best to automate this test with sandbox */
+	if (cros_fdtdec_chrome_ec(gd->fdt_blob, &ec)) {
+		VbExDebug("Failed to load EC config from fdt!\n");
+		return 1;
+	}
+
+	show_entry("flash", &ec.flash);
+	puts("Flash erase value: ");
+	if (ec.flash_erase_value == -1)
+		puts("Unknown\n");
+	else
+		printf("%#02x\n", ec.flash_erase_value);
+
+	return 0;
+}
+
 static int do_vboot_test_all(cmd_tbl_t *cmdtp,
 		int flag, int argc, char * const argv[])
 {
@@ -268,6 +289,7 @@ static int do_vboot_test_all(cmd_tbl_t *cmdtp,
 	ret |= do_vboot_test_memwipe(cmdtp, flag, argc, argv);
 	ret |= do_vboot_test_gpio(cmdtp, flag, argc, argv);
 	ret |= do_vboot_fmap(cmdtp, flag, argc, argv);
+	ret |= do_vboot_chrome_ec(cmdtp, flag, argc, argv);
 
 	return ret;
 }
@@ -280,6 +302,7 @@ static cmd_tbl_t cmd_vboot_test_sub[] = {
 	U_BOOT_CMD_MKENT(reboot, 0, 1, do_vboot_reboot, "", ""),
 	U_BOOT_CMD_MKENT(poweroff, 0, 1, do_vboot_poweroff, "", ""),
 	U_BOOT_CMD_MKENT(fmap, 0, 1, do_vboot_fmap, "", ""),
+	U_BOOT_CMD_MKENT(chrome_ec, 0, 1, do_vboot_chrome_ec, "", ""),
 };
 
 static int do_vboot_test(cmd_tbl_t *cmdtp,
@@ -309,5 +332,6 @@ U_BOOT_CMD(vboot_test, CONFIG_SYS_MAXARGS, 1, do_vboot_test,
 	"vboot_test reboot - test reboot (board will be rebooted!)\n"
 	"vboot_test poweroff - test poweroff (board will be shut down!)\n"
 	"vboot_test fmap - check that flashmap can be decoded\n"
+	"vboot_test chrome_ec - check that EC info can be decoded\n"
 );
 

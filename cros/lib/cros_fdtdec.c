@@ -305,3 +305,30 @@ int cros_fdtdec_memory(const void *blob, const char *name,
 
 	return 0;
 }
+
+int cros_fdtdec_chrome_ec(const void *blob, struct fdt_chrome_ec *config)
+{
+	int flash_node, node;
+
+	node = fdtdec_next_compatible(blob, 0, COMPAT_GOOGLE_CHROME_EC);
+	if (node < 0) {
+		VBDEBUG("Failed to find chrome-ec node'\n");
+		return -1;
+	}
+
+	flash_node = fdt_subnode_offset(blob, node, "flash");
+	if (flash_node < 0) {
+		VBDEBUG("Failed to find flash node'\n");
+		return -1;
+	}
+
+	if (read_entry(blob, flash_node, "flash", &config->flash)) {
+		VBDEBUG("Failed to find flash node in chrome-ec'\n");
+		return -1;
+	}
+
+	config->flash_erase_value = fdtdec_get_int(blob, flash_node,
+						    "erase-value", -1);
+
+	return 0;
+}
