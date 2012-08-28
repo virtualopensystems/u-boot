@@ -85,13 +85,6 @@ struct vboot_flag_driver {
 const char *vboot_flag_node_name(enum vboot_flag_id id);
 
 /**
- * Initialize vboot_flag module
- *
- * @return zero on success and non-zero on failures
- */
-int vboot_flag_init(void);
-
-/**
  * Return the type of the required vboot flag
  *
  * @param id		ID of VBoot flag

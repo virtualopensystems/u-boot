@@ -39,6 +39,8 @@ extern struct vboot_flag_driver vboot_flag_driver_mkbp;
 extern struct vboot_flag_driver vboot_flag_driver_sysinfo;
 #endif
 
+static int vboot_flag_init(void);
+
 static const char *node_name[VBOOT_FLAG_MAX_FLAGS] = {
 #define VBF(__e, __s) __s,
 	VBOOT_FLAGS
@@ -52,6 +54,12 @@ const char *vboot_flag_node_name(enum vboot_flag_id id)
 
 static struct vboot_flag_context *vboot_flag_get_context(enum vboot_flag_id id)
 {
+	static int vboot_flag_initted;
+	if (!vboot_flag_initted) {
+		vboot_flag_initted = 1;
+		vboot_flag_init();
+	}
+
 	if (id < 0 || id >= VBOOT_FLAG_MAX_FLAGS) {
 		VBDEBUG("id out of range: %d\n", id);
 		return NULL;
@@ -123,7 +131,7 @@ int vboot_flag_fetch(enum vboot_flag_id id, struct vboot_flag_details *details)
 	return -1;
 }
 
-int vboot_flag_init(void)
+static int vboot_flag_init(void)
 {
 	const void *blob = gd->fdt_blob;
 	int config, child;
