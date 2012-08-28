@@ -48,7 +48,7 @@ static int vboot_flag_fetch_sysinfo(enum vboot_flag_id id,
 		return 0;
 	}
 
-	VBDEBUG("failed to find gpio port\n");
+	VBDEBUG("failed to find gpio port for %s\n", vboot_flag_node_name(id));
 	return -1;
 }
 
