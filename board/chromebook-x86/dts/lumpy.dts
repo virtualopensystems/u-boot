@@ -12,4 +12,12 @@
 		hwid = "X86 LUMPY TEST 6638";
 		hda_codec_beep = <1>;
 	};
+
+	chromeos-config {
+		oprom-matters;
+		vboot-flag-ec-in-rw {
+			compatible = "google,const-flag";
+			value = <0>;
+		};
+	};
 };
