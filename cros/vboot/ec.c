@@ -39,8 +39,6 @@ int VbExTrustEC(void)
 	return okay;
 }
 
-#ifdef CONFIG_MKBP
-
 VbError_t VbExEcRunningRW(int *in_rw)
 {
 	struct mkbp_dev *mdev = board_get_mkbp_dev();
@@ -202,42 +200,6 @@ VbError_t VbExEcProtectRW(void)
 {
 	return ec_protect_rw(1);
 }
-
-#else  /* CONFIG_MKBP */
-
-/* Stub implementation for ECs which don't support MKBP */
-
-VbError_t VbExEcRunningRW(int *in_rw)
-{
-	return VBERROR_UNKNOWN;
-}
-
-VbError_t VbExEcJumpToRW(void)
-{
-	return VBERROR_UNKNOWN;
-}
-
-VbError_t VbExEcStayInRO(void)
-{
-	return VBERROR_UNKNOWN;
-}
-
-VbError_t VbExEcHashRW(const uint8_t **hash, int *hash_size)
-{
-	return VBERROR_UNKNOWN;
-}
-
-VbError_t VbExEcUpdateRW(const uint8_t  *image, int image_size)
-{
-	return VBERROR_UNKNOWN;
-}
-
-VbError_t VbExEcProtectRW(void)
-{
-	return VBERROR_UNKNOWN;
-}
-
-#endif  /* CONFIG_MKBP */
 
 VbError_t VbExEcGetExpectedRW(enum VbSelectFirmware_t select,
 			      const uint8_t **image, int *image_size)
