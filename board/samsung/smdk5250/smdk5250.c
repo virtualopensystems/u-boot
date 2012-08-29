@@ -68,7 +68,7 @@ struct local_info {
 	unsigned slew_delay_us;
 
 	/* Time between retrying to see if the AP has released the bus */
-	unsigned wait_retry_us;
+	unsigned wait_retry_ms;
 
 	/* Time to wait until the bus becomes free */
 	unsigned wait_free_ms;
@@ -333,8 +333,9 @@ static int board_i2c_arb_init(const void *blob)
 
 	local.slew_delay_us = fdtdec_get_int(blob, node,
 					     "google,slew-delay-us", 10);
-	local.wait_retry_us = fdtdec_get_int(blob, node,
+	local.wait_retry_ms = fdtdec_get_int(blob, node,
 					     "google,wait-retry-us", 2000);
+	local.wait_retry_ms = DIV_ROUND_UP(local.wait_retry_ms, 1000);
 	local.wait_free_ms = fdtdec_get_int(blob, node,
 					    "google,wait-free-us", 50000);
 	local.wait_free_ms = DIV_ROUND_UP(local.wait_free_ms, 1000);
@@ -793,7 +794,7 @@ int board_i2c_claim_bus(int node)
 
 		/* Wait for the EC to release it */
 		start_retry = get_timer(0);
-		while (get_timer(start_retry) < local.wait_retry_us) {
+		while (get_timer(start_retry) < local.wait_retry_ms) {
 			if (gpio_get_value(local.ec_claim.gpio)) {
 				/* We got it, so return */
 				return 0;
@@ -807,7 +808,7 @@ int board_i2c_claim_bus(int node)
 		/* It didn't release, so give up, wait, and try again */
 		gpio_set_value(local.ap_claim.gpio, 1);
 
-		udelay(local.wait_retry_us);
+		mdelay(local.wait_retry_ms);
 	} while (get_timer(start) < local.wait_free_ms);
 
 	/* Give up, release our claim */
