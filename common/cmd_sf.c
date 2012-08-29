@@ -188,11 +188,17 @@ static int spi_flash_update(struct spi_flash *flash, u32 offset,
 		scale = (end - buf) / 100;
 	cmp_buf = malloc(flash->sector_size);
 	if (cmp_buf) {
+		ulong last_update = get_timer(0);
+
 		for (; buf < end && !err_oper; buf += todo, offset += todo) {
 			todo = min(end - buf, flash->sector_size);
-			printf("Updating, %zu%% %lu B/s\r",
-				100 - (end - buf) / scale,
-				bytes_per_second(buf - start_buf, start_time));
+			if (get_timer(last_update) > 100) {
+				printf("   \rUpdating, %zu%% %lu B/s",
+					100 - (end - buf) / scale,
+					bytes_per_second(buf - start_buf,
+							 start_time));
+				last_update = get_timer(0);
+			}
 			err_oper = spi_flash_update_block(flash, offset, todo,
 					buf, cmp_buf, &skipped);
 		}
@@ -200,6 +206,7 @@ static int spi_flash_update(struct spi_flash *flash, u32 offset,
 		err_oper = "malloc";
 	}
 	free(cmp_buf);
+	putc('\r');
 	if (err_oper) {
 		printf("SPI flash failed in %s step\n", err_oper);
 		return 1;
@@ -208,7 +215,7 @@ static int spi_flash_update(struct spi_flash *flash, u32 offset,
 	delta = get_timer(start_time);
 	printf("%zu bytes written, %zu bytes skipped", len - skipped,
 		skipped);
-	printf(" in %ld.%ld seconds. Effective write: %ld B/s\n",
+	printf(" in %ld.%lds, speed %ld B/s\n",
 		delta / 1000, delta % 1000, bytes_per_second(len, start_time));
 
 	return 0;
