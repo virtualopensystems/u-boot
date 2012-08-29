@@ -89,6 +89,8 @@ static void build_command_line(char *command_line, int auto_boot)
 	if (env_command_line)
 		strcat(command_line, env_command_line);
 
+	strcat(command_line, "gpt ");
+
 	puts("Kernel command line: \"");
 	puts(command_line);
 	puts("\"\n");
