@@ -1053,6 +1053,32 @@ twostop_readwrite_main_firmware(void)
 	return twostop_main_firmware(&fmap, gbb, cdata, cdata->vb_shared_data);
 }
 
+/* FIXME(wfrichar): Work in progress. crosbug.com/p/11215 */
+/* Write-protect portions of the RW flash until the next boot. */
+VbError_t VbExProtectFlash(enum VbProtectFlash_t region)
+{
+#ifdef CONFIG_CAN_PROTECT_RW_FLASH
+	switch (region) {
+	case VBPROTECT_RW_A:
+		VBDEBUG("%s( VBPROTECT_RW_A )\n", __func__);
+		break;
+	case VBPROTECT_RW_B:
+		VBDEBUG("%s( VBPROTECT_RW_B )\n", __func__);
+		break;
+	case VBPROTECT_RW_DEVKEY:
+		VBDEBUG("%s( VBPROTECT_RW_DEVKEY )\n", __func__);
+		break;
+	default:
+		VBDEBUG("%s( %d ??? )\n", __func__, region);
+		return VBERROR_INVALID_PARAMETER;
+	}
+	return VBERROR_SUCCESS;
+#else
+	VBDEBUG("%s not implemented on this platform\n", __func__);
+	return VBERROR_UNKNOWN;
+#endif
+}
+
 static int
 do_vboot_twostop(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {

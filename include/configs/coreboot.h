@@ -282,6 +282,9 @@
 /* x86 GPIOs are accessed through a PCI device */
 #define CONFIG_INTEL_ICH6_GPIO
 
+/* FIXME(wfrichar): Work in progress. crosbug.com/p/11215 */
+#define CONFIG_CAN_PROTECT_RW_FLASH
+
 /*-----------------------------------------------------------------------
  * USB configuration
  */
