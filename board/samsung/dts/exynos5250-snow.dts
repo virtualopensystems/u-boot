@@ -31,7 +31,12 @@
 		google,ec-claim-gpios = <&gpio 0xc4 0>;	/* E04 */
 		google,slew-delay-us = <10>;
 		google,wait-retry-us = <2000>;
-		google,wait-free-us = <50000>;
+
+		/*
+		 * TODO)sjg@chromium.org): Reduce to 50ms when EC I2C host
+		 * driver bugs are fixed.
+		 */
+		google,wait-free-us = <500000>;
 		google,arbitrate-bus = <&i2c4>;
 	};
 
