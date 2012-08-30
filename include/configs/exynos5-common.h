@@ -204,4 +204,10 @@
 /* We spend about 100us getting from reset to SPL */
 #define CONFIG_SPL_TIME_US	100000
 
+/* Stringify a token */
+#ifndef STRINGIFY
+#define _STRINGIFY(x)	#x
+#define STRINGIFY(x)	_STRINGIFY(x)
+#endif
+
 #endif	/* __EXYNOS5_CONFIG_H */
