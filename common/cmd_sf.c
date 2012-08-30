@@ -293,6 +293,152 @@ static int do_spi_flash_erase(int argc, char * const argv[])
 	return 0;
 }
 
+enum {
+	STAGE_ERASE,
+	STAGE_CHECK,
+	STAGE_WRITE,
+	STAGE_READ,
+
+	STAGE_COUNT,
+};
+
+static char *stage_name[STAGE_COUNT] = {
+	"erase",
+	"check",
+	"write",
+	"read",
+};
+
+struct test_info {
+	int stage;
+	int bytes;
+	unsigned base_us;
+	unsigned time_us[STAGE_COUNT];
+};
+
+static void show_time(struct test_info *test, int stage)
+{
+	int speed;	/* KiB/s */
+	int bps;	/* Bits per second */
+
+	speed = (long long)test->bytes * 1000000 / test->time_us[stage] / 1024;
+	bps = speed * 1024 * 8;
+
+	printf("%d %s: %d: %d KiB/s %d.%06d Mbps\n", stage, stage_name[stage],
+	       test->time_us[stage], speed, bps / 1000000, bps % 1000000);
+}
+
+static void spi_test_next_stage(struct test_info *test)
+{
+	unsigned now = timer_get_us();
+
+	test->time_us[test->stage] = now - test->base_us;
+	show_time(test, test->stage);
+	test->base_us = timer_get_us();
+	test->stage++;
+}
+
+/**
+ * Run a test on the SPI flash
+ *
+ * @param flash		SPI flash to use
+ * @param buf		Source buffer for data to write
+ * @param len		Size of data to read/write
+ * @param offset	Offset within flash to check
+ * @param vbuf		Verification buffer
+ * @return 0 if ok, -1 on error
+ */
+static int spi_flash_test(struct spi_flash *flash, char *buf, ulong len,
+			   ulong offset, char *vbuf)
+{
+	struct test_info test;
+	int i;
+
+	printf("SPI flash test:\n");
+	memset(&test, '\0', sizeof(test));
+	test.base_us = timer_get_us();
+	test.bytes = len;
+	if (spi_flash_erase(flash, offset, len)) {
+		printf("Erase failed\n");
+		return -1;
+	}
+	spi_test_next_stage(&test);
+
+	if (spi_flash_read(flash, offset, len, vbuf)) {
+		printf("Check read failed\n");
+		return -1;
+	}
+	for (i = 0; i < len; i++) {
+		if (vbuf[i] != 0xff) {
+			printf("Check failed at %d\n", i);
+			print_buffer(i, vbuf + i, 1, min(len - i, 0x40), 0);
+			return -1;
+		}
+	}
+	spi_test_next_stage(&test);
+
+	if (spi_flash_write(flash, offset, len, buf)) {
+		printf("Write failed\n");
+		return -1;
+	}
+	memset(vbuf, '\0', len);
+	spi_test_next_stage(&test);
+
+	if (spi_flash_read(flash, offset, len, vbuf)) {
+		printf("Read failed\n");
+		return -1;
+	}
+	spi_test_next_stage(&test);
+
+	for (i = 0; i < len; i++) {
+		if (buf[i] != vbuf[i]) {
+			printf("Verify failed at %d, good data:\n", i);
+			print_buffer(i, buf + i, 1, min(len - i, 0x40), 0);
+			printf("Bad data:\n");
+			print_buffer(i, vbuf + i, 1, min(len - i, 0x40), 0);
+			return -1;
+		}
+	}
+	printf("Test passed\n");
+	for (i = 0; i < STAGE_COUNT; i++)
+		show_time(&test, i);
+
+	return 0;
+}
+
+static int do_spi_flash_test(void)
+{
+	/* TODO(sjg@chromium.org): Support cmdline parameters for these */
+	unsigned long offset = 0x8000;
+	unsigned long len = 0x100000;
+	char *buf = (char *)CONFIG_SYS_TEXT_BASE;
+	char *vbuf;
+	int ret;
+
+	vbuf = malloc(len);
+	if (!vbuf) {
+		printf("Cannot allocate memory\n");
+		return 1;
+	}
+	buf = malloc(len);
+	if (!buf) {
+		free(vbuf);
+		printf("Cannot allocate memory\n");
+		return 1;
+	}
+
+	memcpy(buf, (char *)CONFIG_SYS_TEXT_BASE, len);
+	ret = spi_flash_test(flash, buf, len, offset, vbuf);
+	free(vbuf);
+	free(buf);
+	if (ret) {
+		printf("Test failed\n");
+		return 1;
+	}
+
+	return 0;
+}
+
 static int do_spi_flash(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	const char *cmd;
@@ -322,6 +468,8 @@ static int do_spi_flash(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[
 		ret = do_spi_flash_read_write(argc, argv);
 	else if (strcmp(cmd, "erase") == 0)
 		ret = do_spi_flash_erase(argc, argv);
+	else if (!strcmp(cmd, "test"))
+		ret = do_spi_flash_test();
 	else
 		ret = -1;
 
