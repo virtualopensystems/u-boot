@@ -62,6 +62,7 @@ enum {
 	I2C_XFER_TIMEOUT_MS	= 35,	/* xfer to complete */
 	I2C_INIT_TIMEOUT_MS	= 1000,	/* bus free on init */
 	I2C_IDLE_TIMEOUT_MS	= 100,	/* waiting for bus idle */
+	I2C_STOP_TIMEOUT_US	= 200,	/* waiting for stop events */
 };
 
 /* We should not rely on any particular ordering of these IDs */
@@ -302,7 +303,7 @@ static int i2c_send_verify(struct s3c24x0_i2c *i2c, unsigned char buf[],
 			writel(buf[i], &i2c->iicds);
 			ReadWriteByte(i2c);
 			result = WaitForXfer(i2c);
-			if (!IsACK(i2c))
+			if (result == I2C_OK && !IsACK(i2c))
 				result = I2C_NACK;
 		}
 	} else {
@@ -338,6 +339,30 @@ void i2c_init(int speed, int slaveadd)
 	writel((readl(&gpio->b3.con) & ~0x00FF) | 0x0022, &gpio->b3.con);
 
 	i2c_ch_init(i2c->regs, speed, slaveadd);
+}
+
+/*
+ * Send a STOP event and wait for it to have completed
+ *
+ * @param mode	If it is a master transmitter or receiver
+ * @return I2C_OK if the line became idle before timeout I2C_NOK_TOUT otherwise
+ */
+static int i2c_send_stop(struct s3c24x0_i2c *i2c, int mode)
+{
+	int timeout;
+
+	/* Setting the STOP event to fire */
+	writel(mode | I2C_TXRX_ENA, &i2c->iicstat);
+	ReadWriteByte(i2c);
+
+	/* Wait for the STOP to send and the bus to go idle */
+	for (timeout = I2C_STOP_TIMEOUT_US; timeout > 0; timeout -= 5) {
+		if (!(readl(&i2c->iicstat) & I2CSTAT_BSY))
+			return I2C_OK;
+		udelay(5);
+	}
+
+	return I2C_NOK_TOUT;
 }
 
 /*
@@ -405,9 +430,7 @@ static int i2c_transfer(struct s3c24x0_i2c *i2c,
 		if (result == I2C_OK)
 			result = WaitForXfer(i2c);
 
-		/* send STOP */
-		writel(I2C_MODE_MT | I2C_TXRX_ENA, &i2c->iicstat);
-		ReadWriteByte(i2c);
+		i2c_send_stop(i2c, I2C_MODE_MT);
 		break;
 
 	case I2C_READ:
@@ -439,9 +462,7 @@ static int i2c_transfer(struct s3c24x0_i2c *i2c,
 			result = I2C_NACK;
 		}
 
-		/* send STOP */
-		writel(I2C_MODE_MR | I2C_TXRX_ENA, &i2c->iicstat);
-		ReadWriteByte(i2c);
+		i2c_send_stop(i2c, I2C_MODE_MR);
 		break;
 	}
 
