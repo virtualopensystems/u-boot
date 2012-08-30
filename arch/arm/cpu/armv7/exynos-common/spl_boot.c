@@ -101,7 +101,7 @@ static void spi_rx_tx(struct exynos_spi *regs, int todo,
 		if (rx_lvl >= 4 && in_bytes) {
 			temp = readl(&regs->rx_data);
 			if (rxp)
-				*rxp++ = be32_to_cpu(temp);
+				*rxp++ = temp;
 			in_bytes -= 4;
 		}
 	}
@@ -134,6 +134,10 @@ static void exynos_spi_copy(unsigned int uboot_size)
 	/* clear rx and tx channel if set priveously */
 	clrbits_le32(&regs->ch_cfg, SPI_RX_CH_ON | SPI_TX_CH_ON);
 
+	setbits_le32(&regs->swap_cfg, SPI_RX_SWAP_EN |
+		SPI_RX_BYTE_SWAP |
+		SPI_RX_HWORD_SWAP);
+
 	/* do a soft reset */
 	setbits_le32(&regs->ch_cfg, SPI_CH_RST);
 	clrbits_le32(&regs->ch_cfg, SPI_CH_RST);
@@ -162,6 +166,7 @@ static void exynos_spi_copy(unsigned int uboot_size)
 	 */
 	clrbits_le32(&regs->mode_cfg, SPI_MODE_CH_WIDTH_WORD |
 					SPI_MODE_BUS_WIDTH_WORD);
+	writel(0, &regs->swap_cfg);
 
 	/*
 	 * Flush spi tx, rx fifos and reset the SPI controller
