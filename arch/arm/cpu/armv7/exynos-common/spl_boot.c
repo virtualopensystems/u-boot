@@ -88,21 +88,24 @@ static void spi_rx_tx(struct exynos_spi *regs, int todo,
 	writel(((todo * 8) / 32) | SPI_PACKET_CNT_EN, &regs->pkt_cnt);
 
 	while (in_bytes) {
+		uint32_t spi_sts;
 		int temp;
 
-		uint32_t spi_sts = readl(&regs->spi_sts);
+		spi_sts = readl(&regs->spi_sts);
 		rx_lvl = ((spi_sts >> 15) & 0x7f);
 		tx_lvl = ((spi_sts >> 6) & 0x7f);
-		if (tx_lvl < 60 && out_bytes) {
+		while (tx_lvl < 32 && out_bytes) {
 			temp = 0xffffffff;
 			writel(temp, &regs->tx_data);
 			out_bytes -= 4;
+			tx_lvl += 4;
 		}
-		if (rx_lvl >= 4 && in_bytes) {
+		while (rx_lvl >= 4 && in_bytes) {
 			temp = readl(&regs->rx_data);
 			if (rxp)
 				*rxp++ = temp;
 			in_bytes -= 4;
+			rx_lvl -= 4;
 		}
 	}
 }
