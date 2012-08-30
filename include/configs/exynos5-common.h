@@ -64,7 +64,7 @@
 #define INFORM1_OFFSET			0x804
 
 /* Size of malloc() pool */
-#define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + (1 << 20))
+#define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + (4 << 20))
 
 /* select serial console configuration */
 #define CONFIG_SERIAL_MULTI
