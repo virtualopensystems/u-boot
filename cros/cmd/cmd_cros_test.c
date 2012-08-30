@@ -224,7 +224,8 @@ struct ssync_info {
 	struct twostop_fmap fmap;	/* Chrome OS Flash map */
 	uint8_t *old_data;		/* Buffer to hold old EC image */
 	uint8_t *new_data;		/* Buffer to hold new EC image */
-	int force;			/* force flashing even if the same */
+	int force;			/* Force flashing even if the same */
+	int verify;			/* Verify EC image after writing */
 	struct fdt_chrome_ec ec;	/* EC configuration */
 };
 
@@ -337,15 +338,18 @@ static int do_ssync(struct ssync_info *ssync, uint32_t offset, uint32_t size,
 		return ret;
 	}
 
-	puts("verify, ");
-	ret = mkbp_flash_read(ssync->dev, ssync->old_data, offset, size);
-	if (ret) {
-		debug("%s: Cannot write flash\n", __func__);
-		return ret;
-	}
-	if (memcmp(ssync->old_data, ssync->new_data, size)) {
-		debug("%s: Cannot verify flash\n", __func__);
-		return ret;
+	if (ssync->verify) {
+		puts("verify, ");
+		ret = mkbp_flash_read(ssync->dev, ssync->old_data, offset,
+				      size);
+		if (ret) {
+			debug("%s: Cannot write flash\n", __func__);
+			return ret;
+		}
+		if (memcmp(ssync->old_data, ssync->new_data, size)) {
+			debug("%s: Cannot verify flash\n", __func__);
+			return ret;
+		}
 	}
 
 	return 0;
@@ -399,7 +403,8 @@ static int process_region(struct ssync_info *ssync,
 	return 0;
 }
 
-int cros_test_swsync(struct mkbp_dev *dev, int region_mask, int force)
+int cros_test_swsync(struct mkbp_dev *dev, int region_mask, int force,
+		     int verify)
 {
 	struct ssync_info ssync;
 	ulong start, duration;
@@ -407,6 +412,7 @@ int cros_test_swsync(struct mkbp_dev *dev, int region_mask, int force)
 
 	ssync.dev = dev;
 	ssync.force = force;
+	ssync.verify = verify;
 
 	assert(dev);
 	if (cros_fdtdec_flashmap(gd->fdt_blob, &ssync.fmap)) {
@@ -457,10 +463,10 @@ static int do_cros_test_swsync(cmd_tbl_t *cmdtp, int flag,
 {
 	int region_mask = -1;
 	struct mkbp_dev *dev;
-	int region, force;
+	int region, force, verify;
 	int ret;
 
-	force = 0;
+	force = verify = 0;
 	dev = board_get_mkbp_dev();
 	if (!dev) {
 		printf("No MKBP device available\n");
@@ -469,8 +475,22 @@ static int do_cros_test_swsync(cmd_tbl_t *cmdtp, int flag,
 
 	argc--;
 	argv++;
-	if (argc > 0 && 0 == strcmp(*argv, "-f")) {
-		force = 1;
+	if (argc > 0 && *argv[0] == '-') {
+		const char *arg;
+
+		for (arg = argv[0] + 1; *arg; arg++) {
+			switch (*arg) {
+			case 'f':
+				force = 1;
+				break;
+			case 'v':
+				verify = 1;
+				break;
+			default:
+				return CMD_RET_USAGE;
+			}
+		}
+
 		argc--;
 		argv++;
 	}
@@ -484,7 +504,7 @@ static int do_cros_test_swsync(cmd_tbl_t *cmdtp, int flag,
 		region_mask = 1 << region;
 	}
 
-	ret = cros_test_swsync(dev, region_mask, force);
+	ret = cros_test_swsync(dev, region_mask, force, verify);
 	if (ret)
 		return 1;
 

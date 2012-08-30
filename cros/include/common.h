@@ -66,7 +66,9 @@ int display_clear(void);
  *				1 << EC_FLASH_REGION_RO: read-only
  *				1 << EC_FLASH_REGION_RW: read-write
  * @param force		Force update without checking existing contents
+ * @param verify	Verify EC contents after writing
  */
-int cros_test_swsync(struct mkbp_dev *dev, int region_mask, int force);
+int cros_test_swsync(struct mkbp_dev *dev, int region_mask, int force,
+		     int verify);
 
 #endif /* CHROMEOS_COMMON_H_ */
