@@ -273,6 +273,38 @@ static int ensure_region_writable(struct mkbp_dev *dev,
 	return 0;
 }
 
+/*
+ * Remove FMAP signature pollution from EC image
+ *
+ * crosbug.com/p/13143
+ *
+ * cros_bundle_firmware has a workaround which pollutes the fmap
+ * signature so that the RO EC binary doesn't include a valid fmap.
+ * This would confuse flashrom when it writes the firmware to SPI
+ * flash.
+ *
+ * As a result, we must fix this up here. This can be removed when
+ * flashrom is no longer involved with EC update (i.e. a pure
+ * software sync is done).
+ *
+ * This only needs to be done for the RO image, but we do it for both since
+ * the __fMAP__ signature doesn't exist in RW, so this code will have no
+ * effect.
+ */
+static void unpollute_image(uint8_t *data, int size)
+{
+	uint32_t *ptr, *end;
+
+	end = (uint32_t *)(data + size);
+	for (ptr = (uint32_t *)data; ptr < end - 1; ptr++) {
+		/* Look for __fMAP__ and change to __FMAP__ */
+		if (ptr[0] == 0x4d665f5f && ptr[1] == 0x5f5f5041) {
+			*ptr = 0x4d465f5f;
+			break;
+		}
+	}
+}
+
 static int do_ssync(struct ssync_info *ssync, uint32_t offset, uint32_t size,
 		    struct fmap_entry *entry)
 {
@@ -284,6 +316,8 @@ static int do_ssync(struct ssync_info *ssync, uint32_t offset, uint32_t size,
 		debug("%s: Cannot read firmware storage\n", __func__);
 		return -1;
 	}
+
+	unpollute_image(ssync->new_data, entry->length);
 
 	/*
 	* Do a sanity check on the image. This uses information about EC
