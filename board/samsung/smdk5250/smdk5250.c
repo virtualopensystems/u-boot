@@ -348,7 +348,7 @@ static int board_i2c_arb_init(const void *blob)
  * Fix-up the kernel device tree so the bridge pd_n and rst_n gpios accurately
  * reflect the current board rev.
  */
-void ft_board_setup(void *blob, bd_t *bd)
+static void ft_board_setup_gpios(void *blob, bd_t *bd)
 {
 	int ret, rev, np, len;
 	const struct fdt_property *prop;
@@ -386,6 +386,41 @@ void ft_board_setup(void *blob, bd_t *bd)
 		debug("%s: Could not delprop err=%d\n", __func__, ret);
 		return;
 	}
+}
+
+/**
+ * Fix-up the kernel device tree so the powered-while-resumed is added to MP
+ * device tree.
+ */
+static void ft_board_setup_tpm_resume(void *blob, bd_t *bd)
+{
+	const char kernel_tpm_compat[] = "infineon,slb9635tt";
+	const char prop_name[] = "powered-while-suspended";
+	int err, node, rev;
+
+	/* Only apply fixup to MP machine */
+	rev = board_get_revision();
+	if (!(rev == 0 || rev == 3))
+		return;
+
+	node = fdt_node_offset_by_compatible(blob, 0, kernel_tpm_compat);
+	if (node < 0) {
+		debug("%s: fail to find %s: %d\n", __func__,
+				kernel_tpm_compat, node);
+		return;
+	}
+
+	err = fdt_setprop(blob, node, prop_name, NULL, 0);
+	if (err) {
+		debug("%s: fail to setprop: %d\n", __func__, err);
+		return;
+	}
+}
+
+void ft_board_setup(void *blob, bd_t *bd)
+{
+	ft_board_setup_gpios(blob, bd);
+	ft_board_setup_tpm_resume(blob, bd);
 }
 
 #ifdef CONFIG_TPS65090_POWER

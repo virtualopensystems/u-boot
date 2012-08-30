@@ -208,6 +208,9 @@ static int bootm_linux_fdt(int machid, bootm_headers_t *images)
 		return ret;
 
 #ifdef CONFIG_OF_BOARD_SETUP
+	/* Try to reserve 1024 bytes for board fixups */
+	if (!fdt_open_into(*of_flat_tree, *of_flat_tree, of_size + 1024))
+		of_size += 1024;
 	/* Call the board-specific fixup routine */
 	ft_board_setup(*of_flat_tree, gd->bd);
 #endif
