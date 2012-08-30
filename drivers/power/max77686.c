@@ -116,7 +116,8 @@ static int max77686_enablereg(enum max77686_regnum reg, int enable)
 
 	pmic = &max77686_param[reg];
 
-	ret = max77686_i2c_read(MAX77686_I2C_ADDR, pmic->vol_addr, &read_data);
+	ret = max77686_i2c_read(MAX77686_I2C_ADDR, pmic->reg_enaddr,
+				&read_data);
 	if (ret != 0) {
 		debug("max77686 i2c read failed.\n");
 		return -1;
