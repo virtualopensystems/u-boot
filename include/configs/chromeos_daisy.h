@@ -31,9 +31,6 @@
 /* Use the default arch_phys_memset implementation */
 #define CONFIG_PHYSMEM
 
-/* TPM */
-#define CONFIG_INFINEON_TPM_I2C
-
 /* Adjust the display resolution. */
 #undef MAIN_VRESOL_VAL
 #undef MAIN_HRESOL_VAL

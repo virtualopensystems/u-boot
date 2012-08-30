@@ -138,6 +138,7 @@
 #define CONFIG_SYS_I2C_SLAVE	0x0
 
 /* TPM */
+#define CONFIG_INFINEON_TPM_I2C
 #define CONFIG_CMD_TPM
 
 /* Sound */
