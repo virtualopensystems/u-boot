@@ -390,8 +390,8 @@
 	"net_boot=setenv loadaddr 0x100000; "\
 		"setenv bootfile uImage; "\
 		"dhcp; "\
-		"setenv loadaddr 0x12008000; "\
 		"if test ${bootfile} != uImage; then source 0x100000; fi; "\
+		"setenv loadaddr 0x12008000; "\
 		"setenv bootfile rootImg; "\
 		"dhcp; "\
 		"bootm 0x100000 0x12008000\0"\
