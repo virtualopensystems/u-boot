@@ -381,4 +381,23 @@ int mkbp_flash_write(struct mkbp_dev *dev, const uint8_t *data,
 int mkbp_flash_offset(struct mkbp_dev *dev, enum ec_flash_region region,
 		      uint32_t *offset, uint32_t *size);
 
+/**
+ * Read the version information for the EC images
+ *
+ * @param dev		MKBP device
+ * @param versionp	This is set to point to the version information
+ * @return 0 if ok, -1 on error
+ */
+int mkbp_read_version(struct mkbp_dev *dev,
+		       struct ec_response_get_version **versionp);
+
+/**
+ * Read the build information for the EC
+ *
+ * @param dev		MKBP device
+ * @param versionp	This is set to point to the build string
+ * @return 0 if ok, -1 on error
+ */
+int mkbp_read_build_info(struct mkbp_dev *dev, char **strp);
+
 #endif

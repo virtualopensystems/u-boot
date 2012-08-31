@@ -53,6 +53,9 @@ static struct mkbp_dev static_dev, *last_dev;
 
 DECLARE_GLOBAL_DATA_PTR;
 
+/* Note: depends on enum ec_current_image */
+static const char * const ec_current_image_name[] = {"unknown", "RO", "RW"};
+
 void mkbp_dump_data(const char *name, int cmd, const uint8_t *data, int len)
 {
 #ifdef DEBUG
@@ -233,6 +236,28 @@ int mkbp_read_id(struct mkbp_dev *dev, char *id, int maxlen)
 	}
 
 	id[maxlen - 1] = '\0';
+	return 0;
+}
+
+int mkbp_read_version(struct mkbp_dev *dev,
+		       struct ec_response_get_version **versionp)
+{
+	*versionp = NULL;
+	if (ec_command(dev, EC_CMD_GET_VERSION, 0, NULL, 0,
+			(uint8_t **)versionp, sizeof(**versionp))
+			< sizeof(**versionp))
+		return -1;
+
+	return 0;
+}
+
+int mkbp_read_build_info(struct mkbp_dev *dev, char **strp)
+{
+	*strp = NULL;
+	if (ec_command(dev, EC_CMD_GET_BUILD_INFO, 0, NULL, 0,
+			(uint8_t **)strp, EC_HOST_PARAM_SIZE) < 0)
+		return -1;
+
 	return 0;
 }
 
@@ -977,6 +1002,28 @@ static int do_mkbp(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 			printf("Test failed with error %d\n", result);
 		else
 			puts("Test passed\n");
+	} else if (0 == strcmp("version", cmd)) {
+		struct ec_response_get_version *p;
+		char *build_string;
+
+		ret = mkbp_read_version(dev, &p);
+		if (!ret) {
+			/* Print versions */
+			printf("RO version:    %1.*s\n",
+			       sizeof(p->version_string_ro),
+			       p->version_string_ro);
+			printf("RW version:    %1.*s\n",
+			       sizeof(p->version_string_rw),
+			       p->version_string_rw);
+			printf("Firmware copy: %s\n",
+				(p->current_image <
+					ARRAY_SIZE(ec_current_image_name) ?
+				ec_current_image_name[p->current_image] :
+				"?"));
+			ret = mkbp_read_build_info(dev, &build_string);
+			if (!ret)
+				printf("Build info:    %s\n", build_string);
+		}
 	} else {
 		return CMD_RET_USAGE;
 	}
@@ -1004,6 +1051,7 @@ U_BOOT_CMD(
 	"mkbp erase <ro|rw>       Erase EC image\n"
 	"mkbp read <ro|rw> <addr> [<size>]   Read EC image\n"
 	"mkbp write <ro|rw> <addr> [<size>]  Write EC image\n"
-	"mkbp test                run tests on mkbp"
+	"mkbp test                run tests on mkbp\n"
+	"mkbp version             Read MKBP version"
 );
 #endif
