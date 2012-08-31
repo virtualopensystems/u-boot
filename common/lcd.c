@@ -194,7 +194,6 @@ static inline void console_newline (void)
 	if (console_row >= CONSOLE_ROWS) {
 		/* Scroll everything up */
 		console_scrollup () ;
-		--console_row;
 	} else {
 		lcd_sync();
 	}
