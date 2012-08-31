@@ -317,7 +317,7 @@ void boot_zimage(void *setup_base, void *load_address)
 	__asm__ __volatile__ (
 	"movl $0, %%ebp		\n"
 	"cli			\n"
-	"jmp %[kernel_entry]	\n"
+	"jmp *%[kernel_entry]	\n"
 	:: [kernel_entry]"a"(load_address),
 	   [boot_params] "S"(setup_base),
 	   "b"(0), "D"(0)
