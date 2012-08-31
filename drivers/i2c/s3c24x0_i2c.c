@@ -380,7 +380,7 @@ static int i2c_transfer(struct s3c24x0_i2c *i2c,
 			unsigned char data[],
 			unsigned short data_len)
 {
-	int i, result;
+	int i, result, stop_bit_result;
 
 	if (data == 0 || data_len == 0) {
 		/* Don't support data transfer of no length or to address 0 */
@@ -430,7 +430,7 @@ static int i2c_transfer(struct s3c24x0_i2c *i2c,
 		if (result == I2C_OK)
 			result = WaitForXfer(i2c);
 
-		i2c_send_stop(i2c, I2C_MODE_MT);
+		stop_bit_result = i2c_send_stop(i2c, I2C_MODE_MT);
 		break;
 
 	case I2C_READ:
@@ -462,17 +462,22 @@ static int i2c_transfer(struct s3c24x0_i2c *i2c,
 			result = I2C_NACK;
 		}
 
-		i2c_send_stop(i2c, I2C_MODE_MR);
+		stop_bit_result = i2c_send_stop(i2c, I2C_MODE_MR);
 		break;
 	}
 
 	default:
 		debug("i2c_transfer: bad call\n");
-		result = I2C_NOK;
+		result = stop_bit_result = I2C_NOK;
 		break;
 	}
 
-	return (result);
+	/*
+	 * If the transmission went fine, then only the stop bit was left to
+	 * fail.  Otherwise, the real failure we're interested in came before
+	 * that, during the actual transmission.
+	 */
+	return (result == I2C_OK) ? stop_bit_result : result;
 }
 
 int i2c_probe(uchar chip)
