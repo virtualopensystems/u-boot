@@ -71,4 +71,15 @@ int display_clear(void);
 int cros_test_swsync(struct mkbp_dev *dev, int region_mask, int force,
 		     int verify);
 
+/**
+ * Select a byte of the EC image to corrupt
+ *
+ * Next time verified boot calls VbExEcGetExpectedRW we will corrupt a single
+ * byte of the image.
+ *
+ * @param offset	Offset to corrupt (-1 for none)
+ * @param byte		Byte value to put into that offset
+ */
+void cros_ec_set_corrupt_image(int offset, int byte);
+
 #endif /* CHROMEOS_COMMON_H_ */

@@ -19,6 +19,17 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+/* We support corrupting a byte of the EC image */
+static int corrupt_offset = -1;	/* offset into image to corrupt */
+static uint8_t corrupt_byte;		/* new byte value at that offset */
+
+
+void cros_ec_set_corrupt_image(int offset, int byte)
+{
+	corrupt_offset = offset;
+	corrupt_byte = byte;
+}
+
 int VbExTrustEC(void)
 {
 	struct vboot_flag_details gpio_ec_in_rw;
@@ -258,6 +269,10 @@ VbError_t VbExEcGetExpectedRW(enum VbSelectFirmware_t select,
 	}
 
 	file.close(&file);
+
+	/* Corrupt a byte if requested */
+	if (corrupt_offset >= 0 && corrupt_offset < size)
+		buf[corrupt_offset] = corrupt_byte;
 
 	*image = buf;
 	*image_size = size;

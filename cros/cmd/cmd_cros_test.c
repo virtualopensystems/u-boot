@@ -25,6 +25,7 @@
 #include <smartbat.h>
 #include <tps65090.h>
 #include <asm/gpio.h>
+#include <cros/common.h>
 #include <cros/firmware_storage.h>
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -546,6 +547,28 @@ static int do_cros_test_swsync(cmd_tbl_t *cmdtp, int flag,
 }
 #endif /* CONFIG_MKBP */
 
+static int do_cros_test_corruptec(cmd_tbl_t *cmdtp, int flag,
+		int argc, char * const argv[])
+{
+	char *endp;
+	int offset;
+	int byte;
+
+	if (argc < 3)
+		return CMD_RET_USAGE;
+	offset = simple_strtoul(argv[1], &endp, 16);
+	if (*argv[1] == 0 || *endp != 0)
+		return CMD_RET_USAGE;
+	byte = simple_strtoul(argv[2], &endp, 16);
+	if (*argv[2] == 0 || *endp != 0)
+		return CMD_RET_USAGE;
+
+	printf("Setting byte at offset %#x to %#02x\n", offset, byte);
+	cros_ec_set_corrupt_image(offset, byte);
+
+	return 0;
+}
+
 static int do_cros_test_all(cmd_tbl_t *cmdtp, int flag,
 		int argc, char * const argv[])
 {
@@ -566,6 +589,7 @@ static cmd_tbl_t cmd_cros_test_sub[] = {
 #ifdef CONFIG_MKBP
 	U_BOOT_CMD_MKENT(swsync, 0, 1, do_cros_test_swsync, "", ""),
 #endif
+	U_BOOT_CMD_MKENT(corruptec, 0, 1, do_cros_test_corruptec, "", ""),
 	U_BOOT_CMD_MKENT(all, 0, 1, do_cros_test_all, "", ""),
 };
 
@@ -594,5 +618,7 @@ U_BOOT_CMD(cros_test, CONFIG_SYS_MAXARGS, 1, do_cros_test,
 	"i2creset   Try to reset i2c bus by holding clk, data low for 15s\n"
 	"i2cfiddle  Try to break TPSCHROME or the battery on i2c\n"
 	"swsync [-f] [ro|rw]   Flash the EC (read-only/read-write/both)\n"
-	"                         -f   Force update even if the same"
+	"                         -f   Force update even if the same\n"
+	"corruptec <offset> <byte>  Corrupt a single byte of the EC image"
+		"during verified boot"
 );
