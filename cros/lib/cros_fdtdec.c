@@ -148,7 +148,7 @@ static int process_fmap_node(const void *blob, int node, int depth,
 		return 0;
 	}
 
-	/* We are looking only for ro-, ro-a- and ro-b- */
+	/* We are looking only for ro-, rw-a- and rw-b- */
 	if (len < 4 || *name != 'r' || name[2] != '-')
 		return 0;
 	if (name[1] == 'o') {
