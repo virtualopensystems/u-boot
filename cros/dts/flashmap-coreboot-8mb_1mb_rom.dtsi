@@ -222,8 +222,8 @@
 			wipe-value = [ff];
 		};
 
-		rw-seabios {
-			label = "rw-seabios";
+		rw-legacy {
+			label = "rw-legacy";
 			reg = <0x00400000 0x00200000>;
 			read-only;
 		};
