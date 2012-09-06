@@ -149,7 +149,19 @@ int power_init(void)
 	/* init the i2c so that we can program pmic chip */
 	i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
 
-	error = max77686_volsetting(PMIC_BUCK2, CONFIG_VDD_ARM_MV,
+	/*
+	 * We're using CR1616 coin cell battery that is non-rechargeable
+	 * battery. But, BBCHOSTEN bit of the BBAT Charger Register in
+	 * MAX77686 is enabled by default for charging coin cell.
+	 *
+	 * Also, we cannot meet the coin cell reverse current spec. in UL
+	 * standard if BBCHOSTEN bit is enabled.
+	 *
+	 * Disable Coin BATT Charging
+	 */
+	error = max77686_disable_backup_batt();
+
+	error |= max77686_volsetting(PMIC_BUCK2, CONFIG_VDD_ARM_MV,
 						REG_ENABLE, MAX77686_MV);
 	error |= max77686_volsetting(PMIC_BUCK3, CONFIG_VDD_INT_UV,
 						REG_ENABLE, MAX77686_UV);

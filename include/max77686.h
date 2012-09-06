@@ -60,7 +60,8 @@ enum max77686_regnum {
 	PMIC_LDO24,
 	PMIC_LDO25,
 	PMIC_LDO26,
-	PMIC_EN32KHZ_CP
+	PMIC_EN32KHZ_CP,
+	PMIC_BBAT_HOSTEN,
 };
 
 /**
@@ -123,5 +124,12 @@ int max77686_enable_32khz_cp(void);
  */
 int max77686_volsetting(enum max77686_regnum reg, unsigned int volt,
 			int enable, int volt_units);
+
+/**
+ * Disable charging of the RTC backup battery
+ *
+ * @return		Return 0 if ok, else -1
+ */
+int max77686_disable_backup_batt(void);
 
 #endif /* __MAX77686_PMIC_H_ */
