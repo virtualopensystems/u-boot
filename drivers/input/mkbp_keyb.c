@@ -96,12 +96,8 @@ static int check_for_keys(struct keyb *config,
  */
 static int kbd_tstc(void)
 {
-	if (mkbp_interrupt_pending(config.dev)) {
-		/* Just get input to do this for us */
-		return input_tstc(&config.input);
-	}
-
-	return 0;
+	/* Just get input to do this for us */
+	return config.inited ? input_tstc(&config.input) : 0;
 }
 
 /**
@@ -126,11 +122,22 @@ static int kbd_getc(void)
  */
 int mkbp_kbc_check(struct input_config *input)
 {
+	static struct key_matrix_key last_keys[KBC_MAX_KEYS];
+	static int last_num_keys = 0;
 	struct key_matrix_key keys[KBC_MAX_KEYS];
 	int keycodes[KBC_MAX_KEYS];
 	int num_keys, num_keycodes;
 
-	num_keys = check_for_keys(&config, keys, KBC_MAX_KEYS);
+	if (mkbp_interrupt_pending(config.dev)) {
+		num_keys = check_for_keys(&config, keys, KBC_MAX_KEYS);
+		last_num_keys = num_keys;
+		memcpy(last_keys, keys, sizeof(keys));
+	} else {
+		/* EC doesn't want to be asked, so use keys from last time */
+		num_keys = last_num_keys;
+		memcpy(keys, last_keys, sizeof(keys));
+	}
+
 	if (num_keys < 0)
 		return -1;
 	num_keycodes = key_matrix_decode(&config.matrix, keys, num_keys,
