@@ -36,7 +36,7 @@
 
 		ro-section {
 			label = "ro-section";
-			reg = <0x00000000 0x001af000>;
+			reg = <0x00000000 0x0019f000>;
 			read-only;
 		};
 
@@ -81,20 +81,9 @@
 			ver-minor = <0>;
 		};
 
-		/* ---- Section: Vital-product data (VPD) ---- */
-		ro-vpd {
-			label = "ro-vpd";
-
-			/* VPD offset must be aligned to 4K bytes */
-			reg = <0x000b0000 0x0000ff00>;
-			read-only;
-			type = "wiped";
-			wipe-value = [ff];
-		};
-
 		ro-firmware-id {
 			label = "ro-frid";
-			reg = <0x000bff00 0x00000100>;
+			reg = <0x000aff00 0x00000100>;
 			read-only;
 			type = "blobstring fwid";
 		};
@@ -103,9 +92,20 @@
 			label = "gbb";
 
 			/* GBB offset must be aligned to 4K bytes */
-			reg = <0x000c0000 0x000ef000>;
+			reg = <0x000b0000 0x000ef000>;
 			read-only;
 			type = "blob gbb";
+		};
+
+		/* ---- Section: Vital-product data (VPD) ---- */
+		ro-vpd {
+			label = "ro-vpd";
+
+			/* VPD offset must be aligned to 4K bytes */
+			reg = <0x001a0000 0x00010000>;
+			read-only;
+			type = "wiped";
+			wipe-value = [ff];
 		};
 	};
 };
