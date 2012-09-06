@@ -28,6 +28,12 @@
 			read-only;
 		};
 
+		wp-ro {
+			label = "wp-ro";
+			reg = <0x00000000 0x00200000>;
+			read-only;
+		};
+
 		ro-section {
 			label = "ro-section";
 			reg = <0x00000000 0x001af000>;
