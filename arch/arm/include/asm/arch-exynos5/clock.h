@@ -107,7 +107,8 @@ struct exynos5_clock {
 	unsigned int	div_stat_sysrgt;
 	unsigned char	res21[0x2f4];
 	unsigned int	gate_ip_core;
-	unsigned char	res22[0xfc];
+	unsigned int	gate_ip_sysrgt;
+	unsigned char	res22[0xf8];
 	unsigned int	clkout_cmu_core;
 	unsigned int	clkout_cmu_core_div_stat;
 	unsigned char	res23[0x5f8];
@@ -137,7 +138,9 @@ struct exynos5_clock {
 	unsigned int	div_syslft;
 	unsigned char	res31b[0xc];
 	unsigned int	div_stat_syslft;
-	unsigned char	res31c[0xec];
+	unsigned char	res31c[0xc];
+	unsigned int	gate_bus_syslft;
+	unsigned char	res31d[0xdc];
 	unsigned int	clkout_cmu_acp;
 	unsigned int	clkout_cmu_acp_div_stat;
 	unsigned char	res32[0x38f8];

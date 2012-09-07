@@ -451,6 +451,9 @@
 /* CLK_GATE_IP_DISP1 */
 #define CLK_GATE_DP1_ALLOW	(1 << 4)
 
+/* CLK_GATE_IP_SYSRGT */
+#define CLK_C2C_MASK		(1 << 1)
+
 /* CLK_GATE_IP_ACP */
 #define CLK_SMMUG2D_MASK	(1 << 7)
 #define CLK_SMMUSSS_MASK	(1 << 6)
@@ -461,11 +464,74 @@
 #define CLK_MDMA_MASK		(1 << 1)
 #define CLK_SECJTAG_MASK	(1 << 0)
 
-/* Clock gate complete ISP */
-#define CLK_GATE_ISP0	0x203fc000
-#define CLK_GATE_ISP1	0xffffcf08
+/* CLK_GATE_BUS_SYSLFT */
+#define CLK_EFCLK_MASK		(1 << 16)
+
+/* CLK_GATE_IP_ISP0 */
+#define CLK_UART_ISP_MASK	(1 << 31)
+#define CLK_WDT_ISP_MASK	(1 << 30)
+#define CLK_PWM_ISP_MASK	(1 << 28)
+#define CLK_MTCADC_ISP_MASK	(1 << 27)
+#define CLK_I2C1_ISP_MASK	(1 << 26)
+#define CLK_I2C0_ISP_MASK	(1 << 25)
+#define CLK_MPWM_ISP_MASK	(1 << 24)
+#define CLK_MCUCTL_ISP_MASK	(1 << 23)
+#define CLK_INT_COMB_ISP_MASK	(1 << 22)
+#define CLK_SMMU_MCUISP_MASK	(1 << 13)
+#define CLK_SMMU_SCALERP_MASK	(1 << 12)
+#define CLK_SMMU_SCALERC_MASK	(1 << 11)
+#define CLK_SMMU_FD_MASK	(1 << 10)
+#define CLK_SMMU_DRC_MASK	(1 << 9)
+#define CLK_SMMU_ISP_MASK	(1 << 8)
+#define CLK_GICISP_MASK		(1 << 7)
+#define CLK_ARM9S_MASK		(1 << 6)
+#define CLK_MCUISP_MASK		(1 << 5)
+#define CLK_SCALERP_MASK	(1 << 4)
+#define CLK_SCALERC_MASK	(1 << 3)
+#define CLK_FD_MASK		(1 << 2)
+#define CLK_DRC_MASK		(1 << 1)
+#define CLK_ISP_MASK		(1 << 0)
+
+/* CLK_GATE_IP_ISP1 */
+#define CLK_SPI1_ISP_MASK	(1 << 13)
+#define CLK_SPI0_ISP_MASK	(1 << 12)
+#define CLK_SMMU3DNR_MASK	(1 << 7)
+#define CLK_SMMUDIS1_MASK	(1 << 6)
+#define CLK_SMMUDIS0_MASK	(1 << 5)
+#define CLK_SMMUODC_MASK	(1 << 4)
+#define CLK_3DNR_MASK		(1 << 2)
+#define CLK_DIS_MASK		(1 << 1)
+#define CLK_ODC_MASK		(1 << 0)
+
+/* CLK_GATE_IP_GSCL */
+#define CLK_SMMUFIMC_LITE2_MASK	(1 << 20)
+#define CLK_SMMUFIMC_LITE1_MASK	(1 << 12)
+#define CLK_SMMUFIMC_LITE0_MASK	(1 << 11)
+#define CLK_SMMUGSCL3_MASK	(1 << 10)
+#define CLK_SMMUGSCL2_MASK	(1 << 9)
+#define CLK_SMMUGSCL1_MASK	(1 << 8)
+#define CLK_SMMUGSCL0_MASK	(1 << 7)
+#define CLK_GSCL_WRAP_B_MASK	(1 << 6)
+#define CLK_GSCL_WRAP_A_MASK	(1 << 5)
+#define CLK_CAMIF_TOP_MASK	(1 << 4)
+#define CLK_GSCL3_MASK		(1 << 3)
+#define CLK_GSCL2_MASK		(1 << 2)
+#define CLK_GSCL1_MASK		(1 << 1)
+#define CLK_GSCL0_MASK		(1 << 0)
+
+/* CLK_GATE_IP_MFC */
+#define CLK_SMMUMFCR_MASK	(1 << 2)
+#define CLK_SMMUMFCL_MASK	(1 << 1)
+#define CLK_MFC_MASK		(1 << 0)
 
 #define SCLK_MPWM_ISP_MASK	(1 << 0)
+
+/* CLK_GATE_IP_DISP1 */
+#define CLK_SMMUTVX_MASK	(1 << 9)
+#define CLK_ASYNCTVX_MASK	(1 << 7)
+#define CLK_HDMI_MASK		(1 << 6)
+#define CLK_MIXER_MASK		(1 << 5)
+#define CLK_DSIM1_MASK		(1 << 3)
 
 /* CLK_GATE_IP_GEN */
 #define CLK_SMMUMDMA1_MASK	(1 << 9)
@@ -476,6 +542,7 @@
 #define CLK_ROTATOR_MASK	(1 << 1)
 
 /* CLK_GATE_IP_FSYS */
+#define CLK_WDT_IOP_MASK	(1 << 30)
 #define CLK_SMMUMCU_IOP_MASK	(1 << 26)
 #define CLK_SATA_PHY_I2C_MASK	(1 << 25)
 #define CLK_SATA_PHY_CTRL_MASK	(1 << 24)
@@ -483,6 +550,8 @@
 #define CLK_NFCON_MASK		(1 << 22)
 #define CLK_SMMURTIC_MASK	(1 << 11)
 #define CLK_RTIC_MASK		(1 << 9)
+#define CLK_MIPI_HSI_MASK	(1 << 8)
+#define CLK_USBOTG_MASK		(1 << 7)
 #define CLK_SATA_MASK		(1 << 6)
 #define CLK_PDMA1_MASK		(1 << 2)
 #define CLK_PDMA0_MASK		(1 << 1)
@@ -493,10 +562,37 @@
 #define CLK_HS_I2C2_MASK	(1 << 30)
 #define CLK_HS_I2C1_MASK	(1 << 29)
 #define CLK_HS_I2C0_MASK	(1 << 28)
+#define CLK_AC97_MASK		(1 << 27)
 #define CLK_SPDIF_MASK		(1 << 26)
+#define CLK_PCM2_MASK		(1 << 23)
+#define CLK_PCM1_MASK		(1 << 22)
+#define CLK_I2S2_MASK		(1 << 21)
+#define CLK_I2S1_MASK		(1 << 20)
+#define CLK_SPI2_MASK		(1 << 18)
+#define CLK_SPI0_MASK		(1 << 16)
 #define CLK_I2CHDMI_MASK	(1 << 14)
+#define CLK_I2C7_MASK		(1 << 13)
+#define CLK_I2C6_MASK		(1 << 12)
+#define CLK_I2C5_MASK		(1 << 11)
+#define CLK_I2C4_MASK		(1 << 10)
+#define CLK_I2C3_MASK		(1 << 9)
+#define CLK_I2C2_MASK		(1 << 8)
+#define CLK_I2C1_MASK		(1 << 7)
+#define CLK_I2C0_MASK		(1 << 6)
 
-#define CLK_GATE_IP_PERIS	0xffff003f
+/* CLK_GATE_IP_PERIS */
+#define CLK_RTC_MASK		(1 << 20)
+#define CLK_TZPC9_MASK		(1 << 15)
+#define CLK_TZPC8_MASK		(1 << 14)
+#define CLK_TZPC7_MASK		(1 << 13)
+#define CLK_TZPC6_MASK		(1 << 12)
+#define CLK_TZPC5_MASK		(1 << 11)
+#define CLK_TZPC4_MASK		(1 << 10)
+#define CLK_TZPC3_MASK		(1 << 9)
+#define CLK_TZPC2_MASK		(1 << 8)
+#define CLK_TZPC1_MASK		(1 << 7)
+#define CLK_TZPC0_MASK		(1 << 6)
+#define CLK_CHIPID_MASK		(1 << 0)
 
 /* CLK_GATE_BLOCK */
 #define CLK_ACP_MASK	(1 << 7)

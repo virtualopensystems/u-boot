@@ -768,62 +768,148 @@ void clock_gate(void)
 {
 	struct exynos5_clock *clk = (struct exynos5_clock *)EXYNOS5_CLOCK_BASE;
 
-	/* CLK_GATE_IP_ACP */
-	clrbits_le32(&clk->gate_ip_acp, CLK_SMMUG2D_MASK);
-	clrbits_le32(&clk->gate_ip_acp, CLK_SMMUSSS_MASK);
-	clrbits_le32(&clk->gate_ip_acp, CLK_SMMUMDMA_MASK);
-	clrbits_le32(&clk->gate_ip_acp, CLK_ID_REMAPPER_MASK);
-	clrbits_le32(&clk->gate_ip_acp, CLK_G2D_MASK);
-	clrbits_le32(&clk->gate_ip_acp, CLK_SSS_MASK);
-	clrbits_le32(&clk->gate_ip_acp, CLK_MDMA_MASK);
-	clrbits_le32(&clk->gate_ip_acp, CLK_SECJTAG_MASK);
+	/* CLK_GATE_IP_SYSRGT */
+	clrbits_le32(&clk->gate_ip_sysrgt, CLK_C2C_MASK);
 
-	/* CLK_GATE_IP_ISP */
-	writel(CLK_GATE_ISP0, &clk->gate_ip_isp0);
-	writel(CLK_GATE_ISP1, &clk->gate_ip_isp1);
+	/* CLK_GATE_IP_ACP */
+	clrbits_le32(&clk->gate_ip_acp, CLK_SMMUG2D_MASK |
+					CLK_SMMUSSS_MASK |
+					CLK_SMMUMDMA_MASK |
+					CLK_ID_REMAPPER_MASK |
+					CLK_G2D_MASK |
+					CLK_SSS_MASK |
+					CLK_MDMA_MASK |
+					CLK_SECJTAG_MASK);
+
+	/* CLK_GATE_BUS_SYSLFT */
+	clrbits_le32(&clk->gate_bus_syslft, CLK_EFCLK_MASK);
+
+	/* CLK_GATE_IP_ISP0 */
+	clrbits_le32(&clk->gate_ip_isp0, CLK_UART_ISP_MASK |
+					 CLK_WDT_ISP_MASK |
+					 CLK_PWM_ISP_MASK |
+					 CLK_MTCADC_ISP_MASK |
+					 CLK_I2C1_ISP_MASK |
+					 CLK_I2C0_ISP_MASK |
+					 CLK_MPWM_ISP_MASK |
+					 CLK_MCUCTL_ISP_MASK |
+					 CLK_INT_COMB_ISP_MASK |
+					 CLK_SMMU_MCUISP_MASK |
+					 CLK_SMMU_SCALERP_MASK |
+					 CLK_SMMU_SCALERC_MASK |
+					 CLK_SMMU_FD_MASK |
+					 CLK_SMMU_DRC_MASK |
+					 CLK_SMMU_ISP_MASK |
+					 CLK_GICISP_MASK |
+					 CLK_ARM9S_MASK |
+					 CLK_MCUISP_MASK |
+					 CLK_SCALERP_MASK |
+					 CLK_SCALERC_MASK |
+					 CLK_FD_MASK |
+					 CLK_DRC_MASK |
+					 CLK_ISP_MASK);
+
+	/* CLK_GATE_IP_ISP1 */
+	clrbits_le32(&clk->gate_ip_isp1, CLK_SPI1_ISP_MASK |
+					 CLK_SPI0_ISP_MASK |
+					 CLK_SMMU3DNR_MASK |
+					 CLK_SMMUDIS1_MASK |
+					 CLK_SMMUDIS0_MASK |
+					 CLK_SMMUODC_MASK |
+					 CLK_3DNR_MASK |
+					 CLK_DIS_MASK |
+					 CLK_ODC_MASK);
+
+	/* CLK_GATE_SCLK_ISP */
 	clrbits_le32(&clk->gate_sclk_isp, SCLK_MPWM_ISP_MASK);
 
+	/* CLK_GATE_IP_GSCL */
+	clrbits_le32(&clk->gate_ip_gscl, CLK_SMMUFIMC_LITE2_MASK |
+					 CLK_SMMUFIMC_LITE1_MASK |
+					 CLK_SMMUFIMC_LITE0_MASK |
+					 CLK_SMMUGSCL3_MASK |
+					 CLK_SMMUGSCL2_MASK |
+					 CLK_SMMUGSCL1_MASK |
+					 CLK_SMMUGSCL0_MASK |
+					 CLK_GSCL_WRAP_B_MASK |
+					 CLK_GSCL_WRAP_A_MASK |
+					 CLK_CAMIF_TOP_MASK |
+					 CLK_GSCL3_MASK |
+					 CLK_GSCL2_MASK |
+					 CLK_GSCL1_MASK |
+					 CLK_GSCL0_MASK);
+
+	/* CLK_GATE_IP_DISP1 */
+	clrbits_le32(&clk->gate_ip_disp1, CLK_SMMUTVX_MASK |
+					  CLK_ASYNCTVX_MASK |
+					  CLK_HDMI_MASK |
+					  CLK_MIXER_MASK |
+					  CLK_DSIM1_MASK);
+
+	/* CLK_GATE_IP_MFC */
+	clrbits_le32(&clk->gate_ip_mfc, CLK_SMMUMFCR_MASK |
+					CLK_SMMUMFCL_MASK |
+					CLK_MFC_MASK);
+
 	/* CLK_GATE_IP_GEN */
-	clrbits_le32(&clk->gate_ip_gen, CLK_SMMUMDMA1_MASK);
-	clrbits_le32(&clk->gate_ip_gen, CLK_SMMUJPEG_MASK);
-	clrbits_le32(&clk->gate_ip_gen, CLK_SMMUROTATOR_MASK);
-	clrbits_le32(&clk->gate_ip_gen, CLK_MDMA1_MASK);
-	clrbits_le32(&clk->gate_ip_gen, CLK_JPEG_MASK);
-	clrbits_le32(&clk->gate_ip_gen, CLK_ROTATOR_MASK);
+	clrbits_le32(&clk->gate_ip_gen, CLK_SMMUMDMA1_MASK |
+					CLK_SMMUJPEG_MASK |
+					CLK_SMMUROTATOR_MASK |
+					CLK_MDMA1_MASK |
+					CLK_JPEG_MASK |
+					CLK_ROTATOR_MASK);
 
 	/* CLK_GATE_IP_FSYS */
-	clrbits_le32(&clk->gate_ip_fsys, CLK_SMMUMCU_IOP_MASK);
-	clrbits_le32(&clk->gate_ip_fsys, CLK_SATA_PHY_I2C_MASK);
-	clrbits_le32(&clk->gate_ip_fsys, CLK_SATA_PHY_CTRL_MASK);
-	clrbits_le32(&clk->gate_ip_fsys, CLK_MCUCTL_MASK);
-	clrbits_le32(&clk->gate_ip_fsys, CLK_NFCON_MASK);
-	clrbits_le32(&clk->gate_ip_fsys, CLK_SMMURTIC_MASK);
-	clrbits_le32(&clk->gate_ip_fsys, CLK_RTIC_MASK);
-	clrbits_le32(&clk->gate_ip_fsys, CLK_SATA_MASK);
-	clrbits_le32(&clk->gate_ip_fsys, CLK_PDMA1_MASK);
-	clrbits_le32(&clk->gate_ip_fsys, CLK_PDMA0_MASK);
-	clrbits_le32(&clk->gate_ip_fsys, CLK_MCU_IOP_MASK);
+	clrbits_le32(&clk->gate_ip_fsys, CLK_WDT_IOP_MASK |
+					 CLK_SMMUMCU_IOP_MASK |
+					 CLK_SATA_PHY_I2C_MASK |
+					 CLK_SATA_PHY_CTRL_MASK |
+					 CLK_MCUCTL_MASK |
+					 CLK_NFCON_MASK |
+					 CLK_SMMURTIC_MASK |
+					 CLK_RTIC_MASK |
+					 CLK_MIPI_HSI_MASK |
+					 CLK_USBOTG_MASK |
+					 CLK_SATA_MASK |
+					 CLK_PDMA1_MASK |
+					 CLK_PDMA0_MASK |
+					 CLK_MCU_IOP_MASK);
 
 	/* CLK_GATE_IP_PERIC */
-	clrbits_le32(&clk->gate_ip_peric, CLK_HS_I2C3_MASK);
-	clrbits_le32(&clk->gate_ip_peric, CLK_HS_I2C2_MASK);
-	clrbits_le32(&clk->gate_ip_peric, CLK_HS_I2C1_MASK);
-	clrbits_le32(&clk->gate_ip_peric, CLK_HS_I2C0_MASK);
-	clrbits_le32(&clk->gate_ip_peric, CLK_SPDIF_MASK);
-	clrbits_le32(&clk->gate_ip_peric, CLK_I2CHDMI_MASK);
+	clrbits_le32(&clk->gate_ip_peric, CLK_HS_I2C3_MASK |
+					  CLK_HS_I2C2_MASK |
+					  CLK_HS_I2C1_MASK |
+					  CLK_HS_I2C0_MASK |
+					  CLK_AC97_MASK |
+					  CLK_SPDIF_MASK |
+					  CLK_PCM2_MASK |
+					  CLK_PCM1_MASK |
+					  CLK_I2S2_MASK |
+					  CLK_I2S1_MASK |
+					  CLK_SPI2_MASK |
+					  CLK_SPI0_MASK);
 
-	/* CLK_GATE_IP_PERIS
-	 * Mainly TZPC 0-9, PKEY0-1 are gated
-	 */
-	writel(CLK_GATE_IP_PERIS, &clk->gate_ip_peris);
+	/* CLK_GATE_IP_PERIS */
+	clrbits_le32(&clk->gate_ip_peris, CLK_RTC_MASK |
+					  CLK_TZPC9_MASK |
+					  CLK_TZPC8_MASK |
+					  CLK_TZPC7_MASK |
+					  CLK_TZPC6_MASK |
+					  CLK_TZPC5_MASK |
+					  CLK_TZPC4_MASK |
+					  CLK_TZPC3_MASK |
+					  CLK_TZPC2_MASK |
+					  CLK_TZPC1_MASK |
+					  CLK_TZPC0_MASK |
+					  CLK_CHIPID_MASK);
 
 	/* CLK_GATE_BLOCK */
 	clrbits_le32(&clk->gate_block, CLK_ACP_MASK);
 
 	/* CLK_GATE_IP_CDREX */
-	clrbits_le32(&clk->gate_ip_cdrex, CLK_DPHY0_MASK);
-	clrbits_le32(&clk->gate_ip_cdrex, CLK_DPHY1_MASK);
-	clrbits_le32(&clk->gate_ip_cdrex, CLK_TZASC_DRBXR_MASK);
+	clrbits_le32(&clk->gate_ip_cdrex, CLK_DPHY0_MASK |
+					  CLK_DPHY1_MASK |
+					  CLK_TZASC_DRBXR_MASK);
 
 }
 
