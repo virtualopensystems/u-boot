@@ -163,7 +163,14 @@ int tps65090_fet_enable(unsigned int fet_id)
 	}
 	if (!(reg & FET_CTRL_PGFET)) {
 		debug("still no power after enable FET%d\n", fet_id);
-		ret = -2;
+
+		/*
+		 * Unfortunately, there are some conditions where the power
+		 * good bit will be 0, but the fet still comes up. One such
+		 * case occurs with the lcd backlight. We'll just return 0 here
+		 * and assume that the fet will eventually come up.
+		 */
+		ret = 0;
 	}
 out:
 	tps65090_deselect();
