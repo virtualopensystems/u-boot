@@ -53,6 +53,13 @@ enum {
 };
 /* TODO(reinauer) other recovery reasons? */
 
+enum {
+	NONVOLATILE_STORAGE_NONE	= 0,
+	NONVOLATILE_STORAGE_NVRAM	= 1,
+	NONVOLATILE_STORAGE_DISK	= 2,
+	NONVOLATILE_STORAGE_MKBP	= 3,
+};
+
 /* the data blob format */
 typedef struct {
 	/* Header of crossystem data blob */
@@ -107,6 +114,7 @@ typedef struct {
 			uint64_t	nonvolatile_context_lba;
 			uint16_t	nonvolatile_context_offset;
 			uint16_t	nonvolatile_context_size;
+			uint8_t		nonvolatile_context_storage;
 		} arm;
 	} board;
 

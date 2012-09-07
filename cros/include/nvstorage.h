@@ -23,6 +23,23 @@
 
 int nvstorage_init(void);
 
+/**
+ * Get current type of non-volatile storage, which is a 8-bit enum value
+ * defined in crossystem.h.
+ *
+ * @return	Current type of non-volatile storage.
+ */
+uint8_t nvstorage_get_type(void);
+
+/**
+ * Set new storage type; if new type is different from old, driver is reloaded.
+ *
+ * @param type	New storage type, which is a 8-bit enum value defined in
+ *		crossystem.h.
+ * @return	0 on success, non-0 on error.
+ */
+int nvstorage_set_type(uint8_t type);
+
 /*
  * Declarations of implementations of VbExNvStorageRead and
  * VbExNvStorageWrite on various storage media.

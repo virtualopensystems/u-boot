@@ -23,6 +23,7 @@
 #include <cros/gbb.h>
 #include <cros/hasher_state.h>
 #include <cros/memory_wipe.h>
+#include <cros/nvstorage.h>
 #include <cros/power_management.h>
 #include <cros/vboot_flag.h>
 #include <usb.h>
@@ -1088,6 +1089,22 @@ twostop_readwrite_main_firmware(void)
 	if (setup_gbb_and_cdata(&gbb, &gbb_size, &cdata, 1))
 		return TWOSTOP_SELECT_ERROR;
 	static_gbb = gbb;
+
+#ifdef CONFIG_ARM
+	uint8_t ro_nvtype = cdata->board.arm.nonvolatile_context_storage;
+	if (ro_nvtype == NONVOLATILE_STORAGE_NONE) {
+		/*
+		 * RO did not set storage type; RO is probably an older
+		 * version of firmware.  Let's use RW's type instead.
+		 */
+		cdata->board.arm.nonvolatile_context_storage =
+			nvstorage_get_type();
+	} else {
+		/* RW has to use the storage type that RO was using. */
+		if (nvstorage_set_type(ro_nvtype))
+			return TWOSTOP_SELECT_ERROR;
+	}
+#endif /* CONFIG_ARM */
 
 	/*
 	 * VbSelectAndLoadKernel() assumes the TPM interface has already been

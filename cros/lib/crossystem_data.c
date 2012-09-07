@@ -99,6 +99,7 @@ int crossystem_data_init(crossystem_data_t *cdata,
 	cdata->board.arm.nonvolatile_context_lba = CHROMEOS_VBNVCONTEXT_LBA;
 	cdata->board.arm.nonvolatile_context_offset = 0;
 	cdata->board.arm.nonvolatile_context_size = VBNV_BLOCK_SIZE;
+	cdata->board.arm.nonvolatile_context_storage = nvstorage_get_type();
 #endif
 
 	return 0;
@@ -229,13 +230,34 @@ int crossystem_data_embed_into_fdt(crossystem_data_t *cdata, void *fdt,
 			readonly_firmware_id);
 
 #ifdef CONFIG_ARM
-	err |= set_scalar_prop("nonvolatile-context-lba",
-			board.arm.nonvolatile_context_lba);
-	err |= set_scalar_prop("nonvolatile-context-offset",
-			board.arm.nonvolatile_context_offset);
-	err |= set_scalar_prop("nonvolatile-context-size",
-			board.arm.nonvolatile_context_size);
-#endif
+	switch (cdata->board.arm.nonvolatile_context_storage) {
+	case NONVOLATILE_STORAGE_NVRAM:
+		err |= fdt_setprop(fdt, nodeoffset,
+				"nonvolatile-context-storage",
+				"nvram", sizeof("nvram"));
+		break;
+	case NONVOLATILE_STORAGE_MKBP:
+		err |= fdt_setprop(fdt, nodeoffset,
+				"nonvolatile-context-storage",
+				"mkbp", sizeof("mkbp"));
+		break;
+	case NONVOLATILE_STORAGE_DISK:
+		err |= fdt_setprop(fdt, nodeoffset,
+				"nonvolatile-context-storage",
+				"disk", sizeof("disk"));
+		err |= set_scalar_prop("nonvolatile-context-lba",
+				board.arm.nonvolatile_context_lba);
+		err |= set_scalar_prop("nonvolatile-context-offset",
+				board.arm.nonvolatile_context_offset);
+		err |= set_scalar_prop("nonvolatile-context-size",
+				board.arm.nonvolatile_context_size);
+		break;
+	default:
+		VBDEBUG("Could not match nonvolatile_context_storage: %d\n",
+				cdata->board.arm.nonvolatile_context_storage);
+		err = 1;
+	}
+#endif /* CONFIG_ARM */
 
 	err |= set_array_prop("vboot-shared-data", vb_shared_data);
 
@@ -340,6 +362,7 @@ void crossystem_data_dump(crossystem_data_t *cdata)
 	_p("%08llx",	board.arm.nonvolatile_context_lba);
 	_p("%08x",	board.arm.nonvolatile_context_offset);
 	_p("%08x",	board.arm.nonvolatile_context_size);
+	_p("%08x",	board.arm.nonvolatile_context_storage);
 #endif
 #undef _p
 }
