@@ -81,17 +81,6 @@
 
 #ifndef __ASSEMBLY__
 
-/**
- * Read and clear the marker value; then return the read value.
- *
- * This marker is set to EXYNOS5_SPL_MARKER when SPL runs. Then in U-Boot
- * we can check (and clear) this marker to see if we were run from SPL.
- * If we were called from another U-Boot, the marker will be clear.
- *
- * @return marker value (EXYNOS5_SPL_MARKER if we were run from SPL, else 0)
- */
-uint32_t exynos5_read_and_clear_spl_marker(void);
-
 #define SAMSUNG_BASE(device, base)				\
 static inline unsigned int samsung_get_base_##device(void)	\
 {								\
