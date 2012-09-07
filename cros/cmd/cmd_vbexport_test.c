@@ -590,6 +590,76 @@ static int do_vbexport_test_isshutdown(cmd_tbl_t *cmdtp, int flag,
 	return 0;
 }
 
+static int do_vbexport_test_image(cmd_tbl_t *cmdtp, int flag,
+		int argc, char * const argv[])
+{
+	uint32_t width, height;
+	GoogleBinaryBlockHeader *gbbh;
+	BmpBlockHeader *bmph;
+	ScreenLayout *screens;
+	int snum, locale = 0;
+
+	if (argc > 1)
+		locale = simple_strtoul(argv[1], NULL, 10);
+
+	if (VbExDisplayInit(&width, &height)) {
+		VbExDebug("Failed to init display.\n");
+		return 1;
+	}
+
+	gbbh = (GoogleBinaryBlockHeader *)read_gbb_from_firmware();
+	if (!gbbh) {
+		VbExDebug("Cannot read GBB\n");
+		return 1;
+	}
+
+	bmph = (BmpBlockHeader *)((uint8_t *)gbbh + gbbh->bmpfv_offset);
+	screens = (ScreenLayout *)(bmph + 1);
+
+	VbExDebug("Total screen layouts: %d\n", bmph->number_of_screenlayouts);
+	VbExDebug("Total localizations: %d\n", bmph->number_of_localizations);
+	VbExDebug("Total images: %d\n", bmph->number_of_imageinfos);
+	VbExDebug("bmpfv_offset=%#x, size=%#x\n", gbbh->bmpfv_offset,
+		  gbbh->bmpfv_size);
+
+	if (locale >= bmph->number_of_localizations) {
+		VbExDebug("Selected localization is out of range\n");
+		return 1;
+	}
+
+	/* Select the correct block */
+	screens += locale * bmph->number_of_screenlayouts;
+
+	for (snum = 0; snum < bmph->number_of_screenlayouts; snum++) {
+		ScreenLayout *screen = &screens[snum];
+		ImageInfo *image;
+		int inum;
+
+		VbExDebug("Screen: %d\n", snum);
+		for (inum = 0; inum < MAX_IMAGE_IN_LAYOUT; inum++) {
+			if (!screen->images[inum].image_info_offset)
+				break;
+			image = (ImageInfo *)((uint8_t *)bmph +
+				screen->images[inum].image_info_offset);
+			VbExDebug("   Image: %d at %d, %d: offset=%#x, "
+				"size=%#x, end=%#x\n", inum,
+				  screen->images[inum].x,
+				  screen->images[inum].y,
+				  gbbh->bmpfv_offset +
+					screen->images[inum].image_info_offset,
+				  image->compressed_size,
+				  gbbh->bmpfv_offset +
+				  screen->images[inum].image_info_offset +
+					image->compressed_size);
+			show_image(image, screen->images[inum].x,
+				   screen->images[inum].y);
+		}
+		mdelay(500);
+	}
+
+	return 0;
+}
+
 static int do_vbexport_test_all(cmd_tbl_t *cmdtp, int flag,
 		int argc, char * const argv[])
 {
@@ -630,6 +700,7 @@ static cmd_tbl_t cmd_vbexport_test_sub[] = {
 	U_BOOT_CMD_MKENT(key, 0, 1, do_vbexport_test_key, "", ""),
 	U_BOOT_CMD_MKENT(display, 0, 1, do_vbexport_test_display, "", ""),
 	U_BOOT_CMD_MKENT(isshutdown, 0, 1, do_vbexport_test_isshutdown, "", ""),
+	U_BOOT_CMD_MKENT(image, 0, 1, do_vbexport_test_image, "", ""),
 };
 
 static int do_vbexport_test(cmd_tbl_t *cmdtp, int flag,
@@ -664,7 +735,8 @@ U_BOOT_CMD(vbexport_test, CONFIG_SYS_MAXARGS, 1, do_vbexport_test,
 	"vbexport_test nvclear - clear the nvstorage content\n"
 	"vbexport_test nvrw - test the nvstorage read and write functions\n"
 	"vbexport_test key - test the keyboard read function\n"
-	"vbexport_test display [screen [local]] - test display functions\n"
+	"vbexport_test display [screen [locale]] - test display functions\n"
 	"vbexport_test isshutdown - check if shutdown requested\n"
+	"vbexport_test image [locale] - show bmp images\n"
 );
 
