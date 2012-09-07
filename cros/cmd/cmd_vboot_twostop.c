@@ -99,6 +99,48 @@ enum {
 	TWOSTOP_SELECT_COMMAND_LINE
 };
 
+/*
+ * TODO(sjg@chromium.org)
+ *
+ * This is non-zero if we have read the BMP block into our gbb region.
+ * This provides a work-around to allow us to read the BMP block when we
+ * think it will be needed. The correct solution is to have vboot ask for
+ * particular fragments of the GBB as needed. TBD.
+ */
+static int have_read_gbb_bmp_block;
+static void *static_gbb;		/* Pointer to GBB data */
+
+
+int cros_cboot_twostop_read_bmp_block(void)
+{
+	/* Yet another use of this evil #define */
+#ifndef CONFIG_HARDWARE_MAPPED_SPI
+	struct twostop_fmap fmap;
+	firmware_storage_t file;
+	int ret;
+
+	if (have_read_gbb_bmp_block)
+		return 0;
+
+	if (cros_fdtdec_flashmap(gd->fdt_blob, &fmap)) {
+		VBDEBUG("failed to decode fmap\n");
+		return -1;
+	}
+
+	if (firmware_storage_open_spi(&file)) {
+		VBDEBUG("failed to open firmware storage\n");
+		return -1;
+	}
+
+	ret = gbb_read_bmp_block(static_gbb, &file, fmap.readonly.gbb.offset,
+				  fmap.readonly.gbb.length);
+	file.close(&file);
+	if (ret)
+		return -1;
+	have_read_gbb_bmp_block = 1;
+#endif /* CONFIG_HARDWARE_MAPPED_SPI */
+	return 0;
+}
 
 #if defined(VBOOT_DEBUG) || defined(DEBUG)
 #define MY_ENUM_TO_STR(a) #a
@@ -461,9 +503,11 @@ twostop_init_vboot_library(firmware_storage_t *file, void *gbb,
 		wipe_unused_memory(cdata, cparams);
 
 	/* Load required information of GBB */
-	if (iparams.out_flags & VB_INIT_OUT_ENABLE_DISPLAY)
+	if (iparams.out_flags & VB_INIT_OUT_ENABLE_DISPLAY) {
 		if (gbb_read_bmp_block(gbb, file, gbb_offset, gbb_size))
 			return VBERROR_INVALID_GBB;
+		have_read_gbb_bmp_block = 1;
+	}
 	if (cdata->boot_developer_switch ||
 			iparams.out_flags & VB_INIT_OUT_ENABLE_RECOVERY) {
 		if (gbb_read_recovery_key(gbb, file, gbb_offset, gbb_size))
@@ -839,7 +883,10 @@ twostop_main_firmware(struct twostop_fmap *fmap, void *gbb,
 			kparams.kernel_buffer_size);
 
 #ifdef CONFIG_EXYNOS_DISPLAYPORT
-	/* Make sure the LCD is up before we load the kernel */
+	/*
+	 * Make sure the LCD is up before we load the kernel. Partly this
+	 * is because VbSelectAndLoadKernel may do a software sync.
+	 */
 	exynos_lcd_check_next_stage(gd->fdt_blob, 1);
 #endif
 
@@ -963,6 +1010,7 @@ twostop_boot(int stop_at_select)
 		VBDEBUG("failed to init twostop boot\n");
 		return TWOSTOP_SELECT_ERROR;
 	}
+	static_gbb = gbb;
 
 	selection = twostop_select_and_set_main_firmware(&fmap, &file,
 			gbb, gbb_size, cdata, vb_shared_data,
@@ -1035,6 +1083,7 @@ twostop_readwrite_main_firmware(void)
 #endif
 	if (setup_gbb_and_cdata(&gbb, &gbb_size, &cdata, 1))
 		return TWOSTOP_SELECT_ERROR;
+	static_gbb = gbb;
 
 	/*
 	 * VbSelectAndLoadKernel() assumes the TPM interface has already been

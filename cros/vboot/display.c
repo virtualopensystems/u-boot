@@ -71,6 +71,13 @@ static struct display_callbacks display_callbacks_ = {
 
 VbError_t VbExDisplayInit(uint32_t *width, uint32_t *height)
 {
+	/*
+	 * crosbug.com/p/13492
+	 * This may be an unexpected display init request - probably due to a
+	 * software sync. Read the bmpblk.
+	 */
+	cros_cboot_twostop_read_bmp_block();
+
 #ifdef HAVE_DISPLAY
 	*width = display_callbacks_.dc_get_pixel_width();
 	*height = display_callbacks_.dc_get_pixel_height();
