@@ -462,51 +462,62 @@ static uint8_t *read_gbb_from_firmware(void)
 	return gbb;
 }
 
-static int show_images_and_delay(BmpBlockHeader *bmph, int index)
+/**
+ * Show an image on the screen at the given location
+ */
+static int show_image(ImageInfo *image, int x, int y)
+{
+	uint32_t inoutsize;
+	void *rawimg;
+	int err;
+
+	inoutsize = image->original_size;
+
+	if (COMPRESS_NONE == image->compression) {
+		rawimg = NULL;
+	} else {
+		rawimg = VbExMalloc(inoutsize);
+		if (VbExDecompress(image + 1, image->compressed_size,
+					image->compression,
+					rawimg, &inoutsize)) {
+			return -1;
+		}
+	}
+
+	err = VbExDisplayImage(x, y,  rawimg ? rawimg : image + 1, inoutsize);
+	if (rawimg)
+		VbExFree(rawimg);
+
+	return err ? -1 : 0;
+}
+
+/**
+ * need comment here
+ */
+static int show_images_and_delay(BmpBlockHeader *bmph, int local, int index)
 {
 	int i;
 	ScreenLayout *screen;
-	ImageInfo *info;
-	void *rawimg;
-        uint32_t inoutsize;
+	ImageInfo *image;
 
 	screen = (ScreenLayout *)(bmph + 1);
+	screen += local * bmph->number_of_screenlayouts;
 	screen += index;
 
 	for (i = 0;
 	     i < MAX_IMAGE_IN_LAYOUT && screen->images[i].image_info_offset;
 	     i++) {
-		info = (ImageInfo *)((uint8_t *)bmph +
+		image = (ImageInfo *)((uint8_t *)bmph +
 				screen->images[i].image_info_offset);
-		inoutsize = info->original_size;
-
-                if (COMPRESS_NONE == info->compression) {
-			rawimg = NULL;
-		} else {
-			rawimg = VbExMalloc(inoutsize);
-			if (VbExDecompress(info + 1, info->compressed_size,
-					   info->compression,
-					   rawimg, &inoutsize)) {
-				goto bad;
-			}
-		}
-
-		if (VbExDisplayImage(screen->images[i].x,
-				     screen->images[i].y,
-				     rawimg ? rawimg : info + 1,
-				     inoutsize)) {
+		if (show_image(image, screen->images[i].x,
+				screen->images[i].y))
 			goto bad;
-		}
-		if (rawimg)
-			VbExFree(rawimg);
 	}
 
 	VbExSleepMs(1000);
 	return 0;
 
 bad:
-	if (rawimg)
-		VbExFree(rawimg);
 	VbExDebug("Failed to display image, screen=%lu, image=%d!\n", index, i);
 	return 1;
 }
@@ -518,6 +529,14 @@ static int do_vbexport_test_display(cmd_tbl_t *cmdtp, int flag,
 	uint32_t width, height;
 	GoogleBinaryBlockHeader *gbbh;
 	BmpBlockHeader *bmph;
+	int screen = -1;
+	int local = 0;
+
+	if (argc > 1) {
+		screen = simple_strtoul(argv[1], NULL, 10);
+		if (argc > 2)
+			local = simple_strtoul(argv[2], NULL, 10);
+	}
 
 	if (VbExDisplayInit(&width, &height)) {
 		VbExDebug("Failed to init display.\n");
@@ -526,23 +545,31 @@ static int do_vbexport_test_display(cmd_tbl_t *cmdtp, int flag,
 
 	VbExDebug("The screen dimensions is %ldx%ld.\n", width, height);
 
-	VbExDebug("Showing screens...\n");
-	ret |= show_screen_and_delay(VB_SCREEN_BLANK);
-	ret |= show_screen_and_delay(VB_SCREEN_DEVELOPER_WARNING);
-	ret |= show_screen_and_delay(VB_SCREEN_DEVELOPER_EGG);
-	ret |= show_screen_and_delay(VB_SCREEN_RECOVERY_REMOVE);
-	ret |= show_screen_and_delay(VB_SCREEN_RECOVERY_INSERT);
-	ret |= show_screen_and_delay(VB_SCREEN_RECOVERY_NO_GOOD);
+	VbExDebug("Showing screens for localisation %d...\n", local);
+	mdelay(500);
+	if (screen == -1) {
+		ret |= show_screen_and_delay(VB_SCREEN_BLANK);
+		ret |= show_screen_and_delay(VB_SCREEN_DEVELOPER_WARNING);
+		ret |= show_screen_and_delay(VB_SCREEN_DEVELOPER_EGG);
+		ret |= show_screen_and_delay(VB_SCREEN_RECOVERY_REMOVE);
+		ret |= show_screen_and_delay(VB_SCREEN_RECOVERY_INSERT);
+		ret |= show_screen_and_delay(VB_SCREEN_RECOVERY_NO_GOOD);
+		ret |= show_screen_and_delay(VB_SCREEN_WAIT);
+	}
 
 	gbbh = (GoogleBinaryBlockHeader *)read_gbb_from_firmware();
 	if (gbbh) {
 		bmph = (BmpBlockHeader *)((uint8_t *)gbbh + gbbh->bmpfv_offset);
 
 		VbExDebug("Showing images...\n");
-		ret |= show_images_and_delay(bmph, SCREEN_DEVELOPER_MODE);
-		ret |= show_images_and_delay(bmph, SCREEN_RECOVERY_MODE);
-		ret |= show_images_and_delay(bmph, SCREEN_RECOVERY_NO_OS);
-		ret |= show_images_and_delay(bmph, SCREEN_RECOVERY_MISSING_OS);
+		if (screen != -1) {
+			ret |= show_images_and_delay(bmph, local, screen);
+		} else {
+			for (screen = 0; screen < MAX_VALID_SCREEN_INDEX;
+					screen++)
+				ret |= show_images_and_delay(bmph, local,
+							     screen);
+		}
 	} else {
 		ret = 1;
 	}
@@ -637,7 +664,7 @@ U_BOOT_CMD(vbexport_test, CONFIG_SYS_MAXARGS, 1, do_vbexport_test,
 	"vbexport_test nvclear - clear the nvstorage content\n"
 	"vbexport_test nvrw - test the nvstorage read and write functions\n"
 	"vbexport_test key - test the keyboard read function\n"
-	"vbexport_test display - test the display related functions\n"
+	"vbexport_test display [screen [local]] - test display functions\n"
 	"vbexport_test isshutdown - check if shutdown requested\n"
 );
 
