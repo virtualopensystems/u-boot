@@ -679,6 +679,17 @@ int board_init(void)
 
 #ifdef CONFIG_TPS65090_POWER
 	tps65090_init();
+
+	/*
+	 * If we just reset, disable the backlight and lcd fets before
+	 * [re-]initializing the lcd. This ensures we are always in the same
+	 * state during lcd init. We've seen some oddities with these fets, so
+	 * this removes a bit of uncertainty.
+	 */
+	if (board_is_processor_reset()) {
+		tps65090_fet_disable(1);
+		tps65090_fet_disable(6);
+	}
 #endif
 	exynos_lcd_check_next_stage(gd->fdt_blob, 0);
 
