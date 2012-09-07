@@ -137,7 +137,7 @@ struct mem_timings mem_timings[] = {
 		.mem_manuf = MEM_MANUF_ELPIDA,
 		.mem_type = DDR_MODE_DDR3,
 		.frequency_mhz = 800,
-		.mpll_mdiv = 0xc8,
+		.mpll_mdiv = 0x64,
 		.mpll_pdiv = 0x3,
 		.mpll_sdiv = 0x0,
 		.cpll_mdiv = 0xde,
@@ -240,7 +240,7 @@ struct mem_timings mem_timings[] = {
 		.mem_manuf = MEM_MANUF_SAMSUNG,
 		.mem_type = DDR_MODE_DDR3,
 		.frequency_mhz = 800,
-		.mpll_mdiv = 0xc8,
+		.mpll_mdiv = 0x64,
 		.mpll_pdiv = 0x3,
 		.mpll_sdiv = 0x0,
 		.cpll_mdiv = 0xde,
@@ -617,12 +617,11 @@ void system_clock_init()
 	while ((readl(&clk->mpll_con0) & MPLL_CON0_LOCKED) == 0)
 		;
 
-	/* Set BPLL */
-	writel(BPLL_CON1_VAL, &clk->bpll_con1);
-	val = set_pll(mem->bpll_mdiv, mem->bpll_pdiv, mem->bpll_sdiv);
-	writel(val, &clk->bpll_con0);
-	while ((readl(&clk->bpll_con0) & BPLL_CON0_LOCKED) == 0)
-		;
+	/*
+	 * Configure MUX_MPLL_FOUT to choose the direct clock source
+	 * path and avoid the fixed DIV/2 block to save power
+	 */
+	setbits_le32(&clk->pll_div2_sel, MUX_MPLL_FOUT_SEL);
 
 	/* Set CPLL */
 	writel(CPLL_CON1_VAL, &clk->cpll_con1);

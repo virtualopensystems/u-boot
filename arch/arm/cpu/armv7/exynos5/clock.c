@@ -137,12 +137,6 @@ unsigned long get_pll_clk(int pllreg)
 	} else {
 		/* FOUT = MDIV * FIN / (PDIV * 2^SDIV) */
 		fout = m * (freq / (p * (1 << s)));
-
-		/* According to the user manual, in EVT1 MPLL always gives
-		 * 1.6GHz clock, so divide by 2 to get 800MHz MPLL clock.
-		 */
-		if (pllreg == MPLL)
-			fout /= 2;
 	}
 
 	return fout;
