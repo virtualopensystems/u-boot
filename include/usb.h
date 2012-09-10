@@ -174,6 +174,8 @@ void usb_event_poll(void);
 #define CONFIG_USB_MAX_CONTROLLER_COUNT 1
 #endif
 
+#elif defined(CONFIG_SANDBOX)
+/* TODO(thutt@chromium.org): no USB support in sandbox yet. */
 #else
 #error USB Lowlevel not defined
 #endif

@@ -20,8 +20,8 @@
  */
 
 #include <common.h>
+#include <ec_commands.h>
 #include <mmc.h>
-
 #include <os.h>
 
 /*
@@ -67,6 +67,72 @@ int board_mmc_getcd(struct mmc *mmc)
 	return 1;
 }
 
+struct mkbp_dev *board_get_mkbp_dev(void)
+{
+#if defined(CONFIG_MKBP)
+#error "MKBP configuration not implemented for sandbox"
+#endif
+	return NULL;
+}
+
+int mkbp_read_hash(struct mkbp_dev *dev, struct ec_response_vboot_hash *hash)
+{
+#if defined(CONFIG_MKBP)
+#error "MKBP configuration not implemented for sandbox"
+#endif
+	return 0;
+}
+
+int mkbp_flash_update_rw(struct mkbp_dev *dev,
+			 const uint8_t  *image, int image_size)
+{
+#if defined(CONFIG_MKBP)
+#error "MKBP configuration not implemented for sandbox"
+#endif
+	return 0;
+}
+
+int mkbp_read_vbnvcontext(struct mkbp_dev *dev, uint8_t *block)
+{
+#if defined(CONFIG_MKBP)
+#error "MKBP configuration not implemented for sandbox"
+#endif
+	return 0;
+}
+
+int mkbp_write_vbnvcontext(struct mkbp_dev *dev, const uint8_t *block)
+{
+#if defined(CONFIG_MKBP)
+#error "MKBP configuration not implemented for sandbox"
+#endif
+	return 0;
+}
+
+int mkbp_flash_protect(struct mkbp_dev *dev,
+		       uint32_t set_mask, uint32_t set_flags,
+		       struct ec_response_flash_protect *resp)
+{
+#if defined(CONFIG_MKBP)
+#error "MKBP configuration not implemented for sandbox"
+#endif
+	return 0;
+}
+
+int mkbp_reboot(struct mkbp_dev *dev, enum ec_reboot_cmd cmd, uint8_t flags)
+{
+#if defined(CONFIG_MKBP)
+#error "MKBP configuration not implemented for sandbox"
+#endif
+	return 0;
+}
+
+int mkbp_read_current_image(struct mkbp_dev *dev, enum ec_current_image *image)
+{
+#if defined(CONFIG_MKBP)
+#error "MKBP configuration not implemented for sandbox"
+#endif
+	return 0;
+}
 
 int board_mmc_init(bd_t *bis)
 {

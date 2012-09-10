@@ -321,12 +321,14 @@ static void setup_arch_unused_memory(memory_wipe_t *wipe,
 
 #else
 
+#if !defined(CONFIG_SANDBOX)
 static void setup_arch_unused_memory(memory_wipe_t *wipe,
 	crossystem_data_t *cdata, VbCommonParams *cparams)
 {
+	/* TODO(thutt@chromium.org): add memory wipe capability */
 	VBDEBUG("No memory wipe performed!");
 }
-
+#endif
 #endif
 
 #if !defined(CONFIG_SANDBOX)
@@ -342,6 +344,7 @@ static uintptr_t get_current_sp(void)
 static void wipe_unused_memory(crossystem_data_t *cdata,
 	VbCommonParams *cparams)
 {
+#if !defined(CONFIG_SANDBOX)
 	memory_wipe_t wipe;
 
 	memory_wipe_init(&wipe);
@@ -366,6 +369,7 @@ static void wipe_unused_memory(crossystem_data_t *cdata,
 			(uintptr_t)cparams->gbb_data + cparams->gbb_size);
 
 	memory_wipe_execute(&wipe);
+#endif
 }
 
 /* Request the EC reboot to RO when the AP shuts down. */

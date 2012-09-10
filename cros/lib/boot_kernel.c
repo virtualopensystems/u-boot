@@ -42,6 +42,7 @@ int do_bootm(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);
 /* Extra buffer to string replacement */
 #define EXTRA_BUFFER		4096
 
+#if !defined(CONFIG_SANDBOX)
 /**
  * This loads kernel command line from the buffer that holds the loaded kernel
  * image. This function calculates the address of the command line from the
@@ -202,9 +203,13 @@ static int update_cmdline(char *src, int devnum, int partnum, uint8_t *guid,
 	*dst = '\0';
 	return 0;
 }
+#endif
 
 int boot_kernel(VbSelectAndLoadKernelParams *kparams, crossystem_data_t *cdata)
 {
+#if defined(CONFIG_SANDBOX)
+	return 0;
+#else
 	/* sizeof(CHROMEOS_BOOTARGS) reserves extra 1 byte */
 	char cmdline_buf[sizeof(CHROMEOS_BOOTARGS) + CROS_CONFIG_SIZE];
 	/* Reserve EXTRA_BUFFER bytes for update_cmdline's string replacement */
@@ -288,6 +293,7 @@ int boot_kernel(VbSelectAndLoadKernelParams *kparams, crossystem_data_t *cdata)
 
 	VBDEBUG("failed to boot; is kernel broken?\n");
 	return 1;
+#endif
 }
 
 #ifdef CONFIG_OF_UPDATE_FDT_BEFORE_BOOT

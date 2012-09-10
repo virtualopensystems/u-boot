@@ -370,15 +370,39 @@ ifdef VBOOT_SOURCE
 # Go off and build vboot_reference directory with the same CFLAGS
 # This is a eng convenience, not used by ebuilds
 # set VBOOT_MAKEFLAGS to required make flags, e.g. MOCK_TPM=1 if no TPM
-CFLAGS_VBOOT = $(filter-out -I%, $(CFLAGS))
+CFLAGS_VBOOT = $(filter-out -Wstrict-prototypes -nostdinc -I%, $(CFLAGS))
 
 # Always call the vboot Makefile, since we don't have its dependencies
+#
+#  FIRMWARE_ARCH:
+#
+#    This can be either a real hardware architecture for which vboot
+#    can be built, or it can be unset.  When unset, vboot will be
+#    built for the host architecture.
+#
+#  ARCH:
+#
+#    ARCH must either be a real hardware architecture for which vboot
+#    can be built, or it must be 'amd64'.  'amd64' is used when
+#    building for the host architecture (which consequently must be
+#    'amd64').
+#
+#  ARCH is an exported variable, and since 'sandbox' is not an
+#  appropriate architecture for vboot, it must be changed on the
+#  command line.  However, since, without 'override', it is not
+#  possible to change the value of Make variables set on the command
+#  line, both FIRMWARE_ARCH and ARCH both must be set correctly before
+#  invoking the sub-make.
+#
+VBOOT_SUBMAKE_FIRMWARE_ARCH=$(filter-out sandbox,$(ARCH))
+VBOOT_SUBMAKE_ARCH=$(subst sandbox,amd64,$(ARCH))
 .PHONY : vboot
 vboot:
-	FIRMWARE_ARCH="$(ARCH)" CFLAGS="$(CFLAGS_VBOOT)" \
+	FIRMWARE_ARCH=$(VBOOT_SUBMAKE_FIRMWARE_ARCH) \
+		CFLAGS="$(CFLAGS_VBOOT)" \
 		$(MAKE) -C $(VBOOT_SOURCE) \
 		BUILD=$(OBJTREE)/include/generated/vboot \
-		$(MAKEFLAGS_VBOOT)
+		ARCH=$(VBOOT_SUBMAKE_ARCH)
 
 __LIBS += $(obj)include/generated/vboot/vboot_fw.a
 VBOOT_TARGET := vboot

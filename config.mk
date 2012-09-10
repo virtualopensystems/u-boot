@@ -242,7 +242,9 @@ endif
 
 ifdef CONFIG_CHROMEOS
 CPPFLAGS += -I$(if $(VBOOT_SOURCE),$(VBOOT_SOURCE)/firmware/include,\
-		$(VBOOT)/include/vboot)
+		$(VBOOT)/include/vboot) \
+	-I$(if $(VBOOT_SOURCE),$(VBOOT_SOURCE)/firmware/include,\
+		$(VBOOT)/include)
 endif
 
 ifdef BUILD_TAG

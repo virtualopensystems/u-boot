@@ -29,6 +29,7 @@ LIB	= $(obj)lib$(ARCH).o
 
 COBJS-y	+= board.o
 COBJS-y	+= interrupts.o
+COBJS-y	+= utility.o
 
 SRCS	:= $(COBJS-y:.o=.c)
 OBJS	:= $(addprefix $(obj),$(COBJS-y))
