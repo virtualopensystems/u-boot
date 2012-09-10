@@ -9,4 +9,6 @@
 
 #include <configs/sandbox.h>
 
+#define CONFIG_CHROMEOS
+
 #endif /* __configs_chromeos_sandbox_h__ */
