@@ -17,6 +17,7 @@
 
 #define STREAM_ON_TIMEOUT 100
 #define PLL_LOCK_TIMEOUT 10
+#define DP_INIT_TRIES 10
 #define MAX_CR_LOOP 5
 #define MAX_EQ_LOOP 4
 

@@ -654,17 +654,26 @@ static int s5p_dp_enable_scramble(struct s5p_dp_device *dp)
  */
 static int s5p_dp_init_dp(struct s5p_dp_device *dp)
 {
-	int ret;
+	int ret, i;
 	struct exynos5_dp *base = dp->base;
 
-	s5p_dp_reset(dp);
+	for (i = 0; i < DP_INIT_TRIES; i++) {
+		s5p_dp_reset(dp);
 
-	/* SW defined function Normal operation */
-	clrbits_le32(&base->func_en_1, SW_FUNC_EN_N);
+		/* SW defined function Normal operation */
+		clrbits_le32(&base->func_en_1, SW_FUNC_EN_N);
 
-	ret = s5p_dp_init_analog_func(dp);
-	if (ret)
+		ret = s5p_dp_init_analog_func(dp);
+		if (!ret)
+			break;
+
+		mdelay(5);
+		debug("LCD retry init, attempt=%d ret=%d\n", i, ret);
+	}
+	if (i == DP_INIT_TRIES) {
+		debug("LCD initialization failed, ret=%d\n", ret);
 		return ret;
+	}
 
 	s5p_dp_init_aux(dp);
 
