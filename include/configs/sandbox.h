@@ -42,6 +42,12 @@
  */
 #define CONFIG_DRAM_SIZE	((24 * 1024 * 1024) - (16 * 4096))
 
+/*
+ * do_spi_flash_test() uses CONFIG_SYS_TEXT_BASE, so define it to be
+ * an address that is inside the shared memory area of the Sandbox.
+ */
+#define CONFIG_SYS_TEXT_BASE	0x10000000
+
 /* Number of bits in a C 'long' on this architecture */
 #define CONFIG_SANDBOX_BITS_PER_LONG	64
 
