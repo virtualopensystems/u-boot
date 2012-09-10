@@ -129,4 +129,8 @@
 /* Logical Memory Blocks */
 #define CONFIG_LMB
 
+/* Device Tree */
+#define CONFIG_OF_CONTROL
+#define CONFIG_OF_LIBFDT
+
 #endif
