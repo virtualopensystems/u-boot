@@ -126,4 +126,7 @@
 #define CONFIG_ISO_PARTITION
 #define CONFIG_EFI_PARTITION
 
+/* Logical Memory Blocks */
+#define CONFIG_LMB
+
 #endif
