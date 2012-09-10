@@ -133,4 +133,7 @@
 #define CONFIG_OF_CONTROL
 #define CONFIG_OF_LIBFDT
 
+/* Compression */
+#define CONFIG_LZMA
+
 #endif
