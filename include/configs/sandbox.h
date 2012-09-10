@@ -140,4 +140,6 @@
 #define CONFIG_TPM_TIS_BASE_ADDRESS        0xd5ea
 #define CONFIG_GENERIC_LPC_TPM
 
+#define CONFIG_PHYSMEM
+
 #endif
