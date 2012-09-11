@@ -11,4 +11,8 @@
 
 #define CONFIG_CHROMEOS
 
+/* Device Tree */
+#undef CONFIG_DEFAULT_DEVICE_TREE
+#define CONFIG_DEFAULT_DEVICE_TREE chromeos_sandbox
+
 #endif /* __configs_chromeos_sandbox_h__ */
