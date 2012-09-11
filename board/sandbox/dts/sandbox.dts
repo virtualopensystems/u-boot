@@ -1,0 +1,33 @@
+/*
+ * Sandbox board device tree source
+ *
+ * Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ *
+ * Alternatively, this software may be distributed under the terms of the
+ * GNU General Public License ("GPL") version 2 as published by the Free
+ * Software Foundation.
+*/
+
+/dts-v1/;
+
+/ {
+	#address-cells = <1>;
+	#size-cells = <0>;
+	model = "Sandbox board";
+	compatible = "google,sandbox";
+
+	gpio: gpio@10004000 {
+		#address-cells = <2>;
+		#size-cells = <1>;
+		compatible = "google,sandbox";
+		#gpio-cells = <2>;
+		reg = < 0x10004000 0x1000 >;
+		gpio-controller;
+	};
+
+	spi {
+		spi-max-frequency = <50000000>;
+	};
+};
