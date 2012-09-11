@@ -112,6 +112,13 @@
 					"stdout=serial\0" \
 					"stderr=serial\0"
 
+/* Device Tree */
+#define CONFIG_OF_CONTROL
+#define CONFIG_OF_LIBFDT
+#define CONFIG_OF_EMBED
+#define CONFIG_DEFAULT_DEVICE_TREE sandbox
+#define CONFIG_ARCH_DEVICE_TREE sandbox
+
 /* SPI */
 #define CONFIG_CMD_SF
 #define CONFIG_SANDBOX_SPI
