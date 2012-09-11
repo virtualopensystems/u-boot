@@ -19,7 +19,7 @@
 		oprom-matters;
 		vboot-flag-ec-in-rw {
 			compatible = "google,gpio-flag";
-			gpio = <&gpio 21 0>;
+			gpio = <&gpio 21 1>;
 		};
 	};
 };
