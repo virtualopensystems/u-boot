@@ -30,6 +30,11 @@ static const struct gigadevice_spi_flash_params gigadevice_spi_flash_table[] = {
 		.nr_blocks		= 64,
 		.name			= "GD25LQ",
 	},
+	{
+		.id			= 0x4017,
+		.nr_blocks		= 128,
+		.name			= "GD25Q64B",
+	},
 
 };
 
