@@ -25,6 +25,16 @@
 #include <i2c.h>
 #include <max77686.h>
 
+/* Chip register numbers (not exported from this module) */
+enum {
+	REG_BBAT		= 0x7e,
+
+	/* Bits for BBAT */
+	BBAT_BBCHOSTEN_MASK	= 1 << 0,
+	BBAT_BBCVS_SHIFT	= 3,
+	BBAT_BBCVS_MASK		= 3 << BBAT_BBCVS_SHIFT,
+};
+
 /*
  * Max77686 parameters values
  * see max77686.h for parameters details
@@ -68,7 +78,6 @@ struct max77686_para max77686_param[] = {/*{regnum, vol_addr, vol_bitpos,
 	{PMIC_LDO25, 0x58, 0x0, 0x3F, 0x58, 0x6, 0x3, 0x3, 0x0, 800, 50000},
 	{PMIC_LDO26, 0x59, 0x0, 0x3F, 0x59, 0x6, 0x3, 0x3, 0x0, 800, 50000},
 	{PMIC_EN32KHZ_CP, 0x0, 0x0, 0x0, 0x7F, 0x1, 0x1, 0x1, 0x0, 0x0, 0x0},
-	{PMIC_BBAT_HOSTEN, 0x0, 0x0, 0x0, 0x7E, 0x0, 0x1, 0x1, 0x0, 0x0, 0x0},
 };
 
 /*
@@ -213,6 +222,36 @@ int max77686_enable_32khz_cp(void)
 
 int max77686_disable_backup_batt(void)
 {
+	unsigned char val;
+	int ret;
+
 	i2c_set_bus_num(0);
-	return max77686_enablereg(PMIC_BBAT_HOSTEN, REG_DISABLE);
+	ret = max77686_i2c_read(MAX77686_I2C_ADDR, REG_BBAT, &val);
+	if (ret) {
+		debug("max77686 i2c read failed\n");
+		return ret;
+	}
+
+	/* If we already have the correct values, exit */
+	if ((val & (BBAT_BBCVS_MASK | BBAT_BBCHOSTEN_MASK)) ==
+			BBAT_BBCVS_MASK)
+		return 0;
+
+	/* First disable charging */
+	val &= ~BBAT_BBCHOSTEN_MASK;
+	ret = max77686_i2c_write(MAX77686_I2C_ADDR, REG_BBAT, val);
+	if (ret) {
+		debug("max77686 i2c write failed\n");
+		return -1;
+	}
+
+	/* Finally select 3.5V to minimize power consumption */
+	val |= BBAT_BBCVS_MASK;
+	ret = max77686_i2c_write(MAX77686_I2C_ADDR, REG_BBAT, val);
+	if (ret) {
+		debug("max77686 i2c write failed\n");
+		return -1;
+	}
+
+	return 0;
 }

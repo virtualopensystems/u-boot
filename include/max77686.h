@@ -61,7 +61,6 @@ enum max77686_regnum {
 	PMIC_LDO25,
 	PMIC_LDO26,
 	PMIC_EN32KHZ_CP,
-	PMIC_BBAT_HOSTEN,
 };
 
 /**
