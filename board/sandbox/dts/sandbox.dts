@@ -18,12 +18,12 @@
 	model = "Sandbox board";
 	compatible = "google,sandbox";
 
-	gpio: gpio@10004000 {
+	gpio: gpio@117ef000 {
 		#address-cells = <2>;
 		#size-cells = <1>;
 		compatible = "google,sandbox";
 		#gpio-cells = <2>;
-		reg = < 0x10004000 0x1000 >;
+		reg = < 0x117ef000 0x1000 >;
 		gpio-controller;
 	};
 
