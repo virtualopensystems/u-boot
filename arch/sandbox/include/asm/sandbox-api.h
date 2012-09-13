@@ -52,6 +52,8 @@
  */
 #define SANDBOX_MEMORY_LAYOUT			\
 	SML(FREE, 0x16df)			\
+	SML(RW_A, 0x1)				\
+	SML(RW_B, 0x1)				\
 	SML(KERNEL, 0x100)			\
 	SML(CROS_SYSTEM_DATA, 0x8)		\
 	SML(GOOGLE_BINARY_BLOCK, 0x8)		\
