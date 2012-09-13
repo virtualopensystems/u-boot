@@ -110,7 +110,10 @@
 
 #define CONFIG_BOOTARGS ""
 
-#define CONFIG_EXTRA_ENV_SETTINGS	"stdin=serial\0" \
+#define CONFIG_CONSOLE_MUX
+#define CONFIG_SYS_CONSOLE_IS_IN_ENV
+
+#define CONFIG_EXTRA_ENV_SETTINGS	"stdin=serial,sandbox-keyb\0" \
 					"stdout=serial\0" \
 					"stderr=serial\0"
 
