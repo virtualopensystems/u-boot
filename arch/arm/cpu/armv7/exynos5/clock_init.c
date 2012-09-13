@@ -607,7 +607,7 @@ void system_clock_init()
 	val = set_pll(arm_clk_ratio->apll_mdiv, arm_clk_ratio->apll_pdiv,
 			arm_clk_ratio->apll_sdiv);
 	writel(val, &clk->apll_con0);
-	while (readl(&clk->apll_con0) & APLL_CON0_LOCKED)
+	while ((readl(&clk->apll_con0) & APLL_CON0_LOCKED) == 0)
 		;
 
 	/* Set MPLL */
