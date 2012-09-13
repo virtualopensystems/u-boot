@@ -33,7 +33,7 @@
 		#size-cells = <1>;
 		compatible = "google,sandbox";
 		#gpio-cells = <2>;
-		reg = < 0x117ef000 0x1000 >;
+		reg = < 0x117f1000 0x1000 >;
 		gpio-controller;
 	};
 
@@ -42,9 +42,9 @@
 	#size-cells = <0>;
 		virtual-dev-switch;
 		nvstorage-media = "disk";
-		kernel = /bits/ 64 <0x116df000 0x00100000>;
-		cros-system-data = /bits/ 64 <0x117df000 0x00008000>;
-		google-binary-block = /bits/ 64 <0x117e7000 0x00008000>;
+		kernel = /bits/ 64 <0x116e1000 0x00100000>;
+		cros-system-data = /bits/ 64 <0x117e1000 0x00008000>;
+		google-binary-block = /bits/ 64 <0x117e9000 0x00008000>;
 		firmware-storage = <&firmware_storage_spi>;
 		cros-gpio-input-charging-delay = <0>;
 
