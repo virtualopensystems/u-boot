@@ -23,7 +23,7 @@
 		#size-cells = <1>;
 		compatible = "google,sandbox";
 		#gpio-cells = <2>;
-		reg = < 0x117ef000 0x1000 >;
+		reg = < 0x117f1000 0x1000 >;
 		gpio-controller;
 	};
 
