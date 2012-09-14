@@ -142,6 +142,15 @@ static int display_banner(void)
 	return (0);
 }
 
+inline void __board_show_dram(ulong size)
+{
+	puts("DRAM:  ");
+	print_size(size, "\n");
+}
+
+void board_show_dram(ulong size)
+	__attribute__((weak, alias("__board_show_dram")));
+
 /*
  * WARNING: this code looks "cleaner" than the PowerPC version, but
  * has the disadvantage that you either get nothing, or everything.
@@ -166,8 +175,7 @@ static int display_dram_config(void)
 	for (i = 0; i < CONFIG_NR_DRAM_BANKS; i++)
 		size += gd->bd->bi_dram[i].size;
 
-	puts("DRAM:  ");
-	print_size(size, "\n");
+	board_show_dram(size);
 #endif
 
 	return (0);

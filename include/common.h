@@ -337,6 +337,15 @@ int set_cpu_clk_info(void);
 void board_i2c_release_bus(int node);
 int board_i2c_claim_bus(int node);
 
+/**
+ * Show the DRAM size in a board-specific way
+ *
+ * This is used by boards to display DRAM information in their own way.
+ *
+ * @param size	Size of DRAM (which should be displayed along with other info)
+ */
+void board_show_dram(ulong size);
+
 #ifdef CONFIG_SYS_GENERIC_BOARD
 /*
  * Reset the watchdog timer, always returns 0
