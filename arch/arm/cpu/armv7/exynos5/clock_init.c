@@ -30,6 +30,7 @@
 #include <asm/arch/clk.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/cpu.h>
+#include <asm/arch/dmc.h>
 #include <asm/arch/gpio.h>
 #include <asm/arch-exynos/spl.h>
 
@@ -375,12 +376,6 @@ static int autodetect_memory(void)
  * Get the required memory type and speed (SPL version).
  *
  * In SPL we have no device tree, so we use the machine parameters
- *
- * @param mem_type	Returns memory type
- * @param frequency_mhz	Returns memory speed in MHz
- * @param arm_freq	Returns ARM clock speed in MHz
- * @param mem_manuf	Return Memory Manufacturer name
- * @return 0 if all ok
  */
 static int clock_get_mem_selection(enum ddr_mode *mem_type,
 		unsigned *frequency_mhz, unsigned *arm_freq,
@@ -405,30 +400,18 @@ static int clock_get_mem_selection(enum ddr_mode *mem_type,
 
 #else
 
-/**
- * Get the required memory type and speed (Main U-Boot version).
- *
- * This should use the device tree. For now we cannot since this function is
- * called before the FDT is available.
- *
- * @param mem_type	Returns memory type
- * @param frequency_mhz	Returns memory speed in MHz
- * @param arm_freq	Returns ARM clock speed in MHz
- * @param mem_manuf	Return Memory Manufacturer name
- * @return 0 if all ok (if not, this function currently does not return)
- */
-static int clock_get_mem_selection(enum ddr_mode *mem_type,
+static const char *mem_types[DDR_MODE_COUNT] = {
+	"DDR2", "DDR3", "LPDDR2", "LPDDR3"
+};
+
+static const char *mem_manufs[MEM_MANUF_COUNT] = {
+	"autodetect", "Elpida", "Samsung"
+};
+
+int clock_get_mem_selection(enum ddr_mode *mem_type,
 		unsigned *frequency_mhz, unsigned *arm_freq,
 		enum mem_manuf *mem_manuf)
 {
-	static const char *mem_types[DDR_MODE_COUNT] = {
-		"ddr2", "ddr3", "lpddr2", "lpddr3"
-	};
-
-	static const char *mem_manufs[MEM_MANUF_COUNT] = {
-		"autodetect", "elpida", "samsung"
-	};
-
 	const char *typestr;
 	int node, i;
 
@@ -438,7 +421,7 @@ static int clock_get_mem_selection(enum ddr_mode *mem_type,
 		panic("No memory information available in device tree");
 	typestr = fdt_getprop(gd->fdt_blob, node, "mem-type", NULL);
 	for (i = 0; i < DDR_MODE_COUNT; i++) {
-		if (!strcmp(typestr, mem_types[i]))
+		if (!stricmp(typestr, mem_types[i]))
 			break;
 	}
 	if (i == DDR_MODE_COUNT)
@@ -447,7 +430,7 @@ static int clock_get_mem_selection(enum ddr_mode *mem_type,
 
 	typestr = fdt_getprop(gd->fdt_blob, node, "mem-manuf", NULL);
 	for (i = 0; i < MEM_MANUF_COUNT; i++) {
-		if (!strcmp(typestr, mem_manufs[i]))
+		if (!stricmp(typestr, mem_manufs[i]))
 			break;
 	}
 	if (i == MEM_MANUF_COUNT)
@@ -472,6 +455,22 @@ static int clock_get_mem_selection(enum ddr_mode *mem_type,
 		panic("Invalid ARM frequency in device tree");
 
 	return 0;
+}
+
+const char *clock_get_mem_type_name(enum ddr_mode mem_type)
+{
+	if (mem_type >= 0 && mem_type < DDR_MODE_COUNT)
+		return mem_types[mem_type];
+
+	return "<unknown>";
+}
+
+const char *clock_get_mem_manuf_name(enum mem_manuf mem_manuf)
+{
+	if (mem_manuf >= 0 && mem_manuf < MEM_MANUF_COUNT)
+		return mem_manufs[mem_manuf];
+
+	return "<unknown>";
 }
 #endif
 

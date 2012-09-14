@@ -517,6 +517,36 @@ int clock_decode_periph_id(const void *blob, int node);
 /* Clock gate unused IP */
 void clock_gate(void);
 
+enum ddr_mode;
+enum mem_manuf;
+
+const char *clock_get_mem_type_name(enum ddr_mode mem_type);
+
+const char *clock_get_mem_manuf_name(enum mem_manuf mem_manuf);
+
+/*
+ * TODO(sjg@chromium.org): Remove this when we have more SPL space.
+ * At present we are using 14148 of 14336 bytes. If we change this function
+ * to be exported in SPL, we go over the edge.
+ */
+#ifndef CONFIG_SPL_BUILD
+/**
+ * Get the required memory type and speed (Main U-Boot version).
+ *
+ * This should use the device tree. For now we cannot since this function is
+ * called before the FDT is available.
+ *
+ * @param mem_type	Returns memory type
+ * @param frequency_mhz	Returns memory speed in MHz
+ * @param arm_freq	Returns ARM clock speed in MHz
+ * @param mem_manuf	Return Memory Manufacturer name
+ * @return 0 if all ok (if not, this function currently does not return)
+ */
+int clock_get_mem_selection(enum ddr_mode *mem_type,
+		unsigned *frequency_mhz, unsigned *arm_freq,
+		enum mem_manuf *mem_manuf);
+#endif /* CONFIG_SPL_BUILD */
+
 #endif
 
 #endif
