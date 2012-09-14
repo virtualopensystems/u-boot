@@ -23,6 +23,8 @@
 #include <common.h>
 #include <asm/io.h>
 #include <asm/arch/clk.h>
+#include <asm/arch/clock.h>
+#include <asm/arch/dmc.h>
 
 /*
  * The following CPU infos are initialized in lowlevel_init(). They should be
@@ -74,6 +76,32 @@ int print_cpuinfo(void)
 			s5p_cpu_id, strmhz(buf, get_arm_clk()));
 
 	return 0;
+}
+#endif
+
+#ifndef CONFIG_SPL_BUILD
+void board_show_dram(ulong size)
+{
+	enum ddr_mode mem_type;
+	unsigned frequency_mhz;
+	unsigned arm_freq;
+	enum mem_manuf mem_manuf;
+	char buf[32];
+	int ret;
+
+	/* Get settings from the fdt */
+	ret = clock_get_mem_selection(&mem_type, &frequency_mhz,
+				       &arm_freq, &mem_manuf);
+	if (ret)
+		panic("Invalid DRAM information");
+
+	puts("DRAM:  ");
+	print_size(size, " ");
+	printf("%s %s @ %sMHz",
+	       clock_get_mem_manuf_name(mem_manuf),
+	       clock_get_mem_type_name(mem_type),
+	       strmhz(buf, frequency_mhz));
+	putc('\n');
 }
 #endif
 
