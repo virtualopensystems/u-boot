@@ -31,9 +31,20 @@ struct cbmem_console {
 
 static struct cbmem_console *cbmem_console_p;
 
+/*
+ * Need to be able to avoid adding charactes to cbmem console buffer while its
+ * contents are being dumped.
+ */
+static int suppress_cbmem_console;
+
 void cbmemc_putc(char data)
 {
-	int cursor = cbmem_console_p->buffer_cursor++;
+	int cursor;
+
+	if (suppress_cbmem_console)
+		return;
+
+	cursor = cbmem_console_p->buffer_cursor++;
 	if (cursor < cbmem_console_p->buffer_size)
 		cbmem_console_p->buffer_body[cursor] = data;
 }
@@ -63,3 +74,20 @@ int cbmemc_init(void)
 
 	return (rc == 0) ? 1 : rc;
 }
+
+static int
+do_cbc_dump(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+{
+	int cursor = 0;
+
+	suppress_cbmem_console = 1;
+
+	while (cursor < cbmem_console_p->buffer_cursor)
+		putc(cbmem_console_p->buffer_body[cursor++]);
+
+	suppress_cbmem_console = 0;
+	return 0;
+}
+
+U_BOOT_CMD(cbc_dump, 1, 1, do_cbc_dump,
+	   "dump CBMEM console buffer to serial port", NULL);
