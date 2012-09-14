@@ -20,6 +20,10 @@ extern __kernel_size_t strspn(const char *,const char *);
  */
 #include <asm/string.h>
 
+int strnicmp(const char *s1, const char *s2, size_t len);
+
+int stricmp(const char *s1, const char *s2);
+
 #ifndef __HAVE_ARCH_STRCPY
 extern char * strcpy(char *,const char *);
 #endif

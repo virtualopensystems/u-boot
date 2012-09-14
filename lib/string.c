@@ -21,7 +21,6 @@
 #include <malloc.h>
 
 
-#if 0 /* not used - was: #ifndef __HAVE_ARCH_STRNICMP */
 /**
  * strnicmp - Case insensitive, length-limited string comparison
  * @s1: One string
@@ -52,7 +51,16 @@ int strnicmp(const char *s1, const char *s2, size_t len)
 	}
 	return (int)c1 - (int)c2;
 }
-#endif
+
+/**
+ * stricmp - Case insensitive string comparison
+ * @s1: One string
+ * @s2: The other string
+ */
+int stricmp(const char *s1, const char *s2)
+{
+	return strnicmp(s1, s2, -1U);
+}
 
 char * ___strtok;
 
