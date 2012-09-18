@@ -47,6 +47,13 @@ DECLARE_GLOBAL_DATA_PTR;
 #error coreboot needs CONFIG_CMD_CBFS and CONFIG_OF_CONTROL enabled.
 #endif
 
+/*
+ * Set this to a nonzero value to make sure there is at least so many
+ * thousands of tsc clocks between port 80 accesses. Set it to 4000 for the
+ * Google EC port 80 implementation.
+ */
+#define MIN_PORT80_KCLOCKS_DELAY	0
+
 static void *find_cbmem_area(void)
 {
 	int i;
@@ -177,6 +184,27 @@ int board_early_init_r(void)
 
 void show_boot_progress(int val)
 {
+#if MIN_PORT80_KCLOCKS_DELAY
+	static uint32_t prev_stamp;
+	static uint32_t base;
+
+	/*
+	 * Scale the time counter reading to avoid using 64 bit arithmetics.
+	 * Can't use get_timer() here becuase it could be not yet
+	 * initialized or even implemented.
+	 */
+	if (!prev_stamp) {
+		base = rdtsc() / 1000;
+		prev_stamp = 0;
+	} else {
+		uint32_t now;
+
+		do {
+			now = rdtsc() / 1000 - base;
+		} while (now < (prev_stamp + MIN_PORT80_KCLOCKS_DELAY));
+		prev_stamp = now;
+	}
+#endif
 	outb(val, 0x80);
 }
 
