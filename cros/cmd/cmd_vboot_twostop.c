@@ -1157,26 +1157,6 @@ do_vboot_twostop(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 
 	bootstage_mark_name(BOOTSTAGE_VBOOT_TWOSTOP, "do_vboot_twostop");
 
-#ifdef CONFIG_MKBP
-	/*
-	 * Empty keyboard buffer before boot.  In case EC did not clear its
-	 * buffer between power cycles, this prevents vboot of current power
-	 * cycle being affected by keystrokes of previous power cycle.
-	 *
-	 * TODO(chrome-os-partner:13864): It is sad that tstc() could return
-	 * false even when there are actually pending interrupts.  We should
-	 * fix this, and then we may remove the #ifdef CONFIG_MKBP and rewrite
-	 * it simply as:
-	 *   while (tstc())
-	 *     getc();
-	 */
-	struct mkbp_dev *dev = board_get_mkbp_dev();
-	while (mkbp_interrupt_pending(dev)) {
-		if (tstc())
-			getc();
-	}
-#endif /* CONFIG_MKBP */
-
 	if (cros_init()) {
 		VBDEBUG("fail to init cros library\n");
 		goto on_error;
