@@ -225,10 +225,12 @@ static int ahci_host_init(struct ahci_probe_ent *probe_ent)
 			msleep(1);
 			j++;
 		}
-		if (j == WAIT_MS_LINKUP)
-			debug("SATA link timeout.\n");
-		else
+		if (j == WAIT_MS_LINKUP) {
+			printf("SATA link %d timeout.\n", i);
+			continue;
+		} else {
 			debug("SATA link ok.\n");
+		}
 
 		/* Clear error status */
 		tmp = readl(port_mmio + PORT_SCR_ERR);
