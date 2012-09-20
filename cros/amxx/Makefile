@@ -14,6 +14,7 @@ LIB	= $(obj)libcros_board.o
 
 COBJS-$(CONFIG_CHROMEOS) += power_management.o
 COBJS-$(CONFIG_CHROMEOS) += utility.o
+COBJS-$(CONFIG_CHROMEOS) += legacy.o
 
 COBJS	:= $(COBJS-y)
 OBJS	:= $(addprefix $(obj),$(COBJS))
