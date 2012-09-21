@@ -1,0 +1,81 @@
+/*
+ * Google Snow board device tree source
+ *
+ * Copyright (c) 2012 Google, Inc
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+*/
+
+/dts-v1/;
+/include/ "exynos5250.dtsi"
+/include/ "flashmap-exynos-ro.dtsi"
+/include/ "flashmap-4mb-rw.dtsi"
+/include/ "chromeos-exynos.dtsi"
+/include/ "cros5250-common.dtsi"
+
+/ {
+	model = "Google Spring";
+	compatible = "google,spring", "google,daisy", "samsung,smdk5250",
+		   "samsung,exynos5250";
+
+	board-rev {
+		compatible = "google,board-revision";
+		google,board-rev-gpios = <&gpio 88 0>, <&gpio 89 0>;
+	};
+
+	dmc@10C00000 {
+		mem-manuf = "elpida";
+	};
+
+	i2c4: i2c@12ca0000 {
+		mkbp@1e {
+			reg = <0x1e>;
+			compatible = "google,mkbp";
+			i2c-max-frequency = <100000>;
+			ec-interrupt = <&gpio 174 1>;
+		};
+	};
+	i2c7: i2c@12cd0000 {
+		ptn3460-bridge@20 {
+			compatible = "nxp,ptn3460";
+			reg = <0x20>;
+			powerdown-gpio = <&gpio 0x7d 1>;	/* Y25 */
+			reset-gpio = <&gpio 0xad 1>;		/* X15 */
+			hotplug-gpio = <&gpio 0xa7 0>;		/* X07 */
+		};
+
+		/* TODO(sjg@chromium.org): Probably should be 0x11 */
+		soundcodec@22 {
+			reg = <0x22>;
+			compatible = "maxim,max98095-codec";
+		};
+	};
+
+	spi@131b0000 {
+		spi-max-frequency = <1000000>;
+		spi-deactivate-delay = <100>;
+		mkbp@0 {
+			reg = <0>;
+			compatible = "google,mkbp";
+			spi-max-frequency = <5000000>;
+			ec-interrupt = <&gpio 174 1>;
+			optimise-flash-write;
+			status = "disabled";
+		};
+	};
+
+	chrome-ec {
+		compatible = "google,chrome-ec";
+		flash@8000000 {
+			reg = <0x08000000 0x20000>;
+			erase-value = <0xff>;
+		};
+	};
+
+	sound@12d60000 {
+		samsung,codec-type = "max98095";
+	};
+
+};
