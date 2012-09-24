@@ -1162,6 +1162,14 @@ do_vboot_twostop(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 
 	bootstage_mark_name(BOOTSTAGE_VBOOT_TWOSTOP, "do_vboot_twostop");
 
+	/*
+	 * Empty keyboard buffer before boot.  In case EC did not clear its
+	 * buffer between power cycles, this prevents vboot of current power
+	 * cycle being affected by keystrokes of previous power cycle.
+	 */
+	while (tstc())
+		getc();
+
 	if (cros_init()) {
 		VBDEBUG("fail to init cros library\n");
 		goto on_error;
