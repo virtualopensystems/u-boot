@@ -54,28 +54,28 @@ struct mem_timings {
 	unsigned frequency_mhz;		/* Frequency of memory in MHz */
 
 	/* Here follow the timing parameters for the selected memory */
-	unsigned apll_mdiv;
-	unsigned apll_pdiv;
-	unsigned apll_sdiv;
-	unsigned mpll_mdiv;
-	unsigned mpll_pdiv;
-	unsigned mpll_sdiv;
-	unsigned cpll_mdiv;
-	unsigned cpll_pdiv;
-	unsigned cpll_sdiv;
-	unsigned gpll_mdiv;
-	unsigned gpll_pdiv;
-	unsigned gpll_sdiv;
-	unsigned epll_mdiv;
-	unsigned epll_pdiv;
-	unsigned epll_sdiv;
-	unsigned vpll_mdiv;
-	unsigned vpll_pdiv;
-	unsigned vpll_sdiv;
-	unsigned bpll_mdiv;
-	unsigned bpll_pdiv;
-	unsigned bpll_sdiv;
-	unsigned pclk_cdrex_ratio;
+	uint8_t apll_mdiv;
+	uint8_t apll_pdiv;
+	uint8_t apll_sdiv;
+	uint8_t mpll_mdiv;
+	uint8_t mpll_pdiv;
+	uint8_t mpll_sdiv;
+	uint8_t cpll_mdiv;
+	uint8_t cpll_pdiv;
+	uint8_t cpll_sdiv;
+	uint8_t gpll_pdiv;
+	uint16_t gpll_mdiv;
+	uint8_t gpll_sdiv;
+	uint8_t epll_mdiv;
+	uint8_t epll_pdiv;
+	uint8_t epll_sdiv;
+	uint8_t vpll_mdiv;
+	uint8_t vpll_pdiv;
+	uint8_t vpll_sdiv;
+	uint8_t bpll_mdiv;
+	uint8_t bpll_pdiv;
+	uint8_t bpll_sdiv;
+	uint8_t pclk_cdrex_ratio;
 	unsigned direct_cmd_msr[MEM_TIMINGS_MSR_COUNT];
 
 	unsigned timing_ref;
@@ -88,32 +88,32 @@ struct mem_timings {
 	unsigned phy1_dqs;
 	unsigned phy0_dq;
 	unsigned phy1_dq;
-	unsigned phy0_tFS;
-	unsigned phy1_tFS;
-	unsigned phy0_pulld_dqs;
-	unsigned phy1_pulld_dqs;
+	uint8_t phy0_tFS;
+	uint8_t phy1_tFS;
+	uint8_t phy0_pulld_dqs;
+	uint8_t phy1_pulld_dqs;
 
-	unsigned lpddr3_ctrl_phy_reset;
-	unsigned ctrl_start_point;
-	unsigned ctrl_inc;
-	unsigned ctrl_start;
-	unsigned ctrl_dll_on;
-	unsigned ctrl_ref;
+	uint8_t lpddr3_ctrl_phy_reset;
+	uint8_t ctrl_start_point;
+	uint8_t ctrl_inc;
+	uint8_t ctrl_start;
+	uint8_t ctrl_dll_on;
+	uint8_t ctrl_ref;
 
-	unsigned ctrl_force;
-	unsigned ctrl_rdlat;
-	unsigned ctrl_bstlen;
+	uint8_t ctrl_force;
+	uint8_t ctrl_rdlat;
+	uint8_t ctrl_bstlen;
 
-	unsigned fp_resync;
-	unsigned iv_size;
-	unsigned dfi_init_start;
-	unsigned aref_en;
+	uint8_t fp_resync;
+	uint8_t iv_size;
+	uint8_t dfi_init_start;
+	uint8_t aref_en;
 
-	unsigned rd_fetch;
+	uint8_t rd_fetch;
 
-	unsigned zq_mode_dds;
-	unsigned zq_mode_term;
-	unsigned zq_mode_noterm;	/* 1 to allow termination disable */
+	uint8_t zq_mode_dds;
+	uint8_t zq_mode_term;
+	uint8_t zq_mode_noterm;	/* 1 to allow termination disable */
 
 	unsigned memcontrol;
 	unsigned memconfig;
