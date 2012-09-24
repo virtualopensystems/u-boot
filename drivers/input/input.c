@@ -93,19 +93,6 @@ static unsigned char kbd_ctrl_xlate[] = {
 	'\r', 0xff, 0xff
 };
 
-/*
- * Scan key code to ANSI 3.64 escape sequence table.  This table is
- * incomplete in that it does not include all possible extra keys.
- */
-static struct {
-	int kbd_scan_code;
-	char *escape;
-} kbd_to_ansi364[] = {
-	{ KEY_UP, "\033[A"},
-	{ KEY_DOWN, "\033[B"},
-	{ KEY_RIGHT, "\033[C"},
-	{ KEY_LEFT, "\033[D"},
-};
 
 int input_queue_ascii(struct input_config *config, int ch)
 {
@@ -302,51 +289,24 @@ static int input_check_keycodes(struct input_config *config,
 }
 
 /**
- * Checks and converts a special key code into ANSI 3.64 escape sequence.
- *
- * @param config	Input state
- * @param queue_ascii	Callback function to queue generated ASCII
- * @param keycode	Key code to examine
- * @return 1 if the key was converted, otherwise 0.
- */
-static int input_keycode_to_ansi364(struct input_config *config,
-		int (*queue_ascii)(struct input_config *, int),
-		int keycode) {
-	int i;
-	const char *escape;
-
-	for (i = 0; i < ARRAY_SIZE(kbd_to_ansi364); i++) {
-		if (keycode != kbd_to_ansi364[i].kbd_scan_code)
-			continue;
-		for (escape = kbd_to_ansi364[i].escape; *escape; escape++)
-			queue_ascii(config, *escape);
-		return 1;
-	}
-	return 0;
-}
-
-/**
- * Converts and queues a list of key codes in escaped ASCII string form
+ * Convert a list of key codes into ASCII
  *
  * You must call input_check_keycodes() before this. It turns the keycode
- * list into a list of ASCII characters and send to the input layer.
+ * list into a list of ASCII characters which are ready to send to the
+ * input layer.
  *
  * Characters which were seen last time do not generate fresh ASCII output.
- * The output (calls to queue_ascii) may be longer than num_keycodes, if the
- * keycode contains special keys that was encoded to longer escaped sequence.
  *
  * @param config	Input state
  * @param keycode	List of key codes to examine
  * @param num_keycodes	Number of key codes
- * @param queue_ascii	Callback function to queue generated ASCII
  * @param same		Number of key codes which are the same
  */
-static void input_keycodes_to_ascii(struct input_config *config,
-		int keycode[], int num_keycodes,
-		int (*queue_ascii)(struct input_config *, int),
-		int same)
+static int input_keycodes_to_ascii(struct input_config *config,
+		int keycode[], int num_keycodes, char output_ch[], int same)
 {
 	struct input_key_xlate *table;
+	int ch_count;
 	int i;
 
 	table = &config->table[0];
@@ -361,26 +321,28 @@ static void input_keycodes_to_ascii(struct input_config *config,
 		}
 	}
 
-	/* Start conversion by looking for the first new keycode (by same). */
-	for (i = same; i < num_keycodes; i++) {
+	/* now find normal keys */
+	for (i = ch_count = 0; i < num_keycodes; i++) {
 		int key = keycode[i];
-		int ch = (key < table->num_entries) ? table->xlate[key] : 0xff;
 
-		/*
-		 * For a normal key (with an ASCII value), add it; otherwise
-		 * translate special key to escape sequence if possible.
-		 */
-		if (ch != 0xff)
-			queue_ascii(config, ch);
-		else
-			input_keycode_to_ansi364(config, queue_ascii, key);
+		if (key < table->num_entries && i >= same) {
+			int ch = table->xlate[key];
+
+			/* If a normal key with an ASCII value, add it! */
+			if (ch != 0xff)
+				output_ch[ch_count++] = (uchar)ch;
+		}
 	}
+
+	/* ok, so return keys */
+	return ch_count;
 }
 
 int input_send_keycodes(struct input_config *config,
 			int keycode[], int num_keycodes)
 {
-	int same = 0;
+	char ch[num_keycodes];
+	int count, i, same = 0;
 	int is_repeat = 0;
 	unsigned delay_ms;
 
@@ -400,8 +362,10 @@ int input_send_keycodes(struct input_config *config,
 			return 0;
 	}
 
-	input_keycodes_to_ascii(config, keycode, num_keycodes,
-				input_queue_ascii, is_repeat ? 0 : same);
+	count = input_keycodes_to_ascii(config, keycode, num_keycodes,
+					ch, is_repeat ? 0 : same);
+	for (i = 0; i < count; i++)
+		input_queue_ascii(config, ch[i]);
 	delay_ms = is_repeat ?
 			config->repeat_rate_ms :
 			config->repeat_delay_ms;
