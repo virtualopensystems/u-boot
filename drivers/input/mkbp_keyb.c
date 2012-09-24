@@ -127,22 +127,40 @@ int mkbp_kbc_check(struct input_config *input)
 	struct key_matrix_key keys[KBC_MAX_KEYS];
 	int keycodes[KBC_MAX_KEYS];
 	int num_keys, num_keycodes;
+	int irq_pending, sent;
 
-	if (mkbp_interrupt_pending(config.dev)) {
-		num_keys = check_for_keys(&config, keys, KBC_MAX_KEYS);
-		last_num_keys = num_keys;
-		memcpy(last_keys, keys, sizeof(keys));
-	} else {
-		/* EC doesn't want to be asked, so use keys from last time */
-		num_keys = last_num_keys;
-		memcpy(keys, last_keys, sizeof(keys));
-	}
+	/*
+	 * crosbug.com/p/13864
+	 *
+	 * Loop until the EC has no more keyscan records, or we have
+	 * received at least one character. This means we know that tstc()
+	 * will always return non-zero if keys have been pressed.
+	 *
+	 * Without this loop, a key release (which generates no new ascii
+	 * characters) will cause us to exit this function, and just tstc()
+	 * may return 0 before all keys have been read from the EC.
+	 */
+	do {
+		irq_pending = mkbp_interrupt_pending(config.dev);
+		if (irq_pending) {
+			num_keys = check_for_keys(&config, keys, KBC_MAX_KEYS);
+			last_num_keys = num_keys;
+			memcpy(last_keys, keys, sizeof(keys));
+		} else {
+			/*
+			 * EC doesn't want to be asked, so use keys from last
+			 * time.
+			 */
+			num_keys = last_num_keys;
+			memcpy(keys, last_keys, sizeof(keys));
+		}
 
-	if (num_keys < 0)
-		return -1;
-	num_keycodes = key_matrix_decode(&config.matrix, keys, num_keys,
-					 keycodes, KBC_MAX_KEYS);
-	input_send_keycodes(input, keycodes, num_keycodes);
+		if (num_keys < 0)
+			return -1;
+		num_keycodes = key_matrix_decode(&config.matrix, keys,
+				num_keys, keycodes, KBC_MAX_KEYS);
+		sent = input_send_keycodes(input, keycodes, num_keycodes);
+	} while (irq_pending && !sent);
 
 	return 1;
 }
