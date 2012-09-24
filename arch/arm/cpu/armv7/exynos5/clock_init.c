@@ -157,6 +157,7 @@ struct mem_timings mem_timings[] = {
 		.bpll_mdiv = 0x64,
 		.bpll_pdiv = 0x3,
 		.bpll_sdiv = 0x0,
+		.use_bpll = 0,
 		.pclk_cdrex_ratio = 0x5,
 		.direct_cmd_msr = {
 			0x00020018, 0x00030000, 0x00010042, 0x00000d70
@@ -260,6 +261,7 @@ struct mem_timings mem_timings[] = {
 		.bpll_mdiv = 0x64,
 		.bpll_pdiv = 0x3,
 		.bpll_sdiv = 0x0,
+		.use_bpll = 0,
 		.pclk_cdrex_ratio = 0x5,
 		.direct_cmd_msr = {
 			0x00020018, 0x00030000, 0x00010000, 0x00000d70
@@ -622,6 +624,17 @@ void system_clock_init()
 	 */
 	setbits_le32(&clk->pll_div2_sel, MUX_MPLL_FOUT_SEL);
 
+	/* Set BPLL */
+	if (mem->use_bpll) {
+		writel(BPLL_CON1_VAL, &clk->bpll_con1);
+		val = set_pll(mem->bpll_mdiv, mem->bpll_pdiv, mem->bpll_sdiv);
+		writel(val, &clk->bpll_con0);
+		while ((readl(&clk->bpll_con0) & BPLL_CON0_LOCKED) == 0)
+			;
+
+		setbits_le32(&clk->pll_div2_sel, MUX_BPLL_FOUT_SEL);
+	}
+
 	/* Set CPLL */
 	writel(CPLL_CON1_VAL, &clk->cpll_con1);
 	val = set_pll(mem->cpll_mdiv, mem->cpll_pdiv, mem->cpll_sdiv);
@@ -709,7 +722,12 @@ void system_clock_init()
 	while (readl(&clk->div_stat_r1x))
 		;
 
-	writel(CLK_REG_DISABLE, &clk->src_cdrex);
+	if (mem->use_bpll) {
+		writel(MUX_BPLL_SEL_MASK | MUX_MCLK_CDREX_SEL |
+			MUX_MCLK_DPHY_SEL, &clk->src_cdrex);
+	} else {
+		writel(CLK_REG_DISABLE, &clk->src_cdrex);
+	}
 
 	writel(CLK_DIV_CDREX_VAL, &clk->div_cdrex);
 	while (readl(&clk->div_stat_cdrex))

@@ -319,8 +319,12 @@
 /* BPLL_LOCK	*/
 #define BPLL_LOCK_VAL	(0x546)
 
+#define MUX_MCLK_CDREX_SEL	(1 << 4)
+#define MUX_MCLK_DPHY_SEL	(1 << 8)
+
 #define MUX_APLL_SEL_MASK	(1 << 0)
 #define MUX_MPLL_FOUT_SEL	(1 << 4)
+#define MUX_BPLL_FOUT_SEL	(1 << 0)
 #define MUX_MPLL_SEL_MASK	(1 << 8)
 #define MPLL_SEL_MOUT_MPLLFOUT	(2 << 8)
 #define MUX_CPLL_SEL_MASK	(1 << 8)
