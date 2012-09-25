@@ -1141,7 +1141,9 @@ VbError_t VbExProtectFlash(enum VbProtectFlash_t region)
 			fmap.readwrite_b.all.length);
 		break;
 	case VBPROTECT_RW_DEVKEY:
-		VBDEBUG("%s( VBPROTECT_RW_DEVKEY ) => HEY\n", __func__);
+		VBDEBUG("%s( VBPROTECT_RW_DEVKEY ) => 0x%08x 0x%x\n", __func__,
+			fmap.readwrite_devkey.offset,
+			fmap.readwrite_devkey.length);
 		break;
 	default:
 		VBDEBUG("%s( %d ??? )\n", __func__, region);
