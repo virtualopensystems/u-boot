@@ -93,6 +93,7 @@ typedef struct ich_spi_controller {
 	uint8_t *status;
 	uint16_t *control;
 	uint32_t *bbar;
+	uint32_t *pr;			/* only for ich9 */
 } ich_spi_controller;
 
 static ich_spi_controller cntlr;
@@ -370,6 +371,7 @@ void spi_init(void)
 			cntlr.control = (uint16_t *)ich9_spi->ssfc;
 			cntlr.bbar = &ich9_spi->bbar;
 			cntlr.preop = &ich9_spi->preop;
+			cntlr.pr = &ich9_spi->pr[0];
 			break;
 		}
 	default:
@@ -703,6 +705,54 @@ int spi_xfer(struct spi_slave *slave, const void *dout,
 
 	/* Clear atomic preop now that xfer is done */
 	writew_(0, cntlr.preop);
+
+	return 0;
+}
+
+
+/*
+ * This uses the SPI controller from the Intel Cougar Point and Panther Point
+ * PCH to write-protect portions of the SPI flash until reboot. The changes
+ * don't actually take effect until the HSFS[FLOCKDN] bit is set, but that's
+ * done elsewhere.
+ */
+int spi_write_protect_region(uint32_t lower_limit, uint32_t length, int hint)
+{
+	uint32_t tmplong;
+	uint32_t upper_limit;
+
+	if (!cntlr.pr) {
+		printf("%s: operation not supported on this chipset\n",
+		       __func__);
+		return -1;
+	}
+
+	if (length == 0 ||
+	    lower_limit > (0xFFFFFFFFUL - length) + 1 ||
+	    hint < 0 || hint > 4) {
+		printf("%s(0x%x, 0x%x, %d): invalid args\n", __func__,
+		     lower_limit, length, hint);
+		return -1;
+	}
+
+	upper_limit = lower_limit + length - 1;
+
+	/*
+	 * Determine bits to write, as follows:
+	 *  31     Write-protection enable (includes erase operation)
+	 *  30:29  reserved
+	 *  28:16  Upper Limit (FLA address bits 24:12, with 11:0 == 0xfff)
+	 *  15     Read-protection enable
+	 *  14:13  reserved
+	 *  12:0   Lower Limit (FLA address bits 24:12, with 11:0 == 0x000)
+	 */
+	tmplong = 0x80000000 |
+		((upper_limit & 0x01fff000) << 4) |
+		((lower_limit & 0x01fff000) >> 12);
+
+	printf("%s: writing 0x%08x to %p\n", __func__, tmplong,
+	       &cntlr.pr[hint]);
+	cntlr.pr[hint] = tmplong;
 
 	return 0;
 }

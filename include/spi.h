@@ -254,4 +254,16 @@ static inline int spi_w8r8(struct spi_slave *slave, unsigned char byte)
 struct spi_slave *spi_setup_slave_fdt(const void *blob, int node,
 		unsigned int cs, unsigned int max_hz, unsigned int mode);
 
+
+/*-----------------------------------------------------------------------
+ * Mark regions of the SPI flash as write-protected until reboot. The changes
+ * don't actually take effect until the HSFS[FLOCKDN] bit is set, which
+ * must be done elsewhere.
+ *
+ * The hint argument selects the Protected Range Register to use.
+ *
+ * Returns: zero on success, or a negative value on error.
+ */
+int spi_write_protect_region(uint32_t lower_limit, uint32_t length, int hint);
+
 #endif	/* _SPI_H_ */
