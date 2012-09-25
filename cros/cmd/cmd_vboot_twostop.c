@@ -26,6 +26,7 @@
 #include <cros/nvstorage.h>
 #include <cros/power_management.h>
 #include <cros/vboot_flag.h>
+#include <spi.h>
 #include <usb.h>
 
 #ifdef CONFIG_VIDEO_TEGRA
@@ -1131,22 +1132,28 @@ VbError_t VbExProtectFlash(enum VbProtectFlash_t region)
 #ifdef CONFIG_CAN_PROTECT_RW_FLASH
 	switch (region) {
 	case VBPROTECT_RW_A:
-		VBDEBUG("%s( VBPROTECT_RW_A ) => 0x%08x 0x%x\n", __func__,
+		VBDEBUG("VBPROTECT_RW_A => 0x%08x 0x%x\n",
 			fmap.readwrite_a.all.offset,
 			fmap.readwrite_a.all.length);
+		spi_write_protect_region(fmap.readwrite_a.all.offset,
+					 fmap.readwrite_a.all.length, 0);
 		break;
 	case VBPROTECT_RW_B:
-		VBDEBUG("%s( VBPROTECT_RW_B ) => 0x%08x 0x%x\n", __func__,
+		VBDEBUG("VBPROTECT_RW_B => 0x%08x 0x%x\n",
 			fmap.readwrite_b.all.offset,
 			fmap.readwrite_b.all.length);
+		spi_write_protect_region(fmap.readwrite_b.all.offset,
+					 fmap.readwrite_b.all.length, 0);
 		break;
 	case VBPROTECT_RW_DEVKEY:
-		VBDEBUG("%s( VBPROTECT_RW_DEVKEY ) => 0x%08x 0x%x\n", __func__,
+		VBDEBUG("VBPROTECT_RW_DEVKEY => 0x%08x 0x%x\n",
 			fmap.readwrite_devkey.offset,
 			fmap.readwrite_devkey.length);
+		spi_write_protect_region(fmap.readwrite_devkey.offset,
+					 fmap.readwrite_devkey.length, 1);
 		break;
 	default:
-		VBDEBUG("%s( %d ??? )\n", __func__, region);
+		VBDEBUG("unknown region %d\n", region);
 		return VBERROR_INVALID_PARAMETER;
 	}
 	return VBERROR_SUCCESS;
