@@ -10,7 +10,16 @@
 
 	config {
 		hwid = "X86 EMERALD LAKE 2 TEST 6638";
+		skip-i8042 = <1>;
 		hda_codec_beep = <1>;
 		usb-keyboard;
+	};
+
+	chromeos-config {
+		oprom-matters;
+		vboot-flag-ec-in-rw {
+			compatible = "google,const-flag";
+			value = <0>;
+		};
 	};
 };
