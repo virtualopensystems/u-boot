@@ -20,7 +20,7 @@
 		boot-device = "emmc";	/* Where SPL loads U-Boot from */
 		flash-method = "exynos";/* How to flash the board */
 		firmware-storage = <&firmware_storage_spi>;
-		nvstorage-media = "disk";
+		nvstorage-media = "mkbp";
 		ec-software-sync;       /* EC firmware in sync with BIOS */
 		ec-slow-update;         /* Display WAIT screen when updating */
 
