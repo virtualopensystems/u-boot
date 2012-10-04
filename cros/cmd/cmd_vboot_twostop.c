@@ -1096,11 +1096,11 @@ twostop_readwrite_main_firmware(void)
 	uint8_t ro_nvtype = cdata->board.arm.nonvolatile_context_storage;
 	if (ro_nvtype == NONVOLATILE_STORAGE_NONE) {
 		/*
-		 * RO did not set storage type; RO is probably an older
-		 * version of firmware.  Let's use RW's type instead.
+		 * Default to disk for older RO firmware which does not provide
+		 * storage type.
 		 */
 		cdata->board.arm.nonvolatile_context_storage =
-			nvstorage_get_type();
+			NONVOLATILE_STORAGE_DISK;
 	} else {
 		/* RW has to use the storage type that RO was using. */
 		if (nvstorage_set_type(ro_nvtype))
