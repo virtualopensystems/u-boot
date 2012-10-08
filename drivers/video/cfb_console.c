@@ -1844,7 +1844,8 @@ int video_get_screen_columns (void)
 
 void video_clear(void)
 {
-	memsetl(video_fb_address,
-		(VIDEO_VISIBLE_ROWS * VIDEO_LINE_LEN) / sizeof(int), 0);
+	if (video_fb_address)
+		memsetl(video_fb_address,
+			(VIDEO_VISIBLE_ROWS * VIDEO_LINE_LEN) / sizeof(int), 0);
 }
 
