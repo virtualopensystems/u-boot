@@ -15,6 +15,8 @@
 	};
 
 	chromeos-config {
+		/* Enable memory region for temporary GBB storage */
+		google-binary-block = <0x01108000 0x100000>;
 		virtual-dev-switch;
 		oprom-matters;
 		vboot-flag-ec-in-rw {
