@@ -31,6 +31,9 @@
 
 #include <asm/io.h>
 
+#define SPI_OPCODE_WREN      0x06
+#define SPI_OPCODE_FAST_READ 0x0b
+
 typedef struct spi_slave ich_spi_slave;
 
 static int ichspi_lock = 0;
@@ -463,6 +466,12 @@ static void spi_setup_type(spi_transaction *trans)
 	if (trans->bytesout == 4) { /* and bytesin is > 0 */
 		trans->type = SPI_OPCODE_TYPE_READ_WITH_ADDRESS;
 	}
+
+	/* Fast read command is called with 5 bytes instead of 4 */
+	if (trans->out[0] == SPI_OPCODE_FAST_READ && trans->bytesout == 5) {
+		trans->type = SPI_OPCODE_TYPE_READ_WITH_ADDRESS;
+		--trans->bytesout;
+	}
 }
 
 static int spi_setup_opcode(spi_transaction *trans)
@@ -483,6 +492,10 @@ static int spi_setup_opcode(spi_transaction *trans)
 		/* The lock is on. See if what we need is on the menu. */
 		uint8_t optype;
 		uint16_t opcode_index;
+
+		/* Write Enable is handled as atomic prefix */
+		if (trans->opcode == SPI_OPCODE_WREN)
+			return 0;
 
 		read_reg(cntlr.opmenu, opmenu, sizeof(opmenu));
 		for (opcode_index = 0; opcode_index < cntlr.menubytes;
@@ -602,13 +615,14 @@ int spi_xfer(struct spi_slave *slave, const void *dout,
 	if ((with_address = spi_setup_offset(&trans)) < 0)
 		return -1;
 
-	if (!ichspi_lock && trans.opcode == 0x06) {
+	if (trans.opcode == SPI_OPCODE_WREN) {
 		/*
 		 * Treat Write Enable as Atomic Pre-Op if possible
 		 * in order to prevent the Management Engine from
 		 * issuing a transaction between WREN and DATA.
 		 */
-		writew_(trans.opcode, cntlr.preop);
+		if (!ichspi_lock)
+			writew_(trans.opcode, cntlr.preop);
 		return 0;
 	}
 
@@ -620,6 +634,10 @@ int spi_xfer(struct spi_slave *slave, const void *dout,
 		control |= SPIC_ACS;
 
 	if (!trans.bytesout && !trans.bytesin) {
+		/* SPI addresses are 24 bit only */
+		if (with_address)
+			writel_(trans.offset & 0x00FFFFFF, cntlr.addr);
+
 		/*
 		 * This is a 'no data' command (like Write Enable), its
 		 * bitesout size was 1, decremented to zero while executing
