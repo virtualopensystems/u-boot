@@ -2,7 +2,7 @@
 
 /include/ "coreboot.dtsi"
 /include/ "chromeos-coreboot.dtsi"
-/include/ "flashmap-coreboot-8mb.dtsi"
+/include/ "flashmap-coreboot-8mb_1mb_rom.dtsi"
 
 / {
 	model = "Google Lumpy";
