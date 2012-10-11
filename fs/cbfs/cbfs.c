@@ -201,7 +201,8 @@ void file_cbfs_init(uintptr_t endOfRom)
 	startOfRom = (u8 *)(endOfRom + 1 - cbfsHeader.romSize);
 
 	file_cbfs_fill_cache(startOfRom + cbfsHeader.offset,
-			     cbfsHeader.romSize, cbfsHeader.align);
+			     cbfsHeader.romSize - cbfsHeader.offset,
+			     cbfsHeader.align);
 	if (file_cbfs_result == CBFS_SUCCESS)
 		initialized = 1;
 }
@@ -273,8 +274,8 @@ CbfsFile file_cbfs_find_uncached(uintptr_t endOfRom, const char *name)
 	if (file_cbfs_load_header(endOfRom, &cbfsHeader))
 		return NULL;
 
-	start = (u8 *)(endOfRom + 1 - cbfsHeader.romSize);
-	size = cbfsHeader.romSize;
+	start = (u8 *)(endOfRom + 1 - cbfsHeader.romSize + cbfsHeader.offset);
+	size = cbfsHeader.romSize - cbfsHeader.offset;
 	align = cbfsHeader.align;
 
 	while (size >= align) {
