@@ -110,8 +110,7 @@ static int file_cbfs_next_file(u8 *start, u32 size, u32 align,
 		}
 
 		swap_file_header(&header, fileHeader);
-		if (header.offset < sizeof(CbfsFileHeader) ||
-				header.offset > header.len) {
+		if (header.offset < sizeof(CbfsFileHeader)) {
 			file_cbfs_result = CBFS_BAD_FILE;
 			return -1;
 		}
