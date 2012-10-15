@@ -20,6 +20,8 @@
 #include <cros/common.h>
 #include <cros/cros_fdtdec.h>
 
+int board_final_cleanup(void);
+
 /* VbExLegacy calls a payload (e.g. SeaBIOS) from an alternate CBFS
  * that lives in the RW section if CTRL-L is pressed at the dev screen.
  * FIXME: Right now no verification is done what so ever!
@@ -116,6 +118,7 @@ int VbExLegacy(void)
 			printf("PARAMS: skipped\n");
 			break;
 		case PAYLOAD_SEGMENT_ENTRY:
+			board_final_cleanup();
 			payload_entry = dst;
 			payload_entry();
 			return 0;
