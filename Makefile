@@ -378,7 +378,8 @@ CFLAGS_VBOOT = $(filter-out -Wstrict-prototypes -nostdinc -I%, $(CFLAGS))
 #
 #    This can be either a real hardware architecture for which vboot
 #    can be built, or it can be unset.  When unset, vboot will be
-#    built for the host architecture.
+#    built for the host architecture.  When set, it has to be one of
+#    arm, i386, and x86_64.
 #
 #  ARCH:
 #
@@ -394,7 +395,7 @@ CFLAGS_VBOOT = $(filter-out -Wstrict-prototypes -nostdinc -I%, $(CFLAGS))
 #  line, both FIRMWARE_ARCH and ARCH both must be set correctly before
 #  invoking the sub-make.
 #
-VBOOT_SUBMAKE_FIRMWARE_ARCH=$(filter-out sandbox,$(ARCH))
+VBOOT_SUBMAKE_FIRMWARE_ARCH=$(filter-out sandbox,$(subst x86,i386,$(ARCH)))
 VBOOT_SUBMAKE_ARCH=$(subst sandbox,amd64,$(ARCH))
 .PHONY : vboot
 vboot:
