@@ -72,6 +72,7 @@ static const char * const compat_names[COMPAT_COUNT] = {
 	COMPAT(MAXIM_98095_CODEC, "maxim,max98095-codec"),
 	COMPAT(GOOGLE_SATA, "google,sata"),
 	COMPAT(NXP_PTN3460, "nxp,ptn3460"),
+	COMPAT(PARADE_PS8622, "parade,ps8622"),
 	COMPAT(SAMSUNG_EXYNOS_USB, "samsung,exynos-usb"),
 	COMPAT(GOOGLE_CHROME_EC, "google,chrome-ec"),
 	COMPAT(ANALOGIX_ANX7805, "analogix,anx7805"),

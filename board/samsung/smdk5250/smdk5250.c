@@ -387,11 +387,12 @@ static int ft_board_setup_gpios(void *blob, bd_t *bd)
 	/*
 	 * If this is an older board, replace powerdown-gpio contents with that
 	 * of reset-gpio and delete reset-gpio from the dt.
+	 * Also do nothing if we have a Parade PS8622 bridge.
 	 */
 	np = fdtdec_next_compatible(blob, 0, COMPAT_NXP_PTN3460);
 	if (np < 0) {
 		debug("%s: Could not find COMPAT_NXP_PTN3460\n", __func__);
-		return -1;
+		return 0;
 	}
 
 	prop = fdt_get_property(blob, np, "reset-gpio", &len);
@@ -471,14 +472,18 @@ int board_dp_lcd_vdd(const void *blob, unsigned *wait_ms)
 }
 #endif
 
-static int board_dp_fill_gpios(const void *blob)
+static int board_dp_fill_gpios(const void *blob, int *is_ps8622)
 {
-	int np, ret, rev;
+	int np, ret = 0, rev;
 
 	np = fdtdec_next_compatible(blob, 0, COMPAT_NXP_PTN3460);
 	if (np < 0) {
-		debug("%s: Could not find COMPAT_NXP_PTN3460 (%d)\n", __func__,
-			np);
+		np = fdtdec_next_compatible(blob, 0, COMPAT_PARADE_PS8622);
+		*is_ps8622 = (np < 0) ? 0 : 1;
+	}
+	if (np < 0) {
+		debug("%s: Could not find PTN3460 or PS8622 (%d)\n", __func__,
+			ret);
 		return np;
 	}
 	ret = fdtdec_decode_gpio(blob, np, "powerdown-gpio", &local.dp_pd);
@@ -498,6 +503,10 @@ static int board_dp_fill_gpios(const void *blob)
 		return ret;
 	}
 
+	/* Parade is only on newer boards */
+	if (*is_ps8622)
+		return 0;
+
 	/* If board is older, replace pd gpio with rst gpio */
 	rev = board_get_revision();
 	if (rev >= 4 && rev != 6) {
@@ -510,13 +519,24 @@ static int board_dp_fill_gpios(const void *blob)
 int board_dp_bridge_setup(const void *blob, unsigned *wait_ms)
 {
 	int ret;
+	int is_ps8622 = 0;
 
-	ret = board_dp_fill_gpios(blob);
+	*wait_ms = 0;
+
+	ret = board_dp_fill_gpios(blob, &is_ps8622);
 	if (ret)
 		return ret;
 
-	/* Mux HPHPD to the special hotplug detect mode */
-	exynos_pinmux_config(PERIPH_ID_DPHPD, 0);
+	if (is_ps8622) {
+		/* LDO17 is providing the 1.2V rail to the Parade bridge */
+		ret = max77686_volsetting(PMIC_LDO17, CONFIG_VDD_LDO17_MV,
+					  REG_ENABLE, MAX77686_MV);
+		/* need to wait 20ms after power on before doing I2C writes */
+		*wait_ms = 20;
+	} else {
+		/* Mux HPHPD to the special hotplug detect mode */
+		exynos_pinmux_config(PERIPH_ID_DPHPD, 0);
+	}
 
 	/* Setup the GPIOs */
 	ret = fdtdec_setup_gpio(&local.dp_pd);
@@ -546,8 +566,108 @@ int board_dp_bridge_setup(const void *blob, unsigned *wait_ms)
 		fdtdec_set_gpio(&local.dp_rst, 0);
 	}
 
-	*wait_ms = 0;
 	return 0;
+}
+
+/**
+ * Write a PS8622 eDP bridge i2c register
+ *
+ * @param	addr_off	offset from the i2c base address for ps8622
+ * @param	reg_addr	register address to write
+ * @param	value		value to be written
+ * @return	0 on success, non-0 on failure
+ */
+static int ps8622_i2c_write(unsigned addr_off, unsigned char reg_addr,
+			    unsigned char value)
+{
+	int ret;
+
+	ret = i2c_write(0x48 + addr_off, reg_addr, 1, &value, 1);
+	debug("%s: reg=%#x, value=%#x, ret=%d\n", __func__, reg_addr, value,
+	      ret);
+	return ret;
+}
+
+static void ps8622_init(void)
+{
+	i2c_set_bus_num(7);
+
+	debug("PS8622 I2C init\n");
+	ps8622_i2c_write(0x02, 0xa1, 0x01); /* HPD low */
+	/* SW setting */
+	ps8622_i2c_write(0x04, 0x14, 0x01); /* [1:0] SW output 1.2V voltage is
+					     * lower to 96% */
+	/* RCO SS setting */
+	ps8622_i2c_write(0x04, 0xe3, 0x20); /* [5:4] = b01 0.5%, b10 1%, b11
+					     * 1.5% */
+	ps8622_i2c_write(0x04, 0xe2, 0x80); /* [7] RCO SS enable */
+	/* RPHY Setting */
+	ps8622_i2c_write(0x04, 0x8a, 0x0c); /* [3:2] CDR tune wait cycle before
+					     * measure for fine tune b00: 1us,
+					     * 01: 0.5us, 10:2us, 11:4us. */
+	ps8622_i2c_write(0x04, 0x89, 0x08); /* [3] RFD always on */
+	ps8622_i2c_write(0x04, 0x71, 0x2d); /* CTN lock in/out:
+					     * 20000ppm/80000ppm. Lock out 2
+					     * times. */
+	/* 2.7G CDR settings */
+	ps8622_i2c_write(0x04, 0x7d, 0x07); /* NOF=40LSB for HBR CDR setting */
+	ps8622_i2c_write(0x04, 0x7b, 0x00); /* [1:0] Fmin=+4bands */
+	ps8622_i2c_write(0x04, 0x7a, 0xfd); /* [7:5] DCO_FTRNG=+-40% */
+	/* 1.62G CDR settings */
+	ps8622_i2c_write(0x04, 0xc0, 0x12); /* [5:2]NOF=64LSB [1:0]DCO scale is
+					     * 2/5 */
+	ps8622_i2c_write(0x04, 0xc1, 0x92); /* Gitune=-37% */
+	ps8622_i2c_write(0x04, 0xc2, 0x1c); /* Fbstep=100% */
+	ps8622_i2c_write(0x04, 0x32, 0x80); /* [7] LOS signal disable */
+	/* RPIO Setting */
+	ps8622_i2c_write(0x04, 0x00, 0xb0); /* [7:4] LVDS driver bias current :
+					     * 75% (250mV swing) */
+	ps8622_i2c_write(0x04, 0x15, 0x40); /* [7:6] Right-bar GPIO output
+					     * strength is 8mA */
+	/* EQ Training State Machine Setting */
+	ps8622_i2c_write(0x04, 0x54, 0x10); /* RCO calibration start */
+	ps8622_i2c_write(0x01, 0x02, 0x81); /* [4:0] MAX_LANE_COUNT set to one
+					     * lane */
+	ps8622_i2c_write(0x01, 0x21, 0x81); /* [4:0] LANE_COUNT_SET set to one
+					     * lane */
+	ps8622_i2c_write(0x00, 0x52, 0x20);
+	ps8622_i2c_write(0x00, 0xf1, 0x03); /* HPD CP toggle enable */
+	ps8622_i2c_write(0x00, 0x62, 0x41);
+	ps8622_i2c_write(0x00, 0xf6, 0x01); /* Counter number, add 1ms counter
+					     * delay */
+	ps8622_i2c_write(0x00, 0x77, 0x06); /* [6]PWM function control by
+					     * DPCD0040f[7], default is PWM
+					     * block always works. */
+	ps8622_i2c_write(0x00, 0x4c, 0x04); /* 04h Adjust VTotal tolerance to
+					     * fix the 30Hz no display issue */
+	ps8622_i2c_write(0x01, 0xc0, 0x00); /* DPCD00400='h00, Parade OUI =
+					     * 'h001cf8 */
+	ps8622_i2c_write(0x01, 0xc1, 0x1c); /* DPCD00401='h1c */
+	ps8622_i2c_write(0x01, 0xc2, 0xf8); /* DPCD00402='hf8 */
+	ps8622_i2c_write(0x01, 0xc3, 0x44); /* DPCD403~408 = ASCII code
+					     * D2SLV5='h4432534c5635 */
+	ps8622_i2c_write(0x01, 0xc4, 0x32); /* DPCD404 */
+	ps8622_i2c_write(0x01, 0xc5, 0x53); /* DPCD405 */
+	ps8622_i2c_write(0x01, 0xc6, 0x4c); /* DPCD406 */
+	ps8622_i2c_write(0x01, 0xc7, 0x56); /* DPCD407 */
+	ps8622_i2c_write(0x01, 0xc8, 0x35); /* DPCD408 */
+	ps8622_i2c_write(0x01, 0xca, 0x01); /* DPCD40A, Initial Code major
+					     * revision '01' */
+	ps8622_i2c_write(0x01, 0xcb, 0x05); /* DPCD40B, Initial Code minor
+					     * revision '05' */
+	ps8622_i2c_write(0x01, 0xa5, 0xa0); /* DPCD720, Select internal PWM */
+	ps8622_i2c_write(0x01, 0xa7, 0xff); /* FFh for 100% PWM of brightness,
+					     * 0h for 0% brightness */
+	ps8622_i2c_write(0x01, 0xcc, 0x13); /* Set LVDS output as 6bit-VESA
+					     * mapping, single LVDS channel */
+	ps8622_i2c_write(0x02, 0xb1, 0x20); /* Enable SSC set by register */
+	ps8622_i2c_write(0x04, 0x10, 0x16); /* Set SSC enabled and +/-1% central
+					     * spreading */
+	ps8622_i2c_write(0x04, 0x59, 0x60); /* MPU Clock source: LC => RCO */
+	ps8622_i2c_write(0x04, 0x54, 0x14); /* LC -> RCO */
+	ps8622_i2c_write(0x02, 0xa1, 0x91); /* HPD high */
+
+	i2c_set_bus_num(0);
 }
 
 int board_dp_bridge_init(const void *blob, unsigned *wait_ms)
@@ -557,6 +677,10 @@ int board_dp_bridge_init(const void *blob, unsigned *wait_ms)
 
 	/* Ignore the return value here, on some boards this is NC */
 	fdtdec_set_gpio(&local.dp_rst, 0);
+
+	/* Configure I2C registers for Parade bridge */
+	if (fdtdec_next_compatible(blob, 0, COMPAT_PARADE_PS8622) >= 0)
+		ps8622_init();
 
 	/*
 	 * We need to wait for 90ms after bringing up the bridge since there
