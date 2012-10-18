@@ -19,6 +19,7 @@
 #endif /* CONFIG_LZMA */
 #include <cros/common.h>
 #include <cros/cros_fdtdec.h>
+#include <tlcl.h>
 
 int board_final_cleanup(void);
 
@@ -119,6 +120,7 @@ int VbExLegacy(void)
 			break;
 		case PAYLOAD_SEGMENT_ENTRY:
 			board_final_cleanup();
+			TlclSaveState();
 			payload_entry = dst;
 			payload_entry();
 			return 0;
