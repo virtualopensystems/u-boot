@@ -24,6 +24,13 @@ struct fdt_chrome_ec {
 	int flash_erase_value;
 };
 
+/* Firmware type as given by the fdt */
+enum cros_firmware_type {
+	CROS_FIRMWARE_RO,
+	CROS_FIRMWARE_RW_A,
+	CROS_FIRMWARE_RW_B,
+};
+
 /* Decode Chrome OS specific configuration from fdt */
 
 int cros_fdtdec_flashmap(const void *fdt, struct twostop_fmap *config);
@@ -80,4 +87,16 @@ int cros_fdtdec_memory(const void *blob, const char *name,
  */
 int cros_fdtdec_chrome_ec(const void *blob, struct fdt_chrome_ec *config);
 
+/**
+ * Returns the current firmware type
+ *
+ * The fdt indicates whether we are in RO/RW-A/RW-B firmware. This function
+ * provides a way to read this information.
+ *
+ * @param blob		FDT blob to use
+ * @param typep		Returns firmware type
+ * @return 0 if ok, -1 on error (e.g. property not in fdt)
+ */
+int cros_fdtdec_firmware_type(const void *blob,
+			      enum cros_firmware_type *typep);
 #endif /* CROS_FDTDEC_H_ */
