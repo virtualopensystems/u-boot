@@ -54,6 +54,7 @@ DECLARE_GLOBAL_DATA_PTR;
  */
 #define MIN_PORT80_KCLOCKS_DELAY	0
 
+#ifdef CONFIG_OF_CBFS
 static void *find_cbmem_area(void)
 {
 	int i;
@@ -90,6 +91,7 @@ static void *find_cbmem_area(void)
 	printf("Error: No usable memory found in CBMEM area\n");
 	return NULL;
 }
+#endif
 
 static int map_coreboot_serial_to_fdt(void)
 {
@@ -138,40 +140,66 @@ static int map_coreboot_serial_to_fdt(void)
 	return !!ret;
 }
 
-int cpu_init_f(void)
+#ifdef CONFIG_OF_CBFS
+/**
+ * Load the fdt from CBFS
+ *
+ * @return 0 if ok, else error
+ */
+static int load_fdt_from_cbfs(void)
 {
 	CbfsFile file;
-	int ret = get_coreboot_info(&lib_sysinfo);
 	int size;
 	void *dtb;
 
-	if (ret != 0)
-		printf("Failed to parse coreboot tables.\n");
-
 	file_cbfs_init(0xffffffff);
 	if (file_cbfs_result != CBFS_SUCCESS)
-		goto cbfs_failed;
+		return -1;
 
 	file = file_cbfs_find_uncached(0xffffffff, "u-boot.dtb");
 	if (!file)
-		goto cbfs_failed;
+		return -1;
 
 	size = file->dataLength < 16384 ? file->dataLength : 16384;
 	dtb = find_cbmem_area();
 
 	memcpy(dtb, (const void *)(file->data), size);
 	gd->fdt_blob = (const void *)dtb;
-	if (map_coreboot_serial_to_fdt())
-		printf("Couldn't add serial port to FDT.\n");
+
+	return 0;
+}
+#endif
+
+int cpu_init_f(void)
+{
+	int ret;
+
+	ret = get_coreboot_info(&lib_sysinfo);
+	if (ret != 0)
+		printf("Failed to parse coreboot tables.\n");
+
+#ifdef CONFIG_OF_CBFS
+	/*
+	 * For cold boot, get the fdt from CBFS. For warm boot it will come
+	 * from memory using CONFIG_OF_SEPARATE.
+	 */
+	if (gd->flags & GD_FLG_COLD_BOOT) {
+		ret = load_fdt_from_cbfs();
+		if (ret)
+			printf("Failed to find fdt in CBFS.\n");
+	}
+#endif
 
 	timestamp_init();
 
-cbfs_failed:
 	return ret;
 }
 
 int board_early_init_f(void)
 {
+	if (map_coreboot_serial_to_fdt())
+		printf("Couldn't add serial port to FDT.\n");
+
 	return 0;
 }
 
