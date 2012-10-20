@@ -146,6 +146,9 @@ static int do_elf_reloc_fixups(void);
 
 init_fnc_t *init_sequence_f[] = {
 	cpu_init_f,
+#ifdef CONFIG_OF_CONTROL
+	fdtdec_check_fdt,
+#endif
 	board_early_init_f,
 	env_init,
 	init_baudrate,
@@ -277,6 +280,17 @@ void board_init_f(ulong boot_flags)
 	gd = &gd_data_f;
 	memset(gd, 0, sizeof(*gd));
 	gd->flags = boot_flags;
+
+#ifdef CONFIG_OF_EMBED
+	/* Get a pointer to the FDT */
+	gd->fdt_blob = _binary_dt_dtb_start;
+#elif defined CONFIG_OF_SEPARATE
+	/* FDT is at end of image */
+	gd->fdt_blob = (ulong *)&__rel_dyn_end;
+#endif
+	/* Allow the early environment to override the fdt address */
+	gd->fdt_blob = (void *)getenv_ulong("fdtcontroladdr", 16,
+						(uintptr_t)gd->fdt_blob);
 
 	for (init_fnc_ptr = init_sequence_f; *init_fnc_ptr; ++init_fnc_ptr) {
 		if ((*init_fnc_ptr)() != 0)
