@@ -742,23 +742,24 @@ static int mkbp_decode_fdt(const void *blob, int node, struct mkbp_dev **devp)
 	return 0;
 }
 
-struct mkbp_dev *mkbp_init(const void *blob)
+int mkbp_init(const void *blob, struct mkbp_dev **mkbpp)
 {
 	char id[MSG_BYTES];
 	struct mkbp_dev *dev;
 	int node = 0;
 
+	*mkbpp = NULL;
 	do {
 		node = fdtdec_next_compatible(blob, node, COMPAT_GOOGLE_MKBP);
 		if (node < 0) {
 			debug("%s: Node not found\n", __func__);
-			return NULL;
+			return 0;
 		}
 	} while (!fdtdec_get_is_enabled(blob, node));
 
 	if (mkbp_decode_fdt(blob, node, &dev)) {
 		debug("%s: Failed to decode device.\n", __func__);
-		return NULL;
+		return -MKBP_ERR_FDT_DECODE;
 	}
 
 	switch (dev->interface) {
@@ -766,25 +767,25 @@ struct mkbp_dev *mkbp_init(const void *blob)
 	case MKBPIF_SPI:
 		if (mkbp_spi_init(dev, blob)) {
 			debug("%s: Could not setup SPI interface\n", __func__);
-			return NULL;
+			return -MKBP_ERR_DEV_INIT;
 		}
 		break;
 #endif
 #ifdef CONFIG_MKBP_I2C
 	case MKBPIF_I2C:
 		if (mkbp_i2c_init(dev, blob))
-			return NULL;
+			return -MKBP_ERR_DEV_INIT;
 		break;
 #endif
 #ifdef CONFIG_MKBP_LPC
 	case MKBPIF_LPC:
 		if (mkbp_lpc_init(dev, blob))
-			return NULL;
+			return -MKBP_ERR_DEV_INIT;
 		break;
 #endif
 	case MKBPIF_NONE:
 	default:
-		return NULL;
+		return 0;
 	}
 
 	/* we will poll the EC interrupt line */
@@ -794,19 +795,19 @@ struct mkbp_dev *mkbp_init(const void *blob)
 
 	if (mkbp_check_version(dev)) {
 		debug("%s: Could not detect MKBP version\n", __func__);
-		return NULL;
+		return -MKBP_ERR_CHECK_VERSION;
 	}
 
 	if (mkbp_read_id(dev, id, sizeof(id))) {
 		debug("%s: Could not read KBC ID\n", __func__);
-		return NULL;
+		return -MKBP_ERR_READ_ID;
 	}
 
 	/* Remember this device for use by the mkbp command */
-	last_dev = dev;
+	last_dev = *mkbpp = dev;
 	debug("Google Chrome EC MKBP driver ready, id '%s'\n", id);
 
-	return dev;
+	return 0;
 }
 
 #ifdef CONFIG_CMD_MKBP
@@ -890,8 +891,9 @@ static int do_mkbp(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 
 	cmd = argv[1];
 	if (0 == strcmp("init", cmd)) {
-		if (!mkbp_init(gd->fdt_blob)) {
-			printf("Could not init mkbp device\n");
+		ret = mkbp_init(gd->fdt_blob, &dev);
+		if (ret) {
+			printf("Could not init mkbp device (err %d)\n", ret);
 			return 1;
 		}
 		return 0;

@@ -55,6 +55,7 @@ DECLARE_GLOBAL_DATA_PTR;
 
 struct local_info {
 	struct mkbp_dev *mkbp_dev;	/* Pointer to mkbp device */
+	int mkbp_err;			/* Error for mkbp, 0 if ok */
 	int arbitrate_node;
 	struct fdt_gpio_state ap_claim;
 	struct fdt_gpio_state ec_claim;
@@ -308,11 +309,9 @@ static void disable_usb30_pll(void)
 
 static int board_init_mkbp_devices(const void *blob)
 {
-	local.mkbp_dev = mkbp_init(blob);
-	if (!local.mkbp_dev) {
-		debug("%s: cannot init mkbp device\n", __func__);
-		return -1;
-	}
+	local.mkbp_err = mkbp_init(blob, &local.mkbp_dev);
+	if (local.mkbp_err)
+		return -1;  /* Will report in board_late_init() */
 
 	return 0;
 }
@@ -950,6 +949,21 @@ int board_late_init(void)
 {
 	stdio_print_current_devices();
 
+	if (local.mkbp_err) {
+		/* Force console and LCD display on */
+		gd->flags &= ~GD_FLG_SILENT;
+		exynos_lcd_check_next_stage(gd->fdt_blob, 1);
+
+		printf("Chrome EC communications failure %d\n",
+		       local.mkbp_err);
+		puts("\nPlease reset with Power+Refresh\n\n");
+		hang();
+		/*
+		 * Replace hang() with panic() once debugged in test lab.
+		 * panic("Cannot init mkbp device");
+		 */
+		return -1;
+	}
 	return 0;
 }
 #endif

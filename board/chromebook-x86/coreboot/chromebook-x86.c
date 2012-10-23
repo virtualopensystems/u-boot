@@ -35,9 +35,16 @@ struct mkbp_dev *board_get_mkbp_dev(void)
 static int board_init_mkbp_devices(const void *blob)
 {
 #ifdef CONFIG_MKBP
-	mkbp_dev = mkbp_init(gd->fdt_blob);
-	if (!mkbp_dev) {
-		debug("%s: cannot init mkbp device\n", __func__);
+	int err;
+
+	err = mkbp_init(gd->fdt_blob, &mkbp_dev);
+	if (err) {
+		gd->flags &= ~GD_FLG_SILENT;
+		printf("Chrome EC communications failure %d\n", err);
+
+		/* Display is not on, so we need to panic(), not hang */
+		mdelay(2000);
+		panic("Cannot init mkbp device");
 		return -1;
 	}
 #endif

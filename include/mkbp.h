@@ -142,13 +142,25 @@ int mkbp_reboot(struct mkbp_dev *dev, enum ec_reboot_cmd cmd, uint8_t flags);
  */
 int mkbp_interrupt_pending(struct mkbp_dev *dev);
 
+enum {
+	MKBP_OK,
+	MKBP_ERR = 1,
+	MKBP_ERR_FDT_DECODE,
+	MKBP_ERR_CHECK_VERSION,
+	MKBP_ERR_READ_ID,
+	MKBP_ERR_DEV_INIT,
+};
+
 /**
  * Set up the Chromium OS matrix keyboard protocol
  *
  * @param blob		Device tree blob containing setup information
- * @return pointer to the mkbp device
+ * @param mkbpp        Returns pointer to the mkbp device, or NULL if none
+ * @return 0 if we got an mkbp device and all is well (or no mkbp is
+ *	expected), -ve if we should have an mkbp device but failed to find
+ *	one, or init failed (-MKBP_ERR_...).
  */
-struct mkbp_dev *mkbp_init(const void *blob);
+int mkbp_init(const void *blob, struct mkbp_dev **mkbpp);
 
 /**
  * Read information about the keyboard matrix
