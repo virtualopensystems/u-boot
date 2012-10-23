@@ -60,6 +60,7 @@ enum {
 	DO_UART		= 1 << 1,
 	DO_CLOCKS	= 1 << 2,
 	DO_POWER	= 1 << 3,
+	DO_MEM_RESET	= 1 << 4,
 };
 
 int lowlevel_init_subsystems(void)
@@ -83,7 +84,7 @@ int lowlevel_init_subsystems(void)
 		actions = DO_WAKEUP;
 	default:
 		/* This is a normal boot (not a wake from sleep) */
-		actions = DO_UART | DO_CLOCKS | DO_POWER;
+		actions = DO_UART | DO_CLOCKS | DO_POWER | DO_MEM_RESET;
 	}
 
 	if (actions & DO_POWER)
@@ -97,7 +98,7 @@ int lowlevel_init_subsystems(void)
 		timer_init();
 	}
 	if (actions & DO_CLOCKS) {
-		mem_ctrl_init();
+		mem_ctrl_init(actions & DO_MEM_RESET);
 		tzpc_init();
 	}
 

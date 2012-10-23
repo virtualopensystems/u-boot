@@ -688,7 +688,13 @@ void sdelay(unsigned long);
 /* CPU info initialization code */
 void cpu_info_init(void);
 
-void mem_ctrl_init(void);
+/*
+ * Memory initialization
+ *
+ * @param mem_reset	Reset PHY during initialization.
+ */
+void mem_ctrl_init(int mem_reset);
+
 /*
  * Memory variant specific initialization code
  *
@@ -697,9 +703,11 @@ void mem_ctrl_init(void);
  *			which the DMC uses to decide how to split a memory
  *			chunk into smaller chunks to support concurrent
  *			accesses; may vary across boards.
+ * @param mem_reset	Reset DDR PHY during initialization.
  * @return 0 if ok, SETUP_ERR_... if there is a problem
  */
-int ddr3_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size);
+int ddr3_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size,
+		       int mem_reset);
 
 void system_clock_init(void);
 

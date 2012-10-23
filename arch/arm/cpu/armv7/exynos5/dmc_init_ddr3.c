@@ -53,7 +53,8 @@ static void reset_phy_ctrl(void)
 	sdelay(425000);
 }
 
-int ddr3_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size)
+int ddr3_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size,
+		       int mem_reset)
 {
 	unsigned int val;
 	struct exynos5_phy_control *phy0_ctrl, *phy1_ctrl;
@@ -64,7 +65,8 @@ int ddr3_mem_ctrl_init(struct mem_timings *mem, unsigned long mem_iv_size)
 	phy1_ctrl = (struct exynos5_phy_control *)EXYNOS5_DMC_PHY1_BASE;
 	dmc = (struct exynos5_dmc *)EXYNOS5_DMC_CTRL_BASE;
 
-	reset_phy_ctrl();
+	if (mem_reset)
+		reset_phy_ctrl();
 
 	/* Set Impedance Output Driver */
 	val = (mem->impedance << CA_CK_DRVR_DS_OFFSET) |

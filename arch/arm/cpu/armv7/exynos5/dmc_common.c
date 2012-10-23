@@ -176,7 +176,7 @@ void dmc_config_memory(struct mem_timings *mem, struct exynos5_dmc *dmc)
 	writel(DMC_MEMBASECONFIG1_VAL, &dmc->membaseconfig1);
 }
 
-void mem_ctrl_init()
+void mem_ctrl_init(int mem_reset)
 {
 	struct spl_machine_param *param = spl_get_machine_params();
 	struct mem_timings *mem;
@@ -186,7 +186,7 @@ void mem_ctrl_init()
 
 	/* If there are any other memory variant, add their init call below */
 	if (param->mem_type == DDR_MODE_DDR3) {
-		ret = ddr3_mem_ctrl_init(mem, param->mem_iv_size);
+		ret = ddr3_mem_ctrl_init(mem, param->mem_iv_size, mem_reset);
 		if (ret)
 			panic("Memory controller init failed, err: %u", ret);
 	} else {
