@@ -82,6 +82,7 @@ int lowlevel_init_subsystems(void)
 	case S5P_CHECK_DIDLE:
 	case S5P_CHECK_LPA:
 		actions = DO_WAKEUP;
+		break;
 	default:
 		/* This is a normal boot (not a wake from sleep) */
 		actions = DO_UART | DO_CLOCKS | DO_POWER | DO_MEM_RESET;
