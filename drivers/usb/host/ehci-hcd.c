@@ -44,6 +44,7 @@ static struct ehci_ctrl {
 	struct QH periodic_queue __attribute__((aligned(ARCH_DMA_MINALIGN)));
 	uint32_t *periodic_list;
 	int ntds;
+	uint32_t port_enable_mask;
 } ehcic[CONFIG_USB_MAX_CONTROLLER_COUNT];
 
 
@@ -527,6 +528,12 @@ ehci_submit_root(struct usb_device *dev, unsigned long pipe, void *buffer,
 			le16_to_cpu(req->index) - 1);
 		return -1;
 	}
+	if (req->index && !(ctrl->port_enable_mask &
+			(1 << (le16_to_cpu(req->index) - 1)))) {
+		debug("skip request on disabled port%d\n",
+			le16_to_cpu(req->index) - 1);
+		return 0;
+	}
 	status_reg = (uint32_t *)&hcor->or_portsc[
 						le16_to_cpu(req->index) - 1];
 	srclen = 0;
@@ -764,6 +771,11 @@ unknown:
 	return -1;
 }
 
+void ehci_hcd_set_port_enable_mask(int index, uint32_t mask)
+{
+	ehcic[index].port_enable_mask = mask;
+}
+
 void usb_lowlevel_stop(int index)
 {
 	ehci_hcd_stop(index);
@@ -777,6 +789,8 @@ void *usb_lowlevel_init(int index)
 	volatile struct ehci_hcor *hcor;
 	struct QH *qh_list;
 	struct QH *periodic;
+
+	ehcic[index].port_enable_mask = -1U;
 
 	if (ehci_hcd_init(index, &hccr, (struct ehci_hcor **)&hcor) != 0)
 		return NULL;

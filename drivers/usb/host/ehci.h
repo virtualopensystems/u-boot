@@ -222,4 +222,12 @@ int ehci_hcd_init(int index, struct ehci_hccr **hccr, struct ehci_hcor **hcor);
  */
 int ehci_hcd_stop(int index);
 
+/**
+ * Define which port should be enabled on the root hub.
+ *
+ * @param index  controller number to configure
+ * @param mask  bitmap of the enabled ports
+ */
+void ehci_hcd_set_port_enable_mask(int index, uint32_t mask);
+
 #endif /* USB_EHCI_H */
