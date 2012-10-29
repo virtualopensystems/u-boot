@@ -74,6 +74,7 @@ static const char * const compat_names[COMPAT_COUNT] = {
 	COMPAT(SAMSUNG_EXYNOS_USB, "samsung,exynos-usb"),
 	COMPAT(GOOGLE_CHROME_EC, "google,chrome-ec"),
 	COMPAT(ANALOGIX_ANX7805, "analogix,anx7805"),
+	COMPAT(SMSC_USB3503, "smsc,usb3503"),
 };
 
 const char *fdtdec_get_compatible(enum fdt_compat_id id)

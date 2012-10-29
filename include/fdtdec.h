@@ -99,6 +99,7 @@ enum fdt_compat_id {
 	COMPAT_SAMSUNG_EXYNOS_USB,	/* Exynos USB */
 	COMPAT_GOOGLE_CHROME_EC,	/* Chrome Embedded Controller */
 	COMPAT_ANALOGIX_ANX7805,	/* Analogix ANX7805 myDP bridge */
+	COMPAT_SMSC_USB3503,		/* HSIC USB hub reset GPIO */
 
 	COMPAT_COUNT,
 };

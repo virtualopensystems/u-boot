@@ -21,11 +21,15 @@
  */
 
 #include <common.h>
+#include <fdtdec.h>
 #include <usb.h>
 #include <asm/arch/cpu.h>
+#include <asm/arch/gpio.h>
 #include <asm/arch/power.h>
 #include <asm/arch/ehci-s5p.h>
 #include "ehci.h"
+
+DECLARE_GLOBAL_DATA_PTR;
 
 int __board_usb_vbus_init(void)
 {
@@ -40,6 +44,8 @@ int board_usb_vbus_init(void)
 static void setup_usb_phy(struct usb_phy *usb)
 {
 	unsigned int hostphy_ctrl0;
+	int node;
+	struct fdt_gpio_state hsichub_reset;
 
 	/* Enable VBUS */
 	board_usb_vbus_init();
@@ -74,6 +80,26 @@ static void setup_usb_phy(struct usb_phy *usb)
 			EHCICTRL_ENAINCR4 |
 			EHCICTRL_ENAINCR8 |
 			EHCICTRL_ENAINCR16);
+
+	/* HSIC USB Hub initialization. */
+	node = fdtdec_next_compatible(gd->fdt_blob, 0, COMPAT_SMSC_USB3503);
+	if (node > 0) {
+		fdtdec_decode_gpio(gd->fdt_blob, node, "reset-gpio",
+			&hsichub_reset);
+		fdtdec_setup_gpio(&hsichub_reset);
+		gpio_direction_output(hsichub_reset.gpio, 0);
+		udelay(100);
+		gpio_direction_output(hsichub_reset.gpio, 1);
+		udelay(5000);
+
+		clrbits_le32(&usb->hsicphyctrl1,
+				HOST_CTRL0_SIDDQ |
+				HOST_CTRL0_FORCESLEEP |
+				HOST_CTRL0_FORCESUSPEND);
+		setbits_le32(&usb->hsicphyctrl1, HOST_CTRL0_PHYSWRST);
+		udelay(10);
+		clrbits_le32(&usb->hsicphyctrl1, HOST_CTRL0_PHYSWRST);
+	}
 
 	/* PHY clock and power setup time */
 	mdelay(50);
