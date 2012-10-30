@@ -51,6 +51,13 @@
 			reg = <0x22>;
 			compatible = "maxim,max98095-codec";
 		};
+
+		anx7805-bridge@72 {
+			compatible = "analogix,anx7805";
+			reg = <0x72>;
+			powerdown-gpio = <&gpio 0xc6 1>;	/* E06 */
+			reset-gpio = <&gpio 0xc7 1>;		/* E07 */
+		};
 	};
 
 	spi@131b0000 {
