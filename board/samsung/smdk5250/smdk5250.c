@@ -646,6 +646,38 @@ static void board_enable_audio_codec(void)
 	gpio_set_pull(en_gpio.gpio, EXYNOS_GPIO_PULL_NONE);
 }
 
+static void board_configure_analogix(void)
+{
+	int node, ret;
+	struct fdt_gpio_state reset_gpio;
+	struct fdt_gpio_state powerdown_gpio;
+
+	node = fdtdec_next_compatible(gd->fdt_blob, 0,
+		COMPAT_ANALOGIX_ANX7805);
+	if (node <= 0)
+		return;
+
+	/* Configure Analogix 780x bridge in USB pass-through mode */
+	ret = fdtdec_decode_gpio(gd->fdt_blob, node, "reset-gpio",
+				&reset_gpio);
+	if (ret < 0) {
+		debug("%s: Could not find reset-gpio", __func__);
+		return;
+	}
+
+	ret = fdtdec_decode_gpio(gd->fdt_blob, node, "powerdown-gpio",
+				&powerdown_gpio);
+	if (ret < 0) {
+		debug("%s: Could not find powerdown-gpio", __func__);
+		return;
+	}
+
+	fdtdec_setup_gpio(&powerdown_gpio);
+	fdtdec_setup_gpio(&reset_gpio);
+	gpio_direction_output(powerdown_gpio.gpio, 1);
+	gpio_direction_output(reset_gpio.gpio, 1);
+}
+
 int board_init(void)
 {
 	struct fdt_memory mem_config;
@@ -721,6 +753,8 @@ int board_init(void)
 
 	if (board_init_mkbp_devices(gd->fdt_blob))
 		return -1;
+
+	board_configure_analogix();
 
 	board_enable_audio_codec();
 

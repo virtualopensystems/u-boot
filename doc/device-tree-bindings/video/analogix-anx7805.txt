@@ -1,0 +1,23 @@
+Analogix ANX7805 myDP bridge
+============================
+
+The device node for a Analogix ANX7805 myDP bridge.
+
+Required properties :
+ - compatible : Should be "analogix,anx7805".
+ - reset-gpio : The GPIO connected to the chip reset_n pin.
+ - powerdown-gpio : The GPIO connected to the chip pd_hv pin.
+
+Optional properties:
+ - reg : I2C address of the chip.
+
+Example
+=======
+
+anx7805-bridge@72 {
+	compatible = "analogix,anx7805";
+	reg = <0x72>;
+	powerdown-gpio = <&gpio 0xc6 1>;
+	reset-gpio = <&gpio 0xc7 1>;
+};
+

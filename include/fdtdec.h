@@ -98,6 +98,7 @@ enum fdt_compat_id {
 	COMPAT_NXP_PTN3460,		/* NXP PTN3460 DP/LVDS bridge */
 	COMPAT_SAMSUNG_EXYNOS_USB,	/* Exynos USB */
 	COMPAT_GOOGLE_CHROME_EC,	/* Chrome Embedded Controller */
+	COMPAT_ANALOGIX_ANX7805,	/* Analogix ANX7805 myDP bridge */
 
 	COMPAT_COUNT,
 };
