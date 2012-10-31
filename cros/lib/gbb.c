@@ -13,6 +13,7 @@
 #include <cros/gbb.h>
 
 #include <gbb_header.h>
+static uint32_t gbb_flags;
 
 int gbb_init(read_buf_type gbb, firmware_storage_t *file, uint32_t gbb_offset,
 	     size_t gbb_size)
@@ -60,6 +61,7 @@ int gbb_init(read_buf_type gbb, firmware_storage_t *file, uint32_t gbb_offset,
 		VBDEBUG("failed to read root key\n");
 		return 1;
 	}
+	gbb_flags = gbbh->flags;
 #else
 	/* No data is actually moved in this case so no bounds checks. */
 	if (file->read(file, gbb_offset,
@@ -67,6 +69,7 @@ int gbb_init(read_buf_type gbb, firmware_storage_t *file, uint32_t gbb_offset,
 		VBDEBUG("failed to read GBB header\n");
 		return 1;
 	}
+	gbb_flags = ((GoogleBinaryBlockHeader *)gbb)->flags;
 #endif
 
 	return 0;
@@ -122,6 +125,11 @@ int gbb_read_recovery_key(void *gbb, firmware_storage_t *file,
 	return 0;
 }
 #endif
+
+uint32_t gbb_get_flags(void)
+{
+	return gbb_flags;
+}
 
 int gbb_check_integrity(uint8_t *gbb)
 {

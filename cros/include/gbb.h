@@ -67,4 +67,11 @@ int gbb_read_recovery_key(read_buf_type gbb, firmware_storage_t *file,
  */
 int gbb_check_integrity(uint8_t *gbb);
 
+/**
+ * Get the GBB flags as they were set at init
+ *
+ * @return gbb_flags
+ */
+uint32_t gbb_get_flags(void);
+
 #endif /* CHROMEOS_GBB_H_ */
