@@ -1,0 +1,18 @@
+SMSC USB3503 HSIC USB hub controller.
+======================
+
+The device node for an SMSC HSIC USB hub controller
+
+Required properties :
+ - compatible : Should be "smsc,usb3503".
+
+Optional properties:
+ - reset-gpio : The GPIO connected to the hub's reset_n port.
+
+Example
+=======
+
+hsichub@13400020 {
+	compatible = "smsc,usb3503";
+	reset-gpio = <&gpio 0xc8 0>;
+};
