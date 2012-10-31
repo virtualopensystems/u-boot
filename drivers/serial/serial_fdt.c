@@ -76,7 +76,7 @@ static int decode_uart_console(const void *blob, struct fdt_uart *uart,
 
 	memset(uart, '\0', sizeof(*uart));
 	uart->compat = COMPAT_UNKNOWN;
-	node = fdtdec_find_alias_node(blob, "console");
+	node = fdt_path_offset(blob, "console");
 	if (node < 0) {
 		debug("%s: Cannot find console alias in fdt\n", __func__);
 		return 0;

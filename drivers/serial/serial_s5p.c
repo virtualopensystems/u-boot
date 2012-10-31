@@ -259,7 +259,7 @@ int fdtdec_decode_console(int *index, struct fdt_serial *uart)
 	const void *blob = gd->fdt_blob;
 	int node;
 
-	node = fdtdec_find_alias_node(blob, "console");
+	node = fdt_path_offset(blob, "console");
 	if (node < 0)
 		return node;
 
