@@ -111,7 +111,7 @@ static int setup_i2c(int *nodep)
 	int node;
 	int err;
 
-	node = fdtdec_find_alias_node(gd->fdt_blob, "i2c4");
+	node = fdt_path_offset(gd->fdt_blob, "i2c4");
 	if (node < 0) {
 		printf("Error: Cannot find fdt node\n");
 		return -1;
