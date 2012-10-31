@@ -85,4 +85,9 @@
 		samsung,codec-type = "max98095";
 	};
 
+	hsichub@13400000 {
+		compatible = "smsc,usb3503";
+		reset-gpio = <&gpio 0xc8 0>;		/* E10 */
+	};
+
 };
