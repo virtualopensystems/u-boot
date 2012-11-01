@@ -164,6 +164,11 @@
 		codec-enable-gpio = <&gpio 0xaf 0>;
 	};
 
+	ehci@12110000 {
+		compatible = "samsung,exynos-ehci", "usb-ehci";
+		reg = <0x12110000 0x100>;
+	};
+
 	mkbp-keyb {
 		compatible = "google,mkbp-keyb";
 		google,key-rows = <8>;

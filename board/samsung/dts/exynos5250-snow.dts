@@ -86,6 +86,10 @@
 		samsung,interface = "edp";
 	};
 
+	ehci@12110000 {
+		port-enable-mask = <0x01>;
+	};
+
 	sound@12d60000 {
 		samsung,codec-type = "max98095";
 	};
