@@ -130,11 +130,25 @@ int ehci_hcd_init(int index, struct ehci_hccr **ret_hccr,
 	struct usb_phy *usb;
 	struct ehci_hccr *hccr;
 	struct ehci_hcor *hcor;
+	int node;
+
+	node = fdtdec_next_compatible(gd->fdt_blob, 0,
+				      COMPAT_SAMSUNG_EXYNOS_EHCI);
+	if (node < 0)
+		return node;
+
+	hccr = (struct ehci_hccr *)fdtdec_get_addr(gd->fdt_blob, node, "reg");
+	if (!hccr) {
+		debug("%s: no registers address for EHCI\n", __func__);
+		return -FDT_ERR_NOTFOUND;
+	}
+
+	ehci_hcd_set_port_enable_mask(index, fdtdec_get_int(gd->fdt_blob, node,
+						"port-enable-mask", -1U));
 
 	usb = (struct usb_phy *)samsung_get_base_usb_phy();
 	setup_usb_phy(usb);
 
-	hccr = (struct ehci_hccr *)(EXYNOS5_USB_HOST_EHCI_BASE);
 	hcor = (struct ehci_hcor *)((uint32_t) hccr
 				+ HC_LENGTH(ehci_readl(&hccr->cr_capbase)));
 

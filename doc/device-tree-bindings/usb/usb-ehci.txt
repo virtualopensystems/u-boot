@@ -1,0 +1,18 @@
+USB EHCI controllers
+====================
+
+Required properties:
+  - compatible : should be "usb-ehci".
+  - reg : should contain at least address and length of the standard EHCI
+    register set for the device.
+
+Optional property:
+  - port-enable-mask : defined which port should be enabled on the root hub.
+
+Example
+=======
+
+ehci@12110000 {
+	compatible = "samsung,exynos-ehci", "usb-ehci";
+	reg = <0x12110000 0x100>;
+};
