@@ -2462,6 +2462,20 @@ FIT uImage format:
 		most specific compatibility entry of U-Boot's fdt's root node.
 		The order of entries in the configuration's fdt is ignored.
 
+		CONFIG_SYS_FDT_PAD
+
+		When relocating the FDT before boot, allow this much extra
+		space (measured in bytes) at the end. This provides space for
+		a board-specific ft_board_setup() to add extra data to the
+		fdt.
+
+		CONFIG_OF_BOARD_SETUP
+
+		Call a function ft_board_setup() to add board-specific data
+		to the FDT before booting the OS. This function should be
+		defined by the board.
+
+
 - Standalone program support:
 		CONFIG_STANDALONE_LOAD_ADDR
 
