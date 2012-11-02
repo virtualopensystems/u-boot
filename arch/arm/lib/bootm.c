@@ -207,23 +207,19 @@ static int bootm_linux_fdt(int machid, bootm_headers_t *images)
 	if (ret)
 		return ret;
 
-#ifdef CONFIG_OF_BOARD_SETUP
-	/* Try to reserve 1024 bytes for board fixups */
-	if (!fdt_open_into(*of_flat_tree, *of_flat_tree, of_size + 1024))
-		of_size += 1024;
-	/* Call the board-specific fixup routine */
-	ft_board_setup(*of_flat_tree, gd->bd);
-#endif
-#ifdef CONFIG_OF_UPDATE_FDT_BEFORE_BOOT
-	/* this must be earlier than boot_relocate_fdt */
-	ret = fit_update_fdt_before_boot(*of_flat_tree, &of_size);
-	if (ret)
-		return ret;
-#endif
-
 	ret = boot_relocate_fdt(lmb, of_flat_tree, &of_size);
 	if (ret)
 		return ret;
+#ifdef CONFIG_OF_BOARD_SETUP
+	/* Call the board-specific fixup routine */
+	ret = ft_board_setup(*of_flat_tree, gd->bd);
+
+	if (ret) {
+		printf("Failed to add board information to FDT: %s\n",
+			fdt_strerror(ret));
+		return ret;	/* FDT_ERR_... */
+	}
+#endif
 
 	debug("## Transferring control to Linux (at address %08lx) ...\n",
 	       (ulong) kernel_entry);

@@ -22,13 +22,11 @@
 
 enum { CROS_32BIT_ENTRY_ADDR = 0x100000 };
 
-#ifdef CONFIG_OF_UPDATE_FDT_BEFORE_BOOT
 /*
- * We uses a static variable to communicate with fit_update_fdt_before_boot().
+ * We uses a static variable to communicate with ft_board_setup().
  * For more information, please see commit log.
  */
 static crossystem_data_t *g_crossystem_data = NULL;
-#endif /* CONFIG_OF_UPDATE_FDT_BEFORE_BOOT */
 
 /* defined in common/cmd_bootm.c */
 int do_bootm(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);
@@ -270,9 +268,7 @@ int boot_kernel(VbSelectAndLoadKernelParams *kparams, crossystem_data_t *cdata)
 	VBDEBUG_PUTS(getenv("bootargs"));
 	VBDEBUG_PUTS("\n");
 
-#ifdef CONFIG_OF_UPDATE_FDT_BEFORE_BOOT
 	g_crossystem_data = cdata;
-#endif /* CONFIG_OF_UPDATE_FDT_BEFORE_BOOT */
 
 #ifdef CONFIG_X86
 	/* Disable keyboard and flush buffer so that further key strokes
@@ -296,13 +292,13 @@ int boot_kernel(VbSelectAndLoadKernelParams *kparams, crossystem_data_t *cdata)
 #endif
 }
 
-#ifdef CONFIG_OF_UPDATE_FDT_BEFORE_BOOT
+#ifdef CONFIG_OF_BOARD_SETUP
 /*
  * This function does the last chance FDT update before booting to kernel.
  * Currently we modify the FDT by embedding crossystem data. So before
  * calling bootm(), g_crossystem_data should be set.
  */
-int fit_update_fdt_before_boot(char *fdt, ulong *new_size)
+int ft_board_setup(void *fdt, bd_t *bd)
 {
 	int err;
 
@@ -320,4 +316,4 @@ int fit_update_fdt_before_boot(char *fdt, ulong *new_size)
 
 	return 0;
 }
-#endif /* CONFIG_OF_UPDATE_FDT_BEFORE_BOOT */
+#endif
