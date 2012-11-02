@@ -67,6 +67,7 @@ struct spi_flash *spi_flash_probe_gigadevice(struct spi_slave *spi, u8 *idcode)
 		debug("SF: Failed to allocate memory\n");
 		return NULL;
 	}
+	memset(flash, '\0', sizeof(*flash));
 
 	flash->spi = spi;
 	flash->name = params->name;
