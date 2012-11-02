@@ -304,19 +304,20 @@ int boot_kernel(VbSelectAndLoadKernelParams *kparams, crossystem_data_t *cdata)
  */
 int fit_update_fdt_before_boot(char *fdt, ulong *new_size)
 {
-	uint32_t ns;
+	int err;
 
 	if (!g_crossystem_data) {
 		VBDEBUG("warning: g_crossystem_data is NULL\n");
 		return 0;
 	}
 
-	if (crossystem_data_embed_into_fdt(g_crossystem_data, fdt, &ns)) {
+	err = crossystem_data_embed_into_fdt(g_crossystem_data, fdt);
+	if (err) {
 		VBDEBUG("crossystem_data_embed_into_fdt() failed\n");
-		return 0;
+		return err;
 	}
+	VBDEBUG("Completed setting up fdt information for kerrnel\n");
 
-	*new_size = ns;
 	return 0;
 }
 #endif /* CONFIG_OF_UPDATE_FDT_BEFORE_BOOT */

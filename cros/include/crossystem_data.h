@@ -240,11 +240,9 @@ int crossystem_data_set_main_firmware(crossystem_data_t *cdata,
  *
  * @param cdata is the data blob shared with crossystem
  * @param fdt points to a device tree
- * @param size_ptr stores the new size of fdt
  * @return 0 if it succeeds, non-zero if it fails
  */
-int crossystem_data_embed_into_fdt(crossystem_data_t *cdata, void *fdt,
-		uint32_t *size_ptr);
+int crossystem_data_embed_into_fdt(crossystem_data_t *cdata, void *fdt);
 
 #ifdef CONFIG_X86
 /**

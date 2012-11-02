@@ -139,30 +139,23 @@ int crossystem_data_set_main_firmware(crossystem_data_t *cdata,
 }
 
 #ifdef CONFIG_OF_LIBFDT
-int crossystem_data_embed_into_fdt(crossystem_data_t *cdata, void *fdt,
-		uint32_t *size_ptr)
+static int fdt_ensure_subnode(void *fdt, int parentoffset, const char *name)
 {
-	char path[] = "/firmware/chromeos";
-	int nodeoffset, err;
-	int gpio_prop[3];
+	int err;
+
+	err = fdt_add_subnode(fdt, parentoffset, name);
+	if (err == -FDT_ERR_EXISTS)
+		return fdt_subnode_offset(fdt, parentoffset, name);
+
+	return err;
+}
+
+static int process_cdata(crossystem_data_t *cdata, void *fdt)
+{
 	const char *ddr_type;
-
-	err = fdt_open_into(fdt, fdt,
-			fdt_totalsize(fdt) + sizeof(*cdata) + 4096);
-	if (err < 0) {
-		VBDEBUG("fail to resize fdt: %s\n", fdt_strerror(err));
-		return 1;
-	}
-	*size_ptr = fdt_totalsize(fdt);
-
-	nodeoffset = fdt_add_subnodes_from_path(fdt, 0, path);
-	if (nodeoffset < 0) {
-		VBDEBUG("fail to create subnode %s: %s\n", path,
-				fdt_strerror(nodeoffset));
-		return 1;
-	}
-
-	fdt_setprop_string(fdt, nodeoffset, "compatible", "chromeos-firmware");
+	int gpio_prop[3];
+	int nodeoffset;
+	int err;
 
 #define set_scalar_prop(name, f) \
 	fdt_setprop_cell(fdt, nodeoffset, name, cdata->f)
@@ -172,85 +165,100 @@ int crossystem_data_embed_into_fdt(crossystem_data_t *cdata, void *fdt,
 	fdt_setprop_string(fdt, nodeoffset, name, str)
 #define set_bool_prop(name, f) \
 	((cdata->f) ? fdt_setprop(fdt, nodeoffset, name, NULL, 0) : 0)
-
+#define CALL(expr) \
+		do { err = (expr); \
+			if (err < 0) { \
+				VBDEBUG("Failure at %s\n", #expr); \
+				return err; \
+			} \
+		} while (0)
 	err = 0;
-	err |= set_scalar_prop("total-size", total_size);
-	err |= set_array_prop("signature", signature);
-	err |= set_scalar_prop("version", version);
+	CALL(fdt_ensure_subnode(fdt, 0, "firmware"));
+	nodeoffset = err;
+	CALL(fdt_ensure_subnode(fdt, nodeoffset, "chromeos"));
+	nodeoffset = err;
+	printf("nodeoffset = %d\n", nodeoffset);
 
-	err |= set_bool_prop("boot-write-protect-switch",
-			boot_write_protect_switch);
-	err |= set_bool_prop("boot-recovery-switch",
-			boot_recovery_switch);
-	err |= set_bool_prop("boot-developer-switch",
-			boot_developer_switch);
+	CALL(fdt_setprop_string(fdt, nodeoffset, "compatible",
+				"chromeos-firmware"));
+
+	CALL(set_scalar_prop("total-size", total_size));
+	CALL(set_array_prop("signature", signature));
+	CALL(set_scalar_prop("version", version));
+
+	CALL(set_bool_prop("boot-write-protect-switch",
+			boot_write_protect_switch));
+	CALL(set_bool_prop("boot-recovery-switch",
+			boot_recovery_switch));
+	CALL(set_bool_prop("boot-developer-switch",
+			boot_developer_switch));
 
 	gpio_prop[1] = cpu_to_fdt32(cdata->gpio_port_recovery_switch);
 	gpio_prop[2] = cpu_to_fdt32(cdata->polarity_recovery_switch);
-	err |= fdt_setprop(fdt, nodeoffset, "recovery-switch",
-			   gpio_prop, sizeof(gpio_prop));
+	CALL(fdt_setprop(fdt, nodeoffset, "recovery-switch",
+			   gpio_prop, sizeof(gpio_prop)));
 
 	gpio_prop[1] = cpu_to_fdt32(cdata->gpio_port_developer_switch);
 	gpio_prop[2] = cpu_to_fdt32(cdata->polarity_developer_switch);
-	err |= fdt_setprop(fdt, nodeoffset, "developer-switch",
-			   gpio_prop, sizeof(gpio_prop));
+	CALL(fdt_setprop(fdt, nodeoffset, "developer-switch",
+			   gpio_prop, sizeof(gpio_prop)));
 
 	gpio_prop[1] = cpu_to_fdt32(cdata->gpio_port_oprom_loaded);
 	gpio_prop[2] = cpu_to_fdt32(cdata->polarity_oprom_loaded);
-	err |= fdt_setprop(fdt, nodeoffset, "oprom-loaded",
-			   gpio_prop, sizeof(gpio_prop));
+	CALL(fdt_setprop(fdt, nodeoffset, "oprom-loaded",
+			   gpio_prop, sizeof(gpio_prop)));
 
-	err |= set_scalar_prop("fmap-offset", fmap_offset);
+	CALL(set_scalar_prop("fmap-offset", fmap_offset));
 
 	switch (cdata->active_ec_firmware) {
 	case ACTIVE_EC_FIRMWARE_UNCHANGE: /* Default to RO */
 	case ACTIVE_EC_FIRMWARE_RO:
-		err |= set_conststring_prop("active-ec-firmware", "RO");
+		CALL(set_conststring_prop("active-ec-firmware", "RO"));
 		break;
 	case ACTIVE_EC_FIRMWARE_RW:
-		err |= set_conststring_prop("active-ec-firmware", "RW");
+		CALL(set_conststring_prop("active-ec-firmware", "RW"));
 		break;
 	}
 
 	switch (cdata->firmware_type) {
 	case FIRMWARE_TYPE_RECOVERY:
-		err |= set_conststring_prop("firmware-type", "recovery");
+		CALL(set_conststring_prop("firmware-type", "recovery"));
 		break;
 	case FIRMWARE_TYPE_NORMAL:
-		err |= set_conststring_prop("firmware-type", "normal");
+		CALL(set_conststring_prop("firmware-type", "normal"));
 		break;
 	case FIRMWARE_TYPE_DEVELOPER:
-		err |= set_conststring_prop("firmware-type", "developer");
+		CALL(set_conststring_prop("firmware-type", "developer"));
 		break;
 	}
 
-	err |= set_array_prop("hardware-id", hardware_id);
-	err |= set_array_prop("firmware-version", firmware_id);
-	err |= set_array_prop("readonly-firmware-version",
-			readonly_firmware_id);
+	CALL(set_array_prop("hardware-id", hardware_id));
+	CALL(set_array_prop("firmware-version", firmware_id));
+	CALL(set_array_prop("readonly-firmware-version",
+			readonly_firmware_id));
 
 #ifdef CONFIG_ARM
 	switch (cdata->board.arm.nonvolatile_context_storage) {
 	case NONVOLATILE_STORAGE_NVRAM:
-		err |= fdt_setprop(fdt, nodeoffset,
+		CALL(fdt_setprop(fdt, nodeoffset,
 				"nonvolatile-context-storage",
-				"nvram", sizeof("nvram"));
+				"nvram", sizeof("nvram")));
 		break;
 	case NONVOLATILE_STORAGE_MKBP:
-		err |= fdt_setprop(fdt, nodeoffset,
+		CALL(fdt_setprop(fdt, nodeoffset,
 				"nonvolatile-context-storage",
-				"mkbp", sizeof("mkbp"));
+				"mkbp", sizeof("mkbp")));
 		break;
 	case NONVOLATILE_STORAGE_DISK:
-		err |= fdt_setprop(fdt, nodeoffset,
+		CALL(fdt_setprop(fdt, nodeoffset,
 				"nonvolatile-context-storage",
-				"disk", sizeof("disk"));
-		err |= set_scalar_prop("nonvolatile-context-lba",
-				board.arm.nonvolatile_context_lba);
-		err |= set_scalar_prop("nonvolatile-context-offset",
-				board.arm.nonvolatile_context_offset);
-		err |= set_scalar_prop("nonvolatile-context-size",
-				board.arm.nonvolatile_context_size);
+				"disk", sizeof("disk")));
+		CALL(set_scalar_prop("nonvolatile-context-lba",
+				board.arm.nonvolatile_context_lba));
+		CALL(set_scalar_prop("nonvolatile-context-offset",
+				board.arm.nonvolatile_context_offset));
+		CALL(set_scalar_prop("nonvolatile-context-size",
+				board.arm.nonvolatile_context_size));
 		break;
 	default:
 		VBDEBUG("Could not match nonvolatile_context_storage: %d\n",
@@ -259,27 +267,37 @@ int crossystem_data_embed_into_fdt(crossystem_data_t *cdata, void *fdt,
 	}
 #endif /* CONFIG_ARM */
 
-	err |= set_array_prop("vboot-shared-data", vb_shared_data);
+	CALL(set_array_prop("vboot-shared-data", vb_shared_data));
 
 	ddr_type = cros_fdt_get_mem_type();
 	if (ddr_type) {
-		err |= fdt_setprop(fdt, nodeoffset, "ddr-type", ddr_type,
-				   strlen(ddr_type));
+		CALL(fdt_setprop(fdt, nodeoffset, "ddr-type", ddr_type,
+				   strlen(ddr_type)));
 	}
 
 #undef set_scalar_prop
 #undef set_array_prop
 #undef set_conststring_prop
 #undef set_bool_prop
+#undef CALL
 
+	return 0;
+}
+
+int crossystem_data_embed_into_fdt(crossystem_data_t *cdata, void *fdt)
+{
+	int err;
+
+	err = process_cdata(cdata, fdt);
 	if (err)
 		VBDEBUG("fail to store all properties into fdt\n");
+
 	return err;
 }
 #endif /* ^^^^ CONFIG_OF_LIBFDT  NOT defined ^^^^ */
 
 #ifdef CONFIG_X86
-
+/* TODO(sjg@chromium.org): Put this in the fdt and move x86 over to use fdt */
 static int crossystem_fw_index_vdat_to_binf(int index)
 {
 	switch (index) {
