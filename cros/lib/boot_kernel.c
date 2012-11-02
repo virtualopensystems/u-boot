@@ -10,6 +10,7 @@
 
 #include <common.h>
 #include <part.h>
+#include <linux/compiler.h>
 #include <cros/boot_kernel.h>
 #include <cros/common.h>
 #include <cros/crossystem_data.h>
@@ -293,6 +294,12 @@ int boot_kernel(VbSelectAndLoadKernelParams *kparams, crossystem_data_t *cdata)
 }
 
 #ifdef CONFIG_OF_BOARD_SETUP
+/* Optional function */
+__weak int ft_system_setup(void *blob, bd_t *bd)
+{
+	return 0;
+}
+
 /*
  * This function does the last chance FDT update before booting to kernel.
  * Currently we modify the FDT by embedding crossystem data. So before
@@ -302,6 +309,11 @@ int ft_board_setup(void *fdt, bd_t *bd)
 {
 	int err;
 
+	err = ft_system_setup(fdt, bd);
+	if (err) {
+		VBDEBUG("warning: fdt_system_setup() fails\n");
+		return err;
+	}
 	if (!g_crossystem_data) {
 		VBDEBUG("warning: g_crossystem_data is NULL\n");
 		return 0;
