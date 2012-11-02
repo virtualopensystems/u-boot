@@ -440,10 +440,12 @@ static void ft_board_setup_tpm_resume(void *blob, bd_t *bd)
 	}
 }
 
-void ft_board_setup(void *blob, bd_t *bd)
+int ft_board_setup(void *blob, bd_t *bd)
 {
 	ft_board_setup_gpios(blob, bd);
 	ft_board_setup_tpm_resume(blob, bd);
+
+	return 0;
 }
 
 #ifdef CONFIG_TPS65090_POWER
