@@ -19,6 +19,8 @@
 		google-binary-block = <0x01108000 0x100000>;
 		virtual-dev-switch;
 		oprom-matters;
+		faft-key-remap-ascii = <0x5c 0x0D 0 0 0 0>;
+		faft-key-remap-special = <0x32 0x20 0 0 0 0>;
 		vboot-flag-ec-in-rw {
 			compatible = "google,sysinfo-flag";
 			google,name = "ec_in_rw";
