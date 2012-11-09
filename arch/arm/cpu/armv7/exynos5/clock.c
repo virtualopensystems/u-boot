@@ -26,6 +26,9 @@
 #include <asm/io.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/clk.h>
+#include <asm/arch/dmc.h>
+
+#include "setup.h"
 
 /* src_bit div_bit prediv_bit */
 static struct clk_bit_info clk_bit_info[PERIPH_ID_COUNT] = {
@@ -135,8 +138,21 @@ unsigned long get_pll_clk(int pllreg)
 		/* FOUT = (MDIV + K / 1024) * FIN / (PDIV * 2^SDIV) */
 		fout = (m + k / 1024) * (freq / (p * (1 << s)));
 	} else {
+		int avoid_div2 = readl(&clk->pll_div2_sel) & MUX_MPLL_FOUT_SEL;
+
 		/* FOUT = MDIV * FIN / (PDIV * 2^SDIV) */
 		fout = m * (freq / (p * (1 << s)));
+
+		/*
+		 * Hopefully SPL set things up with the more power-efficient
+		 * memory clocking mechanism, which doesn't need the DIV/2 or
+		 * BPLL. But if not:
+		 *
+		 * According to the user manual, in EVT1 MPLL always gives
+		 * 1.6GHz clock, so divide by 2 to get 800MHz MPLL clock.
+		 */
+		if (!avoid_div2 && pllreg == MPLL)
+			fout /= 2;
 	}
 
 	return fout;
