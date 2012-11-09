@@ -1120,18 +1120,16 @@ twostop_readwrite_main_firmware(void)
 
 #ifdef CONFIG_ARM
 	uint8_t ro_nvtype = cdata->board.arm.nonvolatile_context_storage;
-	if (ro_nvtype == NONVOLATILE_STORAGE_NONE) {
-		/*
-		 * Default to disk for older RO firmware which does not provide
-		 * storage type.
-		 */
-		cdata->board.arm.nonvolatile_context_storage =
-			NONVOLATILE_STORAGE_DISK;
-	} else {
-		/* RW has to use the storage type that RO was using. */
-		if (nvstorage_set_type(ro_nvtype))
-			return TWOSTOP_SELECT_ERROR;
-	}
+
+	/*
+	 * Default to disk for older RO firmware which does not provide
+	 * storage type.
+	 */
+	if (ro_nvtype == NONVOLATILE_STORAGE_NONE)
+		ro_nvtype = NONVOLATILE_STORAGE_DISK;
+	if (nvstorage_set_type(ro_nvtype))
+		return TWOSTOP_SELECT_ERROR;
+	cdata->board.arm.nonvolatile_context_storage = ro_nvtype;
 #endif /* CONFIG_ARM */
 
 	/*
