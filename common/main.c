@@ -331,6 +331,7 @@ err:
 static void process_fdt_options(const void *blob)
 {
 	ulong addr;
+	int key;
 
 	/* Add an env variable to point to a kernel payload, if available */
 	addr = fdtdec_get_config_int(gd->fdt_blob, "kernel-offset", 0);
@@ -341,6 +342,14 @@ static void process_fdt_options(const void *blob)
 	addr = fdtdec_get_config_int(gd->fdt_blob, "rootdisk-offset", 0);
 	if (addr)
 		setenv_addr("rootaddr", (void *)(CONFIG_SYS_TEXT_BASE + addr));
+
+	key = fdtdec_get_config_int(gd->fdt_blob, "verbose-console-key", 0);
+	if (key) {
+		while (tstc()) {
+			if (getc() == key)
+				gd->flags &= ~GD_FLG_SILENT;
+		}
+	}
 }
 #endif /* CONFIG_OF_CONTROL */
 
