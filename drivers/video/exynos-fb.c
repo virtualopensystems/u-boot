@@ -764,15 +764,20 @@ static int s5p_dp_hw_link_training(struct s5p_dp_device *dp,
 				unsigned int max_rate)
 {
 	u32 data;
+	ulong start;
 	int lane;
 	struct exynos5_dp *base = dp->base;
 
 	/* Stop Video */
 	clrbits_le32(&base->video_ctl_1, VIDEO_EN);
 
-	if (s5p_dp_get_pll_lock_status(dp) == PLL_UNLOCKED) {
-		debug("PLL is not locked yet.\n");
-		return -ERR_PLL_NOT_LOCKED;
+	start = get_timer(0);
+	while (s5p_dp_get_pll_lock_status(dp) == PLL_UNLOCKED) {
+		if (get_timer(start) > PLL_LOCK_TIMEOUT) {
+			/* Ignore this error, and try to continue */
+			printf("PLL is not locked yet.\n");
+			break;
+		}
 	}
 
 	/* Reset Macro */
