@@ -22,6 +22,12 @@ enum {
 	TPS65090_ST1_STATE_MASK	= 0xf << TPS65090_ST1_STATE_SHIFT,
 };
 
+/* FET errors */
+enum {
+	FET_ERR_COMMS		= -1,	/* FET comms error */
+	FET_ERR_NOT_READY	= -2,	/* FET is not yet ready - retry */
+};
+
 /**
  * Enable FET
  *

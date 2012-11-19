@@ -136,71 +136,99 @@ static int tps65090_check_fet(unsigned int fet_id)
 	return 0;
 }
 
+/**
+ * Set the power state for a FET
+ *
+ * @param fet_id	Fet number to set (1..MAX_FET_NUM)
+ * @param set		1 to power on FET, 0 to power off
+ * @return FET_ERR_COMMS if we got a comms error, FET_ERR_NOT_READY if the
+ * FET failed to change state. If all is ok, returns 0.
+ */
+static int tps65090_fet_set(int fet_id, int set)
+{
+	int retry, value;
+	uchar reg;
+
+	value = FET_CTRL_ADENFET | FET_CTRL_WAIT;
+	if (set)
+		value |= FET_CTRL_ENFET;
+
+	if (tps65090_i2c_write(REG_FET1_CTRL + fet_id - 1, value))
+		return FET_ERR_COMMS;
+	/* Try reading until we get a result */
+	for (retry = 0; retry < MAX_CTRL_READ_TRIES; retry++) {
+		if (tps65090_i2c_read(REG_FET1_CTRL + fet_id - 1, &reg))
+			return FET_ERR_COMMS;
+
+		/* Check that the fet went into the expected state */
+		if (!!(reg & FET_CTRL_PGFET) == set)
+			return 0;
+
+		/* If we got a timeout, there is no point in waiting longer */
+		if (reg & FET_CTRL_TOFET)
+			break;
+
+		mdelay(1);
+	}
+
+	debug("FET %d: Power good should have set to %d but reg=%#02x\n",
+	      fet_id, set, reg);
+	return FET_ERR_NOT_READY;
+}
+
 int tps65090_fet_enable(unsigned int fet_id)
 {
-	unsigned char reg;
-	int ret, i;
+	int loops;
+	ulong start;
+	int ret = 0;
 
 	if (tps65090_check_fet(fet_id))
 		return -1;
 	if (tps65090_select())
 		return -1;
-
-	ret = tps65090_i2c_write(REG_FET1_CTRL + fet_id - 1,
-			FET_CTRL_WAIT | FET_CTRL_ADENFET | FET_CTRL_ENFET);
-	if (ret)
-		goto out;
-
-	for (i = 0; i < MAX_CTRL_READ_TRIES; i++) {
-		ret = tps65090_i2c_read(REG_FET1_CTRL + fet_id - 1, &reg);
-		if (ret)
-			goto out;
-
-		if (!(reg & FET_CTRL_TOFET))
+	start = get_timer(0);
+	for (loops = 0; ; loops++) {
+		ret = tps65090_fet_set(fet_id, 1);
+		if (!ret)
 			break;
 
-		mdelay(1);
-	}
-	if (!(reg & FET_CTRL_PGFET)) {
-		debug("still no power after enable FET%d\n", fet_id);
+		if (get_timer(start) > 100)
+			break;
 
-		/*
-		 * Unfortunately, there are some conditions where the power
-		 * good bit will be 0, but the fet still comes up. One such
-		 * case occurs with the lcd backlight. We'll just return 0 here
-		 * and assume that the fet will eventually come up.
-		 */
-		ret = 0;
+		/* Turn it off and try again until we time out */
+		tps65090_fet_set(fet_id, 0);
 	}
-out:
 	tps65090_deselect();
+
+	if (ret) {
+		debug("%s: FET%d failed to power on: time=%lums, loops=%d\n",
+	      __func__, fet_id, get_timer(start), loops);
+	} else if (loops) {
+		debug("%s: FET%d powered on after %lums, loops=%d\n",
+		      __func__, fet_id, get_timer(start), loops);
+	}
+	/*
+	 * Unfortunately, there are some conditions where the power
+	 * good bit will be 0, but the fet still comes up. One such
+	 * case occurs with the lcd backlight. We'll just return 0 here
+	 * and assume that the fet will eventually come up.
+	 */
+	if (ret == FET_ERR_NOT_READY)
+		ret = 0;
 
 	return ret;
 }
 
 int tps65090_fet_disable(unsigned int fet_id)
 {
-	unsigned char reg;
 	int ret;
 
 	if (tps65090_check_fet(fet_id))
 		return -1;
 	if (tps65090_select())
 		return -1;
-	ret = tps65090_i2c_write(REG_FET1_CTRL + fet_id - 1,
-			FET_CTRL_ADENFET);
-	if (!ret) {
-		ret = tps65090_i2c_read(REG_FET1_CTRL + fet_id - 1,
-				&reg);
-	}
+	ret = tps65090_fet_set(fet_id, 0);
 	tps65090_deselect();
-	if (ret)
-		return ret;
-
-	if (reg & FET_CTRL_PGFET) {
-		debug("still power good after disable FET%d\n", fet_id);
-		return -2;
-	}
 
 	return ret;
 }
@@ -214,8 +242,7 @@ int tps65090_fet_is_enabled(unsigned int fet_id)
 		return -1;
 	if (tps65090_select())
 		return -1;
-	ret = tps65090_i2c_read(REG_FET1_CTRL + fet_id - 1,
-			&reg);
+	ret = tps65090_i2c_read(REG_FET1_CTRL + fet_id - 1, &reg);
 	tps65090_deselect();
 	if (ret) {
 		debug("fail to read FET%u_CTRL register over I2C", fet_id);
