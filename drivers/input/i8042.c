@@ -639,7 +639,7 @@ static int usb_cook_scan_code(unsigned char usb_scan_code)
 	}
 
 	/* Handle numeric keypad keys */
-	if ((usb_scan_code > 0x1d) && (usb_scan_code < 0x3a)) {
+	if ((usb_scan_code > 0x1d) && (usb_scan_code < 0x39)) {
 		int shifted;
 
 		if (bits_modifiers & (LEFT_CNTR | RIGHT_CNTR))
