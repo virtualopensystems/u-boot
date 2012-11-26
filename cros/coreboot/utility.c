@@ -13,20 +13,8 @@
 /* Import the definition of vboot_wrapper interfaces. */
 #include <vboot_api.h>
 
-static uint64_t base_value;
-
 uint64_t VbExGetTimer(void)
 {
-	uint64_t time_now;
-
-	time_now = rdtsc();
-	if (!base_value)
-		base_value = time_now;
-
-	return time_now - base_value;
+	return rdtsc() - get_base_timer_value();
 }
 
-void set_base_timer_value(uint64_t new_base)
-{
-	base_value = new_base;
-}

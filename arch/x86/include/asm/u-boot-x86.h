@@ -65,7 +65,7 @@ int video_bios_init(void);
 #endif
 
 /* board/... */
-void set_base_timer_value(uint64_t new_base);
+uint64_t get_base_timer_value(void);
 
 static inline uint64_t rdtsc(void)
 {

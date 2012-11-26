@@ -35,10 +35,20 @@ struct timestamp_table {
 
 static struct timestamp_table *ts_table  __attribute__((section(".data")));
 
+static uint64_t base_value;
+
+uint64_t get_base_timer_value(void)
+{
+	if (!base_value)
+		base_value = rdtsc();
+
+	return base_value;
+}
+
 void timestamp_init(void)
 {
 	ts_table = lib_sysinfo.tstamp_table;
-	set_base_timer_value(ts_table->base_time);
+	base_value = ts_table->base_time;
 	timestamp_add_now(TS_U_BOOT_INITTED);
 }
 
