@@ -43,7 +43,6 @@
  */
 
 #include <common.h>
-#include <cros/common.h>
 #include <pci.h>
 #include <asm-generic/gpio.h>
 #include <asm/io.h>
@@ -75,7 +74,7 @@ static int bad_arg(int num, int *bank, int *bitnum)
 	int j = num % 32;
 
 	if (num < 0 || i > NUM_BANKS) {
-		VBDEBUG("bogus gpio num: %d\n", num);
+		printf("bogus gpio num: %d\n", num);
 		return -1;
 	}
 	*bank = i;
@@ -86,7 +85,7 @@ static int bad_arg(int num, int *bank, int *bitnum)
 static int mark_gpio(int bank, int bitnum)
 {
 	if (lock[bank] & (1UL << bitnum)) {
-		VBDEBUG("%d.%d already marked\n", bank, bitnum);
+		printf("%d.%d already marked\n", bank, bitnum);
 		return -1;
 	}
 	lock[bank] |= (1 << bitnum);
@@ -121,12 +120,12 @@ static int gpio_init(void)
 	/* Is the device present? */
 	pci_read_config_word(dev, PCI_VENDOR_ID, &tmpword);
 	if (tmpword != PCI_VENDOR_ID_INTEL) {
-		VBDEBUG("wrong VendorID\n");
+		printf("wrong VendorID\n");
 		return -1;
 	}
 
 	pci_read_config_word(dev, PCI_DEVICE_ID, &tmpword);
-	VBDEBUG("Found %04x:%04x\n", PCI_VENDOR_ID_INTEL, tmpword);
+	printf("Found %04x:%04x\n", PCI_VENDOR_ID_INTEL, tmpword);
 	/*
 	 * We'd like to validate the Device ID too, but pretty much any
 	 * value is either a) correct with slight differences, or b)
@@ -137,34 +136,34 @@ static int gpio_init(void)
 	/* I/O should already be enabled (it's a RO bit). */
 	pci_read_config_word(dev, PCI_COMMAND, &tmpword);
 	if (!(tmpword & PCI_COMMAND_IO)) {
-		VBDEBUG("device IO not enabled\n");
+		printf("device IO not enabled\n");
 		return -1;
 	}
 
 	/* Header Type must be normal (bits 6-0 only; see spec.) */
 	pci_read_config_byte(dev, PCI_HEADER_TYPE, &tmpbyte);
 	if ((tmpbyte & 0x7f) != PCI_HEADER_TYPE_NORMAL) {
-		VBDEBUG("invalid Header type\n");
+		printf("invalid Header type\n");
 		return -1;
 	}
 
 	/* Base Class must be a bridge device */
 	pci_read_config_byte(dev, PCI_CLASS_CODE, &tmpbyte);
 	if (tmpbyte != PCI_CLASS_CODE_BRIDGE) {
-		VBDEBUG("invalid class\n");
+		printf("invalid class\n");
 		return -1;
 	}
 	/* Sub Class must be ISA */
 	pci_read_config_byte(dev, PCI_CLASS_SUB_CODE, &tmpbyte);
 	if (tmpbyte != PCI_CLASS_SUB_CODE_BRIDGE_ISA) {
-		VBDEBUG("invalid subclass\n");
+		printf("invalid subclass\n");
 		return -1;
 	}
 
 	/* Programming Interface must be 0x00 (no others exist) */
 	pci_read_config_byte(dev, PCI_CLASS_PROG, &tmpbyte);
 	if (tmpbyte != 0x00) {
-		VBDEBUG("invalid interface type\n");
+		printf("invalid interface type\n");
 		return -1;
 	}
 
@@ -176,7 +175,7 @@ static int gpio_init(void)
 	pci_read_config_dword(dev, PCI_CFG_GPIOBASE, &tmplong);
 	if (tmplong == 0x00000000 || tmplong == 0xffffffff ||
 	    !(tmplong & 0x00000001)) {
-		VBDEBUG("unexpected GPIOBASE value\n");
+		printf("unexpected GPIOBASE value\n");
 		return -1;
 	}
 
@@ -212,7 +211,7 @@ int gpio_request(unsigned num, const char *label /* UNUSED */)
 	 */
 	tmplong = inl(gpiobase + gpio_bank[i].use_sel);
 	if (!(tmplong & (1UL << j))) {
-		VBDEBUG("gpio %d is reserved for internal use\n", num);
+		printf("gpio %d is reserved for internal use\n", num);
 		return -1;
 	}
 
