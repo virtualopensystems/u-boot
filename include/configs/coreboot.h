@@ -61,8 +61,7 @@
 /*-----------------------------------------------------------------------
  * Memory layout
  */
-/* TODO(sjg): Move these two to the fdt */
-#define CONFIG_VBGLOBAL_BASE		0x01100000
+/* TODO(sjg): Move this to the fdt */
 #define CONFIG_SYS_TEXT_BASE		0x01110000
 
 /* SATA AHCI storage */
@@ -170,17 +169,6 @@
 #define CONFIG_I8042_KBD
 #define CONFIG_CFB_CONSOLE
 #define CONFIG_SYS_CONSOLE_INFO_QUIET
-
-/*-----------------------------------------------------------------------
- * VBoot Configuration.
- */
-#define CONFIG_CHROMEOS
-
-/* This value is just to get the chromeos library to compile. */
-#define CHROMEOS_VBNVCONTEXT_LBA	0
-
-/* Support USB booting */
-#define CONFIG_CHROMEOS_USB
 
 #if defined(CONFIG_CMD_KGDB)
 #define CONFIG_KGDB_BAUDRATE			115200
