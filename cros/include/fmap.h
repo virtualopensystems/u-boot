@@ -31,6 +31,8 @@ struct fmap_firmware_entry {
 
 	/* Sub-entry for EC RW binary, and RO binary if present */
 	struct fmap_entry ec_rwbin;
+	/* Sub-entry for U-Boot RW binary */
+	struct fmap_entry boot_rwbin;
 };
 
 /*

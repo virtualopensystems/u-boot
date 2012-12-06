@@ -648,12 +648,16 @@ out:
 	FREE_IF_NEEDED(fparams.verification_block_B);
 
 	if (selection == VB_SELECT_FIRMWARE_A) {
-		*fw_blob_ptr = s.fw[0].cache;
-		*fw_size_ptr = s.fw[0].size;
+		uint32_t offset = fmap->readwrite_a.boot_rwbin.offset -
+			fmap->readwrite_a.boot.offset;
+		*fw_blob_ptr = s.fw[0].cache + offset;
+		*fw_size_ptr = s.fw[0].size - offset;
 		FREE_IF_NEEDED(s.fw[1].cache);
 	} else if (selection == VB_SELECT_FIRMWARE_B) {
-		*fw_blob_ptr = s.fw[1].cache;
-		*fw_size_ptr = s.fw[1].size;
+		uint32_t offset = fmap->readwrite_b.boot_rwbin.offset -
+			fmap->readwrite_b.boot.offset;
+		*fw_blob_ptr = s.fw[1].cache + offset;
+		*fw_size_ptr = s.fw[1].size - offset;
 		FREE_IF_NEEDED(s.fw[0].cache);
 	}
 

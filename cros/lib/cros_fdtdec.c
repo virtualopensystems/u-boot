@@ -125,10 +125,17 @@ static int process_fmap_node(const void *blob, int node, int depth,
 		ulong offset;
 
 		/* TODO(sjg@chromium.org): Remove ecbin */
-		if (rw && (0 == strcmp(name, "ecbin") ||
-				0 == strcmp(name, "ecrw"))) {
-			entry = &rw->ec_rwbin;
-			offset = rw->boot.offset;
+		if (rw) {
+			if (0 == strcmp(name, "ecbin") ||
+					0 == strcmp(name, "ecrw")) {
+				entry = &rw->ec_rwbin;
+				offset = rw->boot.offset;
+			} else if (0 == strcmp(name, "boot")) {
+				entry = &rw->boot_rwbin;
+				offset = rw->boot.offset;
+			} else {
+				return 0;
+			}
 		} else if (!rw) {
 			offset = config->readonly.boot.offset;
 			if (0 == strcmp(name, "ecro"))
@@ -199,6 +206,7 @@ static int process_fmap_node(const void *blob, int node, int depth,
 			break;
 		case SECTION_BOOT:
 			rw->boot = entry;
+			rw->boot_rwbin = entry;
 			break;
 		default:
 			return 0;
