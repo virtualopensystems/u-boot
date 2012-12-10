@@ -47,6 +47,8 @@
 enum {
 	/* Timeout waiting for a flash erase command to complete */
 	MKBP_CMD_TIMEOUT_MS	= 5000,
+	/* Timeout waiting for a synchronous hash to be recomputed */
+	MKBP_CMD_HASH_TIMEOUT_MS = 2000,
 };
 
 static struct mkbp_dev static_dev, *last_dev;
@@ -173,7 +175,7 @@ static int ec_command(struct mkbp_dev *dev, uint8_t cmd, int cmd_version,
 				return ret;
 
 			if (get_timer(start) > MKBP_CMD_TIMEOUT_MS) {
-				debug("%s: Command %#02x timeout",
+				debug("%s: Command %#02x timeout\n",
 				      __func__, cmd);
 				return -EC_RES_TIMEOUT;
 			}
@@ -273,22 +275,95 @@ int mkbp_read_current_image(struct mkbp_dev *dev, enum ec_current_image *image)
 	return 0;
 }
 
+static int mkbp_wait_on_hash_done(struct mkbp_dev *dev,
+				  struct ec_response_vboot_hash *hash)
+{
+	struct ec_params_vboot_hash p;
+	ulong start;
+
+	start = get_timer(0);
+	while (hash->status == EC_VBOOT_HASH_STATUS_BUSY) {
+		mdelay(50);	/* Insert some reasonable delay */
+
+		p.cmd = EC_VBOOT_HASH_GET;
+		if (ec_command(dev, EC_CMD_VBOOT_HASH, 0, &p, sizeof(p),
+		       (uint8_t **)&hash, sizeof(*hash)) < 0)
+			return -1;
+
+		if (get_timer(start) > MKBP_CMD_HASH_TIMEOUT_MS) {
+			debug("%s: EC_VBOOT_HASH_GET timeout\n", __func__);
+			return -EC_RES_TIMEOUT;
+		}
+	}
+	return 0;
+}
+
+
 int mkbp_read_hash(struct mkbp_dev *dev, struct ec_response_vboot_hash *hash)
 {
 	struct ec_params_vboot_hash p;
+	int rv;
 
 	p.cmd = EC_VBOOT_HASH_GET;
+	if (ec_command(dev, EC_CMD_VBOOT_HASH, 0, &p, sizeof(p),
+		       (uint8_t **)&hash, sizeof(*hash)) < 0)
+		return -1;
+
+	/* If the EC is busy calculating the hash, fidget until it's done. */
+	rv = mkbp_wait_on_hash_done(dev, hash);
+	if (rv)
+		return rv;
+
+	/* If the hash is valid, we're done. Otherwise, we have to kick it off
+	 * again and wait for it to complete. Note that we explicitly assume
+	 * that hashing zero bytes is always wrong, even though that would
+	 * produce a valid hash value. */
+	if (hash->status == EC_VBOOT_HASH_STATUS_DONE && hash->size)
+		return 0;
+
+	debug("%s: No valid hash (status=%d size=%d). Compute one...\n",
+	      __func__, hash->status, hash->size);
+
+	p.cmd = EC_VBOOT_HASH_RECALC;
+	p.hash_type = EC_VBOOT_HASH_TYPE_SHA256;
+	p.nonce_size = 0;
+	p.offset = EC_VBOOT_HASH_OFFSET_RW;
 
 	if (ec_command(dev, EC_CMD_VBOOT_HASH, 0, &p, sizeof(p),
 		       (uint8_t **)&hash, sizeof(*hash)) < 0)
 		return -1;
 
-	if (hash->status != EC_VBOOT_HASH_STATUS_DONE) {
-		debug("%s: Hash status not done: %d\n", __func__,
-		      hash->status);
-		return -1;
-	}
+	rv = mkbp_wait_on_hash_done(dev, hash);
+	if (rv)
+		return rv;
 
+	debug("%s: hash done\n", __func__);
+
+	return 0;
+}
+
+static int mkbp_invalidate_hash(struct mkbp_dev *dev)
+{
+	struct ec_params_vboot_hash p;
+	struct ec_response_vboot_hash *hash;
+
+	/* We don't have an explict command for the EC to discard its current
+	 * hash value, so we'll just tell it to calculate one that we know is
+	 * wrong (we claim that hashing zero bytes is always invalid).
+	 */
+	p.cmd = EC_VBOOT_HASH_RECALC;
+	p.hash_type = EC_VBOOT_HASH_TYPE_SHA256;
+	p.nonce_size = 0;
+	p.offset = 0;
+	p.size = 0;
+
+	debug("%s:\n", __func__);
+
+	if (ec_command(dev, EC_CMD_VBOOT_HASH, 0, &p, sizeof(p),
+		       (uint8_t **)&hash, sizeof(*hash)) < 0)
+		return -1;
+
+	/* No need to wait for it to finish */
 	return 0;
 }
 
@@ -631,6 +706,14 @@ int mkbp_flash_update_rw(struct mkbp_dev *dev,
 		return -1;
 	if (image_size > rw_size)
 		return -1;
+
+	/* Invalidate the existing hash, just in case the AP reboots
+	 * unexpectedly during the update. If that happened, the EC RW firmware
+	 * would be invalid, but the EC would still have the original hash.
+	 */
+	ret = mkbp_invalidate_hash(dev);
+	if (ret)
+		return ret;
 
 	/*
 	 * Erase the entire RW section, so that the EC doesn't see any garbage

@@ -704,6 +704,14 @@ enum ec_vboot_hash_status {
 	EC_VBOOT_HASH_STATUS_BUSY,     /* Busy computing a hash */
 };
 
+/*
+ * Special values for offset for EC_VBOOT_HASH_START and EC_VBOOT_HASH_RECALC.
+ * If one of these is specified, the EC will automatically update offset and
+ * size to the correct values for the specified image (RO or RW).
+ */
+#define EC_VBOOT_HASH_OFFSET_RO 0xfffffffe
+#define EC_VBOOT_HASH_OFFSET_RW 0xfffffffd
+
 /*****************************************************************************/
 /* USB charging control commands */
 

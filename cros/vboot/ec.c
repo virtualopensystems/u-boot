@@ -120,19 +120,6 @@ VbError_t VbExEcHashRW(const uint8_t **hash, int *hash_size)
 	if (mkbp_read_hash(mdev, &resp) < 0)
 		return VBERROR_UNKNOWN;
 
-	/*
-	 * TODO (rspangler@chromium.org): the code below isn't very tolerant
-	 * of errors.
-	 *
-	 * If the EC is busy calculating a hash, we should wait and retry
-	 * reading the hash status.
-	 *
-	 * If the hash is unavailable, the wrong type, or covers the wrong
-	 * offset/size (which we need to get from the FDT, since it's
-	 * board-specific), we should request a new hash and wait for it to
-	 * finish.  Also need a flag to force it to rehash, which we'll use
-	 * after doing a firmware update.
-	 */
 	if (resp.status != EC_VBOOT_HASH_STATUS_DONE)
 		return VBERROR_UNKNOWN;
 	if (resp.hash_type != EC_VBOOT_HASH_TYPE_SHA256)
