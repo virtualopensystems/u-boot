@@ -25,6 +25,11 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
+/* Factory Required Functionality */
+#ifdef CONFIG_FACTORY_IMAGE
+#define BUILD_NETWORK_STUFF
+#endif
+
 /* Enable Serial Flash Support */
 #define CONFIG_SPI_FLASH
 #define CONFIG_ENV_IS_IN_SPI_FLASH
@@ -96,12 +101,14 @@
 #define CONFIG_CMD_MMC
 #define CONFIG_CMD_EXT2
 #define CONFIG_CMD_FAT
-#define CONFIG_CMD_NET
 #define CONFIG_CMD_TIME
 #define CONFIG_CMD_GPIO
 #define CONFIG_CMD_SOUND
 
+#ifdef BUILD_NETWORK_STUFF
+#define CONFIG_CMD_NET
 #define CONFIG_CMD_DHCP
+#endif
 
 /* So our flasher can verify that all is well */
 #define CONFIG_CRC32_VERIFY
@@ -211,6 +218,9 @@
 #ifdef CONFIG_CMD_NET
 #define CONFIG_SMC911X
 #define CONFIG_SMC911X_16_BIT
+#define CONFIG_USB_HOST_ETHER
+#define CONFIG_USB_ETHER_ASIX
+#define CONFIG_USB_ETHER_SMSC95XX
 #endif /*CONFIG_CMD_NET*/
 
 #ifndef CONFIG_OF_CONTROL
