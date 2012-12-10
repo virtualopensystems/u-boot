@@ -359,7 +359,6 @@
 #ifdef CONFIG_FACTORY_IMAGE
 #define CONFIG_BOOTCOMMAND \
 	"vboot_load_oprom; "\
-	"netboot_acpi; "\
 	"run set_netbootargs; "\
 	"usb start; "\
 	"setenv tftpblocksize 1408; "\
@@ -376,6 +375,7 @@
 		"init=/sbin/init "\
 		"i915.modeset=1 "\
 		"cros_legacy "\
+		"cros_netboot "\
 		"ramdisk_size=409600\0"\
 	"net_boot=setenv loadaddr 0x100000; "\
 		"setenv bootfile uImage; "\
