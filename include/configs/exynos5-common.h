@@ -154,8 +154,15 @@
 
 #ifdef CONFIG_ENV_IS_IN_SPI_FLASH
 #define CONFIG_ENV_SPI_MODE	SPI_MODE_0
-#define CONFIG_ENV_OFFSET	(CONFIG_SEC_FW_SIZE + CONFIG_BL1_SIZE + \
-				 CONFIG_BL2_SIZE)
+
+/*
+ * Store environment at the end of a 4MB SPI flash.
+ * TODO: this really needs to come out of device tree to handle different
+ * SPI flash sizes (actually, it's already there as part of the flashmap, so
+ * we just need to use it).
+ */
+#define CONFIG_ENV_OFFSET	(0x00400000 - CONFIG_ENV_SIZE)
+
 #define CONFIG_ENV_SECT_SIZE	CONFIG_ENV_SIZE
 #define CONFIG_ENV_SPI_BUS	1
 #else /* CONFIG_ENV_IS_IN_MMC */
