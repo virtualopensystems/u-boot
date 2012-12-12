@@ -16,7 +16,7 @@
 #undef CONFIG_SYS_MALLOC_LEN
 #define CONFIG_SYS_MALLOC_LEN	(32 << 20)
 
-#define CONFIG_INITRD_ADDRESS 0x42000000
+#define CONFIG_INITRD_ADDRESS 0x44000000
 
 #include <configs/chromeos.h>
 

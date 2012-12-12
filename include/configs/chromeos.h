@@ -188,7 +188,7 @@
 		"run regen_all\0" \
 	"regen_initrdroot_bootargs=" \
 		"setenv bootdev_bootargs " \
-			"rw root=/dev/ram0 ramdisk_size=294912; " \
+			"rw root=/dev/ram0 ramdisk_size=512000 cros_netboot; " \
 		"run regen_all\0" \
 	\
 	"tftp_setup=" \
