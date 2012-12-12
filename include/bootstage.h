@@ -226,6 +226,15 @@ void show_boot_progress(int val);
 /* This is the full bootstage implementation */
 
 /**
+ * Relocate existing bootstage records
+ *
+ * Call this after relocation has happened and after malloc has been initted.
+ * We need to copy any pointers in bootstage records that were added pre-
+ * relocation, since memory can be overritten later.
+ */
+void bootstage_relocate(void);
+
+/**
  * Add a new bootstage record
  *
  * @param id	Bootstage ID to use (ignored if flags & BOOTSTAGEF_ALLOC)
@@ -301,6 +310,8 @@ int bootstage_unstash(void *base, int size);
  * This is a dummy implementation which just calls show_boot_progress(),
  * and won't even do that unless CONFIG_SHOW_BOOT_PROGRESS is defined
  */
+
+static inline void bootstage_relocate(void) { ; }
 
 static inline ulong bootstage_mark(enum bootstage_id id)
 {
