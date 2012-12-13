@@ -345,7 +345,7 @@ int mkbp_read_hash(struct mkbp_dev *dev, struct ec_response_vboot_hash *hash)
 static int mkbp_invalidate_hash(struct mkbp_dev *dev)
 {
 	struct ec_params_vboot_hash p;
-	struct ec_response_vboot_hash *hash;
+	struct ec_response_vboot_hash *hash = 0;
 
 	/* We don't have an explict command for the EC to discard its current
 	 * hash value, so we'll just tell it to calculate one that we know is
