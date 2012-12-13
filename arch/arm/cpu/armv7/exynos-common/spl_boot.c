@@ -335,10 +335,15 @@ void save_boot_params(u32 r0, u32 r1, u32 r2, u32 r3) {}
  * So we mock these functions in SPL, i.e. vsprintf(), panic(), etc.,
  * in order to cut its dependency.
  */
-int vsprintf(char *buf, const char *fmt, va_list args)
+
+static int _vscnprintf(char *buf, size_t size, const char *fmt, va_list args)
 {
 	char *str = buf, *s;
+	char *end = str + size - 1;
 	ulong u;
+
+	if (size == 0)
+		return -1;
 
 	/*
 	 * We won't implement all full functions of vsprintf().
@@ -346,7 +351,7 @@ int vsprintf(char *buf, const char *fmt, va_list args)
 	 * the original format string as its result.
 	 */
 
-	while (*fmt) {
+	while (*fmt && (str < end)) {
 		if (*fmt != '%') {
 			*str++ = *fmt++;
 			continue;
@@ -359,24 +364,42 @@ int vsprintf(char *buf, const char *fmt, va_list args)
 		case 's':
 			fmt++;
 			s = va_arg(args, char *);
-			while (*s)
+			while (*s && (str < end))
 				*str++ = *s++;
 			break;
 		case 'u':
 			fmt++;
 			u = va_arg(args, ulong);
 			s = simple_itoa(u);
-			while (*s)
+			while (*s && (str < end))
 				*str++ = *s++;
 			break;
 		default:
 			/* Print the original string for unsupported formats */
 			*str++ = '%';
-			*str++ = *fmt++;
+			if  (str < end)
+				*str++ = *fmt++;
 		}
 	}
 	*str = '\0';
 	return str - buf;
+}
+
+/*
+ * Need to wrap definition of vscnprintf in ifdef so that the macro in
+ * vsprintf.h doesn't trip us up.
+ */
+#ifdef CONFIG_SYS_VSNPRINTF
+int vscnprintf(char *buf, size_t size, const char *fmt, va_list args)
+{
+	return _vscnprintf(buf, size, fmt, args);
+}
+#endif
+
+/* Implement vsprintf in case someone doesn't have CONFIG_SYS_VSNPRINTF */
+int vsprintf(char *buf, const char *fmt, va_list args)
+{
+	return _vscnprintf(buf, CONFIG_SYS_PBSIZE, fmt, args);
 }
 
 void panic(const char *fmt, ...)
