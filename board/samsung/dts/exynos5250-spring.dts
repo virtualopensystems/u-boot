@@ -20,6 +20,10 @@
 	compatible = "google,spring", "google,daisy", "samsung,smdk5250",
 		   "samsung,exynos5250";
 
+	aliases {
+		sdmmc1 = "/mshci@12210000";
+	};
+
 	board-rev {
 		compatible = "google,board-revision";
 		google,board-rev-gpios = <&gpio 88 0>, <&gpio 89 0>;
@@ -71,6 +75,19 @@
 			optimise-flash-write;
 			status = "disabled";
 		};
+	};
+
+	mshci@12210000 {
+		samsung,sdhci-bus-width = <4>;
+	};
+
+	mshci@12220000 {
+		/* MMC2 pins are used as GPIO for eDP bridge */
+		status = "disabled";
+	};
+
+	mshci@12230000 {
+		status = "disabled";
 	};
 
 	chrome-ec {
