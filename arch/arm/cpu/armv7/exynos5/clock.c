@@ -479,6 +479,7 @@ int clock_set_mshci(enum periph_id peripheral)
 	unsigned int clock;
 	unsigned int tmp;
 	unsigned int i;
+	unsigned int shift;
 
 	/* get mpll clock */
 	clock = get_pll_clk(MPLL) / 1000000;
@@ -492,18 +493,28 @@ int clock_set_mshci(enum periph_id peripheral)
 	switch (peripheral) {
 	case PERIPH_ID_SDMMC0:
 		addr = &clk->div_fsys1;
+		shift = 0;
+		break;
+	case PERIPH_ID_SDMMC1:
+		addr = &clk->div_fsys1;
+		shift = 16;
 		break;
 	case PERIPH_ID_SDMMC2:
 		addr = &clk->div_fsys2;
+		shift = 0;
+		break;
+	case PERIPH_ID_SDMMC3:
+		addr = &clk->div_fsys1;
+		shift = 16;
 		break;
 	default:
 		debug("invalid peripheral\n");
 		return -1;
 	}
-	tmp = readl(addr) & ~0xff0f;
+	tmp = readl(addr) & ~(0xff0f << shift);
 	for (i = 0; i <= 0xf; i++) {
 		if ((clock / (i + 1)) <= 400) {
-			writel(tmp | i << 0, addr);
+			writel(tmp | i << shift, addr);
 			break;
 		}
 	}
