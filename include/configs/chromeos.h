@@ -48,6 +48,9 @@
 #define CONFIG_OF_BOARD_SETUP
 #define CONFIG_SYS_FDT_PAD	0x8000
 
+/* Make sure that the safe version of printf() is compiled in. */
+#define CONFIG_SYS_VSNPRINTF
+
 /*
  * This is the default kernel command line to a Chrome OS kernel. An ending
  * space character helps us concatenate more arguments.
