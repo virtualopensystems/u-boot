@@ -50,11 +50,25 @@
 		samsung,periph-id = <PERIPH_ID_SDMMC0>;
 	};
 
+	mshci@12210000 {
+		compatible = "samsung,exynos5250-mshci";
+		reg = <0x12210000 0x100>;
+		interrupts = <0 123 0>;
+		samsung,periph-id = <PERIPH_ID_SDMMC1>;
+	};
+
 	mshci@12220000 {
 		compatible = "samsung,exynos5250-mshci";
 		reg = <0x12220000 0x100>;
 		interrupts = <0 123 0>;
 		samsung,periph-id = <PERIPH_ID_SDMMC2>;
+	};
+
+	mshci@12230000 {
+		compatible = "samsung,exynos5250-mshci";
+		reg = <0x12230000 0x100>;
+		interrupts = <0 123 0>;
+		samsung,periph-id = <PERIPH_ID_SDMMC3>;
 	};
 
 	serial@12C00000 {
