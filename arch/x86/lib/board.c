@@ -32,6 +32,7 @@
  */
 
 #include <common.h>
+#include <fdtdec.h>
 #include <watchdog.h>
 #include <command.h>
 #include <environment.h>
@@ -141,6 +142,7 @@ typedef int (init_fnc_t) (void);
 
 int calculate_relocation_address(void);
 static int copy_uboot_to_ram(void);
+static int copy_fdt_to_ram(void);
 static int clear_bss(void);
 static int do_elf_reloc_fixups(void);
 
@@ -157,6 +159,7 @@ init_fnc_t *init_sequence_f[] = {
 	dram_init_f,
 	calculate_relocation_address,
 	copy_uboot_to_ram,
+	copy_fdt_to_ram,
 	clear_bss,
 	do_elf_reloc_fixups,
 
@@ -213,6 +216,22 @@ static int copy_uboot_to_ram(void)
 
 	while (src_addr < end_addr)
 		*dst_addr++ = *src_addr++;
+
+	return 0;
+}
+
+static int copy_fdt_to_ram(void)
+{
+	if (gd->new_fdt) {
+		ulong fdt_size;
+
+		fdt_size = ALIGN(fdt_totalsize(gd->fdt_blob) + 0x1000, 32);
+
+		memcpy(gd->new_fdt, gd->fdt_blob, fdt_size);
+		debug("Relocated fdt from %p to %p, size %lx\n",
+		       gd->fdt_blob, gd->new_fdt, fdt_size);
+		gd->fdt_blob = gd->new_fdt;
+	}
 
 	return 0;
 }

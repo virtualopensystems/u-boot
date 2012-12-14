@@ -23,6 +23,7 @@
  */
 
 #include <common.h>
+#include <libfdt.h>
 #include <malloc.h>
 #include <asm/e820.h>
 #include <asm/u-boot-x86.h>
@@ -72,6 +73,12 @@ int calculate_relocation_address(void)
 	uintptr_t dest_addr = 0;
 	int i;
 
+#if defined(CONFIG_OF_SEPARATE) && defined(CONFIG_OF_CONTROL)
+	ulong fdt_size = 0;
+
+	if (gd->fdt_blob)
+		fdt_size = ALIGN(fdt_totalsize(gd->fdt_blob) + 0x1000, 32);
+#endif
 	for (i = 0; i < lib_sysinfo.n_memranges; i++) {
 		struct memrange *memrange = &lib_sysinfo.memrange[i];
 		/* Force U-Boot to relocate to a page aligned address. */
@@ -91,13 +98,27 @@ int calculate_relocation_address(void)
 
 		/* Use this address if it's the largest so far. */
 		if (end - uboot_size > dest_addr)
-			dest_addr = (end - uboot_size) & ~((1 << 12) - 1);
+			dest_addr = end;
 	}
 
 	/* If no suitable area was found, return an error. */
 	if (!dest_addr)
 		return 1;
 
+#if defined(CONFIG_OF_SEPARATE) && defined(CONFIG_OF_CONTROL)
+	/*
+	 * If the device tree is sitting immediate above our image then we
+	 * must relocate it. If it is embedded in the data section, then it
+	 * will be relocated with other data.
+	 */
+	if (gd->fdt_blob) {
+		dest_addr -= fdt_size;
+		gd->new_fdt = (void *)dest_addr;
+		dest_addr &= ~15;
+	}
+#endif
+
+	dest_addr = (dest_addr - uboot_size) & ~((1 << 12) - 1);
 	gd->start_addr_sp = dest_addr - CONFIG_SYS_MALLOC_LEN;
 	gd->relocaddr = dest_addr;
 	gd->reloc_off = dest_addr - (uintptr_t)&__text_start;
