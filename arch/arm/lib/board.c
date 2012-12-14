@@ -571,6 +571,8 @@ void board_init_r(gd_t *id, ulong dest_addr)
 #endif
 	mem_malloc_init (malloc_start, TOTAL_MALLOC_LEN);
 
+	bootstage_relocate();
+
 #if !defined(CONFIG_SYS_NO_FLASH)
 	puts("Flash: ");
 
