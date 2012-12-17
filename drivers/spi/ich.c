@@ -37,6 +37,7 @@
 typedef struct spi_slave ich_spi_slave;
 
 static int ichspi_lock = 0;
+static int saved_max_hz;
 
 typedef struct ich7_spi_regs {
 	uint16_t spis;
@@ -97,6 +98,8 @@ typedef struct ich_spi_controller {
 	uint16_t *control;
 	uint32_t *bbar;
 	uint32_t *pr;			/* only for ich9 */
+	uint8_t *speed;			/* pointer to speed control reg */
+	ulong max_speed;		/* Maximum bus speed in MHz */
 } ich_spi_controller;
 
 static ich_spi_controller cntlr;
@@ -120,7 +123,10 @@ enum {
 	SPIC_DS =		0x004000,
 	SPIC_SME =		0x008000,
 	SSFC_SCF_MASK =		0x070000,
-	SSFC_RESERVED =		0xf80000
+	SSFC_RESERVED =		0xf80000,
+
+	/* Mask for speed byte, biuts 23:16 of SSFC */
+	SSFC_SCF_33MHZ	=	0x01,
 };
 
 enum {
@@ -270,6 +276,7 @@ struct spi_slave *spi_setup_slave(unsigned int bus, unsigned int cs,
 
 	slave->bus = bus;
 	slave->cs = cs;
+	saved_max_hz = max_hz;
 	return slave;
 }
 
@@ -296,6 +303,23 @@ static inline int get_ich_version(uint16_t device_id)
 		return 9;
 
 	return 0;
+}
+
+/* @return 1 if the SPI flash supports the 33MHz speed */
+static int ich9_can_do_33mhz(pci_dev_t dev)
+{
+	u32 fdod, speed;
+
+	/* Observe SPI Descriptor Component Section 0 */
+	pci_write_config_dword(dev, 0xb0, 0x1000);
+
+	/* Extract the Write/Erase SPI Frequency from descriptor */
+	pci_read_config_dword(dev, 0xb4, &fdod);
+
+	/* Bits 23:21 have the fast read clock frequency, 0=20MHz, 1=33MHz */
+	speed = (fdod >> 21) & 7;
+
+	return speed == 1;
 }
 
 void spi_init(void)
@@ -372,6 +396,7 @@ void spi_init(void)
 			cntlr.databytes = sizeof(ich9_spi->fdata);
 			cntlr.status = &ich9_spi->ssfs;
 			cntlr.control = (uint16_t *)ich9_spi->ssfc;
+			cntlr.speed = ich9_spi->ssfc + 2;
 			cntlr.bbar = &ich9_spi->bbar;
 			cntlr.preop = &ich9_spi->preop;
 			cntlr.pr = &ich9_spi->pr[0];
@@ -380,6 +405,11 @@ void spi_init(void)
 	default:
 		printf("ICH SPI: Unrecognized ICH version %d.\n", ich_version);
 	}
+
+	/* Work out the maximum speed we can support */
+	cntlr.max_speed = 20000000;
+	if (ich_version == 9 && ich9_can_do_33mhz(dev))
+		cntlr.max_speed = 33000000;
 
 	ich_set_bbar(0);
 
@@ -626,7 +656,21 @@ int spi_xfer(struct spi_slave *slave, const void *dout,
 		return 0;
 	}
 
+	/* See if we can go faster */
+	if (cntlr.speed && cntlr.max_speed >= 33000000) {
+		int byte;
+
+		byte = readb_(cntlr.speed);
+		if (saved_max_hz >= 33000000)
+			byte |= SSFC_SCF_33MHZ;
+		else
+			byte &= ~SSFC_SCF_33MHZ;
+		writeb_(byte, cntlr.speed);
+	}
+
 	/* Preset control fields */
+	control = readw_(cntlr.control);
+	control &= ~SSFC_RESERVED;
 	control = SPIC_SCGO | ((opcode_index & 0x07) << 4);
 
 	/* Issue atomic preop cycle if needed */
