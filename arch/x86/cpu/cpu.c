@@ -88,6 +88,11 @@ static void reload_gdt(void)
 
 int x86_cleanup_before_linux(void)
 {
+#ifdef CONFIG_BOOTSTAGE_STASH
+	bootstage_stash((void *)CONFIG_BOOTSTAGE_STASH,
+			CONFIG_BOOTSTAGE_STASH_SIZE);
+#endif
+
 	return 0;
 }
 int cleanup_before_linux(void)
