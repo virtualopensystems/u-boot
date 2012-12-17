@@ -286,7 +286,7 @@ void board_init_f(ulong boot_flags)
 	gd->fdt_blob = _binary_dt_dtb_start;
 #elif defined CONFIG_OF_SEPARATE
 	/* FDT is at end of image */
-	gd->fdt_blob = (ulong *)&__rel_dyn_end;
+	gd->fdt_blob = (ulong *)&__end;
 #endif
 	/* Allow the early environment to override the fdt address */
 	gd->fdt_blob = (void *)getenv_ulong("fdtcontroladdr", 16,

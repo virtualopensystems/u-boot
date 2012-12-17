@@ -45,9 +45,6 @@ SECTIONS
 	.data : { *(.data*) }
 
 	. = ALIGN(4);
-	.dynsym : { *(.dynsym*) }
-
-	. = ALIGN(4);
 	.hash : { *(.hash*) }
 
 	. = ALIGN(4);
@@ -57,15 +54,26 @@ SECTIONS
 	__data_end = .;
 
 	. = ALIGN(4);
-	__bss_start = ABSOLUTE(.);
-	.bss (NOLOAD) : { *(.bss) }
-	. = ALIGN(4);
-	__bss_end = ABSOLUTE(.);
-
-	. = ALIGN(4);
 	__rel_dyn_start = .;
 	.rel.dyn : { *(.rel.dyn) }
 	__rel_dyn_end = .;
+
+	. = ALIGN(4);
+	.dynsym : { *(.dynsym*) }
+
+	/*
+	 * This address is the end of the output u-boot.bin. The BSS will
+	 * not be stored in the output binary, since it is all zero.
+	 */
+	__end = .;
+
+	.bss __rel_dyn_start (OVERLAY) : {
+		__bss_start = .;
+		*(.bss)
+		*(COM*)
+		. = ALIGN(4);
+		__bss_end = .;
+	}
 
 	/DISCARD/ : { *(.dynstr*) }
 	/DISCARD/ : { *(.dynamic*) }
