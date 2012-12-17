@@ -213,8 +213,8 @@ int board_early_init_r(void)
 void show_boot_progress(int val)
 {
 #if MIN_PORT80_KCLOCKS_DELAY
-	static uint32_t prev_stamp;
-	static uint32_t base;
+	static uint32_t prev_stamp __attribute__((section(".data")));
+	static uint32_t base __attribute__((section(".data")));
 
 	/*
 	 * Scale the time counter reading to avoid using 64 bit arithmetics.

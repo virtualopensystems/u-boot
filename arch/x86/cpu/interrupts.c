@@ -690,7 +690,7 @@ asm(".globl irq_common_entry\n" \
  */
 u64 get_ticks(void)
 {
-	static u64 tick_base;
+	static u64 tick_base __attribute__((section(".data")));
 	u64 now_tick = rdtsc();
 
 	if (!tick_base)
