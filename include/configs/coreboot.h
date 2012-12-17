@@ -342,8 +342,6 @@
 #undef CONFIG_CMD_NET
 #endif
 
-#define CONFIG_HARDWARE_MAPPED_SPI
-
 /* Board specific late time init */
 #define CONFIG_MISC_INIT_R
 
