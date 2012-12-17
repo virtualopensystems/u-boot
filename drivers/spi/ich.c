@@ -217,32 +217,12 @@ static void writel_(u32 b, const void *addr)
 
 static void write_reg(const void *value, void *dest, uint32_t size)
 {
-	const uint8_t *bvalue = value;
-	uint8_t *bdest = dest;
-
-	while (size >= 4) {
-		writel_(*(const uint32_t *)bvalue, bdest);
-		bdest += 4; bvalue += 4; size -= 4;
-	}
-	while (size) {
-		writeb_(*bvalue, bdest);
-		bdest++; bvalue++; size--;
-	}
+	memcpy_toio(dest, value, size);
 }
 
 static void read_reg(const void *src, void *value, uint32_t size)
 {
-	const uint8_t *bsrc = src;
-	uint8_t *bvalue = value;
-
-	while (size >= 4) {
-		*(uint32_t *)bvalue = readl_(bsrc);
-		bsrc += 4; bvalue += 4; size -= 4;
-	}
-	while (size) {
-		*bvalue = readb_(bsrc);
-		bsrc++; bvalue++; size--;
-	}
+	memcpy_fromio(value, src, size);
 }
 
 static void ich_set_bbar(uint32_t minaddr)
@@ -611,6 +591,8 @@ int spi_xfer(struct spi_slave *slave, const void *dout,
 	int16_t opcode_index;
 	int with_address;
 	int status;
+	/* Align read transactions to 64-byte boundaries */
+	char buff[cntlr.databytes];
 
 	spi_transaction trans = {
 		dout, bitsout / 8,
@@ -722,9 +704,14 @@ int spi_xfer(struct spi_slave *slave, const void *dout,
 	 */
 	while (trans.bytesout || trans.bytesin) {
 		uint32_t data_length;
+		uint32_t aligned_offset;
+		uint32_t diff;
+
+		aligned_offset = trans.offset & ~(cntlr.databytes - 1);
+		diff = trans.offset - aligned_offset;
 
 		/* SPI addresses are 24 bit only */
-		writel_(trans.offset & 0x00FFFFFF, cntlr.addr);
+		writel_(aligned_offset & 0x00FFFFFF, cntlr.addr);
 
 		if (trans.bytesout)
 			data_length = min(trans.bytesout, cntlr.databytes);
@@ -758,7 +745,13 @@ int spi_xfer(struct spi_slave *slave, const void *dout,
 		}
 
 		if (trans.bytesin) {
-			read_reg(cntlr.data, trans.in, data_length);
+			if (diff) {
+				data_length -= diff;
+				read_reg(cntlr.data, buff, cntlr.databytes);
+				memcpy(trans.in, buff + diff, data_length);
+			} else {
+				read_reg(cntlr.data, trans.in, data_length);
+			}
 			spi_use_in(&trans, data_length);
 			if (with_address)
 				trans.offset += data_length;
