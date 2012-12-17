@@ -20,6 +20,7 @@
 		 * 16MB kernel loaded at 0x100000
 		 */
 		cros-system-data = <0x01100000 0x8000>;
+		google-binary-block = <0x01200000 0x100000>;
 
 		firmware-storage = <&firmware_storage_spi>;
 		nvstorage-media = "nvram";
