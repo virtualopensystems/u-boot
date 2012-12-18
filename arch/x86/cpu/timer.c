@@ -10,11 +10,14 @@
 
 #include <common.h>
 
+/* Temporary patch to maintain bisectability, removed in next commit */
+#ifndef CONFIG_SYS_X86_TSC_TIMER
 unsigned long timer_get_us(void)
 {
 	printf("%s() used but not implemented.\n", __func__);
 	return 0;
 }
+#endif
 
 ulong get_timer_masked(void)
 {

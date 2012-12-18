@@ -47,6 +47,7 @@ COBJS-$(CONFIG_PCI) += pci_type1.o
 COBJS-y += physmem.o
 COBJS-y	+= string.o
 COBJS-$(CONFIG_SYS_X86_ISR_TIMER)	+= timer.o
+COBJS-$(CONFIG_SYS_X86_TSC_TIMER)	+= tsc_timer.o
 COBJS-$(CONFIG_VGA_CONSOLE)	+= video.o
 COBJS-$(CONFIG_CMD_ZBOOT)	+= zimage.o
 

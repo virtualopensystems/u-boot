@@ -49,6 +49,9 @@ void timestamp_init(void)
 {
 	ts_table = lib_sysinfo.tstamp_table;
 	base_value = ts_table->base_time;
+#ifdef CONFIG_SYS_X86_TSC_TIMER
+	timer_set_base(base_value);
+#endif
 	timestamp_add_now(TS_U_BOOT_INITTED);
 }
 
