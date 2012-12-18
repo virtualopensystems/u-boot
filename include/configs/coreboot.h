@@ -55,7 +55,6 @@
 #define CONFIG_OF_LIBFDT	/* Device tree support */
 #define CONFIG_OF_CONTROL	/* Use the device tree to set up U-Boot */
 #define CONFIG_DEFAULT_DEVICE_TREE      link
-#define CONFIG_OF_CBFS
 #define CONFIG_OF_SEPARATE
 
 /*-----------------------------------------------------------------------
