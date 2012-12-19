@@ -348,8 +348,8 @@ static void spi_test_next_stage(struct test_info *test)
  * @param vbuf		Verification buffer
  * @return 0 if ok, -1 on error
  */
-static int spi_flash_test(struct spi_flash *flash, char *buf, ulong len,
-			   ulong offset, char *vbuf)
+static int spi_flash_test(struct spi_flash *flash, uint8_t *buf, ulong len,
+			   ulong offset, uint8_t *vbuf)
 {
 	struct test_info test;
 	int i;
@@ -411,8 +411,8 @@ static int do_spi_flash_test(void)
 	/* TODO(sjg@chromium.org): Support cmdline parameters for these */
 	unsigned long offset = 0x8000;
 	unsigned long len = 0x100000;
-	char *buf = (char *)CONFIG_SYS_TEXT_BASE;
-	char *vbuf;
+	uint8_t *buf = (uint8_t *)CONFIG_SYS_TEXT_BASE;
+	uint8_t *vbuf;
 	int ret;
 
 	vbuf = malloc(len);
