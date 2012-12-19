@@ -13,6 +13,11 @@
 
 #include <compiler.h>
 
+enum cros_compress_t {
+	CROS_COMPRESS_NONE,
+	CROS_COMPRESS_LZO,
+};
+
 /* Structures to hold Chrome OS specific configuration from the FMAP. */
 
 struct fmap_entry {
@@ -34,6 +39,7 @@ struct fmap_firmware_entry {
 	/* Sub-entry for U-Boot RW binary */
 	struct fmap_entry boot_rwbin;
 	int loaded_with_uboot;	/* EC image already loaded as part of U-Boot */
+	enum cros_compress_t compress;		/* Compression type */
 };
 
 /*
