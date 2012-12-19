@@ -70,9 +70,11 @@ int spi_flash_read_common(struct spi_flash *flash, const u8 *cmd,
 	struct spi_slave *spi = flash->spi;
 	int ret;
 
+	bootstage_start(BOOTSTAGE_ID_ACCUM_SPI, "SPI read");
 	spi_claim_bus(spi);
 	ret = spi_flash_cmd_read(spi, cmd, cmd_len, data, data_len);
 	spi_release_bus(spi);
+	bootstage_accum(BOOTSTAGE_ID_ACCUM_SPI);
 
 	return ret;
 }
@@ -80,26 +82,24 @@ int spi_flash_read_common(struct spi_flash *flash, const u8 *cmd,
 int spi_flash_cmd_read_fast(struct spi_flash *flash, u32 offset,
 		size_t len, void *data)
 {
-	struct spi_slave *spi = flash->spi;
 	u8 cmd[5];
 
 	cmd[0] = CMD_READ_ARRAY_FAST;
 	spi_flash_addr(offset, cmd);
 	cmd[4] = 0x00;
 
-	return spi_flash_cmd_read(spi, cmd, sizeof(cmd), data, len);
+	return spi_flash_read_common(flash, cmd, sizeof(cmd), data, len);
 }
 
 int spi_flash_cmd_read_slow(struct spi_flash *flash, u32 offset,
 		size_t len, void *data)
 {
-	struct spi_slave *spi = flash->spi;
 	u8 cmd[4];
 
 	cmd[0] = CMD_READ_ARRAY_SLOW;
 	spi_flash_addr(offset, cmd);
 
-	return spi_flash_cmd_read(spi, cmd, sizeof(cmd), data, len);
+	return spi_flash_read_common(flash, cmd, sizeof(cmd), data, len);
 }
 
 int spi_flash_cmd_poll_bit(struct spi_flash *flash, unsigned long timeout,
@@ -186,9 +186,11 @@ int spi_flash_read_common(struct spi_flash *flash, const u8 *cmd,
 	struct spi_slave *spi = flash->spi;
 	int ret;
 
+	bootstage_start(BOOTSTAGE_ID_ACCUM_SPI, "SPI read");
 	spi_claim_bus(spi);
 	ret = spi_flash_cmd_read(spi, cmd, cmd_len, data, data_len);
 	spi_release_bus(spi);
+	bootstage_accum(BOOTSTAGE_ID_ACCUM_SPI);
 
 	return ret;
 }
