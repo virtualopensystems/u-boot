@@ -33,6 +33,7 @@ struct fmap_firmware_entry {
 	struct fmap_entry ec_rwbin;
 	/* Sub-entry for U-Boot RW binary */
 	struct fmap_entry boot_rwbin;
+	int loaded_with_uboot;	/* EC image already loaded as part of U-Boot */
 };
 
 /*

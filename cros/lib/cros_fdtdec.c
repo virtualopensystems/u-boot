@@ -209,6 +209,8 @@ static int process_fmap_node(const void *blob, int node, int depth,
 		case SECTION_BOOT:
 			rw->boot = entry;
 			rw->boot_rwbin = entry;
+			rw->loaded_with_uboot = fdtdec_get_bool(blob, node,
+					"loaded-with-uboot");
 			break;
 		default:
 			return 0;

@@ -205,6 +205,7 @@ VbError_t VbExEcGetExpectedRW(enum VbSelectFirmware_t select,
 	struct twostop_fmap fmap;
 	uint32_t offset;
 	firmware_storage_t file;
+	struct fmap_firmware_entry *entry;
 	uint8_t *buf;
 	int size;
 
@@ -214,48 +215,58 @@ VbError_t VbExEcGetExpectedRW(enum VbSelectFirmware_t select,
 	cros_fdtdec_flashmap(gd->fdt_blob, &fmap);
 	switch (select) {
 	case VB_SELECT_FIRMWARE_A:
-		offset = fmap.readwrite_a.ec_rwbin.offset;
-		size = fmap.readwrite_a.ec_rwbin.length;
+		entry = &fmap.readwrite_a;
 		break;
 	case VB_SELECT_FIRMWARE_B:
-		offset = fmap.readwrite_b.ec_rwbin.offset;
-		size = fmap.readwrite_b.ec_rwbin.length;
+		entry = &fmap.readwrite_b;
 		break;
 	default:
 		VBDEBUG("Unrecognized EC firmware requested.\n");
 		return VBERROR_UNKNOWN;
 	}
 
-	if (firmware_storage_open_spi(&file)) {
-		VBDEBUG("Failed to open firmware storage.\n");
-		return VBERROR_UNKNOWN;
+	offset = entry->ec_rwbin.offset;
+	size = entry->ec_rwbin.length;
+
+	if (entry->loaded_with_uboot) {
+		/*
+		 * This whole section (UBoot, FDT, EC) was loaded into
+		 * memory already, starting at CONFIG_TEXT_BASE.
+		 */
+		buf = (uint8_t *)CONFIG_SYS_TEXT_BASE + offset -
+				entry->boot_rwbin.offset;
+	} else {
+		if (firmware_storage_open_spi(&file)) {
+			VBDEBUG("Failed to open firmware storage.\n");
+			return VBERROR_UNKNOWN;
+		}
+
+		VBDEBUG("EC-RW image offset %#x size %#x.\n", offset, size);
+
+		/* Sanity-check; we don't expect EC images > 1MB */
+		if (size <= 0 || size > 0x100000) {
+			VBDEBUG("EC image has bogus size.\n");
+			return VBERROR_UNKNOWN;
+		}
+
+		/*
+		* Note: this leaks memory each call, since we don't track the
+		* pointer and the caller isn't expecting to free it.
+		*/
+		buf = malloc(size);
+		if (!buf) {
+			VBDEBUG("Failed to allocate space for EC RW image.\n");
+			return VBERROR_UNKNOWN;
+		}
+
+		if (file.read(&file, offset, size, BT_EXTRA(buf))) {
+			free(buf);
+			VBDEBUG("Failed to read the EC from flash.\n");
+			return VBERROR_UNKNOWN;
+		}
+
+		file.close(&file);
 	}
-
-	VBDEBUG("EC-RW image offset %d size %d.\n", offset, size);
-
-	/* Sanity-check; we don't expect EC images > 1MB */
-	if (size <= 0 || size > 0x100000) {
-		VBDEBUG("EC image has bogus size.\n");
-		return VBERROR_UNKNOWN;
-	}
-
-	/*
-	 * Note: this leaks memory each call, since we don't track the pointer
-	 * and the caller isn't expecting to free it.
-	 */
-	buf = malloc(size);
-	if (!buf) {
-		VBDEBUG("Failed to allocate space for the EC RW image.\n");
-		return VBERROR_UNKNOWN;
-	}
-
-	if (file.read(&file, offset, size, BT_EXTRA(buf))) {
-		free(buf);
-		VBDEBUG("Failed to read the EC from flash.\n");
-		return VBERROR_UNKNOWN;
-	}
-
-	file.close(&file);
 
 	/* Corrupt a byte if requested */
 	if (corrupt_offset >= 0 && corrupt_offset < size)
