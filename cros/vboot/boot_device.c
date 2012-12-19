@@ -107,6 +107,8 @@ VbError_t VbExDiskGetInfo(VbDiskInfo **infos_ptr, uint32_t *count_ptr,
 
 	infos = (VbDiskInfo *)VbExMalloc(sizeof(VbDiskInfo) * max_count);
 
+	bootstage_start(BOOTSTAGE_ACCUM_VBOOT_BOOT_DEVICE_INFO,
+			"boot_device_info");
 	/* Scan through all the interfaces looking for devices */
 	for (upto = 0; upto < interface_count && count < max_count; upto++) {
 		struct boot_interface *iface = interface[upto];
@@ -143,6 +145,7 @@ VbError_t VbExDiskGetInfo(VbDiskInfo **infos_ptr, uint32_t *count_ptr,
 		*count_ptr = 0;
 		VbExFree(infos);
 	}
+	bootstage_accum(BOOTSTAGE_ACCUM_VBOOT_BOOT_DEVICE_INFO);
 
 	/* The operation itself succeeds, despite scan failure all about */
 	return VBERROR_SUCCESS;
@@ -160,6 +163,8 @@ VbError_t VbExDiskRead(VbExDiskHandle_t handle, uint64_t lba_start,
 {
 	block_dev_desc_t *dev = (block_dev_desc_t *)handle;
 
+	bootstage_start(BOOTSTAGE_ACCUM_VBOOT_BOOT_DEVICE_READ,
+			"boot_device_read");
 	if (dev == NULL)
 		return VBERROR_DISK_NO_DEVICE;
 
@@ -169,6 +174,7 @@ VbError_t VbExDiskRead(VbExDiskHandle_t handle, uint64_t lba_start,
 	if (dev->block_read(dev->dev, lba_start, lba_count, buffer)
 			!= lba_count)
 		return VBERROR_DISK_READ_ERROR;
+	bootstage_accum(BOOTSTAGE_ACCUM_VBOOT_BOOT_DEVICE_READ);
 
 	return VBERROR_SUCCESS;
 }
