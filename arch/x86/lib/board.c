@@ -146,8 +146,16 @@ static int copy_fdt_to_ram(void);
 static int clear_bss(void);
 static int do_elf_reloc_fixups(void);
 
+static int do_bootstage_mark(void)
+{
+	bootstage_mark_name(BOOTSTAGE_ID_START_UBOOT_F, "board_init_f");
+
+	return 0;
+}
+
 init_fnc_t *init_sequence_f[] = {
 	cpu_init_f,
+	do_bootstage_mark,
 #ifdef CONFIG_OF_CONTROL
 	fdtdec_check_fdt,
 #endif
