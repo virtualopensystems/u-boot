@@ -218,8 +218,7 @@
  * CPU Features
  */
 
-#define CONFIG_SYS_GENERIC_TIMER
-#define CONFIG_SYS_X86_ISR_TIMER
+#define CONFIG_SYS_X86_TSC_TIMER
 #define CONFIG_SYS_PCAT_INTERRUPTS
 #define CONFIG_SYS_NUM_IRQS		16
 
@@ -344,7 +343,6 @@
 #endif
 
 #define CONFIG_HARDWARE_MAPPED_SPI
-#define CONFIG_INTEL_CORE_ARCH	/* Sandy bridge and ivy bridge chipsets. */
 
 /* Board specific late time init */
 #define CONFIG_MISC_INIT_R
