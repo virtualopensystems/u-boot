@@ -66,6 +66,10 @@
 #define CONFIG_BOOTSTAGE_STASH_SIZE	0x7fc
 #define CONFIG_BOOTSTAGE_USER_COUNT	60
 
+#define CONFIG_LZO
+#undef CONFIG_ZLIB
+#undef CONFIG_GZIP
+
 /*-----------------------------------------------------------------------
  * Memory layout
  */
