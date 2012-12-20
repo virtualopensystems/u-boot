@@ -313,6 +313,12 @@ int bootstage_unstash(void *base, int size);
 
 static inline void bootstage_relocate(void) { ; }
 
+static inline ulong bootstage_add_record(enum bootstage_id id,
+		const char *name, int flags, ulong mark)
+{
+	return 0;
+}
+
 static inline ulong bootstage_mark(enum bootstage_id id)
 {
 	show_boot_progress(id);
@@ -326,6 +332,16 @@ static inline ulong bootstage_error(enum bootstage_id id)
 }
 
 static inline ulong bootstage_mark_name(enum bootstage_id id, const char *name)
+{
+	return 0;
+}
+
+static inline uint32_t bootstage_start(enum bootstage_id id, const char *name)
+{
+	return 0;
+}
+
+static inline uint32_t bootstage_accum(enum bootstage_id id)
 {
 	return 0;
 }
