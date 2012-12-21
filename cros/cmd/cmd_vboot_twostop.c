@@ -14,6 +14,7 @@
 #include <lcd.h>
 #include <malloc.h>
 #include <mkbp.h>
+#include <linux/compiler.h>
 #include <cros/boot_kernel.h>
 #include <cros/common.h>
 #include <cros/crossystem_data.h>
@@ -354,14 +355,16 @@ static void wipe_unused_memory(crossystem_data_t *cdata,
 {
 #if !defined(CONFIG_SANDBOX)
 	memory_wipe_t wipe;
+	int fdt_size __maybe_unused;
 
+	fdt_size = fdt_totalsize(gd->fdt_blob);
 	memory_wipe_init(&wipe);
 	setup_arch_unused_memory(&wipe, cdata, cparams);
 
 	/* Exclude relocated u-boot structures. */
 	memory_wipe_sub(&wipe, get_current_sp() - STACK_MARGIN,
 #if defined(CONFIG_SYS_COREBOOT)
-			gd->relocaddr + (&__bss_end - &__text_start)
+			(uintptr_t)(gd->fdt_blob + fdt_size)
 #elif defined(CONFIG_OF_CONTROL) && defined(CONFIG_ARM)
 			gd->relocaddr + (&__bss_end__ - &_start)
 #else
