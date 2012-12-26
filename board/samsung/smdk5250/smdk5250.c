@@ -478,7 +478,7 @@ static int board_dp_fill_gpios(const void *blob)
 	np = fdtdec_next_compatible(blob, 0, COMPAT_NXP_PTN3460);
 	if (np < 0) {
 		debug("%s: Could not find COMPAT_NXP_PTN3460 (%d)\n", __func__,
-			ret);
+			np);
 		return np;
 	}
 	ret = fdtdec_decode_gpio(blob, np, "powerdown-gpio", &local.dp_pd);
