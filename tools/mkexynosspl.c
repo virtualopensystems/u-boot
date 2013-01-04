@@ -29,21 +29,21 @@
 #include <sys/stat.h>
 #include <compiler.h>
 
-#define CHECKSUM_OFFSET		(14*1024-4)
-#define BUFSIZE			(14*1024)
+#define BUFSIZE			(30*1024)
+#define CHECKSUM_OFFSET		(BUFSIZE - 4)
 #define FILE_PERM		(S_IRUSR | S_IWUSR | S_IRGRP \
 				| S_IWGRP | S_IROTH | S_IWOTH)
 /*
 * Requirement:
-* IROM code reads first 14K bytes from boot device.
-* It then calculates the checksum of 14K-4 bytes and compare with data at
-* 14K-4 offset.
+* BL1 code reads first 30K bytes from boot device.
+* It then calculates the checksum of 30K-4 bytes and compare with data at
+* 30K-4 offset.
 *
 * This function takes two filenames:
 * IN  "u-boot-spl.bin" and
 * OUT "$(BOARD)-spl.bin as filenames.
-* It reads the "u-boot-spl.bin" in 16K buffer.
-* It calculates checksum of 14K-4 Bytes and stores at 14K-4 offset in buffer.
+* It reads the "u-boot-spl.bin" in 32K buffer.
+* It calculates checksum of 30K-4 Bytes and stores at 30K-4 offset in buffer.
 * It writes the buffer to "$(BOARD)-spl.bin" file.
 */
 
@@ -85,8 +85,13 @@ int main(int argc, char **argv)
 	}
 
 	len = stat.st_size;
+	if (len > CHECKSUM_OFFSET) {
+		fprintf(stderr, "%s: Bad size: \"%s\" is not valid image\n",
+			argv[0], argv[1]);
+		exit(EXIT_FAILURE);
+	}
 
-	count = (len < CHECKSUM_OFFSET) ? len : CHECKSUM_OFFSET;
+	count = len;
 
 	if (read(ifd, buffer, count) != count) {
 		fprintf(stderr, "%s: Can't read %s: %s\n",
