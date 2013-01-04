@@ -143,7 +143,7 @@
 
 /* Configuration of BL1, BL2, ENV Blocks on mmc */
 #define CONFIG_RES_BLOCK_SIZE	(512)
-#define CONFIG_BL1_SIZE		(16 << 10) /*16 K reserved for BL1*/
+#define CONFIG_BL1_SIZE		(32 << 10) /* 32 KB reserved for BL1 */
 #define CONFIG_BL2_SIZE		(512UL << 10UL)	/* 512 KB */
 #define CONFIG_ENV_SIZE		(16 << 10)	/* 16 KB */
 
@@ -201,7 +201,7 @@
 
 #define CONFIG_SPL_LDSCRIPT
 #define CONFIG_SPL_TEXT_BASE	0x02023400
-#define CONFIG_SPL_MAX_SIZE	(14 * 1024)
+#define CONFIG_SPL_MAX_SIZE	(CONFIG_BL1_SIZE - (2 << 10))
 
 /* Enable devicetree support */
 #define CONFIG_OF_LIBFDT
