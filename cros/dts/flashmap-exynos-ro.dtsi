@@ -51,7 +51,7 @@
 
 		spl {
 			label = "bl2 spl";
-			size = <0x4000>;
+			size = <0x8000>;
 			read-only;
 			filename = "bl2.bin";
 			type = "blob exynos-bl2 boot,dtb";
@@ -60,7 +60,7 @@
 
 		ro-boot {
 			label = "u-boot";
-			size = <0x9a000>;
+			size = <0x96000>;
 			read-only;
 			type = "blob boot,dtb,ecrw,ecro";
 			required;
