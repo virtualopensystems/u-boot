@@ -49,9 +49,13 @@ static const u32 goodMagic = 0x4f524243;
 static const u8 goodFileMagic[] = "LARCHIVE";
 
 
-static int initialized;
-static struct CbfsHeader cbfsHeader;
-static CbfsCacheNode *fileCache;
+/*
+ * These variables need to be in .data because they may be modified before
+ * relocation.
+ */
+static int initialized __attribute__((section(".data")));
+static struct CbfsHeader cbfsHeader __attribute__((section(".data")));
+static CbfsCacheNode *fileCache __attribute__((section(".data")));
 
 /* Do endian conversion on the CBFS header structure. */
 static void swap_header(CbfsHeader *dest, CbfsHeader *src)
