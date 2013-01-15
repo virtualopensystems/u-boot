@@ -135,7 +135,7 @@ static VbError_t ec_protect_rw(int protect)
 {
 	struct mkbp_dev *mdev = board_get_mkbp_dev();
 	struct ec_response_flash_protect resp;
-	uint32_t mask = EC_FLASH_PROTECT_RW_NOW | EC_FLASH_PROTECT_RW_AT_BOOT;
+	uint32_t mask = EC_FLASH_PROTECT_ALL_NOW | EC_FLASH_PROTECT_ALL_AT_BOOT;
 
 	if (!mdev) {
 		VBDEBUG("%s: no mkbp device\n", __func__);
@@ -148,7 +148,7 @@ static VbError_t ec_protect_rw(int protect)
 
 	if (!protect) {
 		/* If protection is still enabled, need reboot */
-		if (resp.flags & EC_FLASH_PROTECT_RW_NOW)
+		if (resp.flags & EC_FLASH_PROTECT_ALL_NOW)
 			return VBERROR_EC_REBOOT_TO_RO_REQUIRED;
 
 		return VBERROR_SUCCESS;
@@ -163,11 +163,11 @@ static VbError_t ec_protect_rw(int protect)
 		return VBERROR_SUCCESS;
 
 	/* If flash is protected now, success */
-	if (resp.flags & EC_FLASH_PROTECT_RW_NOW)
+	if (resp.flags & EC_FLASH_PROTECT_ALL_NOW)
 		return VBERROR_SUCCESS;
 
 	/* If RW will be protected at boot but not now, need a reboot */
-	if (resp.flags & EC_FLASH_PROTECT_RW_AT_BOOT)
+	if (resp.flags & EC_FLASH_PROTECT_ALL_AT_BOOT)
 		return VBERROR_EC_REBOOT_TO_RO_REQUIRED;
 
 	/* Otherwise, it's an error */
