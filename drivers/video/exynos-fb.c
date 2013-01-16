@@ -825,8 +825,8 @@ static int s5p_dp_hw_link_training(struct s5p_dp_device *dp,
 		dp->link_train.link_rate = max_rate;
 
 	/* Set link rate and count as you want to establish*/
-	writel(dp->video_info->lane_count, &base->lane_count_set);
-	writel(dp->video_info->link_rate, &base->link_bw_set);
+	writel(dp->link_train.lane_count, &base->lane_count_set);
+	writel(dp->link_train.link_rate, &base->link_bw_set);
 
 	/* Set sink to D0 (Sink Not Ready) mode. */
 	s5p_dp_write_byte_to_dpcd(dp, DPCD_ADDR_SINK_POWER_STATE,
@@ -966,8 +966,8 @@ static int dp_controller_init(const void *blob, unsigned *wait_ms)
 	/* Enable enhanced mode */
 	setbits_le32(&base->sys_ctl_4, ENHANCED);
 
-	writel(dp->video_info->lane_count, &base->lane_count_set);
-	writel(dp->video_info->link_rate, &base->link_bw_set);
+	writel(dp->link_train.lane_count, &base->lane_count_set);
+	writel(dp->link_train.link_rate, &base->link_bw_set);
 
 	s5p_dp_init_video(dp);
 	ret = s5p_dp_config_video(dp, dp->video_info);
