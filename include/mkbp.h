@@ -422,4 +422,23 @@ int mkbp_read_version(struct mkbp_dev *dev,
  */
 int mkbp_read_build_info(struct mkbp_dev *dev, char **strp);
 
+/**
+ * Switch on/off a LDO / FET.
+ *
+ * @param dev		MKBP device
+ * @param index		index of the LDO/FET to switch
+ * @param state		new state of the LDO/FET : EC_LDO_STATE_ON|OFF
+ * @return 0 if ok, -1 on error
+ */
+int mkbp_set_ldo(struct mkbp_dev *dev, uint8_t index, uint8_t state);
+
+/**
+ * Read back a LDO / FET current state.
+ *
+ * @param dev		MKBP device
+ * @param index		index of the LDO/FET to switch
+ * @param state		current state of the LDO/FET : EC_LDO_STATE_ON|OFF
+ * @return 0 if ok, -1 on error
+ */
+int mkbp_get_ldo(struct mkbp_dev *dev, uint8_t index, uint8_t *state);
 #endif

@@ -766,6 +766,38 @@ int mkbp_write_vbnvcontext(struct mkbp_dev *dev, const uint8_t *block)
 	return 0;
 }
 
+int mkbp_set_ldo(struct mkbp_dev *dev, uint8_t index, uint8_t state)
+{
+	struct ec_params_ldo_set params;
+
+	params.index = index;
+	params.state = state;
+
+	if (ec_command(dev, EC_CMD_LDO_SET, 0,
+		       &params, sizeof(params),
+		       NULL, 0))
+		return -1;
+
+	return 0;
+}
+
+int mkbp_get_ldo(struct mkbp_dev *dev, uint8_t index, uint8_t *state)
+{
+	struct ec_params_ldo_get params;
+	struct ec_response_ldo_get *resp = NULL;
+
+	params.index = index;
+
+	if (ec_command(dev, EC_CMD_LDO_GET, 0,
+		       &params, sizeof(params),
+		       (uint8_t **)&resp, sizeof(*resp)) < sizeof(*resp))
+		return -1;
+
+	*state = resp->state;
+
+	return 0;
+}
+
 /**
  * Decode MBKP details from the device tree and allocate a suitable device.
  *
@@ -1179,6 +1211,33 @@ static int do_mkbp(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 			if (!ret)
 				printf("Build info:    %s\n", build_string);
 		}
+	} else if (0 == strcmp("ldo", cmd)) {
+		uint8_t index, state;
+		char *endp;
+
+		if (argc < 3)
+			return CMD_RET_USAGE;
+		index = simple_strtoul(argv[2], &endp, 10);
+		if (*argv[2] == 0 || *endp != 0)
+			return CMD_RET_USAGE;
+		if (argc > 3) {
+			state = simple_strtoul(argv[3], &endp, 10);
+			if (*argv[3] == 0 || *endp != 0)
+				return CMD_RET_USAGE;
+			ret = mkbp_set_ldo(dev, index, state);
+		} else {
+			ret = mkbp_get_ldo(dev, index, &state);
+			if (!ret) {
+				printf("LDO%d: %s\n", index,
+					state == EC_LDO_STATE_ON ?
+					"on" : "off");
+			}
+		}
+
+		if (ret) {
+			debug("%s: Could not access LDO%d\n", __func__, index);
+			return ret;
+		}
 	} else {
 		return CMD_RET_USAGE;
 	}
@@ -1207,6 +1266,7 @@ U_BOOT_CMD(
 	"mkbp read <ro|rw> <addr> [<size>]   Read EC image\n"
 	"mkbp write <ro|rw> <addr> [<size>]  Write EC image\n"
 	"mkbp vbnvcontext [hexstring]        Read [write] VbNvContext from EC\n"
+	"mkbp ldo <idx> [<state>] Switch/Read LDO state\n"
 	"mkbp test                run tests on mkbp\n"
 	"mkbp version             Read MKBP version"
 );
