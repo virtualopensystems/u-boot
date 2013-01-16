@@ -91,7 +91,7 @@ int mkbp_spi_command(struct mkbp_dev *dev, uint8_t cmd, int cmd_version,
 	out[0] = cmd_version;
 	out[1] = cmd;
 	out[2] = (uint8_t)dout_len;
-	memcpy(out + 3, dout, dout_len * 8);
+	memcpy(out + 3, dout, dout_len);
 	csum = mkbp_calc_checksum(out, 3) + mkbp_calc_checksum(dout, dout_len);
 	out[3 + dout_len] = (uint8_t)csum;
 
