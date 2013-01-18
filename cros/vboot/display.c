@@ -272,12 +272,8 @@ VbError_t VbExDisplayImage(uint32_t x, uint32_t y,
 #ifdef HAVE_DISPLAY
 	int ret;
 
-	/*
-	 * Put bitmap sanity check in assertion so that it can be skipped in
-	 * production code, as bitmaps are stored in write-protected region and
-	 * thus it should be safe to skip such check.
-	 */
-	assert(!sanity_check_bitmap(buffer, buffersize));
+	if (sanity_check_bitmap(buffer, buffersize))
+		return VBERROR_INVALID_BMPFV;
 
 	ret = display_callbacks_.dc_display_bitmap((ulong)buffer, x, y);
 	if (ret) {
