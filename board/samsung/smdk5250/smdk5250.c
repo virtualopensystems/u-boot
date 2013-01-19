@@ -582,7 +582,8 @@ static int ps8622_i2c_write(unsigned addr_off, unsigned char reg_addr,
 {
 	int ret;
 
-	ret = i2c_write(0x48 + addr_off, reg_addr, 1, &value, 1);
+	/* TODO: read PS8622 address from FDT */
+	ret = i2c_write(0x8 + addr_off, reg_addr, 1, &value, 1);
 	debug("%s: reg=%#x, value=%#x, ret=%d\n", __func__, reg_addr, value,
 	      ret);
 	return ret;

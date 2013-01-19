@@ -42,9 +42,9 @@
 		};
 	};
 	i2c7: i2c@12cd0000 {
-		ps8622-bridge@20 {
+		ps8622-bridge@8 {
 			compatible = "parade,ps8622";
-			reg = <0x48>;
+			reg = <0x8>;
 			powerdown-gpio = <&gpio 0x56 1>;	/* C36 */
 			reset-gpio = <&gpio 0x51 1>;		/* C31 */
 			hotplug-gpio = <&gpio 0x50 0>;		/* C30 */
