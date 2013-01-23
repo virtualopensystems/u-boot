@@ -42,6 +42,11 @@
 			i2c-max-frequency = <100000>;
 			ec-interrupt = <&gpio 174 1>;
 		};
+
+		power-regulator@48 {
+			compatible = "ti,tps65090";
+			reg = <0x48>;
+		};
 	};
 
 	msata@122f0000 {

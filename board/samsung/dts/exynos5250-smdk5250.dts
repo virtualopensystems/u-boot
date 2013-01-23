@@ -99,4 +99,11 @@
 			compatible = "wolfson,wm8994-codec";
 		};
 	};
+
+	i2c4: i2c@12ca0000 {
+		power-regulator@48 {
+			compatible = "ti,tps65090";
+			reg = <0x48>;
+		};
+	};
 };
