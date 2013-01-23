@@ -102,6 +102,7 @@ enum fdt_compat_id {
 	COMPAT_GOOGLE_CHROME_EC,	/* Chrome Embedded Controller */
 	COMPAT_ANALOGIX_ANX7805,	/* Analogix ANX7805 myDP bridge */
 	COMPAT_SMSC_USB3503,		/* HSIC USB hub reset GPIO */
+	COMPAT_TI_TPS65090,		/* Texas Instrument TPS65090 */
 
 	COMPAT_COUNT,
 };

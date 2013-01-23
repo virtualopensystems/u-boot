@@ -9,8 +9,11 @@
  */
 
 #include <common.h>
+#include <fdtdec.h>
 #include <i2c.h>
 #include <tps65090.h>
+
+DECLARE_GLOBAL_DATA_PTR;
 
 /* TPS65090 register addresses */
 enum {
@@ -39,7 +42,7 @@ enum {
 	FET_CTRL_ENFET		= 1 << 0,  /* Enable FET */
 };
 
-static struct {
+static struct tps65090_config {
 	int bus;
 	int addr;
 	int old_bus;
@@ -303,14 +306,43 @@ int tps65090_get_status(void)
 	return val;
 }
 
+static int tps65090_decode_config(struct tps65090_config *config)
+{
+#ifdef CONFIG_OF_CONTROL
+	const void *blob = gd->fdt_blob;
+	int node, parent;
+	int i2c_bus;
+
+	node = fdtdec_next_compatible(blob, 0, COMPAT_TI_TPS65090);
+	if (node < 0) {
+		debug("%s: Node not found\n", __func__);
+		return -1;
+	}
+	parent = fdt_parent_offset(blob, node);
+	if (parent < 0) {
+		debug("%s: Cannot find node parent\n", __func__);
+		return -1;
+	}
+	i2c_bus = i2c_get_bus_num_fdt(blob, parent);
+	if (i2c_bus < 0)
+		return -1;
+	config->bus = i2c_bus;
+	config->addr = fdtdec_get_addr(blob, node, "reg");
+#else
+	config->bus = CONFIG_TPS65090_I2C_BUS;
+	config->addr = TPS65090_I2C_ADDR;
+#endif
+	return 0;
+}
+
 int tps65090_init(void)
 {
 	int ret;
 
-	/* TODO(sjg): Move to fdt */
+	if (tps65090_decode_config(&config))
+		return -1;
+
 	config.old_bus = -1;
-	config.bus = CONFIG_TPS65090_I2C_BUS;
-	config.addr = TPS65090_I2C_ADDR;
 
 	if (tps65090_select())
 		return -1;
