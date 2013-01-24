@@ -25,6 +25,7 @@
 #include <i2c.h>
 #include <max77686.h>
 #include <mkbp.h>
+#include <mkbp_tps65090.h>
 #include <mmc.h>
 #include <netdev.h>
 #include <tps65090.h>
@@ -73,6 +74,9 @@ struct local_info {
 
 	/* Time to wait until the bus becomes free */
 	unsigned wait_free_ms;
+
+	/* TPschrome and battery are behind the EC */
+	int ec_passthrough;
 };
 
 static struct local_info local;
@@ -465,10 +469,28 @@ __weak int ft_board_setup(void *blob, bd_t *bd)
 }
 
 #ifdef CONFIG_TPS65090_POWER
+/* Switch on a TPSchrome LDO */
+int board_ldo_enable(int id)
+{
+	if (local.ec_passthrough)
+		return mkbp_tps65090_fet_enable(id);
+	else
+		return tps65090_fet_enable(id);
+}
+
+/* Switch off a TPSchrome LDO */
+int board_ldo_disable(int id)
+{
+	if (local.ec_passthrough)
+		return mkbp_tps65090_fet_disable(id);
+	else
+		return tps65090_fet_disable(id);
+}
+
 int board_dp_lcd_vdd(const void *blob, unsigned *wait_ms)
 {
 	*wait_ms = 0;
-	return tps65090_fet_enable(6); /* Enable FET6, lcd panel */
+	return board_ldo_enable(6); /* Enable FET6, lcd panel */
 }
 #endif
 
@@ -739,7 +761,7 @@ int board_dp_backlight_vdd(const void *blob, unsigned *wait_ms)
 {
 	/* This delay is T5 in the LCD timing spec (defined as > 10ms) */
 	*wait_ms = 10;
-	return tps65090_fet_enable(1); /* Enable FET1, backlight */
+	return board_ldo_enable(1); /* Enable FET1, backlight */
 }
 #endif
 
@@ -851,8 +873,16 @@ int board_init(void)
 
 	board_i2c_init(gd->fdt_blob);
 
+	if (board_init_mkbp_devices(gd->fdt_blob))
+		return -1;
+
 #ifdef CONFIG_TPS65090_POWER
-	tps65090_init();
+	if (mkbp_tps65090_init() < 0) {
+		local.ec_passthrough = 0;
+		tps65090_init();
+	} else {
+		local.ec_passthrough = 1;
+	}
 
 	/*
 	 * If we just reset, disable the backlight and lcd fets before
@@ -861,8 +891,8 @@ int board_init(void)
 	 * this removes a bit of uncertainty.
 	 */
 	if (board_is_processor_reset()) {
-		tps65090_fet_disable(1);
-		tps65090_fet_disable(6);
+		board_ldo_disable(1);
+		board_ldo_disable(6);
 	}
 #endif
 	exynos_lcd_check_next_stage(gd->fdt_blob, 0);
@@ -892,9 +922,6 @@ int board_init(void)
 
 	/* Disable USB3.0 PLL to save 250mW of power */
 	disable_usb30_pll();
-
-	if (board_init_mkbp_devices(gd->fdt_blob))
-		return -1;
 
 	board_configure_analogix();
 
