@@ -79,6 +79,8 @@ static const char * const compat_names[COMPAT_COUNT] = {
 	COMPAT(ANALOGIX_ANX7805, "analogix,anx7805"),
 	COMPAT(SMSC_USB3503, "smsc,usb3503"),
 	COMPAT(TI_TPS65090, "ti,tps65090"),
+	COMPAT(MAXIM_MAX77686, "maxim,max77686-pmic"),
+	COMPAT(SAMSUNG_S5M8767, "samsung,s5m8767-pmic"),
 };
 
 const char *fdtdec_get_compatible(enum fdt_compat_id id)

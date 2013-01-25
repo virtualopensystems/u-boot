@@ -21,8 +21,10 @@
 #include <fdtdec.h>
 #include <i2c.h>
 #include <max77686.h>
+#include <s5m8767.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/exynos-cpufreq.h>
+#include <asm/arch/power.h>
 
 /* APLL CON0 */
 #define CON0_LOCK_BIT_MASK	(0x1 << 29)
@@ -181,9 +183,15 @@ static int exynos5250_set_voltage(enum cpufreq_level new_volt_index)
 {
 	int error;
 
-	error = max77686_volsetting(MAX77686_BUCK2,
+	if (board_get_pmic() == COMPAT_SAMSUNG_S5M8767) {
+		error = s5m8767_volsetting(S5M8767_BUCK2,
+			exynos5250_data_table[new_volt_index].volt,
+			S5M8767_REG_ENABLE, S5M8767_UV);
+	} else {
+		error = max77686_volsetting(MAX77686_BUCK2,
 			exynos5250_data_table[new_volt_index].volt,
 			MAX77686_REG_ENABLE, MAX77686_UV);
+	}
 	if (error != 0)
 		debug("voltage update corresponding to ARM frequency failed\n");
 

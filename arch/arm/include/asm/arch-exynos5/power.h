@@ -86,4 +86,7 @@ void power_exit_wakeup(void);
 /* pmu debug is used for xclkout, enable xclkout with source as XXTI */
 void power_enable_xclkout(void);
 
+/* returns the fdt compatible id of the PMIC chip present on the board */
+int board_get_pmic(void);
+
 #endif

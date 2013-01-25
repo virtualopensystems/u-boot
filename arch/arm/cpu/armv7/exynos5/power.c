@@ -27,8 +27,10 @@
 #include <asm/arch/power.h>
 #include <asm/arch/sysreg.h>
 #include <asm/arch-exynos/spl.h>
+#include <fdtdec.h>
 #include <i2c.h>
 #include <max77686.h>
+#include <s5m8767.h>
 
 static void ps_hold_setup(void)
 {
@@ -125,29 +127,30 @@ void power_exit_wakeup(void)
 	((resume_func)power->inform0)();
 }
 
-/**
- * Initialize the pmic voltages to power up the system
- * This also calls i2c_init so that we can program the pmic
- *
- * MAX77686_REG_ENABLE = 0, needed to set the buck/ldo enable bit ON
- *
- * @return	Return 0 if ok, else -1
- */
-int power_init(void)
+static int power_init_s5m8767(void)
 {
 	int error = 0;
 
-#ifdef CONFIG_SPL_BUILD
-	struct spl_machine_param *param = spl_get_machine_params();
+	error |= s5m8767_volsetting(S5M8767_BUCK2, CONFIG_VDD_ARM_MV,
+					S5M8767_REG_ENABLE, S5M8767_MV);
+	error |= s5m8767_volsetting(S5M8767_BUCK3, CONFIG_VDD_INT_UV,
+					S5M8767_REG_ENABLE, S5M8767_UV);
+	error |= s5m8767_volsetting(S5M8767_BUCK1, CONFIG_VDD_MIF_MV,
+					S5M8767_REG_ENABLE, S5M8767_MV);
+	error |= s5m8767_volsetting(S5M8767_BUCK4, CONFIG_VDD_G3D_MV,
+					S5M8767_REG_ENABLE, S5M8767_MV);
+	error |= s5m8767_volsetting(S5M8767_LDO25, CONFIG_VDD_LDO2_MV,
+					S5M8767_REG_ENABLE, S5M8767_MV);
+	error |= s5m8767_volsetting(S5M8767_LDO3, CONFIG_VDD_LDO3_MV,
+					S5M8767_REG_ENABLE, S5M8767_MV);
+	error |= s5m8767_volsetting(S5M8767_LDO10, CONFIG_VDD_LDO10_MV,
+					S5M8767_REG_ENABLE, S5M8767_MV);
+	return error;
+}
 
-	/* Set the i2c register address base so i2c works before FDT */
-	i2c_set_early_reg(param->i2c_base);
-#endif
-
-	ps_hold_setup();
-
-	/* init the i2c so that we can program pmic chip */
-	i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
+static int power_init_max77686(void)
+{
+	int error;
 
 	/*
 	 * We're using CR1616 coin cell battery that is non-rechargeable
@@ -173,10 +176,38 @@ int power_init(void)
 					MAX77686_REG_ENABLE, MAX77686_MV);
 	error |= max77686_volsetting(MAX77686_LDO3, CONFIG_VDD_LDO3_MV,
 					MAX77686_REG_ENABLE, MAX77686_MV);
-	error |= max77686_volsetting(MAX77686_LDO5, CONFIG_VDD_LDO5_MV,
-					MAX77686_REG_ENABLE, MAX77686_MV);
 	error |= max77686_volsetting(MAX77686_LDO10, CONFIG_VDD_LDO10_MV,
 					MAX77686_REG_ENABLE, MAX77686_MV);
+	return error;
+}
+
+/**
+ * Initialize the pmic voltages to power up the system
+ * This also calls i2c_init so that we can program the pmic
+ *
+ * @return	Return 0 if ok, else -1
+ */
+int power_init(void)
+{
+	int error = 0;
+
+#ifdef CONFIG_SPL_BUILD
+	struct spl_machine_param *param = spl_get_machine_params();
+
+	/* Set the i2c register address base so i2c works before FDT */
+	i2c_set_early_reg(param->i2c_base);
+#endif
+
+	ps_hold_setup();
+
+	/* init the i2c so that we can program pmic chip */
+	i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
+
+	if (board_get_pmic() == COMPAT_SAMSUNG_S5M8767)
+		error = power_init_s5m8767();
+	else
+		error = power_init_max77686();
+
 	if (error != 0)
 		debug("power init failed\n");
 

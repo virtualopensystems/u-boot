@@ -27,6 +27,10 @@
 #include <asm/arch/board.h>
 #include <asm/arch/dmc.h>
 #include <asm/arch/gpio.h>
+#include <fdtdec.h>
+#include <i2c.h>
+#include <max77686.h>
+#include <s5m8767.h>
 
 #define SIGNATURE	0xdeadbeef
 
@@ -92,6 +96,23 @@ int board_wakeup_permitted(void)
 	is_bad_wake = ((gpio != -1) && gpio_get_value(gpio));
 
 	return !is_bad_wake;
+}
+
+/*
+ * Auto-detect and returns the PMIC chip present on the board.
+ *
+ * This is called from power_init after having done early i2c initialization.
+ */
+int board_get_pmic(void)
+{
+	if (!i2c_probe(MAX77686_I2C_ADDR))
+		return COMPAT_MAXIM_MAX77686;
+
+	if (!i2c_probe(S5M8767_I2C_ADDR))
+		return COMPAT_SAMSUNG_S5M8767;
+
+	/* default fallback on Maxim PMIC */
+	return COMPAT_MAXIM_MAX77686;
 }
 
 /*

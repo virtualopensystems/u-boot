@@ -28,6 +28,7 @@
 #include <mkbp_tps65090.h>
 #include <mmc.h>
 #include <netdev.h>
+#include <s5m8767.h>
 #include <tps65090.h>
 #include <errno.h>
 #include <asm/gpio.h>
@@ -39,6 +40,7 @@
 #include <asm/arch/mmc.h>
 #include <asm/arch/mshc.h>
 #include <asm/arch/pinmux.h>
+#include <asm/arch/power.h>
 #include <asm/arch/sromc.h>
 #include <asm/arch-exynos5/power.h>
 #include <asm/arch/sata.h>
@@ -77,6 +79,8 @@ struct local_info {
 
 	/* TPschrome and battery are behind the EC */
 	int ec_passthrough;
+	/* PMIC chip : COMPAT_MAXIM_MAX77686 or COMPAT_SAMSUNG_S5M8767 */
+	enum fdt_compat_id pmic;
 };
 
 static struct local_info local;
@@ -370,6 +374,56 @@ static int board_i2c_arb_init(const void *blob)
 	return 0;
 }
 
+int board_get_pmic(void)
+{
+	int ret;
+
+	if (local.pmic == COMPAT_UNKNOWN) {
+		i2c_set_bus_num(0);
+		ret = i2c_probe(S5M8767_I2C_ADDR);
+		if (!ret) {
+			local.pmic = COMPAT_SAMSUNG_S5M8767;
+		} else {
+			ret = i2c_probe(MAX77686_I2C_ADDR);
+			if (!ret)
+				local.pmic = COMPAT_MAXIM_MAX77686;
+		}
+		debug("%s: detected PMIC: %d\n", __func__, local.pmic);
+	}
+	return local.pmic;
+}
+
+static int ft_remove_pmic_node(void *fdt, enum fdt_compat_id id)
+{
+	int node;
+
+	node = fdtdec_next_compatible(fdt, 0, id);
+	if (node < 0)
+		return -ENOENT;
+
+	debug("remove %s from kernel DT\n", fdtdec_get_compatible(id));
+	return fdt_nop_node(fdt, node);
+}
+
+static int ft_board_setup_pmic(void *blob, bd_t *bd)
+{
+	int pmic = board_get_pmic();
+
+	/* we have at most one PMIC chip : remove the other one */
+	switch (pmic) {
+	case COMPAT_SAMSUNG_S5M8767:
+		ft_remove_pmic_node(blob, COMPAT_MAXIM_MAX77686);
+		break;
+	case COMPAT_MAXIM_MAX77686:
+		ft_remove_pmic_node(blob, COMPAT_SAMSUNG_S5M8767);
+		break;
+	default:
+		debug("No PMIC detected\n");
+	}
+
+	return 0;
+}
+
 /**
  * Fix-up the kernel device tree so the bridge pd_n and rst_n gpios accurately
  * reflect the current board rev.
@@ -459,6 +513,8 @@ static int ft_board_setup_tpm_resume(void *blob, bd_t *bd)
 int ft_system_setup(void *blob, bd_t *bd)
 {
 	if (ft_board_setup_gpios(blob, bd))
+		return -1;
+	if (ft_board_setup_pmic(blob, bd))
 		return -1;
 	return ft_board_setup_tpm_resume(blob, bd);
 }
@@ -550,9 +606,16 @@ int board_dp_bridge_setup(const void *blob, unsigned *wait_ms)
 		return ret;
 
 	if (is_ps8622) {
-		/* LDO17 is providing the 1.2V rail to the Parade bridge */
-		ret = max77686_volsetting(MAX77686_LDO17, CONFIG_VDD_LDO17_MV,
-					  MAX77686_REG_ENABLE, MAX77686_MV);
+		/* set the LDO providing the 1.2V rail to the Parade bridge */
+		if (board_get_pmic() == COMPAT_SAMSUNG_S5M8767) {
+			ret = s5m8767_volsetting(S5M8767_LDO6,
+				CONFIG_VDD_LDO17_MV, S5M8767_REG_ENABLE,
+				S5M8767_MV);
+		} else {
+			ret = max77686_volsetting(MAX77686_LDO17,
+				CONFIG_VDD_LDO17_MV, MAX77686_REG_ENABLE,
+				MAX77686_MV);
+		}
 		/* need to wait 20ms after power on before doing I2C writes */
 		*wait_ms = 20;
 	} else {
@@ -845,6 +908,7 @@ static void board_configure_analogix(void)
 int board_init(void)
 {
 	struct fdt_memory mem_config;
+	int ret;
 
 	/* Record the time we spent before SPL */
 	bootstage_add_record(BOOTSTAGE_ID_START_SPL, "spl_start", 0,
@@ -897,9 +961,13 @@ int board_init(void)
 #endif
 	exynos_lcd_check_next_stage(gd->fdt_blob, 0);
 
-	if (max77686_enable_32khz_cp()) {
-		debug("%s: Failed to enable max77686 32khz coprocessor clock\n",
-				 __func__);
+	if (board_get_pmic() == COMPAT_SAMSUNG_S5M8767)
+		ret = s5m8767_enable_32khz_cp();
+	else
+		ret = max77686_enable_32khz_cp();
+	if (ret) {
+		debug("%s: Failed to enable 32khz coprocessor clock\n",
+			__func__);
 		return -1;
 	}
 

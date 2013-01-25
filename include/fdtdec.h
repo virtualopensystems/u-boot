@@ -104,6 +104,8 @@ enum fdt_compat_id {
 	COMPAT_ANALOGIX_ANX7805,	/* Analogix ANX7805 myDP bridge */
 	COMPAT_SMSC_USB3503,		/* HSIC USB hub reset GPIO */
 	COMPAT_TI_TPS65090,		/* Texas Instrument TPS65090 */
+	COMPAT_MAXIM_MAX77686,		/* Maxim MAX77686 PMIC */
+	COMPAT_SAMSUNG_S5M8767,		/* Samsung S58767 PMIC */
 
 	COMPAT_COUNT,
 };
