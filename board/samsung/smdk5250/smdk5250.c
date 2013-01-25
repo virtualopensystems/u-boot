@@ -551,8 +551,8 @@ int board_dp_bridge_setup(const void *blob, unsigned *wait_ms)
 
 	if (is_ps8622) {
 		/* LDO17 is providing the 1.2V rail to the Parade bridge */
-		ret = max77686_volsetting(PMIC_LDO17, CONFIG_VDD_LDO17_MV,
-					  REG_ENABLE, MAX77686_MV);
+		ret = max77686_volsetting(MAX77686_LDO17, CONFIG_VDD_LDO17_MV,
+					  MAX77686_REG_ENABLE, MAX77686_MV);
 		/* need to wait 20ms after power on before doing I2C writes */
 		*wait_ms = 20;
 	} else {

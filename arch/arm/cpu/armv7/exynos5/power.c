@@ -129,7 +129,7 @@ void power_exit_wakeup(void)
  * Initialize the pmic voltages to power up the system
  * This also calls i2c_init so that we can program the pmic
  *
- * REG_ENABLE = 0, needed to set the buck/ldo enable bit ON
+ * MAX77686_REG_ENABLE = 0, needed to set the buck/ldo enable bit ON
  *
  * @return	Return 0 if ok, else -1
  */
@@ -161,22 +161,22 @@ int power_init(void)
 	 */
 	error = max77686_disable_backup_batt();
 
-	error |= max77686_volsetting(PMIC_BUCK2, CONFIG_VDD_ARM_MV,
-						REG_ENABLE, MAX77686_MV);
-	error |= max77686_volsetting(PMIC_BUCK3, CONFIG_VDD_INT_UV,
-						REG_ENABLE, MAX77686_UV);
-	error |= max77686_volsetting(PMIC_BUCK1, CONFIG_VDD_MIF_MV,
-						REG_ENABLE, MAX77686_MV);
-	error |= max77686_volsetting(PMIC_BUCK4, CONFIG_VDD_G3D_MV,
-						REG_ENABLE, MAX77686_MV);
-	error |= max77686_volsetting(PMIC_LDO2, CONFIG_VDD_LDO2_MV,
-						REG_ENABLE, MAX77686_MV);
-	error |= max77686_volsetting(PMIC_LDO3, CONFIG_VDD_LDO3_MV,
-						REG_ENABLE, MAX77686_MV);
-	error |= max77686_volsetting(PMIC_LDO5, CONFIG_VDD_LDO5_MV,
-						REG_ENABLE, MAX77686_MV);
-	error |= max77686_volsetting(PMIC_LDO10, CONFIG_VDD_LDO10_MV,
-						REG_ENABLE, MAX77686_MV);
+	error |= max77686_volsetting(MAX77686_BUCK2, CONFIG_VDD_ARM_MV,
+					MAX77686_REG_ENABLE, MAX77686_MV);
+	error |= max77686_volsetting(MAX77686_BUCK3, CONFIG_VDD_INT_UV,
+					MAX77686_REG_ENABLE, MAX77686_UV);
+	error |= max77686_volsetting(MAX77686_BUCK1, CONFIG_VDD_MIF_MV,
+					MAX77686_REG_ENABLE, MAX77686_MV);
+	error |= max77686_volsetting(MAX77686_BUCK4, CONFIG_VDD_G3D_MV,
+					MAX77686_REG_ENABLE, MAX77686_MV);
+	error |= max77686_volsetting(MAX77686_LDO2, CONFIG_VDD_LDO2_MV,
+					MAX77686_REG_ENABLE, MAX77686_MV);
+	error |= max77686_volsetting(MAX77686_LDO3, CONFIG_VDD_LDO3_MV,
+					MAX77686_REG_ENABLE, MAX77686_MV);
+	error |= max77686_volsetting(MAX77686_LDO5, CONFIG_VDD_LDO5_MV,
+					MAX77686_REG_ENABLE, MAX77686_MV);
+	error |= max77686_volsetting(MAX77686_LDO10, CONFIG_VDD_LDO10_MV,
+					MAX77686_REG_ENABLE, MAX77686_MV);
 	if (error != 0)
 		debug("power init failed\n");
 

@@ -181,9 +181,9 @@ static int exynos5250_set_voltage(enum cpufreq_level new_volt_index)
 {
 	int error;
 
-	error = max77686_volsetting(PMIC_BUCK2,
+	error = max77686_volsetting(MAX77686_BUCK2,
 			exynos5250_data_table[new_volt_index].volt,
-			REG_ENABLE, MAX77686_UV);
+			MAX77686_REG_ENABLE, MAX77686_UV);
 	if (error != 0)
 		debug("voltage update corresponding to ARM frequency failed\n");
 
