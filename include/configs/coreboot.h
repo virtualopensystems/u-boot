@@ -259,7 +259,7 @@
 
  /* Must match the flash map definition! */
 #define CONFIG_ENV_SIZE	  0x4000
-#define CONFIG_ENV_OFFSET 0x39c000
+#define CONFIG_ENV_OFFSET 0x3f8000
 
 /* Might want to keep two copies in the 16K space */
 #define CONFIG_ENV_SECT_SIZE 0x1000
