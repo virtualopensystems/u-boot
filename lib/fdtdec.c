@@ -59,6 +59,7 @@ static const char * const compat_names[COMPAT_COUNT] = {
 	COMPAT(SAMSUNG_EXYNOS_EHCI, "samsung,exynos-ehci"),
 	COMPAT(SAMSUNG_EXYNOS_FIMD, "samsung,exynos-fb"),
 	COMPAT(INFINEON_SLB9635_TPM, "infineon,slb9635-tpm"),
+	COMPAT(INFINEON_SLB9645_TPM, "infineon,slb9645-tpm"),
 	COMPAT(SAMSUNG_EXYNOS_LCD, "samsung,exynos-lcd"),
 	COMPAT(GOOGLE_CONST_FLAG, "google,const-flag"),
 	COMPAT(GOOGLE_GPIO_FLAG, "google,gpio-flag"),
