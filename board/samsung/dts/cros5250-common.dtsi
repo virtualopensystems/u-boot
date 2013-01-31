@@ -127,13 +127,6 @@
 		arm-frequency = <1700000000>;
 	};
 
-	i2c@12c90000 {
-		tpm@20 {
-			reg = <0x20>;
-			compatible = "infineon,slb9635-tpm";
-		};
-	};
-
 	i2c@12cd0000 {
 		display@50 {
 			reg = <0x50>;

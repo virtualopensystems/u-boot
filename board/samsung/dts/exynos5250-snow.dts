@@ -43,6 +43,12 @@
 	dmc@10C00000 {
 		mem-manuf = "elpida";
 	};
+	i2c3: i2c@12c90000 {
+		tpm@20 {
+			reg = <0x20>;
+			compatible = "infineon,slb9635-tpm";
+		};
+	};
 	i2c4: i2c@12ca0000 {
 		mkbp@1e {
 			reg = <0x1e>;
