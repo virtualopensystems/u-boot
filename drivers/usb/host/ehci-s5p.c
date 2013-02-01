@@ -31,6 +31,9 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+/* reset line to the HSIC USB chip */
+static struct fdt_gpio_state hsichub_reset;
+
 int __board_usb_vbus_init(void)
 {
 	/* placeholder for board specific VBUS initialization */
@@ -45,7 +48,6 @@ static void setup_usb_phy(struct usb_phy *usb)
 {
 	unsigned int hostphy_ctrl0;
 	int node;
-	struct fdt_gpio_state hsichub_reset;
 
 	/* Enable VBUS */
 	board_usb_vbus_init();
@@ -115,6 +117,16 @@ static void reset_usb_phy(struct usb_phy *usb)
 			HOST_CTRL0_SIDDQ |
 			HOST_CTRL0_FORCESUSPEND |
 			HOST_CTRL0_FORCESLEEP);
+
+	/* reset HSIC PHY and remote USB chip if we have one */
+	if (hsichub_reset.gpio) {
+		setbits_le32(&usb->hsicphyctrl1, HOST_CTRL0_SIDDQ |
+						 HOST_CTRL0_FORCESLEEP |
+						 HOST_CTRL0_FORCESUSPEND |
+						 HOST_CTRL0_PHYSWRST);
+
+		gpio_direction_output(hsichub_reset.gpio, 0);
+	}
 
 	power_disable_usb_phy();
 }
