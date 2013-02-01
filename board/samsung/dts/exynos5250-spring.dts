@@ -65,6 +65,7 @@
 		soundcodec@22 {
 			reg = <0x22>;
 			compatible = "maxim,max98095-codec";
+			mclk-pin = <2>;
 		};
 
 		anx7805-bridge@72 {
