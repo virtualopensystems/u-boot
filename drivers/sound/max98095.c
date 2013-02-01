@@ -16,10 +16,13 @@
 #include <asm/io.h>
 #include <common.h>
 #include <div64.h>
+#include <fdtdec.h>
 #include <i2c.h>
 #include <sound.h>
 #include "i2s.h"
 #include "max98095.h"
+
+DECLARE_GLOBAL_DATA_PTR;
 
 enum max98095_type {
 	MAX98095,
@@ -30,6 +33,7 @@ struct max98095_priv {
 	unsigned int sysclk;
 	unsigned int rate;
 	unsigned int fmt;
+	u8 mclksel;
 };
 
 struct max98095_priv g_max98095_info;
@@ -187,6 +191,8 @@ static int max98095_hw_params(struct max98095_priv *max98095,
  *
  * @param max98095	max98095 information
  * @param freq		Sampling frequency in Hz
+ * @param mclksel       MCLK pin to use : M98095_MCLKSEL_MCLK1 or
+ *                                        M98095_MCLKSEL_MCLK2
  *
  * @return -1 for error and 0 success.
  */
@@ -194,6 +200,7 @@ static int max98095_set_sysclk(struct max98095_priv *max98095,
 				unsigned int freq)
 {
 	int error = 0;
+	u8 mclksel = max98095->mclksel;
 
 	/* Requested clock frequency is already setup */
 	if (freq == max98095->sysclk)
@@ -205,17 +212,19 @@ static int max98095_set_sysclk(struct max98095_priv *max98095,
 	 *	0x03 (when master clk is 40MHz to 60MHz)..
 	 */
 	if ((freq >= 10000000) && (freq < 20000000)) {
-		error = max98095_i2c_write(M98095_026_SYS_CLK, 0x10);
+		mclksel |= M98095_PSCLK_DIV1;
 	} else if ((freq >= 20000000) && (freq < 40000000)) {
-		error = max98095_i2c_write(M98095_026_SYS_CLK, 0x20);
+		mclksel |= M98095_PSCLK_DIV2;
 	} else if ((freq >= 40000000) && (freq < 60000000)) {
-		error = max98095_i2c_write(M98095_026_SYS_CLK, 0x30);
+		mclksel |= M98095_PSCLK_DIV4;
 	} else {
 		debug("%s: Invalid master clock frequency\n", __func__);
 		return -1;
 	}
+	error = max98095_i2c_write(M98095_026_SYS_CLK, mclksel);
 
-	debug("%s: Clock at %uHz\n", __func__, freq);
+	debug("%s: Clock at %uHz on MCLK%d\n", __func__, freq,
+		max98095->mclksel + 1);
 
 	if (error < 0)
 		return -1;
@@ -427,11 +436,36 @@ err_access:
 	return 0;
 }
 
+static int max98095_decode_config(struct max98095_priv *info)
+{
+#ifdef CONFIG_OF_CONTROL
+	const void *blob = gd->fdt_blob;
+	int node;
+	int mclk;
+
+	node = fdtdec_next_compatible(blob, 0, COMPAT_MAXIM_98095_CODEC);
+	if (node < 0) {
+		debug("%s: max98095 node not found\n", __func__);
+		return -1;
+	}
+	mclk = fdtdec_get_int(blob, node, "mclk-pin", 1);
+	info->mclksel = mclk == 2 ? M98095_MCLKSEL_MCLK2 :
+				      M98095_MCLKSEL_MCLK1;
+#else
+	info->mclksel = M98095_MCLKSEL_MCLK1;
+#endif
+	return 0;
+}
+
 static int max98095_do_init(struct sound_codec_info *pcodec_info,
 			int sampling_rate, int mclk_freq,
 			int bits_per_sample)
 {
-	int ret = 0;
+	int ret;
+
+	ret = max98095_decode_config(&g_max98095_info);
+	if (ret < 0)
+		return ret;
 
 	/* Enable codec clock */
 	power_enable_xclkout();
