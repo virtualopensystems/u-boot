@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+ * Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -264,4 +264,11 @@ VbError_t VbExEcGetExpectedRW(enum VbSelectFirmware_t select,
 	*image = buf;
 	*image_size = size;
 	return VBERROR_SUCCESS;
+}
+
+VbError_t VbExEcGetExpectedRWHash(enum VbSelectFirmware_t select,
+		       const uint8_t **hash, int *hash_size)
+{
+	/* TODO(gabeblack): get the precomputed hash */
+	return VBERROR_EC_GET_EXPECTED_HASH_FROM_IMAGE;
 }
