@@ -172,6 +172,7 @@ call_board_init_f:
  *
  */
 	.globl	relocate_code
+	.type relocate_code,%function
 relocate_code:
 	mov	r4, r0	/* save addr_sp */
 	mov	r5, r1	/* save addr of gd */
@@ -297,6 +298,7 @@ _board_init_r_ofs:
  *
  *************************************************************************/
 .globl cpu_init_cp15
+.type cpu_init_cp15,%function
 cpu_init_cp15:
 	/*
 	 * Invalidate L1 I/D
