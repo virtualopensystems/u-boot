@@ -36,3 +36,11 @@ enum boot_mode exynos_get_boot_device(void)
 
 	return param->boot_source;
 }
+
+/* Get the compression type from the SPL parameter table */
+enum compress_t exynos_get_compress_type(void)
+{
+	struct spl_machine_param *param = spl_get_machine_params();
+
+	return param->compress_type;
+}

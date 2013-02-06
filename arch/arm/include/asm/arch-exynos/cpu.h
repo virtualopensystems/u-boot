@@ -78,6 +78,13 @@ unsigned int exynos_get_uboot_size(void);
 enum boot_mode exynos_get_boot_device(void);
 
 /**
+ * Get the compression type of U-boot
+ *
+ * @return compression type
+ */
+enum compress_t exynos_get_compress_type(void);
+
+/**
  * Check if a wakeup is permitted.
  *
  * On some boards we need to look at a special GPIO to ensure that the wakeup
