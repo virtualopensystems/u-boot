@@ -114,8 +114,9 @@ static void spi_rx_tx(struct exynos_spi *regs, int todo,
  * Copy uboot from spi flash to RAM
  *
  * @parma uboot_size	size of u-boot to copy
+ * @param uboot_addr	address of u-boot to copy
  */
-static void exynos_spi_copy(unsigned int uboot_size)
+static void exynos_spi_copy(unsigned int uboot_size, unsigned int uboot_addr)
 {
 	int upto, todo;
 	int i;
@@ -157,7 +158,7 @@ static void exynos_spi_copy(unsigned int uboot_size)
 
 	for (upto = 0, i = 0; upto < uboot_size; upto += todo, i++) {
 		todo = min(uboot_size - upto, (1 << 15));
-		spi_rx_tx(regs, todo, (void *)(CONFIG_SYS_TEXT_BASE),
+		spi_rx_tx(regs, todo, (void *)(uboot_addr),
 					(void *)(SPI_FLASH_UBOOT_POS), i);
 	}
 
@@ -209,7 +210,7 @@ static void copy_uboot_to_ram(void)
 #if defined(CONFIG_EXYNOS_SPI_BOOT)
 	case BOOT_MODE_SERIAL:
 		/* let us our own function to copy u-boot from SF */
-		exynos_spi_copy(uboot_size);
+		exynos_spi_copy(uboot_size, CONFIG_SYS_TEXT_BASE);
 		break;
 #endif
 	case BOOT_MODE_MMC:
