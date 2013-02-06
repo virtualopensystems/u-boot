@@ -169,17 +169,22 @@
 /*
  * Network-boot related settings.
  *
- * At the moment, we support full network root booting (tftp kernel and initial
- * ramdisk) as well as nfs booting (tftp kernel and point root to NFS).
+ * At the moment, we support:
+ *   - initramfs factory install (tftp kernel with factory installer initramfs)
+ *   - full network root booting (tftp kernel and initial ramdisk)
+ *   - nfs booting (tftp kernel and point root to NFS)
  *
  * Network booting is enabled if you have an ethernet adapter plugged in at boot
  * and also have set tftpserverip/nfsserverip to something other than 0.0.0.0.
- * For full network booting you just need tftpserverip.  For full NFS root
- * you neet to set both.
+ * For full network booting or initramfs factory install you just need
+ * tftpserverip. To choose full network booting over initramfs factory intsall,
+ * you have to set has_initrd=1. For full NFS root you neet to set both
+ * tftpserverip and nfsserverip.
  */
 #define CONFIG_NETBOOT_SETTINGS \
 	"tftpserverip=0.0.0.0\0" \
 	"nfsserverip=0.0.0.0\0" \
+	"has_initrd=0\0" \
 	\
 	"rootaddr=" STRINGIFY(CONFIG_INITRD_ADDRESS) "\0" \
 	"initrd_high=0xffffffff\0" \
@@ -192,6 +197,11 @@
 	"regen_initrdroot_bootargs=" \
 		"setenv bootdev_bootargs " \
 			"rw root=/dev/ram0 ramdisk_size=512000 cros_netboot; " \
+		"run regen_all\0" \
+	"regen_initramfs_install_bootargs=" \
+		"setenv bootdev_bootargs " \
+			"lsm.module_locking=0 cros_netboot_ramfs " \
+			"cros_factory_install cros_secure; " \
 		"run regen_all\0" \
 	\
 	"tftp_setup=" \
@@ -212,6 +222,17 @@
 			"bootm ${loadaddr} ${rootaddr}; " \
 		"else " \
 			"echo 'ERROR: Could not load root/kernel from TFTP'; " \
+			"exit; " \
+		"fi\0" \
+	"initramfs_boot=" \
+		"run tftp_setup; "\
+		"run regen_initramfs_install_bootargs; "\
+		"bootp; " \
+		"if tftpboot ${loadaddr} ${tftpserverip}:${tftpkernelpath}; " \
+		"then " \
+			"bootm ${loadaddr}; "\
+		"else " \
+			"echo 'ERROR: Could not load kernel from TFTP'; " \
 			"exit; " \
 		"fi\0" \
 	"tftp_ext2_boot=" \
@@ -240,7 +261,11 @@
 	"net_boot=" \
 		"if test ${ethact} != \"\"; then " \
 			"if test ${tftpserverip} != \"0.0.0.0\"; then " \
-				"run initrdroot_boot; " \
+				"if test ${has_initrd} != \"0\"; then " \
+					"run initrdroot_boot; " \
+				"else " \
+					"run initramfs_boot; " \
+				"fi; " \
 				"if test ${nfsserverip} != \"0.0.0.0\"; then " \
 					"run nfsroot_boot; " \
 				"fi; " \
