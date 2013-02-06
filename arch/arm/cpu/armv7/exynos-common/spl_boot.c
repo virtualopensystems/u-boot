@@ -28,6 +28,7 @@
 #include <asm/arch-exynos/spi.h>
 #include <asm/arch/pinmux.h>
 #include <asm/arch/power.h>
+#include <linux/lzo.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -181,19 +182,49 @@ static void exynos_spi_copy(unsigned int uboot_size, unsigned int uboot_addr)
 	clrbits_le32(&regs->ch_cfg, SPI_TX_CH_ON | SPI_RX_CH_ON);
 }
 
+
+/* The memcpy function is not in SPL u-boot, so create one. */
+void *memcpy(void *d, const void *s, size_t n)
+{
+	const char *sptr = s;
+	char *dptr = d;
+	size_t i;
+
+	for (i = 0; i < n; i++)
+		*dptr++ = *sptr++;
+	return d;
+}
+
 /* Copy U-Boot image to RAM */
 static void copy_uboot_to_ram(void)
 {
 	unsigned int sec_boot_check;
 	unsigned int uboot_size;
+	enum compress_t compress_type;
+	unsigned int uboot_load_addr;
 	int is_cr_z_set;
 	enum boot_mode boot_mode;
 	mmc_copy_func_t mmc_copy;
+#if defined(CONFIG_SPL_LZO_SUPPORT)
+	int ret;
+#endif
 
 	usb_copy_func_t usb_copy;
 
 	uboot_size = exynos_get_uboot_size();
 	boot_mode = exynos_get_boot_device();
+	compress_type = exynos_get_compress_type();
+
+	if (compress_type == UBOOT_COMPRESS_NONE) {
+		uboot_load_addr = CONFIG_SYS_TEXT_BASE;
+#if defined(CONFIG_SPL_LZO_SUPPORT)
+	} else if (compress_type == UBOOT_COMPRESS_LZO) {
+		/* Load U-Boot image to 1MB after the text base. */
+		uboot_load_addr = CONFIG_SYS_TEXT_BASE + 0x100000;
+#endif
+	} else {
+		panic("Invalid compression type %u\n", compress_type);
+	}
 
 	if (boot_mode == BOOT_MODE_OM) {
 		/* Read iRAM location to check for secondary USB boot mode */
@@ -210,14 +241,13 @@ static void copy_uboot_to_ram(void)
 #if defined(CONFIG_EXYNOS_SPI_BOOT)
 	case BOOT_MODE_SERIAL:
 		/* let us our own function to copy u-boot from SF */
-		exynos_spi_copy(uboot_size, CONFIG_SYS_TEXT_BASE);
+		exynos_spi_copy(uboot_size, uboot_load_addr);
 		break;
 #endif
 	case BOOT_MODE_MMC:
 		mmc_copy = *(mmc_copy_func_t *)EXYNOS_COPY_MMC_FNPTR_ADDR;
 		assert(!(uboot_size & 511));
-		mmc_copy(BL2_START_OFFSET, uboot_size / 512,
-				CONFIG_SYS_TEXT_BASE);
+		mmc_copy(BL2_START_OFFSET, uboot_size / 512, uboot_load_addr);
 		break;
 	case BOOT_MODE_USB:
 		/*
@@ -229,12 +259,30 @@ static void copy_uboot_to_ram(void)
 				EXYNOS_COPY_USB_FNPTR_ADDR;
 		usb_copy();
 		config_branch_prediction(is_cr_z_set);
+		/*
+		 * The above usb_copy() loads U-Boot to a fixed location, i.e.
+		 * CONFIG_SYS_TEXT_BASE. Move it before uncompress.
+		 */
+		if (uboot_load_addr != CONFIG_SYS_TEXT_BASE) {
+			memcpy((void *)uboot_load_addr,
+			       (void *)CONFIG_SYS_TEXT_BASE, uboot_size);
+		}
 		break;
 	default:
 		panic("Invalid boot mode selection\n");
 		break;
 	}
 	debug("U-Boot copied\n");
+
+#if defined(CONFIG_SPL_LZO_SUPPORT)
+	if (compress_type == UBOOT_COMPRESS_LZO) {
+		ret = lzop_decompress((void *)uboot_load_addr, uboot_size,
+				(void *)CONFIG_SYS_TEXT_BASE, &uboot_size);
+		if (ret < 0)
+			panic("LZO: uncompress error -%u\n", -ret);
+		debug("U-Boot uncompressed\n");
+	}
+#endif
 }
 
 /* The memzero function is not in SPL u-boot, so create one. */
