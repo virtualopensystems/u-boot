@@ -58,6 +58,11 @@ enum boot_mode {
 	BOOT_MODE_USB,		/* Boot using USB download */
 };
 
+enum compress_t {
+	UBOOT_COMPRESS_NONE,
+	UBOOT_COMPRESS_LZO,
+};
+
 /**
  * Get the U-boot size for SPL copy functions
  *

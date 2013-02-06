@@ -52,9 +52,10 @@ struct spl_machine_param {
 	 *			(lower halfword=bit 0, upper=bit 1)
 	 * M		Memory Manufacturer name
 	 * w		Bad Wake GPIO number
+	 * z		compression type
 	 * \0		termination
 	 */
-	char		params[12];	/* Length must be word-aligned */
+	char		params[16];	/* Length must be word-aligned */
 	u32		mem_iv_size;	/* Memory channel interleaving size */
 	enum ddr_mode	mem_type;	/* Type of on-board memory */
 	/*
@@ -73,6 +74,7 @@ struct spl_machine_param {
 	u32		board_rev_gpios;	/* Board revision GPIOs */
 	enum mem_manuf	mem_manuf;	/* Memory Manufacturer */
 	u32		bad_wake_gpio;	/* If high at wake time disallow wake */
+	enum compress_t	compress_type;	/* Compression type */
 } __attribute__((__packed__));
 
 /**
