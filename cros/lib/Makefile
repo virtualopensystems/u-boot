@@ -14,6 +14,7 @@ LIB	= $(obj)libcros.o
 
 COBJS-$(CONFIG_CHROMEOS) += boot_kernel.o
 COBJS-$(CONFIG_CHROMEOS) += cros_init.o
+COBJS-$(CONFIG_CROS_SPLASH) += cros_splash.o
 COBJS-$(CONFIG_CHROMEOS) += crossystem_data.o
 ifeq ($(CONFIG_CHROMEOS),y)
 COBJS-$(CONFIG_OF_CONTROL) += cros_fdtdec.o

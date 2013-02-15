@@ -46,6 +46,7 @@ struct twostop_fmap {
 		struct fmap_entry firmware_id;
 		struct fmap_entry ec_robin;
 		struct fmap_entry ec_rwbin;
+		struct fmap_entry cros_splash;
 		struct fmap_entry boot;		/* U-Boot */
 	} readonly;
 

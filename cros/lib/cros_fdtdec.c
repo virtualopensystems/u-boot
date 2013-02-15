@@ -142,6 +142,8 @@ static int process_fmap_node(const void *blob, int node, int depth,
 				entry = &config->readonly.ec_robin;
 			else if (0 == strcmp(name, "ecrw"))
 				entry = &config->readonly.ec_rwbin;
+			else if (0 == strcmp(name, "cros-splash"))
+				entry = &config->readonly.cros_splash;
 			else
 				return 0;
 		} else {
