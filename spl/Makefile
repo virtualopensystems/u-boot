@@ -140,10 +140,9 @@ GEN_UBOOT = \
 
 $(obj)u-boot-spl:	depend $(START) $(LIBS) $(obj)u-boot-spl.lds
 	$(GEN_UBOOT)
-	# TODO(sjg@chromium.org): This causes problems at present
-	if $(OBJDUMP) -h u-boot-spl |grep -q .bss; then \
+	if $(OBJDUMP) -h $@ |grep -q .bss; then \
 		echo "u-boot-spl contains BSS data - please check:"; \
-		$(OBJDUMP) -t u-boot-spl |grep .bss; \
+		$(OBJDUMP) -t $@ |grep .bss; \
 		false; \
 	fi
 
