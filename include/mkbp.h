@@ -441,4 +441,24 @@ int mkbp_set_ldo(struct mkbp_dev *dev, uint8_t index, uint8_t state);
  * @return 0 if ok, -1 on error
  */
 int mkbp_get_ldo(struct mkbp_dev *dev, uint8_t index, uint8_t *state);
+
+/**
+ * Get information about the available power and the charger.
+ *
+ * @param dev		MKBP device
+ * @param info		This is set to point to the power information
+ * @return 0 if ok, -1 on error
+ */
+int mkbp_get_power_info(struct mkbp_dev *dev,
+			struct ec_response_power_info **info);
+
+/**
+ * Read a Smart Battery register.
+ *
+ * @param dev		MKBP device
+ * @param index		index of the battery register
+ * @param value		current content of the register
+ * @return 0 if ok, -1 on error
+ */
+int mkbp_read_battery_reg(struct mkbp_dev *dev, uint8_t index, uint16_t *value);
 #endif

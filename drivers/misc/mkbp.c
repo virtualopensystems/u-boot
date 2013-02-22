@@ -798,6 +798,36 @@ int mkbp_get_ldo(struct mkbp_dev *dev, uint8_t index, uint8_t *state)
 	return 0;
 }
 
+int mkbp_get_power_info(struct mkbp_dev *dev,
+			struct ec_response_power_info **info)
+{
+	*info = NULL;
+	if (ec_command(dev, EC_CMD_POWER_INFO, 0,
+			NULL, 0, (uint8_t **)info,
+			sizeof(struct ec_response_power_info))
+				< sizeof(struct ec_response_power_info))
+		return -1;
+
+	return 0;
+}
+
+int mkbp_read_battery_reg(struct mkbp_dev *dev, uint8_t index, uint16_t *value)
+{
+	struct ec_params_sb_rd params;
+	struct ec_response_sb_rd_word *resp = NULL;
+
+	params.reg = index;
+
+	if (ec_command(dev, EC_CMD_SB_READ_WORD, 0,
+		       &params, sizeof(params),
+		       (uint8_t **)&resp, sizeof(*resp)) < sizeof(*resp))
+		return -1;
+
+	*value = resp->value;
+
+	return 0;
+}
+
 /**
  * Decode MBKP details from the device tree and allocate a suitable device.
  *
@@ -1238,6 +1268,32 @@ static int do_mkbp(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 			debug("%s: Could not access LDO%d\n", __func__, index);
 			return ret;
 		}
+	} else if (0 == strcmp("power", cmd)) {
+		struct ec_response_power_info *info;
+
+		ret = mkbp_get_power_info(dev, &info);
+		if (!ret) {
+			printf("Input  %d mV  limit %d mA (charger type %x)\n",
+				info->voltage_ac, info->usb_current_limit,
+				info->usb_dev_type);
+			printf("System %d mV  %d mA\n",
+				info->voltage_system, info->current_system);
+		}
+	} else if (0 == strcmp("bat", cmd)) {
+		uint8_t index;
+		uint16_t value;
+		char *endp;
+
+		if (argc < 3)
+			return CMD_RET_USAGE;
+		index = simple_strtoul(argv[2], &endp, 10);
+		if (*argv[2] == 0 || *endp != 0)
+			return CMD_RET_USAGE;
+
+		ret = mkbp_read_battery_reg(dev, index, &value);
+		if (!ret)
+			printf("reg 0x%02x = 0x%04x / %d\n",
+				index, value, value);
 	} else {
 		return CMD_RET_USAGE;
 	}
@@ -1267,6 +1323,8 @@ U_BOOT_CMD(
 	"mkbp write <ro|rw> <addr> [<size>]  Write EC image\n"
 	"mkbp vbnvcontext [hexstring]        Read [write] VbNvContext from EC\n"
 	"mkbp ldo <idx> [<state>] Switch/Read LDO state\n"
+	"mkbp power               Read power supply info\n"
+	"mkbp bat <reg>           Read smart battery register\n"
 	"mkbp test                run tests on mkbp\n"
 	"mkbp version             Read MKBP version"
 );
