@@ -504,7 +504,7 @@ int clock_set_mshci(enum periph_id peripheral)
 		shift = 0;
 		break;
 	case PERIPH_ID_SDMMC3:
-		addr = &clk->div_fsys1;
+		addr = &clk->div_fsys2;
 		shift = 16;
 		break;
 	default:
