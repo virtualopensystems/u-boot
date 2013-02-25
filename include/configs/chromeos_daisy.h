@@ -80,4 +80,7 @@
 #endif
 #define CONFIG_BOOTCOMMAND CONFIG_NON_VERIFIED_BOOTCOMMAND
 
+/* Enable splash screens */
+#define CONFIG_CROS_SPLASH
+
 #endif /* __configs_chromeos_daisy_h__ */
