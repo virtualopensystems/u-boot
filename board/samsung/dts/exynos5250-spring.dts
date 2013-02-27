@@ -33,6 +33,16 @@
 		mem-manuf = "elpida";
 	};
 
+	/*
+	 * TODO(clchiou): This is not needed in the long-run.
+	 * Delete it when appropriate.  See chrome-os-partner:17716.
+	 */
+	flash@0 {
+		ro-boot {
+			type = "blob boot,dtb,ecrw,ecro,cros-splash";
+		};
+	};
+
 	i2c3: i2c@12c90000 {
 		tpm@20 {
 			reg = <0x20>;

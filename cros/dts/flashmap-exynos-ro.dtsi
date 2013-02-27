@@ -62,7 +62,7 @@
 			label = "u-boot";
 			size = <0x96000>;
 			read-only;
-			type = "blob boot,dtb,ecrw,ecro,cros-splash";
+			type = "blob boot,dtb,ecrw,ecro";
 			required;
 		};
 
