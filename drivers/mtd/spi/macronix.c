@@ -110,6 +110,14 @@ static const struct macronix_spi_flash_params macronix_spi_flash_table[] = {
 		.name = "MX25L12805D",
 	},
 	{
+		.idcode = 0x2536,
+		.page_size = 256,
+		.pages_per_sector = 16,
+		.sectors_per_block = 16,
+		.nr_blocks = 64,
+		.name = "MX25U3235E/F",
+	},
+	{
 		.idcode = 0x2618,
 		.page_size = 256,
 		.pages_per_sector = 16,
@@ -160,7 +168,25 @@ static int macronix_unlock(struct spi_flash *flash)
 
 static int macronix_erase(struct spi_flash *flash, u32 offset, size_t len)
 {
-	return spi_flash_cmd_erase(flash, CMD_MX25XX_BE, offset, len);
+	return spi_flash_cmd_erase(flash, CMD_MX25XX_SE, offset, len);
+}
+
+static int macronix_read_sw_wp_status(struct spi_flash *flash, u8 *result)
+{
+	int r;
+	u8 status_reg = 0;
+
+	r = spi_flash_cmd_read_status(flash, &status_reg);
+	if (r) /* couldn't tell, assume no */
+		return r;
+
+	/* Return true if ANY area is protected (BP[3:0] != 0000b) */
+	if (status_reg & 0x3c)
+		*result = 1;
+	else
+		*result = 0;
+
+	return 0;
 }
 
 struct spi_flash *spi_flash_probe_macronix(struct spi_slave *spi, u8 *idcode)
@@ -198,10 +224,11 @@ struct spi_flash *spi_flash_probe_macronix(struct spi_slave *spi, u8 *idcode)
 #else
 	flash->read = spi_flash_cmd_read_fast;
 #endif
+	flash->read_sw_wp_status = macronix_read_sw_wp_status;
 	flash->page_size = params->page_size;
-	flash->sector_size = params->page_size * params->pages_per_sector
-		* params->sectors_per_block;
-	flash->size = flash->sector_size * params->nr_blocks;
+	flash->sector_size = params->page_size * params->pages_per_sector;
+	flash->size = flash->sector_size * params->sectors_per_block
+					 * params->nr_blocks;
 
 	/* Clear BP# bits for read-only flash */
 	macronix_unlock(flash);
