@@ -123,6 +123,8 @@
 #define CONFIG_SPI_FLASH_WINBOND
 /* Enable Gigadevice SPI flash support for Snow board */
 #define CONFIG_SPI_FLASH_GIGADEVICE
+/* Enable Macronix SPI flash support for Spring board */
+#define CONFIG_SPI_FLASH_MACRONIX
 #define CONFIG_SF_DEFAULT_MODE SPI_MODE_0
 /* Set speed for SPI flash */
 #define CONFIG_SF_DEFAULT_SPEED	50000000
