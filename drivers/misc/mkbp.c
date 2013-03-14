@@ -209,7 +209,7 @@ static int ec_command(struct mkbp_dev *dev, uint8_t cmd, int cmd_version,
 int mkbp_scan_keyboard(struct mkbp_dev *dev, struct mbkp_keyscan *scan)
 {
 	if (ec_command(dev, EC_CMD_MKBP_STATE, 0, NULL, 0, (uint8_t **)&scan,
-		       sizeof(scan->data)) < sizeof(scan->data))
+		       sizeof(scan->data)) < (int)sizeof(scan->data))
 		return -1;
 
 	return 0;
@@ -220,7 +220,7 @@ int mkbp_read_id(struct mkbp_dev *dev, char *id, int maxlen)
 	struct ec_response_get_version *r = NULL;
 
 	if (ec_command(dev, EC_CMD_GET_VERSION, 0, NULL, 0, (uint8_t **)&r,
-		       sizeof(*r)) < sizeof(*r))
+		       sizeof(*r)) < (int)sizeof(*r))
 		return -1;
 
 	if (maxlen > sizeof(r->version_string_ro))
@@ -247,7 +247,7 @@ int mkbp_read_version(struct mkbp_dev *dev,
 	*versionp = NULL;
 	if (ec_command(dev, EC_CMD_GET_VERSION, 0, NULL, 0,
 			(uint8_t **)versionp, sizeof(**versionp))
-			< sizeof(**versionp))
+			< (int)sizeof(**versionp))
 		return -1;
 
 	return 0;
@@ -268,7 +268,7 @@ int mkbp_read_current_image(struct mkbp_dev *dev, enum ec_current_image *image)
 	struct ec_response_get_version *r = NULL;
 
 	if (ec_command(dev, EC_CMD_GET_VERSION, 0, NULL, 0, (uint8_t **)&r,
-		       sizeof(*r)) < sizeof(*r))
+		       sizeof(*r)) < (int)sizeof(*r))
 		return -1;
 
 	*image = r->current_image;
@@ -408,7 +408,7 @@ int mkbp_info(struct mkbp_dev *dev, struct ec_response_mkbp_info *info)
 {
 	if (ec_command(dev, EC_CMD_MKBP_INFO, 0,
 			NULL, 0, (uint8_t **)&info, sizeof(*info))
-				< sizeof(*info))
+				< (int)sizeof(*info))
 		return -1;
 
 	return 0;
@@ -423,7 +423,7 @@ int mkbp_get_host_events(struct mkbp_dev *dev, uint32_t *events_ptr)
 	 * used by ACPI/SMI.
 	 */
 	if (ec_command(dev, EC_CMD_HOST_EVENT_GET_B, 0, NULL, 0,
-		       (uint8_t **)&resp, sizeof(*resp)) < sizeof(*resp))
+		       (uint8_t **)&resp, sizeof(*resp)) < (int)sizeof(*resp))
 		return -1;
 
 	if (resp->mask & EC_HOST_EVENT_MASK(EC_HOST_EVENT_INVALID))
@@ -461,7 +461,7 @@ int mkbp_flash_protect(struct mkbp_dev *dev,
 
 	if (ec_command(dev, EC_CMD_FLASH_PROTECT, EC_VER_FLASH_PROTECT,
 		       &params, sizeof(params),
-		       (uint8_t **)&resp, sizeof(*resp)) < sizeof(*resp))
+		       (uint8_t **)&resp, sizeof(*resp)) < (int)sizeof(*resp))
 		return -1;
 
 	return 0;
@@ -517,7 +517,7 @@ int mkbp_test(struct mkbp_dev *dev)
 
 	req.in_data = 0x12345678;
 	if (ec_command(dev, EC_CMD_HELLO, 0, &req, sizeof(req),
-		       (uint8_t **)&resp, sizeof(*resp)) < sizeof(*resp)) {
+		      (uint8_t **)&resp, sizeof(*resp)) < (int)sizeof(*resp)) {
 		printf("ec_command() returned error\n");
 		return -1;
 	}
@@ -790,7 +790,7 @@ int mkbp_get_ldo(struct mkbp_dev *dev, uint8_t index, uint8_t *state)
 
 	if (ec_command(dev, EC_CMD_LDO_GET, 0,
 		       &params, sizeof(params),
-		       (uint8_t **)&resp, sizeof(*resp)) < sizeof(*resp))
+		       (uint8_t **)&resp, sizeof(*resp)) < (int)sizeof(*resp))
 		return -1;
 
 	*state = resp->state;
@@ -805,7 +805,7 @@ int mkbp_get_power_info(struct mkbp_dev *dev,
 	if (ec_command(dev, EC_CMD_POWER_INFO, 0,
 			NULL, 0, (uint8_t **)info,
 			sizeof(struct ec_response_power_info))
-				< sizeof(struct ec_response_power_info))
+				< (int)sizeof(struct ec_response_power_info))
 		return -1;
 
 	return 0;
@@ -820,7 +820,7 @@ int mkbp_read_battery_reg(struct mkbp_dev *dev, uint8_t index, uint16_t *value)
 
 	if (ec_command(dev, EC_CMD_SB_READ_WORD, 0,
 		       &params, sizeof(params),
-		       (uint8_t **)&resp, sizeof(*resp)) < sizeof(*resp))
+		       (uint8_t **)&resp, sizeof(*resp)) < (int)sizeof(*resp))
 		return -1;
 
 	*value = resp->value;
