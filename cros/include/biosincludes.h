@@ -11,6 +11,4 @@
 #ifndef BIOSINCLUDES_H
 #define BIOSINCLUDES_H
 
-#define UINT64_C(v) ((uint64_t) v)
-
 #endif /* BIOSINCLUDES_H */

@@ -404,7 +404,7 @@ int setenv_addr(const char *varname, const void *addr)
 {
 	char str[17];
 
-	sprintf(str, "%lx", (uintptr_t)addr);
+	sprintf(str, "%x", (uintptr_t)addr);
 	return setenv(varname, str);
 }
 

@@ -531,7 +531,7 @@ static ulong scsi_read(int device, ulong blknr, lbaint_t blkcnt, void *buffer)
 			blks=0;
 		}
 		debug("scsi_read_ext: startblk " LBAF
-		      ", blccnt %x buffer %lx\n",
+		      ", blccnt %x buffer %x\n",
 		      start, smallblks, buf_addr);
 		if(scsi_exec(pccb)!=TRUE) {
 			scsi_print_error(pccb);
@@ -541,7 +541,7 @@ static ulong scsi_read(int device, ulong blknr, lbaint_t blkcnt, void *buffer)
 		buf_addr+=pccb->datalen;
 	} while(blks!=0);
 	debug("scsi_read_ext: end startblk " LBAF
-	      ", blccnt %x buffer %lx\n", start, smallblks, buf_addr);
+	      ", blccnt %x buffer %x\n", start, smallblks, buf_addr);
 	return(blkcnt);
 }
 
@@ -585,7 +585,7 @@ static ulong scsi_write(int device, ulong blknr,
 			start += blks;
 			blks = 0;
 		}
-		debug("%s: startblk " LBAF ", blccnt %x buffer %lx\n",
+		debug("%s: startblk " LBAF ", blccnt %x buffer %x\n",
 		      __func__, start, smallblks, buf_addr);
 		if (scsi_exec(pccb) != TRUE) {
 			scsi_print_error(pccb);
@@ -594,7 +594,7 @@ static ulong scsi_write(int device, ulong blknr,
 		}
 		buf_addr += pccb->datalen;
 	} while (blks != 0);
-	debug("%s: end startblk " LBAF ", blccnt %x buffer %lx\n",
+	debug("%s: end startblk " LBAF ", blccnt %x buffer %x\n",
 	      __func__, start, smallblks, buf_addr);
 	return blkcnt;
 }
