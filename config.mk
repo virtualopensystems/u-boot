@@ -241,10 +241,11 @@ CPPFLAGS += -I$(TOPDIR)/cros/include
 endif
 
 ifdef CONFIG_CHROMEOS
-CPPFLAGS += -I$(if $(VBOOT_SOURCE),$(VBOOT_SOURCE)/firmware/include,\
-		$(VBOOT)/include/vboot) \
-	-I$(if $(VBOOT_SOURCE),$(VBOOT_SOURCE)/firmware/include,\
-		$(VBOOT)/include)
+ifdef VBOOT_SOURCE
+CPPFLAGS += -I$(VBOOT_SOURCE)/firmware/include
+else
+CPPFLAGS += $(VBOOT)/include)
+endif
 endif
 
 ifdef BUILD_TAG

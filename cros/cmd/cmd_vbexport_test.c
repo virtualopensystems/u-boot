@@ -16,12 +16,13 @@
 
 #include <common.h>
 #include <command.h>
-#include <gbb_header.h>
 #include <cros/cros_init.h>
 #include <cros/firmware_storage.h>
 #include <cros/gbb.h>
 
-#include <vboot_api.h>
+#include "bmpblk_header.h"
+#include "gbb_header.h"
+#include "vboot_api.h"
 
 DECLARE_GLOBAL_DATA_PTR;
 
