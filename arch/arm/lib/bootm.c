@@ -31,6 +31,10 @@
 #include <libfdt.h>
 #include <fdt_support.h>
 
+#ifdef CONFIG_ARMV7_NONSEC
+#include <asm/armv7.h>
+#endif
+
 DECLARE_GLOBAL_DATA_PTR;
 
 #if defined (CONFIG_SETUP_MEMORY_TAGS) || \
@@ -61,6 +65,7 @@ static struct tag *params;
 #endif /* CONFIG_SETUP_MEMORY_TAGS || CONFIG_CMDLINE_TAG || CONFIG_INITRD_TAG */
 
 static ulong get_sp(void);
+static void do_nonsec_virt_switch(void);
 #if defined(CONFIG_OF_LIBFDT) && !defined(CONFIG_OF_NO_KERNEL)
 static int bootm_linux_fdt(int machid, bootm_headers_t *images);
 #endif
@@ -122,6 +127,8 @@ int do_bootm_linux(int flag, int argc, char *argv[], bootm_headers_t *images)
 	}
 
 	bootstage_mark(BOOTSTAGE_ID_RUN_OS);
+
+	do_nonsec_virt_switch();
 
 #if defined(CONFIG_OF_LIBFDT) && !defined(CONFIG_OF_NO_KERNEL)
 	if (images->ft_len)
@@ -409,3 +416,27 @@ static ulong get_sp(void)
 	asm("mov %0, sp" : "=r"(ret) : );
 	return ret;
 }
+
+static void do_nonsec_virt_switch(void)
+{
+#ifdef CONFIG_ARMV7_NONSEC
+	int ret;
+
+	ret = armv7_switch_nonsec();
+	switch (ret) {
+	case NONSEC_VIRT_SUCCESS:
+		debug("entered non-secure state\n");
+		break;
+	case NONSEC_ERR_NO_SEC_EXT:
+		printf("nonsec: Security extensions not implemented.\n");
+		break;
+	case NONSEC_ERR_NO_GIC_ADDRESS:
+		printf("nonsec: could not determine GIC address.\n");
+		break;
+	case NONSEC_ERR_GIC_ADDRESS_ABOVE_4GB:
+		printf("nonsec: PERIPHBASE is above 4 GB, no access.\n");
+		break;
+	}
+#endif
+}
+
