@@ -77,6 +77,21 @@ static int get_gicd_base_address(unsigned int *gicdaddr)
 #endif
 }
 
+static void kick_secondary_cpus(unsigned int gicdaddr)
+{
+	unsigned int *secondary_boot_addr;
+
+	secondary_boot_addr = (void *)CONFIG_SYSFLAGS_ADDR;
+#ifdef CONFIG_SYSFLAGS_NEED_CLEAR_BITS
+	secondary_boot_addr[1] = (unsigned)-1;
+#endif
+	*secondary_boot_addr = (uintptr_t)_smp_pen;
+	dmb();
+
+	/* now kick all CPUs (except this one) by writing to GICD_SGIR */
+	writel(1U << 24, gicdaddr + GICD_SGIR);
+}
+
 enum nonsec_virt_errors armv7_switch_nonsec(void)
 {
 	unsigned int reg, ret;
@@ -110,7 +125,9 @@ enum nonsec_virt_errors armv7_switch_nonsec(void)
 	for (i = 0; i <= itlinesnr; i++)
 		writel((unsigned)-1, gicdaddr + GICD_IGROUPRn + 4 * i);
 
-	/* call the non-sec switching code on this CPU */
+	kick_secondary_cpus(gicdaddr);
+
+	/* call the non-sec switching code on this CPU also */
 	_nonsec_init();
 
 	return NONSEC_VIRT_SUCCESS;

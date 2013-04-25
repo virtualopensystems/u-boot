@@ -58,6 +58,33 @@ _secure_monitor:
 	movs	pc, lr				@ return to non-secure SVC
 
 /*
+ * Secondary CPUs start here and call the code for the core specific parts
+ * of the non-secure and HYP mode transition. The GIC distributor specific
+ * code has already been executed by a C function before.
+ * Then they go back to wfi and wait to be woken up by the kernel again.
+ */
+ENTRY(_smp_pen)
+	mrs	r0, cpsr
+	orr	r0, r0, #0xc0
+	msr	cpsr, r0			@ disable interrupts
+	ldr	r1, =_start
+	mcr	p15, 0, r1, c12, c0, 0		@ set VBAR
+
+	bl	_nonsec_init
+
+	ldr	r1, [r0, #GICC_IAR]		@ acknowledge IPI
+	str	r1, [r0, #GICC_EOIR]		@ signal end of interrupt
+	adr	r1, _smp_pen
+waitloop:
+	wfi
+	ldr	r0, =CONFIG_SYSFLAGS_ADDR	@ load start address
+	ldr	r0, [r0]
+	cmp	r0, r1			@ make sure we dont execute this code
+	beq	waitloop		@ again (due to a spurious wakeup)
+	mov	pc, r0
+ENDPROC(_smp_pen)
+
+/*
  * Switch a core to non-secure state.
  *
  *  1. initialize the GIC per-core interface
