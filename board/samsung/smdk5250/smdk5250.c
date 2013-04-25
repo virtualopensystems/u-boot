@@ -496,14 +496,14 @@ static int ft_board_setup_tpm_resume(void *blob, bd_t *bd)
 
 	node = fdt_node_offset_by_compatible(blob, 0, kernel_tpm_compat);
 	if (node < 0) {
-		debug("%s: fail to find %s: %d\n", __func__,
+		debug("%s: Could not find %s: %d\n", __func__,
 				kernel_tpm_compat, node);
-		return -1;
+		return 0;
 	}
 
 	err = fdt_setprop(blob, node, prop_name, NULL, 0);
 	if (err) {
-		debug("%s: fail to setprop: %d\n", __func__, err);
+		debug("%s: Could not setprop: %d\n", __func__, err);
 		return -1;
 	}
 
