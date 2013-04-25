@@ -31,7 +31,7 @@
 #include <libfdt.h>
 #include <fdt_support.h>
 
-#ifdef CONFIG_ARMV7_NONSEC
+#if defined(CONFIG_ARMV7_NONSEC) || defined(CONFIG_ARMV7_VIRT)
 #include <asm/armv7.h>
 #endif
 
@@ -419,13 +419,17 @@ static ulong get_sp(void)
 
 static void do_nonsec_virt_switch(void)
 {
-#ifdef CONFIG_ARMV7_NONSEC
+#if defined(CONFIG_ARMV7_NONSEC) || defined(CONFIG_ARMV7_VIRT)
 	int ret;
 
 	ret = armv7_switch_nonsec();
+#ifdef CONFIG_ARMV7_VIRT
+	if (ret == NONSEC_VIRT_SUCCESS)
+		ret = armv7_switch_hyp();
+#endif
 	switch (ret) {
 	case NONSEC_VIRT_SUCCESS:
-		debug("entered non-secure state\n");
+		debug("entered non-secure state or HYP mode\n");
 		break;
 	case NONSEC_ERR_NO_SEC_EXT:
 		printf("nonsec: Security extensions not implemented.\n");
@@ -435,6 +439,15 @@ static void do_nonsec_virt_switch(void)
 		break;
 	case NONSEC_ERR_GIC_ADDRESS_ABOVE_4GB:
 		printf("nonsec: PERIPHBASE is above 4 GB, no access.\n");
+		break;
+	case VIRT_ERR_NO_VIRT_EXT:
+		printf("HYP mode: Virtualization extensions not implemented.\n");
+		break;
+	case VIRT_ALREADY_HYP_MODE:
+		debug("CPU already in HYP mode\n");
+		break;
+	case VIRT_ERR_NOT_HYP_MODE:
+		printf("HYP mode: switch not successful.\n");
 		break;
 	}
 #endif

@@ -89,21 +89,26 @@ void v7_outer_cache_inval_all(void);
 void v7_outer_cache_flush_range(u32 start, u32 end);
 void v7_outer_cache_inval_range(u32 start, u32 end);
 
-#ifdef CONFIG_ARMV7_NONSEC
+#if defined(CONFIG_ARMV7_NONSEC) || defined(CONFIG_ARMV7_VIRT)
 
 enum nonsec_virt_errors {
 	NONSEC_VIRT_SUCCESS,
 	NONSEC_ERR_NO_SEC_EXT,
 	NONSEC_ERR_NO_GIC_ADDRESS,
 	NONSEC_ERR_GIC_ADDRESS_ABOVE_4GB,
+	VIRT_ALREADY_HYP_MODE,
+	VIRT_ERR_NO_VIRT_EXT,
+	VIRT_ERR_NOT_HYP_MODE
 };
 
 enum nonsec_virt_errors armv7_switch_nonsec(void);
+enum nonsec_virt_errors armv7_switch_hyp(void);
 
 /* defined in assembly file */
 unsigned int _nonsec_init(void);
 void _smp_pen(void);
-#endif /* CONFIG_ARMV7_NONSEC */
+void _switch_to_hyp(void);
+#endif /* CONFIG_ARMV7_NONSEC || CONFIG_ARMV7_VIRT */
 
 #endif /* ! __ASSEMBLY__ */
 

@@ -3,6 +3,7 @@
  * Andre Przywara, Linaro
  *
  * Routines to transition ARMv7 processors from secure into non-secure state
+ * and from non-secure SVC into HYP mode
  * needed to enable ARMv7 virtualization for current hypervisors
  *
  * See file CREDITS for list of people who contributed to this
@@ -28,6 +29,14 @@
 #include <asm/armv7.h>
 #include <asm/gic.h>
 #include <asm/io.h>
+
+static unsigned int read_cpsr(void)
+{
+	unsigned int reg;
+
+	asm volatile ("mrs %0, cpsr\n" : "=r" (reg));
+	return reg;
+}
 
 static unsigned int read_id_pfr1(void)
 {
@@ -90,6 +99,28 @@ static void kick_secondary_cpus(unsigned int gicdaddr)
 
 	/* now kick all CPUs (except this one) by writing to GICD_SGIR */
 	writel(1U << 24, gicdaddr + GICD_SGIR);
+}
+
+enum nonsec_virt_errors armv7_switch_hyp(void)
+{
+	unsigned int reg;
+
+	/* check whether we are in HYP mode already */
+	if ((read_cpsr() & 0x1f) == 0x1a)
+		return VIRT_ALREADY_HYP_MODE;
+
+	/* check whether the CPU supports the virtualization extensions */
+	reg = read_id_pfr1();
+	if ((reg & CPUID_ARM_VIRT_MASK) != 1 << CPUID_ARM_VIRT_SHIFT)
+		return VIRT_ERR_NO_VIRT_EXT;
+
+	/* call the HYP switching code on this CPU also */
+	_switch_to_hyp();
+
+	if ((read_cpsr() & 0x1F) != 0x1a)
+		return VIRT_ERR_NOT_HYP_MODE;
+
+	return NONSEC_VIRT_SUCCESS;
 }
 
 enum nonsec_virt_errors armv7_switch_nonsec(void)
