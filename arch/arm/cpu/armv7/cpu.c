@@ -65,7 +65,7 @@ int cleanup_before_linux(void)
 	disable_interrupts();
 
 #ifdef CONFIG_EXYNOS_LCD
-	exynos_fimd_disable();
+//	exynos_fimd_disable();
 #endif
 
 	/*

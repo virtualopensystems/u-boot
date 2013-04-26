@@ -24,6 +24,7 @@
 #include <common.h>
 #include <command.h>
 #include <image.h>
+#include <lcd.h>
 #include <u-boot/zlib.h>
 #include <asm/byteorder.h>
 #include <fdt.h>
@@ -177,10 +178,16 @@ static int fixup_memory_node(void *blob)
 	int bank;
 	u64 start[CONFIG_NR_DRAM_BANKS];
 	u64 size[CONFIG_NR_DRAM_BANKS];
+	u64 lcdbase = (unsigned long) lcd_base;
 
 	for (bank = 0; bank < CONFIG_NR_DRAM_BANKS; bank++) {
 		start[bank] = bd->bi_dram[bank].start;
 		size[bank] = bd->bi_dram[bank].size;
+
+		/* HACK: Carve out memory for the framebuffer */
+		if (start[bank] <= lcdbase &&
+		    (start[bank] + size[bank]) > lcdbase)
+			size[bank] = lcdbase - start[bank];
 	}
 
 	return fdt_fixup_memory_banks(blob, start, size, CONFIG_NR_DRAM_BANKS);

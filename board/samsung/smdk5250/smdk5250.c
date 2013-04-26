@@ -31,6 +31,7 @@
 #include <s5m8767.h>
 #include <tps65090.h>
 #include <errno.h>
+#include <lcd.h>
 #include <asm/gpio.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/cpu.h>
@@ -510,11 +511,38 @@ static int ft_board_setup_tpm_resume(void *blob, bd_t *bd)
 	return 0;
 }
 
+static int ft_board_setup_lcd(void *blob, bd_t *bd)
+{
+	const char name[] = "simple-framebuffer";
+	const char fmt[] = "r5g6b5";
+	int reg[2];
+	int r;
+	int node;
+
+	node = fdt_add_subnode(blob, 0, "framebuffer");
+	if (node < 0)
+		return -1;
+	fdt_setprop(blob, node, "compatible", name, sizeof(name));
+	reg[0] = cpu_to_fdt32((unsigned int)lcd_base);
+	reg[1] = cpu_to_fdt32(0x00202000);
+	fdt_setprop(blob, node, "reg", reg, sizeof(reg));
+	r = cpu_to_fdt32(1366);
+	fdt_setprop(blob, node, "width", &r, sizeof(r));
+	r = cpu_to_fdt32(768);
+	fdt_setprop(blob, node, "height", &r, sizeof(r));
+	r = cpu_to_fdt32(1366*2);
+	fdt_setprop(blob, node, "stride", &r, sizeof(r));
+	fdt_setprop(blob, node, "format", fmt, sizeof(fmt));
+	return 0;
+}
+
 int ft_system_setup(void *blob, bd_t *bd)
 {
 	if (ft_board_setup_gpios(blob, bd))
 		return -1;
 	if (ft_board_setup_pmic(blob, bd))
+		return -1;
+	if (ft_board_setup_lcd(blob, bd))
 		return -1;
 	return ft_board_setup_tpm_resume(blob, bd);
 }
