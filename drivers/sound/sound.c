@@ -32,6 +32,7 @@
 #include "i2s.h"
 #include "wm8994.h"
 #include "max98095.h"
+#include "max98088.h"
 
 /* defines */
 #define SOUND_BITS_IN_BYTE 8
@@ -200,6 +201,10 @@ static int get_sound_codec_fdt_values(struct sound_codec_info *pcodec_info,
 		pcodec_info->codec_type = CODEC_MAX_98095;
 		error = get_sound_fdt_values(pcodec_info, blob,
 					     COMPAT_MAXIM_98095_CODEC);
+	} else if (!strcmp(codectype, "max98088")) {
+		pcodec_info->codec_type = CODEC_MAX_98088;
+		error = get_sound_fdt_values(pcodec_info, blob,
+					     COMPAT_MAXIM_98088_CODEC);
 	} else
 		error = -1;
 
@@ -246,6 +251,15 @@ int sound_init(const void *blob)
 #else
 		ret = -1;
 		debug("%s: max98095 codec support not built in.\n", __func__);
+#endif
+	} else if (pcodec_info->codec_type == CODEC_MAX_98088) {
+#if defined CONFIG_SOUND_MAX98088
+		ret = max98088_init(pcodec_info, pi2s_tx->samplingrate,
+			(pi2s_tx->samplingrate * (pi2s_tx->rfs)),
+			pi2s_tx->bitspersample);
+#else
+		ret = -1;
+		debug("%s: max98088 codec support not built in.\n", __func__);
 #endif
 	} else {
 		debug("%s: Unknown code type %d\n", __func__,

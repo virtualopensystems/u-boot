@@ -106,6 +106,7 @@ enum fdt_compat_id {
 	COMPAT_TI_TPS65090,		/* Texas Instrument TPS65090 */
 	COMPAT_MAXIM_MAX77686,		/* Maxim MAX77686 PMIC */
 	COMPAT_SAMSUNG_S5M8767,		/* Samsung S58767 PMIC */
+	COMPAT_MAXIM_98088_CODEC,	/* Maxim Max98088 Sound Codec */
 
 	COMPAT_COUNT,
 };
