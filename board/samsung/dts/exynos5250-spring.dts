@@ -71,11 +71,9 @@
 			hotplug-gpio = <&gpio 0x50 0>;		/* C30 */
 		};
 
-		/* TODO(sjg@chromium.org): Probably should be 0x11 */
-		soundcodec@22 {
-			reg = <0x22>;
-			compatible = "maxim,max98095-codec";
-			mclk-pin = <2>;
+		soundcodec@20 {
+			reg = <0x20>;
+			compatible = "maxim,max98088-codec";
 		};
 
 		anx7805-bridge@72 {
@@ -129,7 +127,7 @@
 	};
 
 	sound@12d60000 {
-		samsung,codec-type = "max98095";
+		samsung,codec-type = "max98088";
 	};
 
 	hsichub@13400000 {
