@@ -48,7 +48,7 @@
  * - debug and earlyprintk: easier to debug; they could be removed later
  */
 #define CONFIG_DIRECT_BOOTARGS \
-	"console=ttySAC3," STRINGIFY(CONFIG_BAUDRATE) " debug earlyprintk"
+	"console=tty1 debug clk_ignore_unused"
 
 /* Standard input, output and error device of U-Boot console. */
 #define CONFIG_STD_DEVICES_SETTINGS 	EXYNOS_DEVICE_SETTINGS
@@ -70,15 +70,24 @@
 #endif
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	EXYNOS_DEVICE_SETTINGS \
-	CONFIG_CHROMEOS_EXTRA_ENV_SETTINGS \
-	CONFIG_CHROMEOS_SD_TO_SPI \
-	"dev_extras=daisy\0"
+	"dtaddr=0x43000000\0"\
+	"initrdaddr=0x44000000\0"\
+	"boot_noinitrd=mmc dev 1 ; mmc rescan 1 ; ext2load mmc 1:3 ${loadaddr} uImage ; ext2load mmc 1:3 ${dtaddr} exynos5250-snow.dtb ; bootm ${loadaddr} - ${dtaddr}\0"\
+	"boot_initrd=mmc dev 1 ; mmc rescan 1 ; ext2load mmc 1:3 ${loadaddr} uImage ; ext2load mmc 1:3 ${initrdaddr} initrd ; ext2load mmc 1:3 ${dtaddr} exynos5250-snow.dtb ; bootm ${loadaddr} ${initrdaddr} ${dtaddr}\0"\
+	"bootdelay=3\0"
+
+#ifdef CONFIG_BOOTARGS
+#undef CONFIG_BOOTARGS
+#endif
+#define CONFIG_BOOTARGS \
+	"console=tty1 root=/dev/mmcblk1p4 rw rootwait clk_ignore_unused"
 
 /* Replace default CONFIG_BOOTCOMMAND */
 #ifdef CONFIG_BOOTCOMMAND
 #undef CONFIG_BOOTCOMMAND
 #endif
-#define CONFIG_BOOTCOMMAND CONFIG_NON_VERIFIED_BOOTCOMMAND
+#define CONFIG_BOOTCOMMAND \
+	"run boot_noinitrd"
 
 /* Enable splash screens */
 #define CONFIG_CROS_SPLASH
