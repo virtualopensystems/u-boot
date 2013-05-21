@@ -320,6 +320,41 @@ static int max98088_dai1_set_fmt(struct max98088_priv *max98088, int fmt)
 }
 
 /*
+ * resets the audio codec
+ *
+ * @return -1 for error and 0 success.
+ */
+static int max98088_reset(void)
+{
+	int i, ret;
+	u8 val;
+
+	/*
+	 * Reset to hardware default for registers, as there is not a soft
+	 * reset hardware control register.
+	 */
+	for (i = M98088_REG_0F_IRQ_ENABLE; i <= M98088_REG_51_PWR_SYS; i++) {
+		switch (i) {
+		case M98088_REG_4E_BIAS_CNTL:
+			val = 0xf0;
+			break;
+		case M98088_REG_50_DAC_BIAS2:
+			val = 0x0f;
+			break;
+		default:
+			val = 0;
+		}
+		ret = max98088_i2c_write(i, val);
+		if (ret < 0) {
+			debug("%s: Failed to reset: %d\n", __func__, ret);
+			return ret;
+		}
+	}
+
+	return 0;
+}
+
+/*
  * Intialise max98088 codec device
  *
  * @param max98088	max98088 information
@@ -330,6 +365,11 @@ static int max98088_device_init(struct max98088_priv *max98088)
 {
 	unsigned char id;
 	int error = 0;
+
+	/* reset the codec registers to default values */
+	error = max98088_reset();
+	if (error != 0)
+		return error;
 
 	/* initialize private data */
 	max98088->sysclk = -1U;
@@ -366,10 +406,10 @@ static int max98088_device_init(struct max98088_priv *max98088)
 	error |= max98088_i2c_write(M98088_REG_26_MIX_HP_RIGHT, 1);  /* DACR */
 
 	/* set volume */
-	error |= max98088_i2c_write(M98088_REG_3D_LVL_SPK_L, 0x15);
-	error |= max98088_i2c_write(M98088_REG_3E_LVL_SPK_R, 0x15);
-	error |= max98088_i2c_write(M98088_REG_39_LVL_HP_L, 0x1a);
-	error |= max98088_i2c_write(M98088_REG_3A_LVL_HP_R, 0x1a);
+	error |= max98088_i2c_write(M98088_REG_3D_LVL_SPK_L, 0x0f); /* -12 dB */
+	error |= max98088_i2c_write(M98088_REG_3E_LVL_SPK_R, 0x0f); /* -12 dB */
+	error |= max98088_i2c_write(M98088_REG_39_LVL_HP_L, 0x0d);  /* -22 dB */
+	error |= max98088_i2c_write(M98088_REG_3A_LVL_HP_R, 0x0d);  /* -22 dB */
 
 	/* power enable */
 	error |= max98088_i2c_write(M98088_REG_4D_PWR_EN_OUT,
