@@ -118,3 +118,8 @@ ulong get_tbclk(void)
 {
 	return CONFIG_SYS_HZ;
 }
+
+unsigned long timer_get_us(void)
+{
+	return get_ticks();
+}
