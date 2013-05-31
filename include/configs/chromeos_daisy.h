@@ -83,4 +83,7 @@
 /* Enable splash screens */
 #define CONFIG_CROS_SPLASH
 
+/* Enable simple framebuffer */
+#define CONFIG_SIMPLEFB
+
 #endif /* __configs_chromeos_daisy_h__ */

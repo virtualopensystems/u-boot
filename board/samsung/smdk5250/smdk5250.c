@@ -511,6 +511,7 @@ static int ft_board_setup_tpm_resume(void *blob, bd_t *bd)
 	return 0;
 }
 
+#ifdef CONFIG_SIMPLEFB
 static int ft_board_setup_lcd(void *blob, bd_t *bd)
 {
 	const char name[] = "simple-framebuffer";
@@ -535,6 +536,7 @@ static int ft_board_setup_lcd(void *blob, bd_t *bd)
 	fdt_setprop(blob, node, "format", fmt, sizeof(fmt));
 	return 0;
 }
+#endif
 
 int ft_system_setup(void *blob, bd_t *bd)
 {
@@ -542,8 +544,10 @@ int ft_system_setup(void *blob, bd_t *bd)
 		return -1;
 	if (ft_board_setup_pmic(blob, bd))
 		return -1;
+#ifdef CONFIG_SIMPLEFB
 	if (ft_board_setup_lcd(blob, bd))
 		return -1;
+#endif
 	return ft_board_setup_tpm_resume(blob, bd);
 }
 
