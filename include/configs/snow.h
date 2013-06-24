@@ -110,4 +110,7 @@
 /* Enable simple framebuffer */
 #define CONFIG_SIMPLEFB
 
+/* Enable writing on a FAT formatted filesystem */
+#define CONFIG_FAT_WRITE
+
 #endif /* __configs_snow_h__ */
