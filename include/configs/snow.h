@@ -113,4 +113,10 @@
 /* Enable writing on a FAT formatted filesystem */
 #define CONFIG_FAT_WRITE
 
+/* Enable virt mode commands */
+#define CONFIG_ARMV7_VIRT
+
+/* Disable d-cache */
+#define CONFIG_SYS_DCACHE_OFF
+
 #endif /* __configs_snow_h__ */

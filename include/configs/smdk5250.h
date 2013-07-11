@@ -63,7 +63,9 @@
 #define CONFIG_LZO
 
 /* input clock of PLL: SMDK5250 has 24MHz input clock */
-#define CONFIG_SYS_CLK_FREQ            24000000
+#define CONFIG_SYS_CLK_FREQ		24000000
+#define CONFIG_SYSFLAGS_ADDR		0x02020000
+#define CONFIG_ARM_GIC_BASE_ADDRESS	0x10480000
 
 #ifndef CONFIG_OF_CONTROL
 /* MACH_TYPE_SMDK5250 macro will be removed once added to mach-types */
