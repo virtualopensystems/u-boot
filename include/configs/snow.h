@@ -95,7 +95,7 @@
 #undef CONFIG_BOOTARGS
 #endif
 #define CONFIG_BOOTARGS \
-	"console=tty1 root=/dev/mmcblk1p4 rw rootwait clk_ignore_unused"
+	"console=tty1 root=/dev/mmcblk1p4 rw rootwait clk_ignore_unused --no-log"
 
 /* Replace default CONFIG_BOOTCOMMAND */
 #ifdef CONFIG_BOOTCOMMAND
