@@ -50,6 +50,12 @@ _monitor_vectors:
  */
 	.align	5
 _secure_monitor:
+	/* Fix up Exynos5250 errata */
+	mrc	p15, 0, r1, c1, c0, 1
+	orr	r1, r1, #(1 << 1)			@ 773022
+	orr	r1, r1, #(1 << 25)			@ 774769
+	mcr	p15, 0, r1, c1, c0, 1
+
 	mrc	p15, 0, r1, c1, c1, 0		@ read SCR
 	bic	r1, r1, #0x4e			@ clear IRQ, FIQ, EA, nET bits
 	orr	r1, r1, #0x31			@ enable NS, AW, FW bits
