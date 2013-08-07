@@ -35,6 +35,9 @@
 /* Disable ChromeOS specifics */
 #undef CONFIG_CHROMEOS
 
+/* Force reading the environment */
+#undef CONFIG_OF_LOAD_ENVIRONMENT
+
 #define CONFIG_CHROMEOS_USB
 
 /* Support vboot flag reading from GPIO hardwrae */
